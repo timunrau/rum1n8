@@ -495,7 +495,7 @@
                 @click="openBackupImport"
                 class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors relative"
               >
-                Backup/Import
+                Backup & Restore
                 <span
                   v-if="shouldShowBackupReminder"
                   class="absolute right-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"
@@ -1728,14 +1728,14 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         </div>
       </div>
 
-      <!-- Backup/Import Modal -->
+      <!-- Backup & Restore Modal -->
       <div
         v-if="showBackupImport"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeBackupImport"
       >
         <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Backup & Import</h2>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Backup & Restore</h2>
           
           <div class="space-y-6">
             <!-- Last Backup Info -->
@@ -1758,9 +1758,9 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               </button>
             </div>
 
-            <!-- Import Section -->
+            <!-- Restore Section -->
             <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">Import from Backup</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">Restore from Backup</h3>
               <p class="text-sm text-gray-600 mb-4">
                 Restore your data from a previously saved backup file. This will replace all your current data.
               </p>
