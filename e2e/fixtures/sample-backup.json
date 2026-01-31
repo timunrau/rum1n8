@@ -1,0 +1,30 @@
+{
+  "verses": [
+    {
+      "id": "backup-verse-1",
+      "reference": "Philippians 4:13",
+      "content": "I can do all things through Christ who strengthens me.",
+      "bibleVersion": "BSB",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "lastModified": "2024-01-01T00:00:00.000Z",
+      "memorizationStatus": "unmemorized",
+      "reviewCount": 0,
+      "lastReviewed": null,
+      "nextReviewDate": null,
+      "easeFactor": 2.5,
+      "interval": 0,
+      "reviewHistory": [],
+      "collectionIds": ["backup-collection-1"]
+    }
+  ],
+  "collections": [
+    {
+      "id": "backup-collection-1",
+      "name": "Restored Collection",
+      "description": "Collection from backup",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "lastModified": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "backedUpAt": "2024-01-15T12:00:00.000Z"
+}

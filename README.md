@@ -78,6 +78,13 @@ npm run build
 npm run preview
 ```
 
+### E2E Tests
+
+```bash
+npx playwright install chromium   # First-time: install browsers
+npm run test:e2e
+```
+
 ## Hosting with Docker Compose
 
 This app can be hosted using Docker Compose, which includes both the application and a WebDAV proxy server.

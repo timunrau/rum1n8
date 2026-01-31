@@ -7,18 +7,21 @@
     "dev:proxy": "node proxy-server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:proxy\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "webdav": "^5.8.0",
+    "@gracious.tech/fetch-client": "^1.0.0",
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "http-proxy-middleware": "^3.0.5",
     "fuse.js": "^7.0.0",
-    "@gracious.tech/fetch-client": "^1.0.0"
+    "http-proxy-middleware": "^3.0.5",
+    "vue": "^3.4.0",
+    "webdav": "^5.8.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.1",
     "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.17",
     "concurrently": "^9.2.1",

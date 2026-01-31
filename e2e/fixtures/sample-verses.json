@@ -1,0 +1,34 @@
+[
+  {
+    "id": "verse-1",
+    "reference": "John 3:16",
+    "content": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
+    "bibleVersion": "BSB",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "lastModified": "2024-01-01T00:00:00.000Z",
+    "memorizationStatus": "unmemorized",
+    "reviewCount": 0,
+    "lastReviewed": null,
+    "nextReviewDate": null,
+    "easeFactor": 2.5,
+    "interval": 0,
+    "reviewHistory": [],
+    "collectionIds": []
+  },
+  {
+    "id": "verse-2",
+    "reference": "Psalm 23:1",
+    "content": "The LORD is my shepherd; I shall not want.",
+    "bibleVersion": "BSB",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "lastModified": "2024-01-01T00:00:00.000Z",
+    "memorizationStatus": "mastered",
+    "reviewCount": 3,
+    "lastReviewed": "2024-01-15T00:00:00.000Z",
+    "nextReviewDate": "2023-12-01T00:00:00.000Z",
+    "easeFactor": 2.5,
+    "interval": 7,
+    "reviewHistory": [],
+    "collectionIds": ["master-list"]
+  }
+]

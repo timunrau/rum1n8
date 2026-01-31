@@ -465,6 +465,7 @@
           <div class="relative">
             <button
               ref="settingsButton"
+              data-testid="settings-button"
               @click.stop="toggleSettingsMenu"
               class="p-2 text-gray-700 active:bg-gray-100 rounded-full transition-colors relative"
               title="Settings"
@@ -486,12 +487,14 @@
               class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
             >
               <button
+                data-testid="settings-webdav"
                 @click="openWebDAVSettings"
                 class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 WebDAV Sync
               </button>
               <button
+                data-testid="settings-backup"
                 @click="openBackupImport"
                 class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors relative"
               >
@@ -931,6 +934,7 @@
       <div class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Review Tab -->
         <button
+          data-testid="nav-review"
           @click="navigateToReviewList"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
@@ -947,6 +951,7 @@
         
         <!-- Collections Tab -->
         <button
+          data-testid="nav-collections"
           @click="navigateToCollections"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
@@ -963,6 +968,7 @@
         
         <!-- Search Tab -->
         <button
+          data-testid="nav-search"
           @click="navigateToSearch"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
@@ -999,6 +1005,7 @@
         <!-- New Verse Option -->
         <button
           key="verse"
+          data-testid="fab-new-verse"
           @click="openNewVerse"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
@@ -1015,6 +1022,7 @@
         <button
           v-if="!currentCollectionId && currentView === 'collections'"
           key="collection"
+          data-testid="fab-new-collection"
           @click="openNewCollection"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
@@ -1031,6 +1039,7 @@
         <button
           v-if="currentCollectionId || (!currentCollectionId && currentView === 'collections')"
           key="import"
+          data-testid="fab-import-csv"
           @click="openImportCSV"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
@@ -1046,6 +1055,7 @@
 
       <!-- Main FAB Button -->
       <button
+        data-testid="fab-trigger"
         @click="handleFabClick"
         class="w-14 h-14 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         :class="{ 'rotate-45': fabMenuOpen }"
@@ -1088,6 +1098,7 @@
       <!-- Add Verse Form Modal -->
       <div
         v-if="showForm"
+        data-testid="modal-add-verse"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeForm"
       >
@@ -1209,6 +1220,7 @@
       <!-- Edit Verse Form Modal -->
       <div
         v-if="showEditVerseForm"
+        data-testid="modal-edit-verse"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeEditVerseForm"
       >
@@ -1312,6 +1324,7 @@
       <!-- Add Collection Form Modal -->
       <div
         v-if="showCollectionForm"
+        data-testid="modal-add-collection"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         @click.self="closeCollectionForm"
       >
@@ -1368,6 +1381,7 @@
       <!-- Edit Collection Form Modal -->
       <div
         v-if="showEditCollectionForm"
+        data-testid="modal-edit-collection"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeEditCollectionForm"
       >
@@ -1433,6 +1447,7 @@
       <!-- CSV Import Modal -->
       <div
         v-if="showImportCSV"
+        data-testid="modal-import-csv"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeImportCSV"
       >
@@ -1589,6 +1604,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
       <!-- Settings Modal -->
       <div
         v-if="showSettings"
+        data-testid="modal-webdav-settings"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeSettings"
       >
@@ -1731,6 +1747,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
       <!-- Backup & Restore Modal -->
       <div
         v-if="showBackupImport"
+        data-testid="modal-backup-restore"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeBackupImport"
       >
