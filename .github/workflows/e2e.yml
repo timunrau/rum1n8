@@ -8,6 +8,7 @@ on:
 
 jobs:
   e2e:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,3 +29,4 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+
