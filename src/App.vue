@@ -606,7 +606,7 @@
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
         
-        <div class="space-y-3 overflow-y-auto py-4" style="max-height: calc(100vh - 8rem);">
+        <div class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
@@ -854,7 +854,7 @@
       <!-- Collection View -->
       <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
         <!-- Verse List -->
-        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
