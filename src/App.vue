@@ -20,6 +20,13 @@
           {{ memorizingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
+          <button
+            v-if="!isPWAInstalled()"
+            @click="triggerInstall"
+            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
+          >
+            Install app
+          </button>
           <!-- Sync Button -->
           <button
             v-if="hasWebDAVConfigured"
@@ -255,6 +262,13 @@
           {{ reviewingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1">
+          <button
+            v-if="!isPWAInstalled()"
+            @click="triggerInstall"
+            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
+          >
+            Install app
+          </button>
           <!-- Share Button -->
           <button
             @click="copyVerse(reviewingVerse)"
@@ -420,6 +434,15 @@
           {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'search' ? 'Search' : 'Verses')) }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
+          <!-- Install app button -->
+          <button
+            v-if="!isPWAInstalled()"
+            data-testid="install-app-header"
+            @click="triggerInstall"
+            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
+          >
+            Install app
+          </button>
           <!-- Sync Button -->
           <button
             v-if="hasWebDAVConfigured"
@@ -1075,6 +1098,12 @@
       class="fixed inset-0 z-20"
     ></div>
   </div>
+
+  <!-- iOS Install Modal -->
+  <IOSInstallModal
+    v-if="showIOSModal"
+    @close="closeIOSModal"
+  />
 
   <!-- Copy Toast Notification - rendered at root level to appear above all screens -->
   <transition name="toast">
@@ -1824,9 +1853,12 @@ import {
   markCollectionDeleted,
   getDeletedCollections
 } from './webdav-sync.js'
+import { usePWAInstall } from './composables/usePWAInstall.js'
+import IOSInstallModal from './components/IOSInstallModal.vue'
 
 export default {
   name: 'App',
+  components: { IOSInstallModal },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -1876,6 +1908,14 @@ export default {
     const expandedVerseIds = ref({})
     const copyToast = ref({ show: false, message: '' })
     const lastBackupTimestamp = ref(localStorage.getItem('bible-memory-last-backup'))
+
+    // PWA install
+    const {
+      isPWAInstalled,
+      showIOSModal,
+      triggerInstall,
+      closeIOSModal
+    } = usePWAInstall()
 
     // Bible verse import state
     const importingVerse = ref(false)
@@ -5616,7 +5656,11 @@ export default {
       importingVerse,
       importError,
       importErrorShowLink,
-      importVerseContent
+      importVerseContent,
+      isPWAInstalled,
+      showIOSModal,
+      triggerInstall,
+      closeIOSModal
     }
   }
 }

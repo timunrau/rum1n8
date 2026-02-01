@@ -48,8 +48,6 @@ For the list of verses on this page, export to CSV. Map it to columns as follows
 - Due in x days -> "DaysUntilNextReview" (only add the number e.g., 54)
 - Review every x months -> "Interval" (only add the number, and convert to number of days)
 
-Then combine all the verses into one verse and rename the reference to reflect that it's now a range of verses. For example Philippians 1:3-5
-
 ```
 
 ## Getting Started
