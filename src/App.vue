@@ -20,13 +20,6 @@
           {{ memorizingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
-          <button
-            v-if="!isPWAInstalled()"
-            @click="triggerInstall"
-            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
-          >
-            Install app
-          </button>
           <!-- Sync Button -->
           <button
             v-if="hasWebDAVConfigured"
@@ -262,13 +255,6 @@
           {{ reviewingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1">
-          <button
-            v-if="!isPWAInstalled()"
-            @click="triggerInstall"
-            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
-          >
-            Install app
-          </button>
           <!-- Share Button -->
           <button
             @click="copyVerse(reviewingVerse)"
@@ -430,13 +416,13 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 flex-1 ml-2" :class="{ 'mr-20': !currentCollectionId || currentCollectionId }">
+        <h1 class="text-xl font-semibold text-gray-900 flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
           {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'search' ? 'Search' : 'Verses')) }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
-          <!-- Install app button -->
+          <!-- Install app button (top-level verses screen only) -->
           <button
-            v-if="!isPWAInstalled()"
+            v-if="!isPWAInstalled() && currentView === 'collections' && !currentCollectionId"
             data-testid="install-app-header"
             @click="triggerInstall"
             class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
