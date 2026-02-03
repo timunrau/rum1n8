@@ -3,7 +3,7 @@
   <div
     v-if="memorizingVerse"
     class="fixed inset-0 bg-gray-50 z-50 flex flex-col"
-    style="height: 100dvh;"
+    style="height: 100dvh"
   >
     <!-- Top App Bar -->
     <header class="bg-white shadow-sm z-40 flex-shrink-0">
@@ -12,8 +12,18 @@
           @click="exitMemorization"
           class="p-2 -ml-2 mr-1 text-gray-700 active:bg-gray-100 rounded-full transition-colors"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 class="text-xl font-semibold text-gray-900 flex-1">
@@ -30,44 +40,60 @@
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
             <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-if="syncing"
+              class="w-6 h-6 animate-spin"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
-              style="transform-origin: center;"
+              style="transform-origin: center"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else-if="syncSuccess"
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>
       </div>
     </header>
 
-    <div ref="memorizationScrollContainer" class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full sm:px-4">
-     
-
+    <div
+      ref="memorizationScrollContainer"
+      class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full sm:px-4"
+    >
       <div class="bg-white rounded-lg shadow-xl p-4 mb-4 sm:my-4">
         <div
           class="text-xl leading-relaxed text-gray-900 font-serif min-h-[200px]"
@@ -81,53 +107,93 @@
           >
             <span v-if="memorizationMode === 'learn'">
               <template v-if="word.revealed">
-                <span :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">{{ word.text }}</span>
+                <span
+                  :class="
+                    word.incorrect ? 'text-red-600' : 'text-gray-900'
+                  "
+                  >{{ word.text }}</span
+                >
               </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ getRemainingPartText(word) }}</span>
+                <span class="text-gray-900">{{
+                  getPartialWordText(word)
+                }}</span
+                ><span class="text-gray-300">{{
+                  getRemainingPartText(word)
+                }}</span>
               </template>
               <template v-else>
                 <span class="text-gray-300">{{ word.text }}</span>
               </template>
             </span>
             <span v-else-if="memorizationMode === 'memorize'">
-              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-gray-300">
+              <span
+                v-if="
+                  word.visible &&
+                  !word.revealed &&
+                  !isPartiallyTyped(word)
+                "
+                class="text-gray-300"
+              >
                 {{ word.text }}
               </span>
-              <span v-else-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
+              <span
+                v-else-if="word.revealed"
+                :class="
+                  word.incorrect ? 'text-red-600' : 'text-gray-900'
+                "
+              >
                 {{ word.text }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900">{{
+                  getPartialWordText(word)
+                }}</span
+                ><span class="text-gray-300">{{
+                  "_".repeat(getRemainingPartText(word).length)
+                }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ "_".repeat(word.text.length) }}
               </span>
             </span>
             <span v-else-if="memorizationMode === 'master'">
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
+              <span
+                v-if="word.revealed"
+                :class="
+                  word.incorrect ? 'text-red-600' : 'text-gray-900'
+                "
+              >
                 {{ word.text }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 font-semibold">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900 font-semibold">{{
+                  getPartialWordText(word)
+                }}</span
+                ><span class="text-gray-300">{{
+                  "_".repeat(getRemainingPartText(word).length)
+                }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ "_".repeat(word.text.length) }}
               </span>
             </span>
           </span>
         </div>
       </div>
 
-       <div class="mb-6">
-        
+      <div class="mb-6">
         <!-- Progress Indicator -->
         <div class="flex items-center justify-center gap-2 mb-4">
           <div
             v-for="(stage, index) in [
               { name: 'Learn', status: 'unmemorized', mode: 'learn' },
-              { name: 'Memorize', status: 'learned', mode: 'memorize' },
-              { name: 'Master', status: 'memorized', mode: 'master' }
+              {
+                name: 'Memorize',
+                status: 'learned',
+                mode: 'memorize',
+              },
+              { name: 'Master', status: 'memorized', mode: 'master' },
             ]"
             :key="index"
             class="flex items-center"
@@ -138,14 +204,21 @@
                 'px-4 py-2 rounded-lg font-semibold transition-colors duration-200',
                 memorizationMode === stage.mode
                   ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
-                  : getMemorizationStatus(memorizingVerse) === 'mastered' || 
-                    (stage.status === 'unmemorized' && getMemorizationStatus(memorizingVerse) === 'learned') ||
-                    (stage.status === 'learned' && getMemorizationStatus(memorizingVerse) === 'memorized') ||
-                    (stage.status === 'memorized' && getMemorizationStatus(memorizingVerse) === 'mastered')
-                  ? 'bg-green-100 text-green-800 cursor-pointer hover:bg-green-200'
-                  : canSwitchToMode(stage.mode)
-                  ? 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300'
-                  : 'bg-gray-200 text-gray-400'
+                  : getMemorizationStatus(memorizingVerse) ===
+                        'mastered' ||
+                      (stage.status === 'unmemorized' &&
+                        getMemorizationStatus(memorizingVerse) ===
+                          'learned') ||
+                      (stage.status === 'learned' &&
+                        getMemorizationStatus(memorizingVerse) ===
+                          'memorized') ||
+                      (stage.status === 'memorized' &&
+                        getMemorizationStatus(memorizingVerse) ===
+                          'mastered')
+                    ? 'bg-green-100 text-green-800 cursor-pointer hover:bg-green-200'
+                    : canSwitchToMode(stage.mode)
+                      ? 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300'
+                      : 'bg-gray-200 text-gray-400',
               ]"
             >
               {{ stage.name }}
@@ -157,12 +230,16 @@
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </div>
         </div>
       </div>
-
 
       <div class="text-center">
         <input
@@ -187,38 +264,84 @@
         v-if="allWordsRevealed && memorizationMode"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
       >
-        <div class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+        <div
+          class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6"
+        >
           <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-green-800 mb-2 text-center">🎉 Great job!</p>
+            <p
+              class="text-2xl font-bold text-green-800 mb-2 text-center"
+            >
+              🎉 Great job!
+            </p>
             <p class="text-green-700 text-center mb-6">
-              <span v-if="memorizationMode === 'learn'">You've learned this verse! Ready to memorize it?</span>
-              <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse! Ready to master it?</span>
-              <span v-else-if="memorizationMode === 'master'">You've mastered this verse! It's now in your spaced repetition system.</span>
+              <span v-if="memorizationMode === 'learn'"
+                >You've learned this verse! Ready to memorize
+                it?</span
+              >
+              <span v-else-if="memorizationMode === 'memorize'"
+                >You've memorized this verse! Ready to master
+                it?</span
+              >
+              <span v-else-if="memorizationMode === 'master'"
+                >You've mastered this verse! It's now in your spaced
+                repetition system.</span
+              >
             </p>
             <div class="flex justify-center">
-              <button
-                v-if="memorizationMode !== 'master'"
-                @click="advanceToNextMode"
-                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
+              <div
+                class="flex flex-col-reverse sm:flex-row items-center gap-3 w-full"
               >
-                Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
-              </button>
-              <button
-                v-else
-                @click="exitMemorization"
-                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
-              >
-                Done
-              </button>
+                <button
+                  v-if="
+                    memorizationMode === 'learn' ||
+                    memorizationMode === 'memorize'
+                  "
+                  @click="retryMemorization"
+                  class="w-full sm:w-auto px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-semibold transition-colors duration-200"
+                >
+                  {{
+                    memorizationMode === "learn"
+                      ? "Keep Learning"
+                      : "Keep Memorizing"
+                  }}
+                </button>
+                <template v-if="memorizationMode !== 'master'">
+                  <button
+                    @click="advanceToNextMode"
+                    class="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
+                  >
+                    Continue to
+                    {{
+                      memorizationMode === "learn"
+                        ? "Memorize"
+                        : "Master"
+                    }}
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    @click="exitMemorization"
+                    class="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
+                  >
+                    Done
+                  </button>
+                </template>
+              </div>
             </div>
           </div>
           <div v-else>
-            <p class="text-2xl font-bold text-orange-800 mb-2 text-center">Keep practicing!</p>
+            <p
+              class="text-2xl font-bold text-orange-800 mb-2 text-center"
+            >
+              Keep practicing!
+            </p>
             <p class="text-orange-700 text-center mb-2">
-              Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to advance.
+              Your accuracy is {{ accuracy.toFixed(1) }}%. You need
+              90% accuracy to advance.
             </p>
             <p class="text-sm text-gray-600 text-center mb-6">
-              Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
+              Mistakes: {{ reviewMistakes }} /
+              {{ reviewWords.length }} words
             </p>
             <div class="flex justify-center">
               <button
@@ -238,7 +361,7 @@
   <div
     v-if="reviewingVerse"
     class="fixed inset-0 bg-gray-50 z-50 flex flex-col"
-    style="height: 100dvh;"
+    style="height: 100dvh"
   >
     <!-- Top App Bar -->
     <header class="bg-white shadow-sm z-40 flex-shrink-0">
@@ -247,8 +370,18 @@
           @click="exitReview"
           class="p-2 -ml-2 mr-1 text-gray-700 active:bg-gray-100 rounded-full transition-colors"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 class="text-xl font-semibold text-gray-900 flex-1">
@@ -261,8 +394,18 @@
             class="p-2 text-gray-700 active:bg-gray-100 rounded-full transition-colors"
             title="Share verse"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+              />
             </svg>
           </button>
           <!-- Sync Button -->
@@ -275,44 +418,64 @@
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
             <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-if="syncing"
+              class="w-6 h-6 animate-spin"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
-              style="transform-origin: center;"
+              style="transform-origin: center"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else-if="syncSuccess"
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>
       </div>
     </header>
 
-    <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
+    <div
+      class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4"
+    >
       <!-- Scrollable text box -->
-      <div ref="reviewTextContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
+      <div
+        ref="reviewTextContainer"
+        class="flex-1 overflow-y-auto min-h-0 sm:py-4"
+      >
         <div class="bg-white sm:rounded-lg sm:shadow-xl p-4">
           <div
             class="text-xl leading-relaxed text-gray-900 font-serif"
@@ -324,14 +487,24 @@
               :id="`review-word-${index}`"
               class="inline-block mr-2"
             >
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
+              <span
+                v-if="word.revealed"
+                :class="
+                  word.incorrect ? 'text-red-600' : 'text-gray-900'
+                "
+              >
                 {{ word.text }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900">{{
+                  getPartialWordText(word)
+                }}</span
+                ><span class="text-gray-300">{{
+                  "_".repeat(getRemainingPartText(word).length)
+                }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ "_".repeat(word.text.length) }}
               </span>
             </span>
           </div>
@@ -357,72 +530,117 @@
       </div>
     </div>
 
-      <!-- Completion Modal for Review -->
-      <div
-        v-if="allWordsRevealed && reviewingVerse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
-          <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-green-800 mb-2 text-center">🎉 Great job!</p>
-            <p class="text-green-700 text-center mb-6">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</p>
-            <div class="flex justify-center gap-3">
-              <button
-                @click="retryReview"
-                class="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Retry
-              </button>
-              <button
-                @click="nextVerse"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Next Verse
-              </button>
-            </div>
+    <!-- Completion Modal for Review -->
+    <div
+      v-if="allWordsRevealed && reviewingVerse"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+        <div v-if="meetsAccuracyRequirement">
+          <p
+            class="text-2xl font-bold text-green-800 mb-2 text-center"
+          >
+            🎉 Great job!
+          </p>
+          <p class="text-green-700 text-center mb-6">
+            You've reviewed this verse with {{ accuracy.toFixed(1) }}%
+            accuracy!
+          </p>
+          <div class="flex justify-center gap-3">
+            <button
+              @click="retryReview"
+              class="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Retry
+            </button>
+            <button
+              @click="nextVerse"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Next Verse
+            </button>
           </div>
-          <div v-else>
-            <p class="text-2xl font-bold text-orange-800 mb-2 text-center">Keep practicing!</p>
-            <p class="text-orange-700 text-center mb-2">
-              Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to count this as reviewed.
-            </p>
-            <p class="text-sm text-gray-600 text-center mb-6">
-              Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
-            </p>
-            <div class="flex justify-center">
-              <button
-                @click="retryReview"
-                class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Try Again
-              </button>
-            </div>
+        </div>
+        <div v-else>
+          <p
+            class="text-2xl font-bold text-orange-800 mb-2 text-center"
+          >
+            Keep practicing!
+          </p>
+          <p class="text-orange-700 text-center mb-2">
+            Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90%
+            accuracy to count this as reviewed.
+          </p>
+          <p class="text-sm text-gray-600 text-center mb-6">
+            Mistakes: {{ reviewMistakes }} /
+            {{ reviewWords.length }} words
+          </p>
+          <div class="flex justify-center">
+            <button
+              @click="retryReview"
+              class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>
+    </div>
   </div>
 
   <!-- Main Content -->
-  <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-gray-50">
+  <div
+    v-if="!memorizingVerse && !reviewingVerse"
+    class="min-h-screen bg-gray-50"
+  >
     <!-- Top App Bar -->
-    <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40">
+    <header
+      class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40"
+    >
       <div class="h-16 flex items-center px-4">
         <button
           v-if="currentCollectionId"
           @click="viewAllVerses"
           class="p-2 -ml-2 mr-1 text-gray-700 active:bg-gray-100 rounded-full transition-colors"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
-          {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'search' ? 'Search' : 'Verses')) }}
+        <h1
+          class="text-xl font-semibold text-gray-900 flex-1 ml-2"
+          :class="{
+            'mr-2': !currentCollectionId || currentCollectionId,
+          }"
+        >
+          {{
+            currentCollectionId
+              ? getCollectionName(currentCollectionId)
+              : currentView === "review-list"
+                ? "Review"
+                : currentView === "search"
+                  ? "Search"
+                  : "Verses"
+          }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Install app button (top-level verses screen only) -->
           <button
-            v-if="!isPWAInstalled() && currentView === 'collections' && !currentCollectionId"
+            v-if="
+              !isPWAInstalled() &&
+              currentView === 'collections' &&
+              !currentCollectionId
+            "
             data-testid="install-app-header"
             @click="triggerInstall"
             class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
@@ -439,38 +657,53 @@
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
             <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-if="syncing"
+              class="w-6 h-6 animate-spin"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
-              style="transform-origin: center;"
+              style="transform-origin: center"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else-if="syncSuccess"
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
-              <!-- Settings Button -->
+          <!-- Settings Button -->
           <div class="relative">
             <button
               ref="settingsButton"
@@ -479,9 +712,24 @@
               class="p-2 text-gray-700 active:bg-gray-100 rounded-full transition-colors relative"
               title="Settings"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               <!-- Reminder dot -->
               <span
@@ -525,8 +773,18 @@
       class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-50 border border-red-200 rounded-lg shadow-lg p-4 max-w-md mx-4"
     >
       <div class="flex items-start gap-3">
-        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <div class="flex-1">
           <p class="text-sm font-medium text-red-800">Sync Failed</p>
@@ -536,8 +794,18 @@
           @click="syncError = null"
           class="text-red-600 hover:text-red-800 flex-shrink-0"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -546,401 +814,687 @@
     <!-- Content Area with top padding for fixed header -->
     <div class="pt-16 pb-24 px-4">
       <div class="max-w-4xl mx-auto">
-
-      <!-- Review List View -->
-      <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
-        <div class="space-y-2 py-4 overflow-y-auto" style="max-height: calc(100vh - 8rem);">
-          <div
-            v-for="verse in reviewSortedVerses"
-            :key="verse.id"
-            @click="handleVerseClick(verse)"
-            :class="[
-              'bg-white rounded-xl shadow-sm p-3 border transition-all duration-200 cursor-pointer active:scale-98',
-              isDueForReview(verse)
-                ? 'border-red-200 bg-red-50'
-                : 'border-gray-200'
-            ]"
-          >
-            <div class="flex items-center justify-between">
-              <h3 class="text-base font-semibold text-gray-800 flex-1">
-                {{ verse.reference }}
-              </h3>
-              <span
-                :class="[
-                  'px-2 py-1 text-xs font-medium rounded-full ml-2',
-                  isDueForReview(verse)
-                    ? 'text-red-700 bg-red-100'
-                    : 'text-blue-700 bg-blue-100'
-                ]"
-              >
-                {{ getTimeUntilReview(verse) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Empty state when no verses to review -->
-          <div v-if="reviewSortedVerses.length === 0" class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-gray-500 text-lg">No verses to review</p>
-            <p class="text-gray-400 text-sm mt-2">Master some verses to see them here</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collections View -->
-      <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
-        
-        <div class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
-          <!-- Master List Collection -->
-          <div
-            @click="viewCollection('master-list')"
-            class="bg-blue-50 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-blue-200"
-          >
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <h3 class="text-lg font-semibold text-blue-900">{{ getCollectionName('master-list') }}</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="dueVersesCount > 0"
-                  class="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full"
-                >
-                  {{ dueVersesCount }}
-                </span>
-                <span
-                  v-else-if="verses.length > 0"
-                  class="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full"
-                >
-                  ✓
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-500">
-                {{ totalVerseCount }} verse{{ totalVerseCount !== 1 ? 's' : '' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- No Collection -->
-          <div
-            v-if="hasNoCollectionVerses"
-            @click="viewCollection('no-collection')"
-            class="bg-slate-100 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-slate-300"
-          >
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                <h3 class="text-lg font-semibold text-slate-800">{{ getCollectionName('no-collection') }}</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
-                >
-                  {{ getCollectionDueCount('no-collection') }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-slate-500">
-                {{ getCollectionVerseCount('no-collection') }} verse{{ getCollectionVerseCount('no-collection') !== 1 ? 's' : '' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- To Learn -->
-          <div
-            v-if="hasToLearnVerses"
-            @click="viewCollection('to-learn')"
-            class="bg-yellow-50 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-yellow-200"
-          >
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-yellow-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                </svg>
-                <h3 class="text-lg font-semibold text-yellow-900">{{ getCollectionName('to-learn') }}</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
-                >
-                  {{ getCollectionDueCount('to-learn') }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-yellow-800">
-                {{ getCollectionVerseCount('to-learn') }} verse{{ getCollectionVerseCount('to-learn') !== 1 ? 's' : '' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- User Collections -->
-          <div
-            v-for="collection in collections"
-            :key="collection.id"
-            @click="viewCollection(collection.id)"
-            class="bg-white rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-gray-100"
-          >
-            <div class="flex justify-between">
-              <h3 class="text-lg font-semibold text-gray-800 flex-1">{{ collection.name }}</h3>
-
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
-                >
-                  {{ getCollectionDueCount(collection.id) }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
-                            <div class="flex items-center gap-1">
-                <button
-                  @click.stop="startEditCollection(collection)"
-                  class="text-gray-600 hover:bg-gray-100 p-1.5 rounded-full"
-                  title="Edit collection"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p v-if="collection.description" class="text-gray-500 text-sm mb-3 line-clamp-2">{{ collection.description }}</p>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-500">
-                {{ getCollectionVerseCount(collection.id) }} verse{{ getCollectionVerseCount(collection.id) !== 1 ? 's' : '' }}
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Empty state when no verses exist -->
-          <div v-if="verses.length === 0 && collections.length === 0" class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <p class="text-gray-500 text-lg">No verses yet</p>
-            <p class="text-gray-400 text-sm mt-2">Tap + to add your first verse</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Search View -->
-      <div v-if="currentView === 'search' && !currentCollectionId" class="">
-        <div class="py-4">
-          <!-- Search Input -->
-          <div class="relative mb-4">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search verses..."
-              :class="['w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900', searchQuery.trim() ? 'pr-11' : 'pr-4']"
-            />
-            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <button
-              v-if="searchQuery.trim()"
-              type="button"
-              @click="clearSearch"
-              class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              title="Clear search"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Search Results -->
-          <div class="space-y-3 overflow-y-auto" style="max-height: calc(100vh - 12rem);">
-            <div
-              v-for="result in searchResults"
-              :key="result.item.id"
-              @click="handleVerseClick(result.item)"
-              class="bg-white rounded-2xl shadow-sm py-3 px-4 border border-gray-200 transition-all duration-200 cursor-pointer active:scale-98 relative"
-            >
-              <div class="flex flex-col gap-2">
-                <div class="flex items-start justify-between gap-2">
-                  <h3 class="text-lg font-semibold text-gray-800 flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
-                  <div class="flex items-center gap-0.5 shrink-0">
-                    <button
-                      @click.stop="startEditVerse(result.item)"
-                      class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                      title="Edit verse"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      @click.stop="copyVerse(result.item)"
-                      class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                      title="Share verse"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
-              </div>
-            </div>
-
-            <!-- Empty state when no search query -->
-            <div v-if="!searchQuery.trim()" class="bg-white rounded-2xl shadow-sm p-12 text-center">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <p class="text-gray-500 text-lg">Search verses</p>
-              <p class="text-gray-400 text-sm mt-2">Type to search by reference or content</p>
-            </div>
-
-            <!-- Empty state when no results found -->
-            <div v-else-if="searchQuery.trim() && searchResults.length === 0" class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="text-gray-500 text-lg">No results found</p>
-              <p class="text-gray-400 text-sm mt-2">Try different search terms</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collection View -->
-      <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
-        <!-- Verse List -->
-        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
+        <!-- Review List View -->
         <div
-          v-for="verse in sortedVerses"
-          :key="verse.id"
-          @click="handleVerseClick(verse)"
-          :class="[
-            'bg-white rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
-            verse.memorizationStatus === 'mastered' && isDueForReview(verse)
-              ? 'border-red-200 bg-red-50'
-              : verse.memorizationStatus === 'mastered'
-              ? 'border-blue-200'
-              : 'border-yellow-200 bg-yellow-50'
-          ]"
+          v-if="currentView === 'review-list' && !currentCollectionId"
+          class=""
         >
-          <div class="flex gap-2 items-start">
-            <button
-              type="button"
-              @click="toggleVerseExpanded(verse, $event)"
-              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-transform duration-200"
-              :class="{ 'rotate-90': isVerseExpanded(verse) }"
-              :aria-label="isVerseExpanded(verse) ? 'Collapse verse' : 'Expand verse'"
+          <div
+            class="space-y-2 py-4 overflow-y-auto"
+            style="max-height: calc(100vh - 8rem)"
+          >
+            <div
+              v-for="verse in reviewSortedVerses"
+              :key="verse.id"
+              @click="handleVerseClick(verse)"
+              :class="[
+                'bg-white rounded-xl shadow-sm p-3 border transition-all duration-200 cursor-pointer active:scale-98',
+                isDueForReview(verse)
+                  ? 'border-red-200 bg-red-50'
+                  : 'border-gray-200',
+              ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <div class="flex items-center justify-between">
+                <h3
+                  class="text-base font-semibold text-gray-800 flex-1"
+                >
+                  {{ verse.reference }}
+                </h3>
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs font-medium rounded-full ml-2',
+                    isDueForReview(verse)
+                      ? 'text-red-700 bg-red-100'
+                      : 'text-blue-700 bg-blue-100',
+                  ]"
+                >
+                  {{ getTimeUntilReview(verse) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Empty state when no verses to review -->
+            <div
+              v-if="reviewSortedVerses.length === 0"
+              class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8"
+            >
+              <svg
+                class="w-16 h-16 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-            </button>
-            <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 justify-between">
-                <div class="flex flex-wrap items-center gap-2 min-w-0">
-                  <h3 class="text-lg font-semibold text-gray-800">
-                    {{ verse.reference }}
-                  </h3>
-                  <span
-                    v-if="verse.bibleVersion"
-                    class="px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md uppercase tracking-wider"
+              <p class="text-gray-500 text-lg">No verses to review</p>
+              <p class="text-gray-400 text-sm mt-2">
+                Master some verses to see them here
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collections View -->
+        <div
+          v-if="
+            currentView === 'collections' &&
+            !currentCollectionId &&
+            collections.length > 0
+          "
+        >
+          <div
+            class="space-y-3 overflow-y-auto pt-4 pb-24"
+            style="max-height: calc(100vh - 8rem)"
+          >
+            <!-- Master List Collection -->
+            <div
+              @click="viewCollection('master-list')"
+              class="bg-blue-50 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-blue-200"
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <svg
+                    class="w-5 h-5 shrink-0 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    {{ verse.bibleVersion }}
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
+                  <h3 class="text-lg font-semibold text-blue-900">
+                    {{ getCollectionName("master-list") }}
+                  </h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="dueVersesCount > 0"
+                    class="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full"
+                  >
+                    {{ dueVersesCount }}
+                  </span>
+                  <span
+                    v-else-if="verses.length > 0"
+                    class="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full"
+                  >
+                    ✓
                   </span>
                 </div>
-                  <div class="flex items-center">
-                    <span
-                      v-if="verse.memorizationStatus !== 'mastered'"
-                      :class="[
-                        'px-2 py-0.5 text-xs font-medium rounded-lg',
-                        verse.memorizationStatus === 'unmemorized'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : verse.memorizationStatus === 'learned'
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-purple-100 text-purple-800'
-                      ]"
-                    >
-                      {{ verse.memorizationStatus === 'unmemorized' ? 'Learn' : verse.memorizationStatus === 'learned' ? 'Memorize' : 'Master' }}
-                    </span>
-                    <span
-                      v-else-if="isDueForReview(verse)"
-                      class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-lg"
-                    >
-                      Due
-                    </span>
-                    <span
-                      v-else
-                      class="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-lg"
-                    >
-                      {{ getTimeUntilReview(verse) }}
-                    </span>
-                                    <button
-                    @click.stop="startEditVerse(verse)"
-                    class="text-gray-600 hover:bg-gray-100 p-1.5 rounded-full shrink-0"
-                    title="Edit verse"
-                                    >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                                    </button>
-                  </div>
               </div>
-              <div
-                v-if="isVerseExpanded(verse)"
-                class="mt-2 text-gray-600 text-sm leading-relaxed"
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-500">
+                  {{ totalVerseCount }} verse{{
+                    totalVerseCount !== 1 ? "s" : ""
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- No Collection -->
+            <div
+              v-if="hasNoCollectionVerses"
+              @click="viewCollection('no-collection')"
+              class="bg-slate-100 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-slate-300"
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <svg
+                    class="w-5 h-5 shrink-0 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
+                  </svg>
+                  <h3 class="text-lg font-semibold text-slate-800">
+                    {{ getCollectionName("no-collection") }}
+                  </h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="getCollectionDueCount('no-collection') > 0"
+                    class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
+                  >
+                    {{ getCollectionDueCount("no-collection") }}
+                  </span>
+                  <span
+                    v-else-if="
+                      getCollectionVerseCount('no-collection') > 0
+                    "
+                    class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
+                  >
+                    ✓
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-slate-500">
+                  {{ getCollectionVerseCount("no-collection") }}
+                  verse{{
+                    getCollectionVerseCount("no-collection") !== 1
+                      ? "s"
+                      : ""
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- To Learn -->
+            <div
+              v-if="hasToLearnVerses"
+              @click="viewCollection('to-learn')"
+              class="bg-yellow-50 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-yellow-200"
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <svg
+                    class="w-5 h-5 shrink-0 text-yellow-800"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                    />
+                  </svg>
+                  <h3 class="text-lg font-semibold text-yellow-900">
+                    {{ getCollectionName("to-learn") }}
+                  </h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="getCollectionDueCount('to-learn') > 0"
+                    class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
+                  >
+                    {{ getCollectionDueCount("to-learn") }}
+                  </span>
+                  <span
+                    v-else-if="
+                      getCollectionVerseCount('to-learn') > 0
+                    "
+                    class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
+                  >
+                    ✓
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-yellow-800">
+                  {{ getCollectionVerseCount("to-learn") }} verse{{
+                    getCollectionVerseCount("to-learn") !== 1
+                      ? "s"
+                      : ""
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- User Collections -->
+            <div
+              v-for="collection in collections"
+              :key="collection.id"
+              @click="viewCollection(collection.id)"
+              class="bg-white rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-gray-100"
+            >
+              <div class="flex justify-between">
+                <h3
+                  class="text-lg font-semibold text-gray-800 flex-1"
+                >
+                  {{ collection.name }}
+                </h3>
+
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="getCollectionDueCount(collection.id) > 0"
+                    class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-md"
+                  >
+                    {{ getCollectionDueCount(collection.id) }}
+                  </span>
+                  <span
+                    v-else-if="
+                      getCollectionVerseCount(collection.id) > 0
+                    "
+                    class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-md"
+                  >
+                    ✓
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    @click.stop="startEditCollection(collection)"
+                    class="text-gray-600 hover:bg-gray-100 p-1.5 rounded-full"
+                    title="Edit collection"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p
+                v-if="collection.description"
+                class="text-gray-500 text-sm mb-3 line-clamp-2"
               >
-                {{ verse.content }}
+                {{ collection.description }}
+              </p>
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-500">
+                  {{ getCollectionVerseCount(collection.id) }} verse{{
+                    getCollectionVerseCount(collection.id) !== 1
+                      ? "s"
+                      : ""
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state when no verses exist -->
+            <div
+              v-if="verses.length === 0 && collections.length === 0"
+              class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8"
+            >
+              <svg
+                class="w-16 h-16 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              <p class="text-gray-500 text-lg">No verses yet</p>
+              <p class="text-gray-400 text-sm mt-2">
+                Tap + to add your first verse
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search View -->
+        <div
+          v-if="currentView === 'search' && !currentCollectionId"
+          class=""
+        >
+          <div class="py-4">
+            <!-- Search Input -->
+            <div class="relative mb-4">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search verses..."
+                :class="[
+                  'w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900',
+                  searchQuery.trim() ? 'pr-11' : 'pr-4',
+                ]"
+              />
+              <svg
+                class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <button
+                v-if="searchQuery.trim()"
+                type="button"
+                @click="clearSearch"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                title="Clear search"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Search Results -->
+            <div
+              class="space-y-3 overflow-y-auto"
+              style="max-height: calc(100vh - 12rem)"
+            >
+              <div
+                v-for="result in searchResults"
+                :key="result.item.id"
+                @click="handleVerseClick(result.item)"
+                class="bg-white rounded-2xl shadow-sm py-3 px-4 border border-gray-200 transition-all duration-200 cursor-pointer active:scale-98 relative"
+              >
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h3
+                      class="text-lg font-semibold text-gray-800 flex-1"
+                      v-html="
+                        highlightText(
+                          result.item.reference,
+                          result.matches,
+                          'reference',
+                        )
+                      "
+                    ></h3>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                      <button
+                        @click.stop="startEditVerse(result.item)"
+                        class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        title="Edit verse"
+                      >
+                        <svg
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        @click.stop="copyVerse(result.item)"
+                        class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        title="Share verse"
+                      >
+                        <svg
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <p
+                    class="text-gray-600 text-sm leading-relaxed"
+                    v-html="
+                      highlightText(
+                        result.item.content,
+                        result.matches,
+                        'content',
+                      )
+                    "
+                  ></p>
+                </div>
+              </div>
+
+              <!-- Empty state when no search query -->
+              <div
+                v-if="!searchQuery.trim()"
+                class="bg-white rounded-2xl shadow-sm p-12 text-center"
+              >
+                <svg
+                  class="w-16 h-16 mx-auto mb-4 text-gray-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <p class="text-gray-500 text-lg">Search verses</p>
+                <p class="text-gray-400 text-sm mt-2">
+                  Type to search by reference or content
+                </p>
+              </div>
+
+              <!-- Empty state when no results found -->
+              <div
+                v-else-if="
+                  searchQuery.trim() && searchResults.length === 0
+                "
+                class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8"
+              >
+                <svg
+                  class="w-16 h-16 mx-auto mb-4 text-gray-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p class="text-gray-500 text-lg">No results found</p>
+                <p class="text-gray-400 text-sm mt-2">
+                  Try different search terms
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-          <div v-if="sortedVerses.length === 0" class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <p class="text-gray-500 text-lg">No verses yet</p>
-            <p class="text-gray-400 text-sm mt-2">Tap + to add a verse</p>
+        <!-- Collection View -->
+        <div
+          v-if="
+            currentCollectionId ||
+            (currentView === 'collections' &&
+              !currentCollectionId &&
+              collections.length === 0)
+          "
+        >
+          <!-- Verse List -->
+          <div
+            class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36"
+          >
+            <div
+              v-for="verse in sortedVerses"
+              :key="verse.id"
+              @click="handleVerseClick(verse)"
+              :class="[
+                'bg-white rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
+                verse.memorizationStatus === 'mastered' &&
+                isDueForReview(verse)
+                  ? 'border-red-200 bg-red-50'
+                  : verse.memorizationStatus === 'mastered'
+                    ? 'border-blue-200'
+                    : 'border-yellow-200 bg-yellow-50',
+              ]"
+            >
+              <div class="flex gap-2 items-start">
+                <button
+                  type="button"
+                  @click="toggleVerseExpanded(verse, $event)"
+                  class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-transform duration-200"
+                  :class="{ 'rotate-90': isVerseExpanded(verse) }"
+                  :aria-label="
+                    isVerseExpanded(verse)
+                      ? 'Collapse verse'
+                      : 'Expand verse'
+                  "
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+                <div class="flex-1 min-w-0">
+                  <div
+                    class="flex flex-wrap items-center gap-2 justify-between"
+                  >
+                    <div
+                      class="flex flex-wrap items-center gap-2 min-w-0"
+                    >
+                      <h3 class="text-lg font-semibold text-gray-800">
+                        {{ verse.reference }}
+                      </h3>
+                      <span
+                        v-if="verse.bibleVersion"
+                        class="px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md uppercase tracking-wider"
+                      >
+                        {{ verse.bibleVersion }}
+                      </span>
+                    </div>
+                    <div class="flex items-center">
+                      <span
+                        v-if="verse.memorizationStatus !== 'mastered'"
+                        :class="[
+                          'px-2 py-0.5 text-xs font-medium rounded-lg',
+                          verse.memorizationStatus === 'unmemorized'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : verse.memorizationStatus === 'learned'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-purple-100 text-purple-800',
+                        ]"
+                      >
+                        {{
+                          verse.memorizationStatus === "unmemorized"
+                            ? "Learn"
+                            : verse.memorizationStatus === "learned"
+                              ? "Memorize"
+                              : "Master"
+                        }}
+                      </span>
+                      <span
+                        v-else-if="isDueForReview(verse)"
+                        class="px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-lg"
+                      >
+                        Due
+                      </span>
+                      <span
+                        v-else
+                        class="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-lg"
+                      >
+                        {{ getTimeUntilReview(verse) }}
+                      </span>
+                      <button
+                        @click.stop="startEditVerse(verse)"
+                        class="text-gray-600 hover:bg-gray-100 p-1.5 rounded-full shrink-0"
+                        title="Edit verse"
+                      >
+                        <svg
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    v-if="isVerseExpanded(verse)"
+                    class="mt-2 text-gray-600 text-sm leading-relaxed"
+                  >
+                    {{ verse.content }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="sortedVerses.length === 0"
+              class="bg-white rounded-2xl shadow-sm p-12 text-center mt-8"
+            >
+              <svg
+                class="w-16 h-16 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              <p class="text-gray-500 text-lg">No verses yet</p>
+              <p class="text-gray-400 text-sm mt-2">
+                Tap + to add a verse
+              </p>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
-      <div class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto">
+    <nav
+      v-if="
+        !memorizingVerse && !reviewingVerse && !currentCollectionId
+      "
+      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40"
+      style="padding-bottom: env(safe-area-inset-bottom)"
+    >
+      <div
+        class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto"
+      >
         <!-- Review Tab -->
         <button
           data-testid="nav-review"
@@ -949,15 +1503,25 @@
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'review-list'
               ? 'text-blue-600'
-              : 'text-gray-500'
+              : 'text-gray-500',
           ]"
         >
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span class="text-xs font-medium">Review</span>
         </button>
-        
+
         <!-- Collections Tab -->
         <button
           data-testid="nav-collections"
@@ -966,15 +1530,25 @@
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'collections'
               ? 'text-blue-600'
-              : 'text-gray-500'
+              : 'text-gray-500',
           ]"
         >
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
           </svg>
           <span class="text-xs font-medium">Verses</span>
         </button>
-        
+
         <!-- Search Tab -->
         <button
           data-testid="nav-search"
@@ -983,11 +1557,21 @@
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'search'
               ? 'text-blue-600'
-              : 'text-gray-500'
+              : 'text-gray-500',
           ]"
         >
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <span class="text-xs font-medium">Search</span>
         </button>
@@ -995,13 +1579,16 @@
     </nav>
 
     <!-- Floating Action Button with Menu -->
-    <div 
-      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'search'"
+    <div
+      v-if="
+        !memorizingVerse &&
+        !reviewingVerse &&
+        currentView !== 'review-list' &&
+        currentView !== 'search'
+      "
       :class="[
         'fixed right-6 z-30',
-        !currentCollectionId
-          ? 'bottom-20'
-          : 'bottom-6'
+        !currentCollectionId ? 'bottom-20' : 'bottom-6',
       ]"
     >
       <!-- FAB Menu (shown on collections screen and inside collections) -->
@@ -1017,16 +1604,33 @@
           data-testid="fab-new-verse"
           @click="openNewVerse"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          style="
+            box-shadow:
+              0 4px 5px 0 rgba(0, 0, 0, 0.14),
+              0 1px 10px 0 rgba(0, 0, 0, 0.12),
+              0 2px 4px -1px rgba(0, 0, 0, 0.2);
+          "
         >
-          <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          <div
+            class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
+          >
+            <svg
+              class="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
             </svg>
           </div>
           <span class="text-sm font-medium">New Verse</span>
         </button>
-        
+
         <!-- New Collection Option (only on collections screen) -->
         <button
           v-if="!currentCollectionId && currentView === 'collections'"
@@ -1034,28 +1638,65 @@
           data-testid="fab-new-collection"
           @click="openNewCollection"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          style="
+            box-shadow:
+              0 4px 5px 0 rgba(0, 0, 0, 0.14),
+              0 1px 10px 0 rgba(0, 0, 0, 0.12),
+              0 2px 4px -1px rgba(0, 0, 0, 0.2);
+          "
         >
-          <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          <div
+            class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0"
+          >
+            <svg
+              class="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
             </svg>
           </div>
           <span class="text-sm font-medium">New Collection</span>
         </button>
-        
+
         <!-- Import CSV Option (collections screen or inside collection) -->
         <button
-          v-if="currentCollectionId || (!currentCollectionId && currentView === 'collections')"
+          v-if="
+            currentCollectionId ||
+            (!currentCollectionId && currentView === 'collections')
+          "
           key="import"
           data-testid="fab-import-csv"
           @click="openImportCSV"
           class="bg-white text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          style="
+            box-shadow:
+              0 4px 5px 0 rgba(0, 0, 0, 0.14),
+              0 1px 10px 0 rgba(0, 0, 0, 0.12),
+              0 2px 4px -1px rgba(0, 0, 0, 0.2);
+          "
         >
-          <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          <div
+            class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0"
+          >
+            <svg
+              class="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
             </svg>
           </div>
           <span class="text-sm font-medium">Import CSV</span>
@@ -1068,1510 +1709,1986 @@
         @click="handleFabClick"
         class="w-14 h-14 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         :class="{ 'rotate-45': fabMenuOpen }"
-        :title="currentCollectionId ? 'Add new verse' : 'Add new item'"
-        style="box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.2);"
+        :title="
+          currentCollectionId ? 'Add new verse' : 'Add new item'
+        "
+        style="
+          box-shadow:
+            0 6px 10px 0 rgba(0, 0, 0, 0.14),
+            0 1px 18px 0 rgba(0, 0, 0, 0.12),
+            0 3px 5px -1px rgba(0, 0, 0, 0.2);
+        "
       >
-        <svg class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        <svg
+          class="w-7 h-7 transition-transform duration-200"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
       </button>
     </div>
 
     <!-- Backdrop to close menu when clicking outside -->
     <div
-      v-if="fabMenuOpen && !memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'search'"
+      v-if="
+        fabMenuOpen &&
+        !memorizingVerse &&
+        !reviewingVerse &&
+        currentView !== 'review-list' &&
+        currentView !== 'search'
+      "
       @click="fabMenuOpen = false"
       class="fixed inset-0 z-20"
     ></div>
   </div>
 
   <!-- iOS Install Modal -->
-  <IOSInstallModal
-    v-if="showIOSModal"
-    @close="closeIOSModal"
-  />
+  <IOSInstallModal v-if="showIOSModal" @close="closeIOSModal" />
 
   <!-- Copy Toast Notification - rendered at root level to appear above all screens -->
   <transition name="toast">
     <div
       v-if="copyToast.show"
       class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] px-4 py-3 rounded-xl shadow-lg max-w-sm"
-      :class="copyToast.isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'"
+      :class="
+        copyToast.isError
+          ? 'bg-red-600 text-white'
+          : 'bg-green-600 text-white'
+      "
     >
       <div class="flex items-center gap-2">
-        <svg v-if="!copyToast.isError" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        <svg
+          v-if="!copyToast.isError"
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
-        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          v-else
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
-        <span class="text-sm font-medium">{{ copyToast.message }}</span>
+        <span class="text-sm font-medium">{{
+          copyToast.message
+        }}</span>
       </div>
     </div>
   </transition>
 
-      <!-- Add Verse Form Modal -->
-      <div
-        v-if="showForm"
-        data-testid="modal-add-verse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeForm"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Add New Verse</h2>
-          
-          <form @submit.prevent="addVerse" class="space-y-4">
-            <div>
-              <label for="reference" class="block text-sm font-medium text-gray-700 mb-2">
-                Verse Reference
-              </label>
-              <input
-                id="reference"
-                v-model="newVerse.reference"
-                type="text"
-                placeholder="e.g., John 3:16"
-                required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+  <!-- Add Verse Form Modal -->
+  <div
+    v-if="showForm"
+    data-testid="modal-add-verse"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeForm"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Add New Verse
+      </h2>
 
-            <div>
-              <label for="bible-version" class="block text-sm font-medium text-gray-700 mb-2">
-                Bible Version
-              </label>
-              <input
-                id="bible-version"
-                v-model="newVerse.bibleVersion"
-                type="text"
-                placeholder="e.g., BSB, NIV, ESV"
-                maxlength="10"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase tracking-wider"
-                style="text-transform: uppercase;"
-              />
-            </div>
-
-            <div>
-              <button
-                type="button"
-                @click="importVerseContent"
-                :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
-                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200 flex items-center space-x-2"
-              >
-                <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
-              </button>
-
-              <div v-if="importError" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p class="text-sm text-amber-800">{{ importError }}</p>
-                <a
-                  v-if="importErrorShowLink"
-                  href="https://fetch.bible/content/need/"
-                  target="_blank"
-                  class="text-sm text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
-                >
-                  Learn more about available translations
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
-                Verse Content
-              </label>
-              <textarea
-                id="content"
-                v-model="newVerse.content"
-                rows="6"
-                placeholder="Enter the verse text here..."
-                required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <div v-if="!currentCollectionId || currentCollectionId === 'master-list'">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Collections
-              </label>
-              <div v-if="collections.length > 0" class="space-y-2">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="newVerse.collectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-gray-700">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p v-else class="text-sm text-gray-500">No collections yet. Create one to organize verses.</p>
-            </div>
-
-            <div class="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                @click="closeForm"
-                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Save Verse
-              </button>
-            </div>
-          </form>
+      <form @submit.prevent="addVerse" class="space-y-4">
+        <div>
+          <label
+            for="reference"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Verse Reference
+          </label>
+          <input
+            id="reference"
+            v-model="newVerse.reference"
+            type="text"
+            placeholder="e.g., John 3:16"
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
         </div>
-      </div>
 
-      <!-- Edit Verse Form Modal -->
-      <div
-        v-if="showEditVerseForm"
-        data-testid="modal-edit-verse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeEditVerseForm"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Edit Verse</h2>
-          
-          <form @submit.prevent="saveEditedVerse" class="space-y-4" v-if="editingVerse">
-            <div>
-              <label for="edit-reference" class="block text-sm font-medium text-gray-700 mb-2">
-                Verse Reference
-              </label>
-              <input
-                id="edit-reference"
-                v-model="editingVerse.reference"
-                type="text"
-                placeholder="e.g., John 3:16"
-                required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-
-            <div>
-              <label for="edit-bible-version" class="block text-sm font-medium text-gray-700 mb-2">
-                Bible Version
-              </label>
-              <input
-                id="edit-bible-version"
-                v-model="editingVerse.bibleVersion"
-                type="text"
-                placeholder="e.g., BSB, NIV, ESV"
-                maxlength="10"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase tracking-wider"
-                style="text-transform: uppercase;"
-              />
-            </div>
-
-            <div>
-              <label for="edit-content" class="block text-sm font-medium text-gray-700 mb-2">
-                Verse Content
-              </label>
-              <textarea
-                id="edit-content"
-                v-model="editingVerse.content"
-                rows="6"
-                placeholder="Enter the verse text here..."
-                required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Collections
-              </label>
-              <div v-if="collections.length > 0" class="space-y-2">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="editingVerse.collectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-gray-700">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p v-else class="text-sm text-gray-500">No collections yet.</p>
-            </div>
-
-            <div class="flex justify-between items-center pt-4">
-              <button
-                type="button"
-                @click="handleDeleteVerseFromModal"
-                class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Delete
-              </button>
-              <div class="flex space-x-3">
-                <button
-                  type="button"
-                  @click="closeEditVerseForm"
-                  class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
+        <div>
+          <label
+            for="bible-version"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Bible Version
+          </label>
+          <input
+            id="bible-version"
+            v-model="newVerse.bibleVersion"
+            type="text"
+            placeholder="e.g., BSB, NIV, ESV"
+            maxlength="10"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase tracking-wider"
+            style="text-transform: uppercase"
+          />
         </div>
-      </div>
 
-      <!-- Add Collection Form Modal -->
-      <div
-        v-if="showCollectionForm"
-        data-testid="modal-add-collection"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-        @click.self="closeCollectionForm"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Create New Collection</h2>
-          
-          <form @submit.prevent="addCollection" class="space-y-4">
-            <div>
-              <label for="collection-name" class="block text-sm font-medium text-gray-700 mb-2">
-                Collection Name
-              </label>
-              <input
-                id="collection-name"
-                v-model="newCollection.name"
-                type="text"
-                placeholder="e.g., Favorite Verses, Daily Devotion"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-              />
-            </div>
-
-            <div>
-              <label for="collection-description" class="block text-sm font-medium text-gray-700 mb-2">
-                Description (optional)
-              </label>
-              <textarea
-                id="collection-description"
-                v-model="newCollection.description"
-                rows="3"
-                placeholder="Describe this collection..."
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <div class="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                @click="closeCollectionForm"
-                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Create Collection
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Edit Collection Form Modal -->
-      <div
-        v-if="showEditCollectionForm"
-        data-testid="modal-edit-collection"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeEditCollectionForm"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Edit Collection</h2>
-          
-          <form @submit.prevent="saveEditedCollection" class="space-y-4" v-if="editingCollection">
-            <div>
-              <label for="edit-collection-name" class="block text-sm font-medium text-gray-700 mb-2">
-                Collection Name
-              </label>
-              <input
-                id="edit-collection-name"
-                v-model="editingCollection.name"
-                type="text"
-                placeholder="e.g., Favorite Verses, Daily Devotion"
-                required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-
-            <div>
-              <label for="edit-collection-description" class="block text-sm font-medium text-gray-700 mb-2">
-                Description (optional)
-              </label>
-              <textarea
-                id="edit-collection-description"
-                v-model="editingCollection.description"
-                rows="3"
-                placeholder="Describe this collection..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-              ></textarea>
-            </div>
-
-            <div class="flex justify-between items-center pt-4">
-              <button
-                type="button"
-                @click="handleDeleteCollectionFromModal"
-                class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Delete
-              </button>
-              <div class="flex space-x-3">
-                <button
-                  type="button"
-                  @click="closeEditCollectionForm"
-                  class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- CSV Import Modal -->
-      <div
-        v-if="showImportCSV"
-        data-testid="modal-import-csv"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeImportCSV"
-      >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Import Verses from CSV</h2>
-          
-          <div class="mb-6">
-            <p class="text-sm text-gray-600 mb-4">
-              Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
-            </p>
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p class="text-xs text-blue-800 mb-2"><strong>CSV Format:</strong></p>
-              <pre class="text-xs text-blue-700 bg-blue-100 p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
-John 3:16,"For God so loved the world...",NIV,45,60
-Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
-              <p class="text-xs text-blue-700 mt-2">
-                <strong>Optional columns:</strong> Version, DaysUntilNextReview (days until next review), Interval (review interval in days). 
-                When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
-              </p>
-            </div>
-            
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-3">
-                Import CSV
-              </label>
-              
-              <!-- File Upload Option -->
-              <div class="mb-4">
-                <label for="csv-file" class="block text-xs font-medium text-gray-600 mb-2">
-                  Option 1: Upload CSV File
-                </label>
-                <input
-                  id="csv-file"
-                  ref="csvFileInput"
-                  type="file"
-                  accept=".csv"
-                  @change="handleCSVFileSelect"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
-              </div>
-              
-              <!-- Divider -->
-              <div class="flex items-center my-4">
-                <div class="flex-1 border-t border-gray-300"></div>
-                <span class="px-3 text-xs text-gray-500 uppercase">or</span>
-                <div class="flex-1 border-t border-gray-300"></div>
-              </div>
-              
-              <!-- Paste CSV Option -->
-              <div>
-                <label for="csv-text" class="block text-xs font-medium text-gray-600 mb-2">
-                  Option 2: Paste CSV Content
-                </label>
-                <textarea
-                  id="csv-text"
-                  ref="csvTextarea"
-                  v-model="csvPastedText"
-                  @input="handleCSVPaste"
-                  placeholder="Paste your CSV content here..."
-                  rows="6"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm"
-                ></textarea>
-              </div>
-            </div>
-            
-            <div v-if="csvImportStatus" class="p-3 rounded-lg mb-4" :class="csvImportStatus.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
-              <p class="text-sm whitespace-pre-line">{{ csvImportStatus.message }}</p>
-            </div>
-            
-            <div v-if="csvPreview.length > 0" class="mb-4">
-              <p class="text-sm font-medium text-gray-700 mb-2">Preview (first 5 rows):</p>
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <div class="overflow-x-auto max-h-64">
-                  <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Content</th>
-                        <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
-                        <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Days Until Review</th>
-                        <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Interval</th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                      <tr v-for="(row, index) in csvPreview.slice(0, 5)" :key="index">
-                        <td class="px-3 py-2 text-gray-900">{{ row.reference || '' }}</td>
-                        <td class="px-3 py-2 text-gray-900">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
-                        <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-gray-900">{{ row.version || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-gray-900">{{ row.daysUntilNextReview || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-gray-900">{{ row.interval || '' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <p class="text-xs text-gray-500 mt-2">Total rows: {{ csvPreview.length }}</p>
-            </div>
-
-            <!-- Collections selector (only when opening from collections screen) -->
-            <div v-if="csvImportFromCollectionsScreen && collections.length > 0" class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Add to collections</label>
-              <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-xl p-3">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="csvImportTargetCollectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-gray-700">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">Select which collections to add imported verses to. Leave empty for master list only.</p>
-            </div>
-          </div>
-
-          <div class="flex justify-end space-x-3 pt-4">
-            <!-- Show Done button after successful import -->
-            <button
-              v-if="csvImportStatus && csvImportStatus.type === 'success'"
-              type="button"
-              @click="closeImportCSV"
-              class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200"
+        <div>
+          <button
+            type="button"
+            @click="importVerseContent"
+            :disabled="
+              !newVerse.reference ||
+              !newVerse.bibleVersion ||
+              importingVerse
+            "
+            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200 flex items-center space-x-2"
+          >
+            <svg
+              v-if="importingVerse"
+              class="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              Done
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span>{{
+              importingVerse ? "Importing..." : "Import Content"
+            }}</span>
+          </button>
+
+          <div
+            v-if="importError"
+            class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+          >
+            <p class="text-sm text-amber-800">{{ importError }}</p>
+            <a
+              v-if="importErrorShowLink"
+              href="https://fetch.bible/content/need/"
+              target="_blank"
+              class="text-sm text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
+            >
+              Learn more about available translations
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <label
+            for="content"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Verse Content
+          </label>
+          <textarea
+            id="content"
+            v-model="newVerse.content"
+            rows="6"
+            placeholder="Enter the verse text here..."
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+          ></textarea>
+        </div>
+
+        <div
+          v-if="
+            !currentCollectionId ||
+            currentCollectionId === 'master-list'
+          "
+        >
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Collections
+          </label>
+          <div v-if="collections.length > 0" class="space-y-2">
+            <label
+              v-for="collection in collections"
+              :key="collection.id"
+              class="flex items-center space-x-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :value="collection.id"
+                v-model="newVerse.collectionIds"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-gray-700">{{ collection.name }}</span>
+            </label>
+          </div>
+          <p v-else class="text-sm text-gray-500">
+            No collections yet. Create one to organize verses.
+          </p>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            @click="closeForm"
+            class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Save Verse
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Verse Form Modal -->
+  <div
+    v-if="showEditVerseForm"
+    data-testid="modal-edit-verse"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeEditVerseForm"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Edit Verse
+      </h2>
+
+      <form
+        @submit.prevent="saveEditedVerse"
+        class="space-y-4"
+        v-if="editingVerse"
+      >
+        <div>
+          <label
+            for="edit-reference"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Verse Reference
+          </label>
+          <input
+            id="edit-reference"
+            v-model="editingVerse.reference"
+            type="text"
+            placeholder="e.g., John 3:16"
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+
+        <div>
+          <label
+            for="edit-bible-version"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Bible Version
+          </label>
+          <input
+            id="edit-bible-version"
+            v-model="editingVerse.bibleVersion"
+            type="text"
+            placeholder="e.g., BSB, NIV, ESV"
+            maxlength="10"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase tracking-wider"
+            style="text-transform: uppercase"
+          />
+        </div>
+
+        <div>
+          <label
+            for="edit-content"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Verse Content
+          </label>
+          <textarea
+            id="edit-content"
+            v-model="editingVerse.content"
+            rows="6"
+            placeholder="Enter the verse text here..."
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Collections
+          </label>
+          <div v-if="collections.length > 0" class="space-y-2">
+            <label
+              v-for="collection in collections"
+              :key="collection.id"
+              class="flex items-center space-x-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :value="collection.id"
+                v-model="editingVerse.collectionIds"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-gray-700">{{ collection.name }}</span>
+            </label>
+          </div>
+          <p v-else class="text-sm text-gray-500">
+            No collections yet.
+          </p>
+        </div>
+
+        <div class="flex justify-between items-center pt-4">
+          <button
+            type="button"
+            @click="handleDeleteVerseFromModal"
+            class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Delete
+          </button>
+          <div class="flex space-x-3">
+            <button
+              type="button"
+              @click="closeEditVerseForm"
+              class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+            >
+              Cancel
             </button>
-            
-            <!-- Show Cancel and Import buttons before/during import -->
-            <template v-else>
-              <button
-                type="button"
-                @click="closeImportCSV"
-                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                @click="importCSVVerses"
-                :disabled="csvPreview.length === 0 || importingCSV"
-                class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {{ importingCSV ? 'Importing...' : `Import ${csvPreview.length} Verse${csvPreview.length !== 1 ? 's' : ''}` }}
-              </button>
-            </template>
+            <button
+              type="submit"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Save
+            </button>
           </div>
         </div>
-      </div>
+      </form>
+    </div>
+  </div>
 
-      <!-- Settings Modal -->
-      <div
-        v-if="showSettings"
-        data-testid="modal-webdav-settings"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeSettings"
+  <!-- Add Collection Form Modal -->
+  <div
+    v-if="showCollectionForm"
+    data-testid="modal-add-collection"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    @click.self="closeCollectionForm"
+  >
+    <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Create New Collection
+      </h2>
+
+      <form @submit.prevent="addCollection" class="space-y-4">
+        <div>
+          <label
+            for="collection-name"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Collection Name
+          </label>
+          <input
+            id="collection-name"
+            v-model="newCollection.name"
+            type="text"
+            placeholder="e.g., Favorite Verses, Daily Devotion"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+          />
+        </div>
+
+        <div>
+          <label
+            for="collection-description"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Description (optional)
+          </label>
+          <textarea
+            id="collection-description"
+            v-model="newCollection.description"
+            rows="3"
+            placeholder="Describe this collection..."
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            @click="closeCollectionForm"
+            class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Create Collection
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Collection Form Modal -->
+  <div
+    v-if="showEditCollectionForm"
+    data-testid="modal-edit-collection"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeEditCollectionForm"
+  >
+    <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Edit Collection
+      </h2>
+
+      <form
+        @submit.prevent="saveEditedCollection"
+        class="space-y-4"
+        v-if="editingCollection"
       >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">WebDAV Sync Settings</h2>
-          
-          <form @submit.prevent="saveWebDAVSettingsForm" class="space-y-4">
-            <div>
-              <label for="webdav-url" class="block text-sm font-medium text-gray-700 mb-2">
-                WebDAV Server URL
-              </label>
-              <input
-                id="webdav-url"
-                v-model="webdavSettings.url"
-                type="url"
-                placeholder="https://example.com/webdav"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-              <p class="text-xs text-gray-500 mt-1">Full URL to your WebDAV server</p>
-            </div>
+        <div>
+          <label
+            for="edit-collection-name"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Collection Name
+          </label>
+          <input
+            id="edit-collection-name"
+            v-model="editingCollection.name"
+            type="text"
+            placeholder="e.g., Favorite Verses, Daily Devotion"
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
 
-            <div>
-              <label for="webdav-folder" class="block text-sm font-medium text-gray-700 mb-2">
-                Folder Path (optional)
-              </label>
-              <input
-                id="webdav-folder"
-                v-model="webdavSettings.folder"
-                type="text"
-                placeholder="bible-memory"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-              <p class="text-xs text-gray-500 mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
-            </div>
+        <div>
+          <label
+            for="edit-collection-description"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Description (optional)
+          </label>
+          <textarea
+            id="edit-collection-description"
+            v-model="editingCollection.description"
+            rows="3"
+            placeholder="Describe this collection..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+          ></textarea>
+        </div>
 
-            <div>
-              <label for="webdav-username" class="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                id="webdav-username"
-                v-model="webdavSettings.username"
-                type="text"
-                placeholder="your-username"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+        <div class="flex justify-between items-center pt-4">
+          <button
+            type="button"
+            @click="handleDeleteCollectionFromModal"
+            class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Delete
+          </button>
+          <div class="flex space-x-3">
+            <button
+              type="button"
+              @click="closeEditCollectionForm"
+              class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-            <div>
-              <label for="webdav-password" class="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="webdav-password"
-                v-model="webdavSettings.password"
-                type="password"
-                placeholder="your-password"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+  <!-- CSV Import Modal -->
+  <div
+    v-if="showImportCSV"
+    data-testid="modal-import-csv"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeImportCSV"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Import Verses from CSV
+      </h2>
 
-            <div v-if="isDev" class="border-t border-gray-200 pt-4 mt-4">
-              <div class="flex items-center space-x-2 mb-4">
-                <input
-                  id="use-proxy"
-                  v-model="webdavSettings.useProxy"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label for="use-proxy" class="text-sm font-medium text-gray-700">
-                  Use CORS Proxy (for development with Nextcloud)
-                </label>
-              </div>
-              
-              <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
-                <div>
-                  <label for="proxy-url" class="block text-sm font-medium text-gray-700 mb-2">
-                    Proxy Server URL
-                  </label>
-                  <input
-                    id="proxy-url"
-                    v-model="webdavSettings.proxyUrl"
-                    type="url"
-                    placeholder="http://localhost:3001"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                  <p class="text-xs text-gray-500 mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
-                </div>
-                
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p class="text-xs text-yellow-800">
-                    <strong>Setup:</strong> Run the proxy server with:<br/>
-                    <code class="bg-yellow-100 px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
-                    Or use <code class="bg-yellow-100 px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
-                  </p>
-                </div>
-              </div>
-            </div>
+      <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-4">
+          Upload a CSV file with columns:
+          <strong>Reference</strong> (required),
+          <strong>Content</strong> (required), and optional fields:
+          <strong>Version</strong>,
+          <strong>DaysUntilNextReview</strong>,
+          <strong>Interval</strong>.
+        </p>
+        <div
+          class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4"
+        >
+          <p class="text-xs text-blue-800 mb-2">
+            <strong>CSV Format:</strong>
+          </p>
+          <pre
+            class="text-xs text-blue-700 bg-blue-100 p-2 rounded overflow-x-auto"
+          >
+          Reference,Content,Version,DaysUntilNextReview,Interval
+          John 3:16,"For God so loved the world...",NIV,45,60
+          Romans 8:28,"And we know that in all things...",ESV,30,60</pre
+          >
+          <p class="text-xs text-blue-700 mt-2">
+            <strong>Optional columns:</strong> Version,
+            DaysUntilNextReview (days until next review), Interval
+            (review interval in days). When Interval and
+            DaysUntilNextReview are provided, verses will be imported
+            with memorization progress.
+          </p>
+        </div>
 
-            <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
-              <p class="text-sm whitespace-pre-line">{{ syncStatus.message }}</p>
-            </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-3">
+            Import CSV
+          </label>
 
-            <div v-if="isDev" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-              <p class="text-sm text-blue-800">
-                <strong>Note:</strong> If you see a "CORS Error", enable the CORS proxy option above and run the proxy server. 
-                This is needed for Nextcloud and other servers that don't allow direct browser access.
-              </p>
-            </div>
+          <!-- File Upload Option -->
+          <div class="mb-4">
+            <label
+              for="csv-file"
+              class="block text-xs font-medium text-gray-600 mb-2"
+            >
+              Option 1: Upload CSV File
+            </label>
+            <input
+              id="csv-file"
+              ref="csvFileInput"
+              type="file"
+              accept=".csv"
+              @change="handleCSVFileSelect"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
 
-            <div class="flex justify-between items-center pt-4">
-              <button
-                type="button"
-                @click="testWebDAVConnection"
-                :disabled="testingConnection"
-                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          <!-- Divider -->
+          <div class="flex items-center my-4">
+            <div class="flex-1 border-t border-gray-300"></div>
+            <span class="px-3 text-xs text-gray-500 uppercase"
+              >or</span
+            >
+            <div class="flex-1 border-t border-gray-300"></div>
+          </div>
+
+          <!-- Paste CSV Option -->
+          <div>
+            <label
+              for="csv-text"
+              class="block text-xs font-medium text-gray-600 mb-2"
+            >
+              Option 2: Paste CSV Content
+            </label>
+            <textarea
+              id="csv-text"
+              ref="csvTextarea"
+              v-model="csvPastedText"
+              @input="handleCSVPaste"
+              placeholder="Paste your CSV content here..."
+              rows="6"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm"
+            ></textarea>
+          </div>
+        </div>
+
+        <div
+          v-if="csvImportStatus"
+          class="p-3 rounded-lg mb-4"
+          :class="
+            csvImportStatus.type === 'success'
+              ? 'bg-green-50 text-green-800'
+              : 'bg-red-50 text-red-800'
+          "
+        >
+          <p class="text-sm whitespace-pre-line">
+            {{ csvImportStatus.message }}
+          </p>
+        </div>
+
+        <div v-if="csvPreview.length > 0" class="mb-4">
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            Preview (first 5 rows):
+          </p>
+          <div
+            class="border border-gray-200 rounded-lg overflow-hidden"
+          >
+            <div class="overflow-x-auto max-h-64">
+              <table
+                class="min-w-full divide-y divide-gray-200 text-sm"
               >
-                {{ testingConnection ? 'Testing...' : 'Test' }}
-              </button>
-              <div class="flex gap-3">
-                <button
-                  type="button"
-                  @click="closeSettings"
-                  class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      Reference
+                    </th>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      Content
+                    </th>
+                    <th
+                      v-if="csvPreview.some((r) => r.version)"
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      Version
+                    </th>
+                    <th
+                      v-if="
+                        csvPreview.some((r) => r.daysUntilNextReview)
+                      "
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      Days Until Review
+                    </th>
+                    <th
+                      v-if="csvPreview.some((r) => r.interval)"
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      Interval
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr
+                    v-for="(row, index) in csvPreview.slice(0, 5)"
+                    :key="index"
+                  >
+                    <td class="px-3 py-2 text-gray-900">
+                      {{ row.reference || "" }}
+                    </td>
+                    <td class="px-3 py-2 text-gray-900">
+                      {{ (row.content || "").substring(0, 50)
+                      }}{{
+                        (row.content || "").length > 50 ? "..." : ""
+                      }}
+                    </td>
+                    <td
+                      v-if="csvPreview.some((r) => r.version)"
+                      class="px-3 py-2 text-gray-900"
+                    >
+                      {{ row.version || "" }}
+                    </td>
+                    <td
+                      v-if="
+                        csvPreview.some((r) => r.daysUntilNextReview)
+                      "
+                      class="px-3 py-2 text-gray-900"
+                    >
+                      {{ row.daysUntilNextReview || "" }}
+                    </td>
+                    <td
+                      v-if="csvPreview.some((r) => r.interval)"
+                      class="px-3 py-2 text-gray-900"
+                    >
+                      {{ row.interval || "" }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </form>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            Total rows: {{ csvPreview.length }}
+          </p>
+        </div>
+
+        <!-- Collections selector (only when opening from collections screen) -->
+        <div
+          v-if="
+            csvImportFromCollectionsScreen && collections.length > 0
+          "
+          class="mb-4"
+        >
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Add to collections</label
+          >
+          <div
+            class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-xl p-3"
+          >
+            <label
+              v-for="collection in collections"
+              :key="collection.id"
+              class="flex items-center space-x-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :value="collection.id"
+                v-model="csvImportTargetCollectionIds"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-gray-700">{{ collection.name }}</span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            Select which collections to add imported verses to. Leave
+            empty for master list only.
+          </p>
         </div>
       </div>
 
-      <!-- Backup & Restore Modal -->
-      <div
-        v-if="showBackupImport"
-        data-testid="modal-backup-restore"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeBackupImport"
+      <div class="flex justify-end space-x-3 pt-4">
+        <!-- Show Done button after successful import -->
+        <button
+          v-if="csvImportStatus && csvImportStatus.type === 'success'"
+          type="button"
+          @click="closeImportCSV"
+          class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200"
+        >
+          Done
+        </button>
+
+        <!-- Show Cancel and Import buttons before/during import -->
+        <template v-else>
+          <button
+            type="button"
+            @click="closeImportCSV"
+            class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="importCSVVerses"
+            :disabled="csvPreview.length === 0 || importingCSV"
+            class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{
+              importingCSV
+                ? "Importing..."
+                : `Import ${csvPreview.length} Verse${csvPreview.length !== 1 ? "s" : ""}`
+            }}
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div
+    v-if="showSettings"
+    data-testid="modal-webdav-settings"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeSettings"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        WebDAV Sync Settings
+      </h2>
+
+      <form
+        @submit.prevent="saveWebDAVSettingsForm"
+        class="space-y-4"
       >
-        <div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Backup & Restore</h2>
-          
-          <div class="space-y-6">
-            <!-- Last Backup Info -->
-            <div class="bg-gray-50 rounded-xl p-4">
-              <p class="text-sm text-gray-600 mb-1">Last backup:</p>
-              <p class="text-lg font-medium text-gray-900">{{ getTimeSinceLastBackup() }}</p>
-            </div>
+        <div>
+          <label
+            for="webdav-url"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            WebDAV Server URL
+          </label>
+          <input
+            id="webdav-url"
+            v-model="webdavSettings.url"
+            type="url"
+            placeholder="https://example.com/webdav"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            Full URL to your WebDAV server
+          </p>
+        </div>
 
-            <!-- Backup Section -->
+        <div>
+          <label
+            for="webdav-folder"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Folder Path (optional)
+          </label>
+          <input
+            id="webdav-folder"
+            v-model="webdavSettings.folder"
+            type="text"
+            placeholder="bible-memory"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            Subfolder path on your WebDAV server (leave empty for
+            root)
+          </p>
+        </div>
+
+        <div>
+          <label
+            for="webdav-username"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Username
+          </label>
+          <input
+            id="webdav-username"
+            v-model="webdavSettings.username"
+            type="text"
+            placeholder="your-username"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+
+        <div>
+          <label
+            for="webdav-password"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Password
+          </label>
+          <input
+            id="webdav-password"
+            v-model="webdavSettings.password"
+            type="password"
+            placeholder="your-password"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+
+        <div v-if="isDev" class="border-t border-gray-200 pt-4 mt-4">
+          <div class="flex items-center space-x-2 mb-4">
+            <input
+              id="use-proxy"
+              v-model="webdavSettings.useProxy"
+              type="checkbox"
+              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label
+              for="use-proxy"
+              class="text-sm font-medium text-gray-700"
+            >
+              Use CORS Proxy (for development with Nextcloud)
+            </label>
+          </div>
+
+          <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">Backup All Data</h3>
-              <p class="text-sm text-gray-600 mb-4">
-                Download a backup file containing all your verses, collections, and settings.
-              </p>
-              <button
-                @click="backupAllData"
-                class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Download Backup
-              </button>
-            </div>
-
-            <!-- Restore Section -->
-            <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">Restore from Backup</h3>
-              <p class="text-sm text-gray-600 mb-4">
-                Restore your data from a previously saved backup file. This will replace all your current data.
-              </p>
-              <input
-                type="file"
-                accept=".json"
-                @change="handleBackupFileSelect"
-                class="hidden"
-                ref="backupFileInput"
-                id="backup-file-input"
-              />
               <label
-                for="backup-file-input"
-                class="block w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
+                for="proxy-url"
+                class="block text-sm font-medium text-gray-700 mb-2"
               >
-                Choose Backup File
+                Proxy Server URL
               </label>
+              <input
+                id="proxy-url"
+                v-model="webdavSettings.proxyUrl"
+                type="url"
+                placeholder="http://localhost:3001"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                URL of the CORS proxy server (default:
+                http://localhost:3001)
+              </p>
             </div>
 
-            <!-- Close Button -->
-            <div class="flex justify-end pt-4">
-              <button
-                @click="closeBackupImport"
-                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
-              >
-                Close
-              </button>
+            <div
+              class="bg-yellow-50 border border-yellow-200 rounded-lg p-3"
+            >
+              <p class="text-xs text-yellow-800">
+                <strong>Setup:</strong> Run the proxy server with:<br />
+                <code class="bg-yellow-100 px-2 py-1 rounded"
+                  >NEXTCLOUD_URL={{
+                    webdavSettings.url || "YOUR_NEXTCLOUD_URL"
+                  }}
+                  npm run dev:proxy</code
+                ><br />
+                Or use
+                <code class="bg-yellow-100 px-2 py-1 rounded"
+                  >npm run dev:all</code
+                >
+                to run both the app and proxy together.
+              </p>
             </div>
           </div>
         </div>
+
+        <div
+          v-if="syncStatus"
+          class="p-3 rounded-lg"
+          :class="
+            syncStatus.type === 'success'
+              ? 'bg-green-50 text-green-800'
+              : 'bg-red-50 text-red-800'
+          "
+        >
+          <p class="text-sm whitespace-pre-line">
+            {{ syncStatus.message }}
+          </p>
+        </div>
+
+        <div
+          v-if="isDev"
+          class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4"
+        >
+          <p class="text-sm text-blue-800">
+            <strong>Note:</strong> If you see a "CORS Error", enable
+            the CORS proxy option above and run the proxy server. This
+            is needed for Nextcloud and other servers that don't allow
+            direct browser access.
+          </p>
+        </div>
+
+        <div class="flex justify-between items-center pt-4">
+          <button
+            type="button"
+            @click="testWebDAVConnection"
+            :disabled="testingConnection"
+            class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ testingConnection ? "Testing..." : "Test" }}
+          </button>
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="closeSettings"
+              class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Backup & Restore Modal -->
+  <div
+    v-if="showBackupImport"
+    data-testid="modal-backup-restore"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+    @click.self="closeBackupImport"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        Backup & Restore
+      </h2>
+
+      <div class="space-y-6">
+        <!-- Last Backup Info -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <p class="text-sm text-gray-600 mb-1">Last backup:</p>
+          <p class="text-lg font-medium text-gray-900">
+            {{ getTimeSinceLastBackup() }}
+          </p>
+        </div>
+
+        <!-- Backup Section -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            Backup All Data
+          </h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Download a backup file containing all your verses,
+            collections, and settings.
+          </p>
+          <button
+            @click="backupAllData"
+            class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Download Backup
+          </button>
+        </div>
+
+        <!-- Restore Section -->
+        <div class="border-t border-gray-200 pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            Restore from Backup
+          </h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Restore your data from a previously saved backup file.
+            This will replace all your current data.
+          </p>
+          <input
+            type="file"
+            accept=".json"
+            @change="handleBackupFileSelect"
+            class="hidden"
+            ref="backupFileInput"
+            id="backup-file-input"
+          />
+          <label
+            for="backup-file-input"
+            class="block w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
+          >
+            Choose Backup File
+          </label>
+        </div>
+
+        <!-- Close Button -->
+        <div class="flex justify-end pt-4">
+          <button
+            @click="closeBackupImport"
+            class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+          >
+            Close
+          </button>
+        </div>
       </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
-import Fuse from 'fuse.js'
-import { BibleClient } from '@gracious.tech/fetch-client'
-import { 
-  getWebDAVSettings, 
-  saveWebDAVSettings, 
-  syncData, 
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  nextTick,
+} from "vue";
+import Fuse from "fuse.js";
+import { BibleClient } from "@gracious.tech/fetch-client";
+import {
+  getWebDAVSettings,
+  saveWebDAVSettings,
+  syncData,
   testWebDAVConnection as testConnection,
   markVerseDeleted,
   markCollectionDeleted,
-  getDeletedCollections
-} from './webdav-sync.js'
-import { usePWAInstall } from './composables/usePWAInstall.js'
-import IOSInstallModal from './components/IOSInstallModal.vue'
+  getDeletedCollections,
+} from "./webdav-sync.js";
+import { usePWAInstall } from "./composables/usePWAInstall.js";
+import IOSInstallModal from "./components/IOSInstallModal.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: { IOSInstallModal },
   setup() {
-    const verses = ref([])
-    const collections = ref([])
-    const showForm = ref(false)
-    const showCollectionForm = ref(false)
-    const showEditVerseForm = ref(false)
-    const showEditCollectionForm = ref(false)
-    const showSettings = ref(false)
-    const showSettingsMenu = ref(false)
-    const showBackupImport = ref(false)
-    const showImportCSV = ref(false)
-    const editingVerse = ref(null)
-    const editingCollection = ref(null)
-    const currentCollectionId = ref(null) // null = all verses, string = specific collection
-    const currentView = ref('collections') // 'review-list', 'collections', or 'search'
-    const searchQuery = ref('')
-    const reviewingVerse = ref(null)
-    const reviewSourceList = ref(null) // Track the source list when starting a review
-    const reviewSourceState = ref(null) // Track the original source navigation state
-    const memorizingVerse = ref(null)
-    const memorizationMode = ref(null) // 'learn', 'memorize', 'master'
-    const memorizationSourceState = ref(null) // Track the original source navigation state for memorization
-    const reviewWords = ref([])
-    const typedLetter = ref('')
-    const reviewInput = ref(null)
-    const reviewTextContainer = ref(null)
-    const memorizationScrollContainer = ref(null)
-    const reviewMistakes = ref(0) // Track mistakes during review
-    const currentReviewSaved = ref(false) // Track if current review has been saved
-    const testingConnection = ref(false)
-    const syncStatus = ref(null)
-    const syncing = ref(false)
-    const syncSuccess = ref(false)
-    const syncError = ref(null)
-    const shareSuccess = ref(false)
-    const fabMenuOpen = ref(false)
-    const isDev = import.meta.env.DEV
-    const csvFileInput = ref(null)
-    const csvTextarea = ref(null)
-    const csvPastedText = ref('')
-    const backupFileInput = ref(null)
-    const csvImportFromCollectionsScreen = ref(false)
-    const csvImportTargetCollectionIds = ref([])
-    const csvPreview = ref([])
-    const csvImportStatus = ref(null)
-    const importingCSV = ref(false)
-    const expandedVerseIds = ref({})
-    const copyToast = ref({ show: false, message: '' })
-    const lastBackupTimestamp = ref(localStorage.getItem('bible-memory-last-backup'))
+    const verses = ref([]);
+    const collections = ref([]);
+    const showForm = ref(false);
+    const showCollectionForm = ref(false);
+    const showEditVerseForm = ref(false);
+    const showEditCollectionForm = ref(false);
+    const showSettings = ref(false);
+    const showSettingsMenu = ref(false);
+    const showBackupImport = ref(false);
+    const showImportCSV = ref(false);
+    const editingVerse = ref(null);
+    const editingCollection = ref(null);
+    const currentCollectionId = ref(null); // null = all verses, string = specific collection
+    const currentView = ref("collections"); // 'review-list', 'collections', or 'search'
+    const searchQuery = ref("");
+    const reviewingVerse = ref(null);
+    const reviewSourceList = ref(null); // Track the source list when starting a review
+    const reviewSourceState = ref(null); // Track the original source navigation state
+    const memorizingVerse = ref(null);
+    const memorizationMode = ref(null); // 'learn', 'memorize', 'master'
+    const memorizationSourceState = ref(null); // Track the original source navigation state for memorization
+    const reviewWords = ref([]);
+    const typedLetter = ref("");
+    const reviewInput = ref(null);
+    const reviewTextContainer = ref(null);
+    const memorizationScrollContainer = ref(null);
+    const reviewMistakes = ref(0); // Track mistakes during review
+    const currentReviewSaved = ref(false); // Track if current review has been saved
+    const testingConnection = ref(false);
+    const syncStatus = ref(null);
+    const syncing = ref(false);
+    const syncSuccess = ref(false);
+    const syncError = ref(null);
+    const shareSuccess = ref(false);
+    const fabMenuOpen = ref(false);
+    const isDev = import.meta.env.DEV;
+    const csvFileInput = ref(null);
+    const csvTextarea = ref(null);
+    const csvPastedText = ref("");
+    const backupFileInput = ref(null);
+    const csvImportFromCollectionsScreen = ref(false);
+    const csvImportTargetCollectionIds = ref([]);
+    const csvPreview = ref([]);
+    const csvImportStatus = ref(null);
+    const importingCSV = ref(false);
+    const expandedVerseIds = ref({});
+    const copyToast = ref({ show: false, message: "" });
+    const lastBackupTimestamp = ref(
+      localStorage.getItem("bible-memory-last-backup"),
+    );
 
     // PWA install
     const {
       isPWAInstalled,
       showIOSModal,
       triggerInstall,
-      closeIOSModal
-    } = usePWAInstall()
+      closeIOSModal,
+    } = usePWAInstall();
 
     // Bible verse import state
-    const importingVerse = ref(false)
-    const importError = ref(null)
-    const importErrorShowLink = ref(false)
-    const bibleClient = ref(null)
-    const bibleCollection = ref(null)
+    const importingVerse = ref(false);
+    const importError = ref(null);
+    const importErrorShowLink = ref(false);
+    const bibleClient = ref(null);
+    const bibleCollection = ref(null);
 
     const newVerse = ref({
-      reference: '',
-      content: '',
-      bibleVersion: '',
-      collectionIds: []
-    })
+      reference: "",
+      content: "",
+      bibleVersion: "",
+      collectionIds: [],
+    });
 
     const newCollection = ref({
-      name: '',
-      description: ''
-    })
+      name: "",
+      description: "",
+    });
 
     // WebDAV settings
     const webdavSettings = ref({
-      url: '',
-      folder: '',
-      username: '',
-      password: '',
+      url: "",
+      folder: "",
+      username: "",
+      password: "",
       useProxy: false,
-      proxyUrl: 'http://localhost:3001'
-    })
+      proxyUrl: "http://localhost:3001",
+    });
 
-    const STORAGE_KEY = 'bible-memory-verses'
-    const COLLECTIONS_KEY = 'bible-memory-collections'
+    const STORAGE_KEY = "bible-memory-verses";
+    const COLLECTIONS_KEY = "bible-memory-collections";
 
     // Navigation state tracking for back button handling
-    let isHandlingBackButton = false
-    
+    let isHandlingBackButton = false;
+
     // Get current navigation state
     const getNavigationState = () => {
       if (memorizingVerse.value) {
         return {
-          view: 'memorization',
+          view: "memorization",
           verseId: memorizingVerse.value.id,
           mode: memorizationMode.value,
-          collectionId: currentCollectionId.value
-        }
+          collectionId: currentCollectionId.value,
+        };
       } else if (reviewingVerse.value) {
         return {
-          view: 'review',
+          view: "review",
           verseId: reviewingVerse.value.id,
-          collectionId: currentCollectionId.value
-        }
+          collectionId: currentCollectionId.value,
+        };
       } else if (currentCollectionId.value) {
         return {
-          view: 'collection',
-          collectionId: currentCollectionId.value
-        }
+          view: "collection",
+          collectionId: currentCollectionId.value,
+        };
       } else {
         return {
-          view: currentView.value
-        }
+          view: currentView.value,
+        };
       }
-    }
+    };
 
     // Push history state when navigating
     const pushNavigationState = (state) => {
-      if (isHandlingBackButton) return
-      
-      const url = new URL(window.location.href)
-      url.searchParams.set('view', state.view)
+      if (isHandlingBackButton) return;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", state.view);
       if (state.collectionId) {
-        url.searchParams.set('collection', state.collectionId)
+        url.searchParams.set("collection", state.collectionId);
       }
       if (state.verseId) {
-        url.searchParams.set('verse', state.verseId)
+        url.searchParams.set("verse", state.verseId);
       }
       if (state.mode) {
-        url.searchParams.set('mode', state.mode)
+        url.searchParams.set("mode", state.mode);
       }
-      
-      window.history.pushState(state, '', url)
-    }
+
+      window.history.pushState(state, "", url);
+    };
 
     // Replace history state (used when navigating sequentially without creating new history entries)
     const replaceNavigationState = (state) => {
-      if (isHandlingBackButton) return
-      
-      const url = new URL(window.location.href)
-      url.searchParams.set('view', state.view)
+      if (isHandlingBackButton) return;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", state.view);
       if (state.collectionId) {
-        url.searchParams.set('collection', state.collectionId)
+        url.searchParams.set("collection", state.collectionId);
       }
       if (state.verseId) {
-        url.searchParams.set('verse', state.verseId)
+        url.searchParams.set("verse", state.verseId);
       }
       if (state.mode) {
-        url.searchParams.set('mode', state.mode)
+        url.searchParams.set("mode", state.mode);
       }
-      
-      window.history.replaceState(state, '', url)
-    }
+
+      window.history.replaceState(state, "", url);
+    };
 
     // Restore app state from navigation state
     const restoreNavigationState = (state) => {
-      isHandlingBackButton = true
-      
+      isHandlingBackButton = true;
+
       // Close any modals/forms first
-      showForm.value = false
-      showCollectionForm.value = false
-      showEditVerseForm.value = false
-      showSettings.value = false
-      showImportCSV.value = false
-      fabMenuOpen.value = false
-      
+      showForm.value = false;
+      showCollectionForm.value = false;
+      showEditVerseForm.value = false;
+      showSettings.value = false;
+      showImportCSV.value = false;
+      fabMenuOpen.value = false;
+
       // Restore collection view
       if (state.collectionId) {
-        currentCollectionId.value = state.collectionId
+        currentCollectionId.value = state.collectionId;
       } else {
-        currentCollectionId.value = null
+        currentCollectionId.value = null;
       }
-      
+
       // Restore main view (review-list, collections, or search) before starting review/memorization
       // so that startReview can determine the correct source list
-      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search') {
-        currentView.value = state.view
-      } else if (state.view === 'collection') {
+      if (
+        state.view === "review-list" ||
+        state.view === "collections" ||
+        state.view === "search"
+      ) {
+        currentView.value = state.view;
+      } else if (state.view === "collection") {
         // Collection view is handled above
-      } else if (state.view === 'review' || state.view === 'memorization') {
+      } else if (
+        state.view === "review" ||
+        state.view === "memorization"
+      ) {
         // If coming from review/memorization, try to determine the source view
         // If we have a collectionId, we came from a collection
         // Otherwise, default to collections (home screen)
         if (!state.collectionId) {
-          currentView.value = 'collections'
+          currentView.value = "collections";
         }
       } else {
         // Default to collections if no view specified
-        currentView.value = 'collections'
+        currentView.value = "collections";
       }
-      
+
       // Restore memorization or review view
-      if (state.view === 'memorization' && state.verseId) {
-        const verse = verses.value.find(v => v.id === state.verseId)
+      if (state.view === "memorization" && state.verseId) {
+        const verse = verses.value.find(
+          (v) => v.id === state.verseId,
+        );
         if (verse && state.mode) {
-          startMemorization(verse, state.mode)
+          startMemorization(verse, state.mode);
         }
-      } else if (state.view === 'review' && state.verseId) {
-        const verse = verses.value.find(v => v.id === state.verseId)
+      } else if (state.view === "review" && state.verseId) {
+        const verse = verses.value.find(
+          (v) => v.id === state.verseId,
+        );
         if (verse) {
-          startReview(verse)
+          startReview(verse);
         }
       } else {
         // Exit memorization/review if we're going back
         // Save review before exiting if it was completed successfully
-        if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
-          const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
+        if (
+          reviewingVerse.value &&
+          !currentReviewSaved.value &&
+          allWordsRevealed.value &&
+          meetsAccuracyRequirement.value
+        ) {
+          const verse = verses.value.find(
+            (v) => v.id === reviewingVerse.value.id,
+          );
           if (verse) {
-            const totalWords = reviewWords.value.length
-            const grade = calculateGrade(totalWords, reviewMistakes.value)
-            
+            const totalWords = reviewWords.value.length;
+            const grade = calculateGrade(
+              totalWords,
+              reviewMistakes.value,
+            );
+
             // Check if verse was already reviewed today
-            const wasAlreadyReviewedToday = wasReviewedToday(verse)
-            
+            const wasAlreadyReviewedToday = wasReviewedToday(verse);
+
             // Only update algorithm-affecting fields if this is the first review of the day
             if (!wasAlreadyReviewedToday) {
               // Calculate next review date and update ease factor
-              const reviewData = calculateNextReviewDate(verse, grade, true)
-              
-              verse.reviewCount = (verse.reviewCount || 0) + 1
-              verse.nextReviewDate = reviewData.nextReviewDate
-              verse.easeFactor = reviewData.easeFactor
-              verse.interval = reviewData.interval
+              const reviewData = calculateNextReviewDate(
+                verse,
+                grade,
+                true,
+              );
+
+              verse.reviewCount = (verse.reviewCount || 0) + 1;
+              verse.nextReviewDate = reviewData.nextReviewDate;
+              verse.easeFactor = reviewData.easeFactor;
+              verse.interval = reviewData.interval;
             }
-            
+
             // Always update tracking fields regardless of whether it was reviewed today
-            verse.lastReviewed = new Date().toISOString()
-            verse.lastGrade = grade
-            verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-            verse.lastModified = new Date().toISOString()
-            
+            verse.lastReviewed = new Date().toISOString();
+            verse.lastGrade = grade;
+            verse.lastAccuracy = (
+              ((totalWords - reviewMistakes.value) / totalWords) *
+              100
+            ).toFixed(1);
+            verse.lastModified = new Date().toISOString();
+
             // Track review history
-            if (!verse.reviewHistory) verse.reviewHistory = []
+            if (!verse.reviewHistory) verse.reviewHistory = [];
             verse.reviewHistory.push({
               date: new Date().toISOString(),
               grade: grade,
               accuracy: parseFloat(verse.lastAccuracy),
-              mistakes: reviewMistakes.value
-            })
-            
-            currentReviewSaved.value = true
-            saveVerses()
+              mistakes: reviewMistakes.value,
+            });
+
+            currentReviewSaved.value = true;
+            saveVerses();
           }
         }
-        
-        memorizingVerse.value = null
-        memorizationMode.value = null
-        reviewingVerse.value = null
-        reviewWords.value = []
-        typedLetter.value = ''
-        reviewMistakes.value = 0
-        currentReviewSaved.value = false
+
+        memorizingVerse.value = null;
+        memorizationMode.value = null;
+        reviewingVerse.value = null;
+        reviewWords.value = [];
+        typedLetter.value = "";
+        reviewMistakes.value = 0;
+        currentReviewSaved.value = false;
       }
-      
+
       // Use nextTick to ensure DOM updates before resetting flag
       nextTick(() => {
-        isHandlingBackButton = false
-      })
-    }
+        isHandlingBackButton = false;
+      });
+    };
 
     // Handle browser back/forward button
     const handlePopState = (event) => {
       if (event.state) {
-        restoreNavigationState(event.state)
+        restoreNavigationState(event.state);
       } else {
         // If no state, restore to collections view
-        restoreNavigationState({ view: 'collections' })
+        restoreNavigationState({ view: "collections" });
       }
-    }
+    };
 
     // Initialize history state on mount
     const initializeHistory = () => {
       // Read URL params to restore view state
-      const urlParams = new URLSearchParams(window.location.search)
-      const viewParam = urlParams.get('view')
-      
-      if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'search') {
-        currentView.value = viewParam
-      } else if (viewParam === 'collection') {
-        const collectionId = urlParams.get('collection')
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get("view");
+
+      if (
+        viewParam === "review-list" ||
+        viewParam === "collections" ||
+        viewParam === "search"
+      ) {
+        currentView.value = viewParam;
+      } else if (viewParam === "collection") {
+        const collectionId = urlParams.get("collection");
         if (collectionId) {
-          currentCollectionId.value = collectionId
+          currentCollectionId.value = collectionId;
         }
-      } else if (viewParam === 'memorization' || viewParam === 'review') {
+      } else if (
+        viewParam === "memorization" ||
+        viewParam === "review"
+      ) {
         // These are handled by restoreNavigationState
       } else {
         // Default to collections if no view param
-        currentView.value = 'collections'
+        currentView.value = "collections";
       }
-      
-      const initialState = getNavigationState()
-      window.history.replaceState(initialState, '', window.location.href)
-      window.addEventListener('popstate', handlePopState)
-    }
+
+      const initialState = getNavigationState();
+      window.history.replaceState(
+        initialState,
+        "",
+        window.location.href,
+      );
+      window.addEventListener("popstate", handlePopState);
+    };
 
     // Computed properties
     const revealedCount = computed(() => {
-      return reviewWords.value.filter(w => w.revealed).length
-    })
+      return reviewWords.value.filter((w) => w.revealed).length;
+    });
 
     const allWordsRevealed = computed(() => {
-      if (reviewWords.value.length === 0) return false
-      
-      if (memorizationMode.value === 'memorize') {
+      if (reviewWords.value.length === 0) return false;
+
+      if (memorizationMode.value === "memorize") {
         // In memorize mode, all words that were hidden (not visible) should be revealed
-        return reviewWords.value.every(w => w.visible || w.revealed)
+        return reviewWords.value.every(
+          (w) => w.visible || w.revealed,
+        );
       } else {
         // In learn, master, or review mode, all words should be revealed
-        return reviewWords.value.every(w => w.revealed)
+        return reviewWords.value.every((w) => w.revealed);
       }
-    })
+    });
 
     // Calculate accuracy percentage
     const accuracy = computed(() => {
-      if (reviewWords.value.length === 0) return 0
-      return ((reviewWords.value.length - reviewMistakes.value) / reviewWords.value.length) * 100
-    })
+      if (reviewWords.value.length === 0) return 0;
+      return (
+        ((reviewWords.value.length - reviewMistakes.value) /
+          reviewWords.value.length) *
+        100
+      );
+    });
 
     // Check if accuracy meets the 90% requirement
     const meetsAccuracyRequirement = computed(() => {
-      return accuracy.value >= 90
-    })
+      return accuracy.value >= 90;
+    });
 
     // Count verses due for review
     const dueVersesCount = computed(() => {
-      return verses.value.filter(v => isDueForReview(v)).length
-    })
+      return verses.value.filter((v) => isDueForReview(v)).length;
+    });
 
     // Total verse count accounting for ranges (e.g., "Psalm 1:1-3" = 3 verses)
     const totalVerseCount = computed(() => {
       return verses.value.reduce((total, verse) => {
-        return total + countVersesInReference(verse.reference)
-      }, 0)
-    })
+        return total + countVersesInReference(verse.reference);
+      }, 0);
+    });
 
     // Check if "No Collection" has any verses
     const hasNoCollectionVerses = computed(() => {
-      return verses.value.some(v => {
-        const ids = v.collectionIds
-        return !ids || (Array.isArray(ids) && ids.length === 0)
-      })
-    })
+      return verses.value.some((v) => {
+        const ids = v.collectionIds;
+        return !ids || (Array.isArray(ids) && ids.length === 0);
+      });
+    });
 
     // Check if "To Learn" has any verses
     const hasToLearnVerses = computed(() => {
-      return verses.value.some(v => v.memorizationStatus !== 'mastered')
-    })
+      return verses.value.some(
+        (v) => v.memorizationStatus !== "mastered",
+      );
+    });
 
     // Biblical book order for sorting
     const bookOrder = {
       // Old Testament
-      'genesis': 1, 'gen': 1,
-      'exodus': 2, 'ex': 2, 'exo': 2,
-      'leviticus': 3, 'lev': 3,
-      'numbers': 4, 'num': 4,
-      'deuteronomy': 5, 'deut': 5,
-      'joshua': 6, 'josh': 6,
-      'judges': 7, 'judg': 7,
-      'ruth': 8,
-      '1 samuel': 9, '1sam': 9, '1 sam': 9,
-      '2 samuel': 10, '2sam': 10, '2 sam': 10,
-      '1 kings': 11, '1kings': 11, '1 ki': 11,
-      '2 kings': 12, '2kings': 12, '2 ki': 12,
-      '1 chronicles': 13, '1chron': 13, '1 chron': 13,
-      '2 chronicles': 14, '2chron': 14, '2 chron': 14,
-      'ezra': 15,
-      'nehemiah': 16, 'neh': 16,
-      'esther': 17, 'est': 17,
-      'job': 18,
-      'psalms': 19, 'psalm': 19, 'ps': 19,
-      'proverbs': 20, 'prov': 20,
-      'ecclesiastes': 21, 'eccl': 21,
-      'song of solomon': 22, 'song': 22,
-      'isaiah': 23, 'isa': 23,
-      'jeremiah': 24, 'jer': 24,
-      'lamentations': 25, 'lam': 25,
-      'ezekiel': 26, 'ezek': 26,
-      'daniel': 27, 'dan': 27,
-      'hosea': 28, 'hos': 28,
-      'joel': 29,
-      'amos': 30,
-      'obadiah': 31, 'obad': 31,
-      'jonah': 32,
-      'micah': 33, 'mic': 33,
-      'nahum': 34, 'nah': 34,
-      'habakkuk': 35, 'hab': 35,
-      'zephaniah': 36, 'zeph': 36,
-      'haggai': 37, 'hag': 37,
-      'zechariah': 38, 'zech': 38,
-      'malachi': 39, 'mal': 39,
+      genesis: 1,
+      gen: 1,
+      exodus: 2,
+      ex: 2,
+      exo: 2,
+      leviticus: 3,
+      lev: 3,
+      numbers: 4,
+      num: 4,
+      deuteronomy: 5,
+      deut: 5,
+      joshua: 6,
+      josh: 6,
+      judges: 7,
+      judg: 7,
+      ruth: 8,
+      "1 samuel": 9,
+      "1sam": 9,
+      "1 sam": 9,
+      "2 samuel": 10,
+      "2sam": 10,
+      "2 sam": 10,
+      "1 kings": 11,
+      "1kings": 11,
+      "1 ki": 11,
+      "2 kings": 12,
+      "2kings": 12,
+      "2 ki": 12,
+      "1 chronicles": 13,
+      "1chron": 13,
+      "1 chron": 13,
+      "2 chronicles": 14,
+      "2chron": 14,
+      "2 chron": 14,
+      ezra: 15,
+      nehemiah: 16,
+      neh: 16,
+      esther: 17,
+      est: 17,
+      job: 18,
+      psalms: 19,
+      psalm: 19,
+      ps: 19,
+      proverbs: 20,
+      prov: 20,
+      ecclesiastes: 21,
+      eccl: 21,
+      "song of solomon": 22,
+      song: 22,
+      isaiah: 23,
+      isa: 23,
+      jeremiah: 24,
+      jer: 24,
+      lamentations: 25,
+      lam: 25,
+      ezekiel: 26,
+      ezek: 26,
+      daniel: 27,
+      dan: 27,
+      hosea: 28,
+      hos: 28,
+      joel: 29,
+      amos: 30,
+      obadiah: 31,
+      obad: 31,
+      jonah: 32,
+      micah: 33,
+      mic: 33,
+      nahum: 34,
+      nah: 34,
+      habakkuk: 35,
+      hab: 35,
+      zephaniah: 36,
+      zeph: 36,
+      haggai: 37,
+      hag: 37,
+      zechariah: 38,
+      zech: 38,
+      malachi: 39,
+      mal: 39,
       // New Testament
-      'matthew': 40, 'matt': 40, 'mat': 40, 'mt': 40,
-      'mark': 41, 'mk': 41,
-      'luke': 42, 'lk': 42,
-      'john': 43, 'jn': 43,
-      'acts': 44,
-      'romans': 45, 'rom': 45,
-      '1 corinthians': 46, '1cor': 46, '1 cor': 46,
-      '2 corinthians': 47, '2cor': 47, '2 cor': 47,
-      'galatians': 48, 'gal': 48,
-      'ephesians': 49, 'eph': 49,
-      'philippians': 50, 'phil': 50,
-      'colossians': 51, 'col': 51,
-      '1 thessalonians': 52, '1thess': 52, '1 thess': 52,
-      '2 thessalonians': 53, '2thess': 53, '2 thess': 53,
-      '1 timothy': 54, '1tim': 54, '1 tim': 54,
-      '2 timothy': 55, '2tim': 55, '2 tim': 55,
-      'titus': 56,
-      'philemon': 57, 'phlm': 57,
-      'hebrews': 58, 'heb': 58,
-      'james': 59, 'jas': 59,
-      '1 peter': 60, '1pet': 60, '1 pet': 60,
-      '2 peter': 61, '2pet': 61, '2 pet': 61,
-      '1 john': 62, '1jn': 62, '1 jn': 62,
-      '2 john': 63, '2jn': 63, '2 jn': 63,
-      '3 john': 64, '3jn': 64, '3 jn': 64,
-      'jude': 65,
-      'revelation': 66, 'rev': 66
-    }
+      matthew: 40,
+      matt: 40,
+      mat: 40,
+      mt: 40,
+      mark: 41,
+      mk: 41,
+      luke: 42,
+      lk: 42,
+      john: 43,
+      jn: 43,
+      acts: 44,
+      romans: 45,
+      rom: 45,
+      "1 corinthians": 46,
+      "1cor": 46,
+      "1 cor": 46,
+      "2 corinthians": 47,
+      "2cor": 47,
+      "2 cor": 47,
+      galatians: 48,
+      gal: 48,
+      ephesians: 49,
+      eph: 49,
+      philippians: 50,
+      phil: 50,
+      colossians: 51,
+      col: 51,
+      "1 thessalonians": 52,
+      "1thess": 52,
+      "1 thess": 52,
+      "2 thessalonians": 53,
+      "2thess": 53,
+      "2 thess": 53,
+      "1 timothy": 54,
+      "1tim": 54,
+      "1 tim": 54,
+      "2 timothy": 55,
+      "2tim": 55,
+      "2 tim": 55,
+      titus: 56,
+      philemon: 57,
+      phlm: 57,
+      hebrews: 58,
+      heb: 58,
+      james: 59,
+      jas: 59,
+      "1 peter": 60,
+      "1pet": 60,
+      "1 pet": 60,
+      "2 peter": 61,
+      "2pet": 61,
+      "2 pet": 61,
+      "1 john": 62,
+      "1jn": 62,
+      "1 jn": 62,
+      "2 john": 63,
+      "2jn": 63,
+      "2 jn": 63,
+      "3 john": 64,
+      "3jn": 64,
+      "3 jn": 64,
+      jude: 65,
+      revelation: 66,
+      rev: 66,
+    };
 
     // Parse verse reference into sortable components
     const parseReference = (reference) => {
-      if (!reference) return { book: 999, chapter: 0, verse: 0 }
-      
+      if (!reference) return { book: 999, chapter: 0, verse: 0 };
+
       // Match patterns like "Matthew 24:1" or "1 John 3:16" or "Psalm 119:105"
-      const match = reference.match(/^((?:\d\s)?[a-z]+)\s+(\d+):(\d+)/i)
-      
+      const match = reference.match(
+        /^((?:\d\s)?[a-z]+)\s+(\d+):(\d+)/i,
+      );
+
       if (match) {
-        const bookName = match[1].toLowerCase().trim()
-        const chapter = parseInt(match[2], 10)
-        const verse = parseInt(match[3], 10)
-        const bookNum = bookOrder[bookName] || 999
-        
-        return { book: bookNum, chapter, verse }
+        const bookName = match[1].toLowerCase().trim();
+        const chapter = parseInt(match[2], 10);
+        const verse = parseInt(match[3], 10);
+        const bookNum = bookOrder[bookName] || 999;
+
+        return { book: bookNum, chapter, verse };
       }
-      
+
       // If no match, return high numbers to sort to the end
-      return { book: 999, chapter: 0, verse: 0 }
-    }
+      return { book: 999, chapter: 0, verse: 0 };
+    };
 
     // Filtered verses for current view
     const filteredVerses = computed(() => {
-      return getVersesForView()
-    })
+      return getVersesForView();
+    });
 
     // Sort filtered verses by biblical reference
     const sortedVerses = computed(() => {
-      const versesToSort = filteredVerses.value
+      const versesToSort = filteredVerses.value;
       return [...versesToSort].sort((a, b) => {
-        const aParsed = parseReference(a.reference)
-        const bParsed = parseReference(b.reference)
-        
+        const aParsed = parseReference(a.reference);
+        const bParsed = parseReference(b.reference);
+
         // Sort by book
         if (aParsed.book !== bParsed.book) {
-          return aParsed.book - bParsed.book
+          return aParsed.book - bParsed.book;
         }
-        
+
         // Then by chapter
         if (aParsed.chapter !== bParsed.chapter) {
-          return aParsed.chapter - bParsed.chapter
+          return aParsed.chapter - bParsed.chapter;
         }
-        
+
         // Then by verse
-        return aParsed.verse - bParsed.verse
-      })
-    })
+        return aParsed.verse - bParsed.verse;
+      });
+    });
 
     // Initialize Fuse.js for fuzzy search
     const fuseOptions = {
       keys: [
-        { name: 'reference', weight: 0.4 },
-        { name: 'content', weight: 0.6 }
+        { name: "reference", weight: 0.4 },
+        { name: "content", weight: 0.6 },
       ],
       threshold: 0.4, // 0.0 = exact match, 1.0 = match anything
       includeMatches: true,
       includeScore: true,
-      minMatchCharLength: 1
-    }
-    
+      minMatchCharLength: 1,
+    };
+
     // Create Fuse instance (will be recreated when verses change)
     const getFuseInstance = () => {
-      return new Fuse(verses.value, fuseOptions)
-    }
+      return new Fuse(verses.value, fuseOptions);
+    };
 
     // Search results using Fuse.js
     const searchResults = computed(() => {
       if (!searchQuery.value.trim()) {
-        return []
+        return [];
       }
-      
-      const fuse = getFuseInstance()
-      const results = fuse.search(searchQuery.value)
-      
-      return results.map(result => ({
+
+      const fuse = getFuseInstance();
+      const results = fuse.search(searchQuery.value);
+
+      return results.map((result) => ({
         item: result.item,
         matches: result.matches || [],
-        score: result.score
-      }))
-    })
+        score: result.score,
+      }));
+    });
 
     // Sort verses by next review date (closest first) for review list
     const reviewSortedVerses = computed(() => {
       // Filter to only verses with nextReviewDate (mastered verses)
-      const versesWithReviewDate = verses.value.filter(v => v.nextReviewDate)
-      
+      const versesWithReviewDate = verses.value.filter(
+        (v) => v.nextReviewDate,
+      );
+
       return [...versesWithReviewDate].sort((a, b) => {
-        const dateA = new Date(a.nextReviewDate)
-        const dateB = new Date(b.nextReviewDate)
+        const dateA = new Date(a.nextReviewDate);
+        const dateB = new Date(b.nextReviewDate);
         // Sort ascending (closest date first)
-        return dateA - dateB
-      })
-    })
+        return dateA - dateB;
+      });
+    });
 
     // Check if WebDAV is configured
     const hasWebDAVConfigured = computed(() => {
-      const settings = getWebDAVSettings()
-      return settings && settings.url && settings.username && settings.password
-    })
+      const settings = getWebDAVSettings();
+      return (
+        settings &&
+        settings.url &&
+        settings.username &&
+        settings.password
+      );
+    });
 
     // Get last backup timestamp (reactive)
     const getLastBackupTimestamp = () => {
-      return lastBackupTimestamp.value || null
-    }
+      return lastBackupTimestamp.value || null;
+    };
 
     // Get time since last backup as formatted string
     const getTimeSinceLastBackup = () => {
-      const timestamp = getLastBackupTimestamp()
+      const timestamp = getLastBackupTimestamp();
       if (!timestamp) {
-        return 'Never backed up'
+        return "Never backed up";
       }
-      
-      const lastBackup = new Date(timestamp)
-      const now = new Date()
-      const diffMs = now - lastBackup
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-      const diffMinutes = Math.floor(diffMs / (1000 * 60))
-      
+
+      const lastBackup = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - lastBackup;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
       if (diffDays > 0) {
-        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
+        return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
       } else if (diffHours > 0) {
-        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
+        return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
       } else if (diffMinutes > 0) {
-        return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`
+        return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
       } else {
-        return 'Just now'
+        return "Just now";
       }
-    }
+    };
 
     // Check if backup reminder should be shown
     const shouldShowBackupReminder = computed(() => {
       // Only show if WebDAV is not configured
       if (hasWebDAVConfigured.value) {
-        return false
+        return false;
       }
-      
-      const timestamp = getLastBackupTimestamp()
+
+      const timestamp = getLastBackupTimestamp();
       if (!timestamp) {
         // Never backed up
-        return true
+        return true;
       }
-      
+
       // Check if last backup is more than 7 days ago
-      const lastBackup = new Date(timestamp)
-      const now = new Date()
-      const diffMs = now - lastBackup
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      
-      return diffDays > 7
-    })
+      const lastBackup = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - lastBackup;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      return diffDays > 7;
+    });
 
     // Load collections from local storage
     const loadCollections = () => {
-      const stored = localStorage.getItem(COLLECTIONS_KEY)
+      const stored = localStorage.getItem(COLLECTIONS_KEY);
       if (stored) {
-        const loadedCollections = JSON.parse(stored)
-        let needsMigration = false
+        const loadedCollections = JSON.parse(stored);
+        let needsMigration = false;
         // Migrate existing collections to include lastModified
-        collections.value = loadedCollections.map(collection => {
+        collections.value = loadedCollections.map((collection) => {
           // Add lastModified if missing (use createdAt or current time as fallback)
-          if (!collection.hasOwnProperty('lastModified')) {
-            collection.lastModified = collection.createdAt || new Date().toISOString()
-            needsMigration = true
+          if (!collection.hasOwnProperty("lastModified")) {
+            collection.lastModified =
+              collection.createdAt || new Date().toISOString();
+            needsMigration = true;
           }
-          return collection
-        })
+          return collection;
+        });
         // Only save if we actually migrated something (and avoid triggering sync during load)
         if (needsMigration) {
-          localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
+          localStorage.setItem(
+            COLLECTIONS_KEY,
+            JSON.stringify(collections.value),
+          );
         }
       }
-    }
+    };
 
     // Save collections to local storage
     const saveCollections = () => {
-      localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
+      localStorage.setItem(
+        COLLECTIONS_KEY,
+        JSON.stringify(collections.value),
+      );
       // Trigger sync after save
-      triggerSync()
-    }
+      triggerSync();
+    };
 
     // Load verses from local storage
     const loadVerses = () => {
-      const stored = localStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const loadedVerses = JSON.parse(stored)
+        const loadedVerses = JSON.parse(stored);
         // Migrate existing verses to include review fields
-        verses.value = loadedVerses.map(verse => {
-          if (!verse.hasOwnProperty('reviewCount')) {
-            verse.reviewCount = 0
-            verse.lastReviewed = null
-            verse.nextReviewDate = verse.createdAt || new Date().toISOString()
-            verse.easeFactor = 2.5 // Default ease factor
-            verse.interval = 0
-            verse.reviewHistory = []
+        verses.value = loadedVerses.map((verse) => {
+          if (!verse.hasOwnProperty("reviewCount")) {
+            verse.reviewCount = 0;
+            verse.lastReviewed = null;
+            verse.nextReviewDate =
+              verse.createdAt || new Date().toISOString();
+            verse.easeFactor = 2.5; // Default ease factor
+            verse.interval = 0;
+            verse.reviewHistory = [];
           }
           // Ensure all new fields exist
-          if (!verse.hasOwnProperty('easeFactor')) verse.easeFactor = 2.5
-          if (!verse.hasOwnProperty('interval')) verse.interval = 0
-          if (!verse.hasOwnProperty('reviewHistory')) verse.reviewHistory = []
+          if (!verse.hasOwnProperty("easeFactor"))
+            verse.easeFactor = 2.5;
+          if (!verse.hasOwnProperty("interval")) verse.interval = 0;
+          if (!verse.hasOwnProperty("reviewHistory"))
+            verse.reviewHistory = [];
           // Set memorization status - if it has reviews, it's mastered, otherwise unmemorized
-          if (!verse.hasOwnProperty('memorizationStatus')) {
-            verse.memorizationStatus = (verse.reviewCount > 0) ? 'mastered' : 'unmemorized'
+          if (!verse.hasOwnProperty("memorizationStatus")) {
+            verse.memorizationStatus =
+              verse.reviewCount > 0 ? "mastered" : "unmemorized";
           }
           // If unmemorized, clear nextReviewDate
-          if (verse.memorizationStatus === 'unmemorized') {
-            verse.nextReviewDate = null
+          if (verse.memorizationStatus === "unmemorized") {
+            verse.nextReviewDate = null;
           }
           // Add collectionIds if missing
-          if (!verse.hasOwnProperty('collectionIds')) {
-            verse.collectionIds = []
+          if (!verse.hasOwnProperty("collectionIds")) {
+            verse.collectionIds = [];
           }
           // Add bibleVersion if missing
-          if (!verse.hasOwnProperty('bibleVersion')) {
-            verse.bibleVersion = ''
+          if (!verse.hasOwnProperty("bibleVersion")) {
+            verse.bibleVersion = "";
           }
           // Add lastModified if missing (use createdAt or current time as fallback)
-          if (!verse.hasOwnProperty('lastModified')) {
-            verse.lastModified = verse.lastReviewed || verse.createdAt || new Date().toISOString()
+          if (!verse.hasOwnProperty("lastModified")) {
+            verse.lastModified =
+              verse.lastReviewed ||
+              verse.createdAt ||
+              new Date().toISOString();
           }
-          return verse
-        })
-        saveVerses() // Save migrated data
+          return verse;
+        });
+        saveVerses(); // Save migrated data
       }
-    }
+    };
 
     // Save verses to local storage
     const saveVerses = () => {
-      console.log('[saveVerses] Saving verses to localStorage', {
+      console.log("[saveVerses] Saving verses to localStorage", {
         totalVerses: verses.value.length,
-        timestamp: new Date().toISOString()
-      })
-      
+        timestamp: new Date().toISOString(),
+      });
+
       // Find the verse we just updated to verify it's in the array
-      const reviewingId = reviewingVerse.value?.id
+      const reviewingId = reviewingVerse.value?.id;
       if (reviewingId) {
-        const verseToCheck = verses.value.find(v => v.id === reviewingId)
-        console.log('[saveVerses] Verse being saved', {
+        const verseToCheck = verses.value.find(
+          (v) => v.id === reviewingId,
+        );
+        console.log("[saveVerses] Verse being saved", {
           id: verseToCheck?.id,
           reference: verseToCheck?.reference,
           lastReviewed: verseToCheck?.lastReviewed,
           reviewCount: verseToCheck?.reviewCount,
-          interval: verseToCheck?.interval
-        })
+          interval: verseToCheck?.interval,
+        });
       }
-      
-      const serialized = JSON.stringify(verses.value)
-      localStorage.setItem(STORAGE_KEY, serialized)
-      
+
+      const serialized = JSON.stringify(verses.value);
+      localStorage.setItem(STORAGE_KEY, serialized);
+
       // Verify what was actually saved
-      const saved = localStorage.getItem(STORAGE_KEY)
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && reviewingId) {
         try {
-          const parsed = JSON.parse(saved)
-          const savedVerse = parsed.find((v) => v.id === reviewingId)
-          console.log('[saveVerses] Verified saved data', {
+          const parsed = JSON.parse(saved);
+          const savedVerse = parsed.find((v) => v.id === reviewingId);
+          console.log("[saveVerses] Verified saved data", {
             found: !!savedVerse,
             lastReviewed: savedVerse?.lastReviewed,
-            reviewCount: savedVerse?.reviewCount
-          })
+            reviewCount: savedVerse?.reviewCount,
+          });
         } catch (e) {
-          console.error('[saveVerses] Error parsing saved data', e)
+          console.error("[saveVerses] Error parsing saved data", e);
         }
       }
-      
+
       // Trigger sync after save
-      triggerSync()
-    }
+      triggerSync();
+    };
 
     // Get adjacent keys on QWERTY keyboard for fuzzy typing
     const getAdjacentKeys = (letter) => {
       const qwertyLayout = {
         // Row 1
-        'q': ['w', 'a'],
-        'w': ['q', 'e', 'a', 's'],
-        'e': ['w', 'r', 's', 'd'],
-        'r': ['e', 't', 'd', 'f'],
-        't': ['r', 'y', 'f', 'g'],
-        'y': ['t', 'u', 'g', 'h'],
-        'u': ['y', 'i', 'h', 'j'],
-        'i': ['u', 'o', 'j', 'k'],
-        'o': ['i', 'p', 'k', 'l'],
-        'p': ['o', 'l'],
+        q: ["w", "a"],
+        w: ["q", "e", "a", "s"],
+        e: ["w", "r", "s", "d"],
+        r: ["e", "t", "d", "f"],
+        t: ["r", "y", "f", "g"],
+        y: ["t", "u", "g", "h"],
+        u: ["y", "i", "h", "j"],
+        i: ["u", "o", "j", "k"],
+        o: ["i", "p", "k", "l"],
+        p: ["o", "l"],
         // Row 2
-        'a': ['q', 'w', 's', 'z'],
-        's': ['a', 'w', 'e', 'd', 'x', 'z'],
-        'd': ['s', 'e', 'r', 'f', 'c', 'x'],
-        'f': ['d', 'r', 't', 'g', 'v', 'c'],
-        'g': ['f', 't', 'y', 'h', 'b', 'v'],
-        'h': ['g', 'y', 'u', 'j', 'n', 'b'],
-        'j': ['h', 'u', 'i', 'k', 'm', 'n'],
-        'k': ['j', 'i', 'o', 'l', 'm'],
-        'l': ['k', 'o', 'p'],
+        a: ["q", "w", "s", "z"],
+        s: ["a", "w", "e", "d", "x", "z"],
+        d: ["s", "e", "r", "f", "c", "x"],
+        f: ["d", "r", "t", "g", "v", "c"],
+        g: ["f", "t", "y", "h", "b", "v"],
+        h: ["g", "y", "u", "j", "n", "b"],
+        j: ["h", "u", "i", "k", "m", "n"],
+        k: ["j", "i", "o", "l", "m"],
+        l: ["k", "o", "p"],
         // Row 3
-        'z': ['a', 's', 'x'],
-        'x': ['z', 's', 'd', 'c'],
-        'c': ['x', 'd', 'f', 'v'],
-        'v': ['c', 'f', 'g', 'b'],
-        'b': ['v', 'g', 'h', 'n'],
-        'n': ['b', 'h', 'j', 'm'],
-        'm': ['n', 'j', 'k']
-      }
-      return qwertyLayout[letter.toLowerCase()] || []
-    }
+        z: ["a", "s", "x"],
+        x: ["z", "s", "d", "c"],
+        c: ["x", "d", "f", "v"],
+        v: ["c", "f", "g", "b"],
+        b: ["v", "g", "h", "n"],
+        n: ["b", "h", "j", "m"],
+        m: ["n", "j", "k"],
+      };
+      return qwertyLayout[letter.toLowerCase()] || [];
+    };
 
     // Extract required letters from a word (handles hyphenated words)
     // For "peace-loving", returns ["p", "l"]
@@ -2586,52 +3703,52 @@ export default {
       // - U+2014 EM DASH (—)
       // - U+2015 HORIZONTAL BAR (―)
       // Split by any type of dash/hyphen character
-      const parts = word.split(/[-\u2010-\u2015]/)
-      const requiredLetters = []
-      
+      const parts = word.split(/[-\u2010-\u2015]/);
+      const requiredLetters = [];
+
       for (const part of parts) {
         // Trim whitespace and find the first alphabetic character (skip punctuation at the start)
-        const trimmedPart = part.trim()
+        const trimmedPart = part.trim();
         if (trimmedPart.length > 0) {
-          const firstLetterMatch = trimmedPart.match(/[a-zA-Z]/)
+          const firstLetterMatch = trimmedPart.match(/[a-zA-Z]/);
           if (firstLetterMatch) {
-            requiredLetters.push(firstLetterMatch[0].toLowerCase())
+            requiredLetters.push(firstLetterMatch[0].toLowerCase());
           }
         }
       }
-      
+
       // Fallback: if no letters found, use first character
       if (requiredLetters.length === 0) {
-        const firstChar = word.trim().charAt(0)
+        const firstChar = word.trim().charAt(0);
         if (firstChar) {
-          requiredLetters.push(firstChar.toLowerCase())
+          requiredLetters.push(firstChar.toLowerCase());
         }
       }
-      
-      return requiredLetters
-    }
+
+      return requiredLetters;
+    };
 
     // Split word into parts by hyphens and get the separator characters
     // Returns { parts: ["peace", "loving"], separators: ["-"] }
     const splitWordParts = (word) => {
       // Find all hyphen/dash characters and their positions
-      const separators = []
-      const parts = []
-      let lastIndex = 0
-      
+      const separators = [];
+      const parts = [];
+      let lastIndex = 0;
+
       // Match all types of hyphens and dashes (U+002D, U+2010-U+2015)
-      const separatorRegex = /[-\u2010-\u2015]/g
-      let match
-      
+      const separatorRegex = /[-\u2010-\u2015]/g;
+      let match;
+
       while ((match = separatorRegex.exec(word)) !== null) {
-        parts.push(word.substring(lastIndex, match.index))
-        separators.push(match[0])
-        lastIndex = match.index + match[0].length
+        parts.push(word.substring(lastIndex, match.index));
+        separators.push(match[0]);
+        lastIndex = match.index + match[0].length;
       }
-      parts.push(word.substring(lastIndex))
-      
-      return { parts, separators }
-    }
+      parts.push(word.substring(lastIndex));
+
+      return { parts, separators };
+    };
 
     // Get partial word text based on how many letters have been typed
     // For "peace-loving" with typedLettersIndex=1, returns "peace-"
@@ -2639,46 +3756,54 @@ export default {
     const getPartialWordText = (word) => {
       if (!word.requiredLetters || word.requiredLetters.length <= 1) {
         // Not a hyphenated word
-        return ''
+        return "";
       }
-      
-      const typedLettersIndex = word.typedLettersIndex || 0
-      
+
+      const typedLettersIndex = word.typedLettersIndex || 0;
+
       // If all letters typed, return full word
       if (typedLettersIndex >= word.requiredLetters.length) {
-        return word.text
+        return word.text;
       }
-      
+
       // If no letters typed yet, return empty (will show underscores)
       if (typedLettersIndex === 0) {
-        return ''
+        return "";
       }
-      
+
       // Use stored parts and separators, or compute them if not available
-      let parts = word.parts
-      let separators = word.separators
+      let parts = word.parts;
+      let separators = word.separators;
       if (!parts || !separators) {
-        const split = splitWordParts(word.text)
-        parts = split.parts
-        separators = split.separators
+        const split = splitWordParts(word.text);
+        parts = split.parts;
+        separators = split.separators;
       }
-      
+
       // Build partial text up to the current part
-      let partialText = ''
-      for (let i = 0; i < typedLettersIndex && i < parts.length; i++) {
+      let partialText = "";
+      for (
+        let i = 0;
+        i < typedLettersIndex && i < parts.length;
+        i++
+      ) {
         if (i > 0 && separators[i - 1]) {
-          partialText += separators[i - 1] // Add separator before this part
+          partialText += separators[i - 1]; // Add separator before this part
         }
-        partialText += parts[i]
+        partialText += parts[i];
       }
-      
+
       // Add separator after the last revealed part if there are more parts
-      if (typedLettersIndex < parts.length && separators.length > 0 && separators[typedLettersIndex - 1]) {
-        partialText += separators[typedLettersIndex - 1]
+      if (
+        typedLettersIndex < parts.length &&
+        separators.length > 0 &&
+        separators[typedLettersIndex - 1]
+      ) {
+        partialText += separators[typedLettersIndex - 1];
       }
-      
-      return partialText
-    }
+
+      return partialText;
+    };
 
     // Get remaining (untyped) part of a word for hyphenated words
     // For "peace-loving" with typedLettersIndex=1, returns "loving"
@@ -2686,502 +3811,623 @@ export default {
     const getRemainingPartText = (word) => {
       if (!word.requiredLetters || word.requiredLetters.length <= 1) {
         // Not a hyphenated word - return full text
-        return word.text
+        return word.text;
       }
-      
-      const typedLettersIndex = word.typedLettersIndex || 0
-      
+
+      const typedLettersIndex = word.typedLettersIndex || 0;
+
       // If all letters typed, return empty
       if (typedLettersIndex >= word.requiredLetters.length) {
-        return ''
+        return "";
       }
-      
+
       // If no letters typed yet, return full text
       if (typedLettersIndex === 0) {
-        return word.text
+        return word.text;
       }
-      
+
       // Use stored parts and separators, or compute them if not available
-      let parts = word.parts
-      let separators = word.separators
+      let parts = word.parts;
+      let separators = word.separators;
       if (!parts || !separators) {
-        const split = splitWordParts(word.text)
-        parts = split.parts
-        separators = split.separators
+        const split = splitWordParts(word.text);
+        parts = split.parts;
+        separators = split.separators;
       }
-      
+
       // Build remaining text from current part onwards
-      let remainingText = ''
+      let remainingText = "";
       for (let i = typedLettersIndex; i < parts.length; i++) {
         if (i > typedLettersIndex && separators[i - 1]) {
-          remainingText += separators[i - 1]
+          remainingText += separators[i - 1];
         }
-        remainingText += parts[i]
+        remainingText += parts[i];
       }
-      
-      return remainingText
-    }
+
+      return remainingText;
+    };
 
     // Check if a word is partially typed (for hyphenated words like "residing—all")
     const isPartiallyTyped = (word) => {
       if (!word.requiredLetters || word.requiredLetters.length <= 1) {
-        return false
+        return false;
       }
-      const typedLettersIndex = word.typedLettersIndex || 0
-      return typedLettersIndex > 0 && typedLettersIndex < word.requiredLetters.length
-    }
+      const typedLettersIndex = word.typedLettersIndex || 0;
+      return (
+        typedLettersIndex > 0 &&
+        typedLettersIndex < word.requiredLetters.length
+      );
+    };
 
     // Check if typed letter is correct or adjacent (fuzzy typing)
     const isLetterMatch = (typedLetter, correctLetter) => {
-      const typed = typedLetter.toLowerCase()
-      const correct = correctLetter.toLowerCase()
-      
+      const typed = typedLetter.toLowerCase();
+      const correct = correctLetter.toLowerCase();
+
       // Exact match
-      if (typed === correct) return true
-      
+      if (typed === correct) return true;
+
       // Check if typed letter is adjacent to correct letter
-      const adjacentKeys = getAdjacentKeys(correct)
-      return adjacentKeys.includes(typed)
-    }
+      const adjacentKeys = getAdjacentKeys(correct);
+      return adjacentKeys.includes(typed);
+    };
 
     // Vibrate phone on wrong keypress
     const vibrate = (pattern = 100) => {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(pattern)
+      if ("vibrate" in navigator) {
+        navigator.vibrate(pattern);
       }
-    }
+    };
 
     // Calculate grade (0-5) based on accuracy
     // Grade 5 = perfect, 4 = excellent, 3 = good, 2 = hard, 1 = again, 0 = complete failure
     const calculateGrade = (totalWords, mistakes) => {
-      if (totalWords === 0) return 0
-      
-      const accuracy = (totalWords - mistakes) / totalWords
-      
-      if (accuracy >= 1.0) return 5 // Perfect
-      if (accuracy >= 0.9) return 4 // Excellent (90-99%)
-      if (accuracy >= 0.7) return 3 // Good (70-89%)
-      if (accuracy >= 0.5) return 2 // Hard (50-69%)
-      if (accuracy >= 0.3) return 1 // Again (30-49%)
-      return 0 // Complete failure (<30%)
-    }
+      if (totalWords === 0) return 0;
+
+      const accuracy = (totalWords - mistakes) / totalWords;
+
+      if (accuracy >= 1.0) return 5; // Perfect
+      if (accuracy >= 0.9) return 4; // Excellent (90-99%)
+      if (accuracy >= 0.7) return 3; // Good (70-89%)
+      if (accuracy >= 0.5) return 2; // Hard (50-69%)
+      if (accuracy >= 0.3) return 1; // Again (30-49%)
+      return 0; // Complete failure (<30%)
+    };
 
     // Update ease factor based on grade (SM-2 algorithm)
     const updateEaseFactor = (currentEF, grade) => {
       // EF starts at 2.5, adjusts based on performance
       // Formula: EF' = EF + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
-      let newEF = currentEF + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
-      
+      let newEF =
+        currentEF + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+
       // Minimum ease factor is 1.3
-      if (newEF < 1.3) newEF = 1.3
-      
-      return newEF
-    }
+      if (newEF < 1.3) newEF = 1.3;
+
+      return newEF;
+    };
 
     // Check if verse was reviewed today
     const wasReviewedToday = (verse) => {
-      if (!verse.lastReviewed) return false
-      const lastReviewed = new Date(verse.lastReviewed)
-      const now = new Date()
-      return lastReviewed.toDateString() === now.toDateString()
-    }
+      if (!verse.lastReviewed) return false;
+      const lastReviewed = new Date(verse.lastReviewed);
+      const now = new Date();
+      return lastReviewed.toDateString() === now.toDateString();
+    };
 
     // Calculate next review date using SM-2-inspired algorithm with shorter intervals
-    const calculateNextReviewDate = (verse, grade, isNewReview = false) => {
-      const now = new Date()
-      let interval = 0
-      let newEF = verse.easeFactor || 2.5
-      
+    const calculateNextReviewDate = (
+      verse,
+      grade,
+      isNewReview = false,
+    ) => {
+      const now = new Date();
+      let interval = 0;
+      let newEF = verse.easeFactor || 2.5;
+
       // If reviewed today (and this is NOT a new review), don't advance the interval - keep the same next review date
       // When isNewReview is true, we're actively reviewing now, so always calculate a new date
-      if (!isNewReview && wasReviewedToday(verse) && verse.nextReviewDate) {
+      if (
+        !isNewReview &&
+        wasReviewedToday(verse) &&
+        verse.nextReviewDate
+      ) {
         return {
           nextReviewDate: verse.nextReviewDate,
           easeFactor: newEF,
-          interval: verse.interval || 0
-        }
+          interval: verse.interval || 0,
+        };
       }
-      
+
       // Update ease factor based on grade
-      newEF = updateEaseFactor(newEF, grade)
-      
+      newEF = updateEaseFactor(newEF, grade);
+
       // If grade < 3 (not good enough), reset to learning phase
       if (grade < 3) {
         // Learning phase: very short intervals (minutes/hours)
-        const learningSteps = [10, 30, 60, 120] // minutes
-        const stepIndex = Math.min(verse.reviewCount || 0, learningSteps.length - 1)
-        interval = learningSteps[stepIndex] / (24 * 60) // Convert minutes to days
+        const learningSteps = [10, 30, 60, 120]; // minutes
+        const stepIndex = Math.min(
+          verse.reviewCount || 0,
+          learningSteps.length - 1,
+        );
+        interval = learningSteps[stepIndex] / (24 * 60); // Convert minutes to days
         // Reset ease factor slightly but don't go below 1.3
-        newEF = Math.max(1.3, newEF * 0.8)
+        newEF = Math.max(1.3, newEF * 0.8);
       } else {
         // Graduated phase: use ease factor to calculate interval
         if (verse.reviewCount === 0) {
           // First successful review: 1 day
-          interval = 1
+          interval = 1;
         } else if (verse.reviewCount === 1) {
           // Second review: 1 day
-          interval = 1
+          interval = 1;
         } else if (verse.reviewCount === 2) {
           // Third review: 2 days
-          interval = 2
+          interval = 2;
         } else if (verse.reviewCount === 3) {
           // Fourth review: 3 days
-          interval = 3
+          interval = 3;
         } else if (verse.reviewCount === 4) {
           // Fifth review: 4 days
-          interval = 4
+          interval = 4;
         } else {
           // Subsequent reviews: previous interval * ease factor
-          const previousInterval = verse.interval || 1
-          interval = previousInterval * newEF
-          
+          const previousInterval = verse.interval || 1;
+          interval = previousInterval * newEF;
+
           // Cap maximum interval at 90 days (3 months)
-          if (interval > 90) interval = 90
+          if (interval > 90) interval = 90;
         }
       }
-      
-      const nextDate = new Date(now)
-      nextDate.setDate(nextDate.getDate() + interval)
-      
+
+      const nextDate = new Date(now);
+      nextDate.setDate(nextDate.getDate() + interval);
+
       return {
         nextReviewDate: nextDate.toISOString(),
         easeFactor: newEF,
-        interval: interval
-      }
-    }
+        interval: interval,
+      };
+    };
 
     // Check if a verse is due for review (only for mastered verses)
     const isDueForReview = (verse) => {
-      if (verse.memorizationStatus !== 'mastered') return false
-      if (!verse.nextReviewDate) return true
-      const now = new Date()
-      const nextReview = new Date(verse.nextReviewDate)
-      return now >= nextReview
-    }
+      if (verse.memorizationStatus !== "mastered") return false;
+      if (!verse.nextReviewDate) return true;
+      const now = new Date();
+      const nextReview = new Date(verse.nextReviewDate);
+      return now >= nextReview;
+    };
 
     // Get memorization status display
     const getMemorizationStatus = (verse) => {
-      return verse.memorizationStatus || 'unmemorized'
-    }
+      return verse.memorizationStatus || "unmemorized";
+    };
 
     // Get next memorization mode
     const getNextMemorizationMode = (status) => {
       const progression = {
-        'unmemorized': 'learn',
-        'learned': 'memorize',
-        'memorized': 'master',
-        'mastered': null
-      }
-      return progression[status] || null
-    }
+        unmemorized: "learn",
+        learned: "memorize",
+        memorized: "master",
+        mastered: null,
+      };
+      return progression[status] || null;
+    };
 
     // Handle verse click - route to memorization or review
     const handleVerseClick = (verse) => {
-      if (verse.memorizationStatus !== 'mastered') {
+      if (verse.memorizationStatus !== "mastered") {
         // Not mastered yet - start memorization
-        const nextMode = getNextMemorizationMode(verse.memorizationStatus)
+        const nextMode = getNextMemorizationMode(
+          verse.memorizationStatus,
+        );
         if (nextMode) {
-          startMemorization(verse, nextMode)
+          startMemorization(verse, nextMode);
         }
       } else {
         // Mastered - start review
-        startReview(verse)
+        startReview(verse);
       }
-    }
+    };
 
-    const isVerseExpanded = (verse) => !!expandedVerseIds.value[verse.id]
+    const isVerseExpanded = (verse) =>
+      !!expandedVerseIds.value[verse.id];
     const toggleVerseExpanded = (verse, e) => {
-      e.stopPropagation()
-      const next = { ...expandedVerseIds.value }
-      next[verse.id] = !next[verse.id]
-      expandedVerseIds.value = next
-    }
+      e.stopPropagation();
+      const next = { ...expandedVerseIds.value };
+      next[verse.id] = !next[verse.id];
+      expandedVerseIds.value = next;
+    };
 
     // Get time until review (or overdue) in a human-readable format
     const getTimeUntilReview = (verse) => {
-      if (!verse.nextReviewDate) return 'Now'
-      const now = new Date()
-      const nextReview = new Date(verse.nextReviewDate)
-      const diffTime = nextReview - now
-      
-      if (diffTime <= 0) return 'Due'
-      
-      const diffMinutes = Math.ceil(diffTime / (1000 * 60))
-      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60))
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
-      if (diffMinutes < 60) return `${diffMinutes}m`
-      if (diffHours < 24) return `${diffHours}h`
-      return `${diffDays}d`
-    }
+      if (!verse.nextReviewDate) return "Now";
+      const now = new Date();
+      const nextReview = new Date(verse.nextReviewDate);
+      const diffTime = nextReview - now;
+
+      if (diffTime <= 0) return "Due";
+
+      const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffMinutes < 60) return `${diffMinutes}m`;
+      if (diffHours < 24) return `${diffHours}h`;
+      return `${diffDays}d`;
+    };
 
     // Get days until review (for sorting/display)
     const getDaysUntilReview = (verse) => {
-      if (!verse.nextReviewDate) return 0
-      const now = new Date()
-      const nextReview = new Date(verse.nextReviewDate)
-      const diffTime = nextReview - now
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      return diffDays
-    }
+      if (!verse.nextReviewDate) return 0;
+      const now = new Date();
+      const nextReview = new Date(verse.nextReviewDate);
+      const diffTime = nextReview - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    };
 
     // Add new verse
     const addVerse = () => {
       if (newVerse.value.reference && newVerse.value.content) {
-        const now = new Date().toISOString()
-        
+        const now = new Date().toISOString();
+
         // If inside a collection (and not master-list), automatically add to that collection
-        let collectionIds = newVerse.value.collectionIds || []
-        if (currentCollectionId.value && currentCollectionId.value !== 'master-list') {
+        let collectionIds = newVerse.value.collectionIds || [];
+        if (
+          currentCollectionId.value &&
+          currentCollectionId.value !== "master-list"
+        ) {
           // Ensure the current collection is included
           if (!collectionIds.includes(currentCollectionId.value)) {
-            collectionIds = [...collectionIds, currentCollectionId.value]
+            collectionIds = [
+              ...collectionIds,
+              currentCollectionId.value,
+            ];
           }
         }
-        
+
         const verse = {
           id: Date.now().toString(),
           reference: newVerse.value.reference.trim(),
           content: newVerse.value.content.trim(),
-          bibleVersion: newVerse.value.bibleVersion ? newVerse.value.bibleVersion.trim().toUpperCase() : '',
+          bibleVersion: newVerse.value.bibleVersion
+            ? newVerse.value.bibleVersion.trim().toUpperCase()
+            : "",
           createdAt: now,
           lastModified: now, // Track when verse was last modified
-          memorizationStatus: 'unmemorized', // unmemorized, learned, memorized, mastered
+          memorizationStatus: "unmemorized", // unmemorized, learned, memorized, mastered
           reviewCount: 0,
           lastReviewed: null,
           nextReviewDate: null, // Not in spaced repetition until mastered
           easeFactor: 2.5, // Default ease factor (SM-2 standard)
           interval: 0,
           reviewHistory: [],
-          collectionIds: collectionIds
-        }
-        verses.value.unshift(verse)
-        saveVerses()
-        closeForm()
+          collectionIds: collectionIds,
+        };
+        verses.value.unshift(verse);
+        saveVerses();
+        closeForm();
       }
-    }
+    };
 
     // Close form and reset
     const closeForm = () => {
-      showForm.value = false
+      showForm.value = false;
       newVerse.value = {
-        reference: '',
-        content: '',
-        bibleVersion: '',
-        collectionIds: []
-      }
-      fabMenuOpen.value = false
-      importError.value = null
-      importErrorShowLink.value = false
-      importingVerse.value = false
-    }
+        reference: "",
+        content: "",
+        bibleVersion: "",
+        collectionIds: [],
+      };
+      fabMenuOpen.value = false;
+      importError.value = null;
+      importErrorShowLink.value = false;
+      importingVerse.value = false;
+    };
 
     // Initialize Bible client lazily
     const initBibleClient = async () => {
       if (!bibleClient.value) {
-        bibleClient.value = new BibleClient()
+        bibleClient.value = new BibleClient();
       }
       if (!bibleCollection.value) {
-        bibleCollection.value = await bibleClient.value.fetch_collection()
+        bibleCollection.value =
+          await bibleClient.value.fetch_collection();
       }
-      return { client: bibleClient.value, collection: bibleCollection.value }
-    }
+      return {
+        client: bibleClient.value,
+        collection: bibleCollection.value,
+      };
+    };
 
     // Parse verse reference into components
     const parseVerseReference = (reference) => {
       // Handles: "John 3:16", "John 3:16-17", "1 John 1:9", "Psalm 23:1-6"
-      const match = reference.match(/^(\d?\s*[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?$/)
-      if (!match) return null
+      const match = reference.match(
+        /^(\d?\s*[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?$/,
+      );
+      if (!match) return null;
 
-      const bookName = match[1].trim()
-      const chapter = parseInt(match[2], 10)
-      const verseStart = parseInt(match[3], 10)
-      const verseEnd = match[4] ? parseInt(match[4], 10) : verseStart
+      const bookName = match[1].trim();
+      const chapter = parseInt(match[2], 10);
+      const verseStart = parseInt(match[3], 10);
+      const verseEnd = match[4] ? parseInt(match[4], 10) : verseStart;
 
-      return { bookName, chapter, verseStart, verseEnd }
-    }
+      return { bookName, chapter, verseStart, verseEnd };
+    };
 
     // Map book name to API book ID
     const getBookId = (bookName) => {
-      const normalizedName = bookName.toLowerCase().replace(/\s+/g, '')
+      const normalizedName = bookName
+        .toLowerCase()
+        .replace(/\s+/g, "");
 
       // Common variations mapping
       const variations = {
-        'psalm': 'psa', 'psalms': 'psa', 'ps': 'psa',
-        'genesis': 'gen', 'gen': 'gen',
-        'exodus': 'exo', 'exod': 'exo', 'ex': 'exo',
-        'leviticus': 'lev', 'lev': 'lev',
-        'numbers': 'num', 'num': 'num',
-        'deuteronomy': 'deu', 'deut': 'deu',
-        'joshua': 'jos', 'josh': 'jos',
-        'judges': 'jdg', 'judg': 'jdg',
-        'ruth': 'rut',
-        '1samuel': '1sa', '1sam': '1sa',
-        '2samuel': '2sa', '2sam': '2sa',
-        '1kings': '1ki', '1kgs': '1ki',
-        '2kings': '2ki', '2kgs': '2ki',
-        '1chronicles': '1ch', '1chr': '1ch',
-        '2chronicles': '2ch', '2chr': '2ch',
-        'ezra': 'ezr',
-        'nehemiah': 'neh', 'neh': 'neh',
-        'esther': 'est', 'esth': 'est',
-        'job': 'job',
-        'proverbs': 'pro', 'prov': 'pro',
-        'ecclesiastes': 'ecc', 'eccl': 'ecc',
-        'songofsolomon': 'sng', 'songofsongs': 'sng', 'song': 'sng', 'sos': 'sng',
-        'isaiah': 'isa', 'isa': 'isa',
-        'jeremiah': 'jer', 'jer': 'jer',
-        'lamentations': 'lam', 'lam': 'lam',
-        'ezekiel': 'ezk', 'ezek': 'ezk',
-        'daniel': 'dan', 'dan': 'dan',
-        'hosea': 'hos', 'hos': 'hos',
-        'joel': 'jol', 'joe': 'jol',
-        'amos': 'amo', 'amo': 'amo',
-        'obadiah': 'oba', 'obad': 'oba',
-        'jonah': 'jon', 'jon': 'jon',
-        'micah': 'mic', 'mic': 'mic',
-        'nahum': 'nam', 'nah': 'nam',
-        'habakkuk': 'hab', 'hab': 'hab',
-        'zephaniah': 'zep', 'zeph': 'zep',
-        'haggai': 'hag', 'hag': 'hag',
-        'zechariah': 'zec', 'zech': 'zec',
-        'malachi': 'mal', 'mal': 'mal',
-        'matthew': 'mat', 'matt': 'mat', 'mt': 'mat',
-        'mark': 'mrk', 'mk': 'mrk', 'mar': 'mrk',
-        'luke': 'luk', 'lk': 'luk',
-        'john': 'jhn', 'jn': 'jhn',
-        'acts': 'act',
-        'romans': 'rom', 'rom': 'rom',
-        '1corinthians': '1co', '1cor': '1co',
-        '2corinthians': '2co', '2cor': '2co',
-        'galatians': 'gal', 'gal': 'gal',
-        'ephesians': 'eph', 'eph': 'eph',
-        'philippians': 'php', 'phil': 'php',
-        'colossians': 'col', 'col': 'col',
-        '1thessalonians': '1th', '1thess': '1th',
-        '2thessalonians': '2th', '2thess': '2th',
-        '1timothy': '1ti', '1tim': '1ti',
-        '2timothy': '2ti', '2tim': '2ti',
-        'titus': 'tit', 'tit': 'tit',
-        'philemon': 'phm', 'phlm': 'phm',
-        'hebrews': 'heb', 'heb': 'heb',
-        'james': 'jas', 'jam': 'jas',
-        '1peter': '1pe', '1pet': '1pe',
-        '2peter': '2pe', '2pet': '2pe',
-        '1john': '1jn', '1jn': '1jn',
-        '2john': '2jn', '2jn': '2jn',
-        '3john': '3jn', '3jn': '3jn',
-        'jude': 'jud',
-        'revelation': 'rev', 'rev': 'rev'
-      }
+        psalm: "psa",
+        psalms: "psa",
+        ps: "psa",
+        genesis: "gen",
+        gen: "gen",
+        exodus: "exo",
+        exod: "exo",
+        ex: "exo",
+        leviticus: "lev",
+        lev: "lev",
+        numbers: "num",
+        num: "num",
+        deuteronomy: "deu",
+        deut: "deu",
+        joshua: "jos",
+        josh: "jos",
+        judges: "jdg",
+        judg: "jdg",
+        ruth: "rut",
+        "1samuel": "1sa",
+        "1sam": "1sa",
+        "2samuel": "2sa",
+        "2sam": "2sa",
+        "1kings": "1ki",
+        "1kgs": "1ki",
+        "2kings": "2ki",
+        "2kgs": "2ki",
+        "1chronicles": "1ch",
+        "1chr": "1ch",
+        "2chronicles": "2ch",
+        "2chr": "2ch",
+        ezra: "ezr",
+        nehemiah: "neh",
+        neh: "neh",
+        esther: "est",
+        esth: "est",
+        job: "job",
+        proverbs: "pro",
+        prov: "pro",
+        ecclesiastes: "ecc",
+        eccl: "ecc",
+        songofsolomon: "sng",
+        songofsongs: "sng",
+        song: "sng",
+        sos: "sng",
+        isaiah: "isa",
+        isa: "isa",
+        jeremiah: "jer",
+        jer: "jer",
+        lamentations: "lam",
+        lam: "lam",
+        ezekiel: "ezk",
+        ezek: "ezk",
+        daniel: "dan",
+        dan: "dan",
+        hosea: "hos",
+        hos: "hos",
+        joel: "jol",
+        joe: "jol",
+        amos: "amo",
+        amo: "amo",
+        obadiah: "oba",
+        obad: "oba",
+        jonah: "jon",
+        jon: "jon",
+        micah: "mic",
+        mic: "mic",
+        nahum: "nam",
+        nah: "nam",
+        habakkuk: "hab",
+        hab: "hab",
+        zephaniah: "zep",
+        zeph: "zep",
+        haggai: "hag",
+        hag: "hag",
+        zechariah: "zec",
+        zech: "zec",
+        malachi: "mal",
+        mal: "mal",
+        matthew: "mat",
+        matt: "mat",
+        mt: "mat",
+        mark: "mrk",
+        mk: "mrk",
+        mar: "mrk",
+        luke: "luk",
+        lk: "luk",
+        john: "jhn",
+        jn: "jhn",
+        acts: "act",
+        romans: "rom",
+        rom: "rom",
+        "1corinthians": "1co",
+        "1cor": "1co",
+        "2corinthians": "2co",
+        "2cor": "2co",
+        galatians: "gal",
+        gal: "gal",
+        ephesians: "eph",
+        eph: "eph",
+        philippians: "php",
+        phil: "php",
+        colossians: "col",
+        col: "col",
+        "1thessalonians": "1th",
+        "1thess": "1th",
+        "2thessalonians": "2th",
+        "2thess": "2th",
+        "1timothy": "1ti",
+        "1tim": "1ti",
+        "2timothy": "2ti",
+        "2tim": "2ti",
+        titus: "tit",
+        tit: "tit",
+        philemon: "phm",
+        phlm: "phm",
+        hebrews: "heb",
+        heb: "heb",
+        james: "jas",
+        jam: "jas",
+        "1peter": "1pe",
+        "1pet": "1pe",
+        "2peter": "2pe",
+        "2pet": "2pe",
+        "1john": "1jn",
+        "1jn": "1jn",
+        "2john": "2jn",
+        "2jn": "2jn",
+        "3john": "3jn",
+        "3jn": "3jn",
+        jude: "jud",
+        revelation: "rev",
+        rev: "rev",
+      };
 
       // Try direct variation match
       if (variations[normalizedName]) {
-        return variations[normalizedName]
+        return variations[normalizedName];
       }
 
       // Try first 3 characters as fallback
-      return normalizedName.substring(0, 3)
-    }
+      return normalizedName.substring(0, 3);
+    };
 
     // Main import function
     const importVerseContent = async () => {
-      importError.value = null
-      importErrorShowLink.value = false
+      importError.value = null;
+      importErrorShowLink.value = false;
 
-      const reference = newVerse.value.reference.trim()
-      const version = newVerse.value.bibleVersion.trim().toLowerCase()
+      const reference = newVerse.value.reference.trim();
+      const version = newVerse.value.bibleVersion
+        .trim()
+        .toLowerCase();
 
       if (!reference || !version) {
-        importError.value = 'Please enter both a verse reference and Bible version first.'
-        return
+        importError.value =
+          "Please enter both a verse reference and Bible version first.";
+        return;
       }
 
-      const parsed = parseVerseReference(reference)
+      const parsed = parseVerseReference(reference);
       if (!parsed) {
-        importError.value = "Could not parse verse reference. Please use format like 'John 3:16' or 'John 3:16-17'."
-        return
+        importError.value =
+          "Could not parse verse reference. Please use format like 'John 3:16' or 'John 3:16-17'.";
+        return;
       }
 
-      importingVerse.value = true
+      importingVerse.value = true;
 
       try {
-        const { collection } = await initBibleClient()
+        const { collection } = await initBibleClient();
 
         // Try to find the translation with different ID formats
         // Users might enter "BSB", but the API uses "eng_bsb"
         const versionVariants = [
           version,
           `eng_${version}`,
-          version.replace(/^eng_/, ''),
-        ]
+          version.replace(/^eng_/, ""),
+        ];
 
-        let translationId = null
+        let translationId = null;
         for (const variant of versionVariants) {
           if (collection.has_translation(variant)) {
-            translationId = variant
-            break
+            translationId = variant;
+            break;
           }
         }
 
         if (!translationId) {
-          importError.value = `The ${version.toUpperCase()} version is not available. Most popular translations (ESV, NIV, NASB, etc.) are copyrighted and not freely distributable.`
-          importErrorShowLink.value = true
-          importingVerse.value = false
-          return
+          importError.value = `The ${version.toUpperCase()} version is not available. Most popular translations (ESV, NIV, NASB, etc.) are copyrighted and not freely distributable.`;
+          importErrorShowLink.value = true;
+          importingVerse.value = false;
+          return;
         }
 
         // Get the book ID
-        const bookId = getBookId(parsed.bookName)
+        const bookId = getBookId(parsed.bookName);
 
         // Check if book exists in this translation
         if (!collection.has_book(translationId, bookId)) {
-          importError.value = `Could not find book '${parsed.bookName}' in this translation.`
-          importingVerse.value = false
-          return
+          importError.value = `Could not find book '${parsed.bookName}' in this translation.`;
+          importingVerse.value = false;
+          return;
         }
 
         // Fetch the book in 'txt' format which supports excluding notes
-        const book = await collection.fetch_book(translationId, bookId, 'txt')
+        const book = await collection.fetch_book(
+          translationId,
+          bookId,
+          "txt",
+        );
 
         // Extract verses using get_passage for ranges or get_verse for single
         // Use notes: false to exclude footnotes, verse_nums: false to exclude verse numbers
-        const options = { attribute: false, notes: false, verse_nums: false, headings: false }
-        let verseText
+        const options = {
+          attribute: false,
+          notes: false,
+          verse_nums: false,
+          headings: false,
+        };
+        let verseText;
         if (parsed.verseStart === parsed.verseEnd) {
-          verseText = book.get_verse(parsed.chapter, parsed.verseStart, options)
+          verseText = book.get_verse(
+            parsed.chapter,
+            parsed.verseStart,
+            options,
+          );
         } else {
           verseText = book.get_passage(
-            parsed.chapter, parsed.verseStart,
-            parsed.chapter, parsed.verseEnd,
-            options
-          )
+            parsed.chapter,
+            parsed.verseStart,
+            parsed.chapter,
+            parsed.verseEnd,
+            options,
+          );
         }
 
         if (!verseText) {
-          importError.value = 'Verse(s) not found. Please check the chapter and verse numbers.'
-          importingVerse.value = false
-          return
+          importError.value =
+            "Verse(s) not found. Please check the chapter and verse numbers.";
+          importingVerse.value = false;
+          return;
         }
 
         // Clean up whitespace
-        verseText = verseText.replace(/\s+/g, ' ').trim()
+        verseText = verseText.replace(/\s+/g, " ").trim();
 
         if (!verseText) {
-          importError.value = 'Verse(s) not found. Please check the verse numbers.'
-          importingVerse.value = false
-          return
+          importError.value =
+            "Verse(s) not found. Please check the verse numbers.";
+          importingVerse.value = false;
+          return;
         }
 
-        newVerse.value.content = verseText
-        importingVerse.value = false
-
+        newVerse.value.content = verseText;
+        importingVerse.value = false;
       } catch (err) {
-        console.error('Import error:', err)
-        importError.value = `Failed to import verse: ${err.message}`
-        importingVerse.value = false
+        console.error("Import error:", err);
+        importError.value = `Failed to import verse: ${err.message}`;
+        importingVerse.value = false;
       }
-    }
+    };
 
     // Add new collection
     const addCollection = () => {
@@ -3191,434 +4437,529 @@ export default {
           name: newCollection.value.name.trim(),
           description: newCollection.value.description.trim(),
           createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString() // Track when collection was last modified
-        }
-        collections.value.push(collection)
-        saveCollections()
-        closeCollectionForm()
+          lastModified: new Date().toISOString(), // Track when collection was last modified
+        };
+        collections.value.push(collection);
+        saveCollections();
+        closeCollectionForm();
       }
-    }
+    };
 
     // Close collection form
     const closeCollectionForm = () => {
-      showCollectionForm.value = false
+      showCollectionForm.value = false;
       newCollection.value = {
-        name: '',
-        description: ''
-      }
-      fabMenuOpen.value = false
-    }
+        name: "",
+        description: "",
+      };
+      fabMenuOpen.value = false;
+    };
 
     // Handle FAB click
     const handleFabClick = () => {
       // Toggle menu for both collections screen and inside collections
-      fabMenuOpen.value = !fabMenuOpen.value
-    }
+      fabMenuOpen.value = !fabMenuOpen.value;
+    };
 
     // Open new verse from FAB menu
     const openNewVerse = () => {
-      fabMenuOpen.value = false
-      showForm.value = true
-    }
+      fabMenuOpen.value = false;
+      showForm.value = true;
+    };
 
     // Open new collection from FAB menu
     const openNewCollection = () => {
-      fabMenuOpen.value = false
-      showCollectionForm.value = true
-    }
+      fabMenuOpen.value = false;
+      showCollectionForm.value = true;
+    };
 
     // Open CSV import modal
     const openImportCSV = () => {
-      fabMenuOpen.value = false
-      csvImportFromCollectionsScreen.value = !currentCollectionId.value && currentView.value === 'collections'
-      csvImportTargetCollectionIds.value = csvImportFromCollectionsScreen.value ? [] : []
-      showImportCSV.value = true
-      csvPreview.value = []
-      csvImportStatus.value = null
-      csvPastedText.value = ''
-    }
+      fabMenuOpen.value = false;
+      csvImportFromCollectionsScreen.value =
+        !currentCollectionId.value &&
+        currentView.value === "collections";
+      csvImportTargetCollectionIds.value =
+        csvImportFromCollectionsScreen.value ? [] : [];
+      showImportCSV.value = true;
+      csvPreview.value = [];
+      csvImportStatus.value = null;
+      csvPastedText.value = "";
+    };
 
     // Close CSV import modal
     const closeImportCSV = () => {
-      showImportCSV.value = false
-      csvPreview.value = []
-      csvImportStatus.value = null
-      csvPastedText.value = ''
-      csvImportTargetCollectionIds.value = []
+      showImportCSV.value = false;
+      csvPreview.value = [];
+      csvImportStatus.value = null;
+      csvPastedText.value = "";
+      csvImportTargetCollectionIds.value = [];
       if (csvFileInput.value) {
-        csvFileInput.value.value = ''
+        csvFileInput.value.value = "";
       }
-    }
+    };
 
     // Parse CSV file
     const parseCSV = (text) => {
-      const lines = text.split('\n').filter(line => line.trim())
-      if (lines.length === 0) return []
-      
+      const lines = text.split("\n").filter((line) => line.trim());
+      if (lines.length === 0) return [];
+
       // Parse header row
-      const headerLine = lines[0]
-      const headers = parseCSVLine(headerLine)
-      
+      const headerLine = lines[0];
+      const headers = parseCSVLine(headerLine);
+
       // Normalize header names (case-insensitive, trim whitespace)
-      const normalizedHeaders = headers.map(h => h.trim().toLowerCase())
-      const referenceIndex = normalizedHeaders.findIndex(h => h === 'reference')
-      const contentIndex = normalizedHeaders.findIndex(h => h === 'content')
-      const versionIndex = normalizedHeaders.findIndex(h => h === 'version')
-      const daysUntilNextReviewIndex = normalizedHeaders.findIndex(h => 
-        h === 'daysuntilnextreview' || h === 'daysuntilreview' || h === 'days_until_next_review' || h === 'days_until_review'
-      )
-      const intervalIndex = normalizedHeaders.findIndex(h => h === 'interval')
-      
+      const normalizedHeaders = headers.map((h) =>
+        h.trim().toLowerCase(),
+      );
+      const referenceIndex = normalizedHeaders.findIndex(
+        (h) => h === "reference",
+      );
+      const contentIndex = normalizedHeaders.findIndex(
+        (h) => h === "content",
+      );
+      const versionIndex = normalizedHeaders.findIndex(
+        (h) => h === "version",
+      );
+      const daysUntilNextReviewIndex = normalizedHeaders.findIndex(
+        (h) =>
+          h === "daysuntilnextreview" ||
+          h === "daysuntilreview" ||
+          h === "days_until_next_review" ||
+          h === "days_until_review",
+      );
+      const intervalIndex = normalizedHeaders.findIndex(
+        (h) => h === "interval",
+      );
+
       if (referenceIndex === -1 || contentIndex === -1) {
-        throw new Error('CSV must have "Reference" and "Content" columns')
+        throw new Error(
+          'CSV must have "Reference" and "Content" columns',
+        );
       }
-      
+
       // Parse data rows
-      const rows = []
+      const rows = [];
       for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i])
-        if (values.length === 0) continue
-        
+        const values = parseCSVLine(lines[i]);
+        if (values.length === 0) continue;
+
         const row = {
-          reference: values[referenceIndex]?.trim() || '',
-          content: values[contentIndex]?.trim() || '',
-          version: versionIndex !== -1 ? (values[versionIndex]?.trim() || '') : '',
-          daysUntilNextReview: daysUntilNextReviewIndex !== -1 ? (values[daysUntilNextReviewIndex]?.trim() || '') : '',
-          interval: intervalIndex !== -1 ? (values[intervalIndex]?.trim() || '') : ''
-        }
-        
+          reference: values[referenceIndex]?.trim() || "",
+          content: values[contentIndex]?.trim() || "",
+          version:
+            versionIndex !== -1
+              ? values[versionIndex]?.trim() || ""
+              : "",
+          daysUntilNextReview:
+            daysUntilNextReviewIndex !== -1
+              ? values[daysUntilNextReviewIndex]?.trim() || ""
+              : "",
+          interval:
+            intervalIndex !== -1
+              ? values[intervalIndex]?.trim() || ""
+              : "",
+        };
+
         // Only add rows with reference and content
         if (row.reference && row.content) {
-          rows.push(row)
+          rows.push(row);
         }
       }
-      
-      return rows
-    }
+
+      return rows;
+    };
 
     // Parse a single CSV line, handling quoted fields
     const parseCSVLine = (line) => {
-      const result = []
-      let current = ''
-      let inQuotes = false
-      
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+
       for (let i = 0; i < line.length; i++) {
-        const char = line[i]
-        const nextChar = line[i + 1]
-        
-        if (char === '\\' && inQuotes) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (char === "\\" && inQuotes) {
           // Handle backslash escape sequences within quoted fields
           if (nextChar === '"') {
             // Escaped quote: \"
-            current += '"'
-            i++ // Skip the quote
-          } else if (nextChar === '\\') {
+            current += '"';
+            i++; // Skip the quote
+          } else if (nextChar === "\\") {
             // Escaped backslash: \\
-            current += '\\'
-            i++ // Skip the next backslash
-          } else if (nextChar === 'n') {
+            current += "\\";
+            i++; // Skip the next backslash
+          } else if (nextChar === "n") {
             // Escaped newline: \n
-            current += '\n'
-            i++ // Skip the 'n'
-          } else if (nextChar === 't') {
+            current += "\n";
+            i++; // Skip the 'n'
+          } else if (nextChar === "t") {
             // Escaped tab: \t
-            current += '\t'
-            i++ // Skip the 't'
-          } else if (nextChar === 'r') {
+            current += "\t";
+            i++; // Skip the 't'
+          } else if (nextChar === "r") {
             // Escaped carriage return: \r
-            current += '\r'
-            i++ // Skip the 'r'
+            current += "\r";
+            i++; // Skip the 'r'
           } else {
             // Unknown escape sequence, keep the backslash
-            current += char
+            current += char;
           }
         } else if (char === '"') {
           if (inQuotes && nextChar === '"') {
             // Standard CSV escaped quote (e.g., "")
-            current += '"'
-            i++ // Skip next quote
+            current += '"';
+            i++; // Skip next quote
           } else {
             // Toggle quote state
-            inQuotes = !inQuotes
+            inQuotes = !inQuotes;
           }
-        } else if (char === ',' && !inQuotes) {
+        } else if (char === "," && !inQuotes) {
           // Field separator
-          result.push(current)
-          current = ''
+          result.push(current);
+          current = "";
         } else {
-          current += char
+          current += char;
         }
       }
-      
+
       // Add last field
-      result.push(current)
-      return result
-    }
+      result.push(current);
+      return result;
+    };
 
     // Handle CSV file selection
     const handleCSVFileSelect = (event) => {
-      const file = event.target.files[0]
-      if (!file) return
-      
+      const file = event.target.files[0];
+      if (!file) return;
+
       // Clear textarea if file is selected
-      csvPastedText.value = ''
-      
-      csvImportStatus.value = null
-      csvPreview.value = []
-      
-      const reader = new FileReader()
+      csvPastedText.value = "";
+
+      csvImportStatus.value = null;
+      csvPreview.value = [];
+
+      const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const text = e.target.result
-          const parsed = parseCSV(text)
-          
+          const text = e.target.result;
+          const parsed = parseCSV(text);
+
           if (parsed.length === 0) {
             csvImportStatus.value = {
-              type: 'error',
-              message: 'No valid verses found in CSV file. Make sure the file has "Reference" and "Content" columns.'
-            }
-            return
+              type: "error",
+              message:
+                'No valid verses found in CSV file. Make sure the file has "Reference" and "Content" columns.',
+            };
+            return;
           }
-          
-          csvPreview.value = parsed
+
+          csvPreview.value = parsed;
           // Don't set success status here - just show preview. Status will be set after import.
         } catch (error) {
           csvImportStatus.value = {
-            type: 'error',
-            message: `Error parsing CSV: ${error.message}`
-          }
-          csvPreview.value = []
+            type: "error",
+            message: `Error parsing CSV: ${error.message}`,
+          };
+          csvPreview.value = [];
         }
-      }
-      
+      };
+
       reader.onerror = () => {
         csvImportStatus.value = {
-          type: 'error',
-          message: 'Error reading file. Please try again.'
-        }
-      }
-      
-      reader.readAsText(file)
-    }
+          type: "error",
+          message: "Error reading file. Please try again.",
+        };
+      };
+
+      reader.readAsText(file);
+    };
 
     // Handle CSV paste from textarea
     const handleCSVPaste = () => {
-      const text = csvPastedText.value
-      
+      const text = csvPastedText.value;
+
       // Clear file input if text is pasted
       if (text.trim() && csvFileInput.value) {
-        csvFileInput.value.value = ''
+        csvFileInput.value.value = "";
       }
-      
-      csvImportStatus.value = null
-      csvPreview.value = []
-      
+
+      csvImportStatus.value = null;
+      csvPreview.value = [];
+
       if (!text.trim()) {
-        return
+        return;
       }
-      
+
       try {
-        const parsed = parseCSV(text)
-        
+        const parsed = parseCSV(text);
+
         if (parsed.length === 0) {
           csvImportStatus.value = {
-            type: 'error',
-            message: 'No valid verses found in CSV content. Make sure the content has "Reference" and "Content" columns.'
-          }
-          return
+            type: "error",
+            message:
+              'No valid verses found in CSV content. Make sure the content has "Reference" and "Content" columns.',
+          };
+          return;
         }
-        
-        csvPreview.value = parsed
+
+        csvPreview.value = parsed;
         // Don't set success status here - just show preview. Status will be set after import.
       } catch (error) {
         csvImportStatus.value = {
-          type: 'error',
-          message: `Error parsing CSV: ${error.message}`
-        }
-        csvPreview.value = []
+          type: "error",
+          message: `Error parsing CSV: ${error.message}`,
+        };
+        csvPreview.value = [];
       }
-    }
+    };
 
     // Estimate review count based on interval (heuristic)
     const estimateReviewCount = (interval) => {
-      if (!interval || interval <= 0) return 0
-      if (interval >= 60) return 10  // Mature verses with long intervals
-      if (interval >= 30) return 5
-      if (interval >= 7) return 3
-      if (interval > 0) return 1
-      return 0
-    }
+      if (!interval || interval <= 0) return 0;
+      if (interval >= 60) return 10; // Mature verses with long intervals
+      if (interval >= 30) return 5;
+      if (interval >= 7) return 3;
+      if (interval > 0) return 1;
+      return 0;
+    };
 
     // Parse and validate numeric field from CSV
-    const parseNumericField = (value, fieldName, min = 0, max = null) => {
-      if (!value || value.trim() === '') return null
-      const num = parseFloat(value.trim())
+    const parseNumericField = (
+      value,
+      fieldName,
+      min = 0,
+      max = null,
+    ) => {
+      if (!value || value.trim() === "") return null;
+      const num = parseFloat(value.trim());
       if (isNaN(num)) {
-        throw new Error(`Invalid ${fieldName}: "${value}" is not a number`)
+        throw new Error(
+          `Invalid ${fieldName}: "${value}" is not a number`,
+        );
       }
       if (num < min) {
-        throw new Error(`Invalid ${fieldName}: ${num} is less than minimum ${min}`)
+        throw new Error(
+          `Invalid ${fieldName}: ${num} is less than minimum ${min}`,
+        );
       }
       if (max !== null && num > max) {
-        throw new Error(`Invalid ${fieldName}: ${num} is greater than maximum ${max}`)
+        throw new Error(
+          `Invalid ${fieldName}: ${num} is greater than maximum ${max}`,
+        );
       }
-      return num
-    }
+      return num;
+    };
 
     // Import verses from CSV
     const importCSVVerses = () => {
-      if (csvPreview.value.length === 0) return
-      
-      importingCSV.value = true
-      csvImportStatus.value = null
-      
+      if (csvPreview.value.length === 0) return;
+
+      importingCSV.value = true;
+      csvImportStatus.value = null;
+
       try {
-        const now = new Date().toISOString()
-        let importedCount = 0
-        let updatedCount = 0
-        let importedWithProgressCount = 0
-        let updatedWithProgressCount = 0
-        
+        const now = new Date().toISOString();
+        let importedCount = 0;
+        let updatedCount = 0;
+        let importedWithProgressCount = 0;
+        let updatedWithProgressCount = 0;
+
         // Determine collection IDs to add verses to
-        let collectionIds = []
+        let collectionIds = [];
         if (csvImportFromCollectionsScreen.value) {
-          collectionIds = [...(csvImportTargetCollectionIds.value || [])]
-        } else if (currentCollectionId.value && currentCollectionId.value !== 'master-list') {
-          collectionIds = [currentCollectionId.value]
+          collectionIds = [
+            ...(csvImportTargetCollectionIds.value || []),
+          ];
+        } else if (
+          currentCollectionId.value &&
+          currentCollectionId.value !== "master-list"
+        ) {
+          collectionIds = [currentCollectionId.value];
         }
-        
-        csvPreview.value.forEach(row => {
+
+        csvPreview.value.forEach((row) => {
           // Parse and validate interval and days until review
-          let interval = null
-          let daysUntilNextReview = null
-          
+          let interval = null;
+          let daysUntilNextReview = null;
+
           try {
-            interval = parseNumericField(row.interval, 'Interval', 0, 365)
-            daysUntilNextReview = parseNumericField(row.daysUntilNextReview, 'DaysUntilNextReview', 0, 365)
+            interval = parseNumericField(
+              row.interval,
+              "Interval",
+              0,
+              365,
+            );
+            daysUntilNextReview = parseNumericField(
+              row.daysUntilNextReview,
+              "DaysUntilNextReview",
+              0,
+              365,
+            );
           } catch (error) {
-            throw new Error(`Error in row "${row.reference}": ${error.message}`)
+            throw new Error(
+              `Error in row "${row.reference}": ${error.message}`,
+            );
           }
-          
+
           // Check if verse already exists (by reference)
-          const existingVerse = verses.value.find(v => 
-            v.reference.toLowerCase().trim() === row.reference.toLowerCase().trim()
-          )
-          
+          const existingVerse = verses.value.find(
+            (v) =>
+              v.reference.toLowerCase().trim() ===
+              row.reference.toLowerCase().trim(),
+          );
+
           if (existingVerse) {
             // Update existing verse with memorization data
-            let hasProgressUpdate = false
-            let hasAnyUpdate = false
-            
+            let hasProgressUpdate = false;
+            let hasAnyUpdate = false;
+
             // Update version if provided
             if (row.version && row.version.trim()) {
-              existingVerse.bibleVersion = row.version.trim().toUpperCase()
-              hasAnyUpdate = true
+              existingVerse.bibleVersion = row.version
+                .trim()
+                .toUpperCase();
+              hasAnyUpdate = true;
             }
-            
+
             // Update memorization fields if provided
             if (interval !== null && interval > 0) {
-              existingVerse.memorizationStatus = 'mastered'
-              existingVerse.interval = interval
-              
+              existingVerse.memorizationStatus = "mastered";
+              existingVerse.interval = interval;
+
               // Estimate review count if not already set or if interval suggests more reviews
-              const estimatedCount = estimateReviewCount(interval)
-              if (!existingVerse.reviewCount || existingVerse.reviewCount < estimatedCount) {
-                existingVerse.reviewCount = estimatedCount
+              const estimatedCount = estimateReviewCount(interval);
+              if (
+                !existingVerse.reviewCount ||
+                existingVerse.reviewCount < estimatedCount
+              ) {
+                existingVerse.reviewCount = estimatedCount;
               }
-              
-              hasProgressUpdate = true
-              hasAnyUpdate = true
+
+              hasProgressUpdate = true;
+              hasAnyUpdate = true;
             }
-            
+
             // Update next review date
             if (daysUntilNextReview !== null) {
-              const nextDate = new Date()
-              nextDate.setDate(nextDate.getDate() + daysUntilNextReview)
-              existingVerse.nextReviewDate = nextDate.toISOString()
-              
+              const nextDate = new Date();
+              nextDate.setDate(
+                nextDate.getDate() + daysUntilNextReview,
+              );
+              existingVerse.nextReviewDate = nextDate.toISOString();
+
               // If we have a next review date and interval, set last reviewed date
-              if (interval !== null && interval > 0 && !existingVerse.lastReviewed) {
-                const lastReviewDate = new Date(nextDate)
-                lastReviewDate.setDate(lastReviewDate.getDate() - interval)
-                existingVerse.lastReviewed = lastReviewDate.toISOString()
+              if (
+                interval !== null &&
+                interval > 0 &&
+                !existingVerse.lastReviewed
+              ) {
+                const lastReviewDate = new Date(nextDate);
+                lastReviewDate.setDate(
+                  lastReviewDate.getDate() - interval,
+                );
+                existingVerse.lastReviewed =
+                  lastReviewDate.toISOString();
               }
-              
-              hasProgressUpdate = true
-              hasAnyUpdate = true
-            } else if (interval !== null && interval > 0 && !existingVerse.nextReviewDate) {
+
+              hasProgressUpdate = true;
+              hasAnyUpdate = true;
+            } else if (
+              interval !== null &&
+              interval > 0 &&
+              !existingVerse.nextReviewDate
+            ) {
               // If interval provided but no days until review, set next review to now (due immediately)
-              existingVerse.nextReviewDate = now
-              hasAnyUpdate = true
+              existingVerse.nextReviewDate = now;
+              hasAnyUpdate = true;
             }
-            
+
             // Update ease factor if we're setting up a mastered verse
-            if (interval !== null && interval > 0 && existingVerse.easeFactor === 2.5) {
+            if (
+              interval !== null &&
+              interval > 0 &&
+              existingVerse.easeFactor === 2.5
+            ) {
               // Keep default ease factor for now, or could calculate based on interval
-              existingVerse.easeFactor = 2.5
+              existingVerse.easeFactor = 2.5;
             }
-            
+
             // If importing into collection(s), add to those collections if not already there
-            const targetCollectionIds = csvImportFromCollectionsScreen.value
-              ? (csvImportTargetCollectionIds.value || [])
-              : (currentCollectionId.value && currentCollectionId.value !== 'master-list' ? [currentCollectionId.value] : [])
+            const targetCollectionIds =
+              csvImportFromCollectionsScreen.value
+                ? csvImportTargetCollectionIds.value || []
+                : currentCollectionId.value &&
+                    currentCollectionId.value !== "master-list"
+                  ? [currentCollectionId.value]
+                  : [];
             for (const cid of targetCollectionIds) {
               if (!existingVerse.collectionIds) {
-                existingVerse.collectionIds = []
+                existingVerse.collectionIds = [];
               }
               if (!existingVerse.collectionIds.includes(cid)) {
-                existingVerse.collectionIds.push(cid)
-                hasAnyUpdate = true
+                existingVerse.collectionIds.push(cid);
+                hasAnyUpdate = true;
               }
             }
-            
+
             // Update lastModified timestamp whenever verse is modified
             if (hasAnyUpdate) {
-              existingVerse.lastModified = now
+              existingVerse.lastModified = now;
             }
-            
+
             if (hasProgressUpdate) {
-              updatedWithProgressCount++
+              updatedWithProgressCount++;
             }
-            updatedCount++
-            return
+            updatedCount++;
+            return;
           }
-          
+
           // Create new verse
-          let memorizationStatus = 'unmemorized'
-          let reviewCount = 0
-          let nextReviewDate = null
-          let lastReviewed = null
-          let verseInterval = 0
-          let hasProgress = false
-          
+          let memorizationStatus = "unmemorized";
+          let reviewCount = 0;
+          let nextReviewDate = null;
+          let lastReviewed = null;
+          let verseInterval = 0;
+          let hasProgress = false;
+
           // Set up memorization data if provided
           if (interval !== null && interval > 0) {
-            memorizationStatus = 'mastered'
-            verseInterval = interval
-            reviewCount = estimateReviewCount(interval)
-            hasProgress = true
-            
+            memorizationStatus = "mastered";
+            verseInterval = interval;
+            reviewCount = estimateReviewCount(interval);
+            hasProgress = true;
+
             // Set next review date
             if (daysUntilNextReview !== null) {
-              const nextDate = new Date()
-              nextDate.setDate(nextDate.getDate() + daysUntilNextReview)
-              nextReviewDate = nextDate.toISOString()
-              
+              const nextDate = new Date();
+              nextDate.setDate(
+                nextDate.getDate() + daysUntilNextReview,
+              );
+              nextReviewDate = nextDate.toISOString();
+
               // Estimate last reviewed date
-              const lastReviewDate = new Date(nextDate)
-              lastReviewDate.setDate(lastReviewDate.getDate() - interval)
-              lastReviewed = lastReviewDate.toISOString()
+              const lastReviewDate = new Date(nextDate);
+              lastReviewDate.setDate(
+                lastReviewDate.getDate() - interval,
+              );
+              lastReviewed = lastReviewDate.toISOString();
             } else {
               // If interval provided but no days until review, set next review to now
-              nextReviewDate = now
+              nextReviewDate = now;
             }
           }
-          
+
           const verse = {
-            id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+            id:
+              Date.now().toString() +
+              "-" +
+              Math.random().toString(36).substr(2, 9),
             reference: row.reference.trim(),
             content: row.content.trim(),
-            bibleVersion: row.version ? row.version.trim().toUpperCase() : '',
+            bibleVersion: row.version
+              ? row.version.trim().toUpperCase()
+              : "",
             createdAt: now,
             lastModified: now, // Track when verse was last modified
             memorizationStatus: memorizationStatus,
@@ -3628,475 +4969,552 @@ export default {
             easeFactor: 2.5,
             interval: verseInterval,
             reviewHistory: [],
-            collectionIds: collectionIds
-          }
-          
-          verses.value.unshift(verse)
-          importedCount++
+            collectionIds: collectionIds,
+          };
+
+          verses.value.unshift(verse);
+          importedCount++;
           if (hasProgress) {
-            importedWithProgressCount++
+            importedWithProgressCount++;
           }
-        })
-        
-        saveVerses()
-        
+        });
+
+        saveVerses();
+
         // Build status message
-        let statusMessage = `Successfully imported ${importedCount} verse${importedCount !== 1 ? 's' : ''}`
+        let statusMessage = `Successfully imported ${importedCount} verse${importedCount !== 1 ? "s" : ""}`;
         if (importedWithProgressCount > 0) {
-          statusMessage += ` (${importedWithProgressCount} with memorization progress)`
+          statusMessage += ` (${importedWithProgressCount} with memorization progress)`;
         }
         if (updatedCount > 0) {
-          statusMessage += `. Updated ${updatedCount} existing verse${updatedCount !== 1 ? 's' : ''}`
+          statusMessage += `. Updated ${updatedCount} existing verse${updatedCount !== 1 ? "s" : ""}`;
           if (updatedWithProgressCount > 0) {
-            statusMessage += ` (${updatedWithProgressCount} with memorization progress)`
+            statusMessage += ` (${updatedWithProgressCount} with memorization progress)`;
           }
         }
-        
+
         csvImportStatus.value = {
-          type: 'success',
-          message: statusMessage
-        }
-        
+          type: "success",
+          message: statusMessage,
+        };
+
         // Clear preview after successful import
         setTimeout(() => {
-          csvPreview.value = []
-          csvImportStatus.value = null
-          csvPastedText.value = ''
+          csvPreview.value = [];
+          csvImportStatus.value = null;
+          csvPastedText.value = "";
           if (csvFileInput.value) {
-            csvFileInput.value.value = ''
+            csvFileInput.value.value = "";
           }
-        }, 3000)
+        }, 3000);
       } catch (error) {
         csvImportStatus.value = {
-          type: 'error',
-          message: `Error importing verses: ${error.message}`
-        }
+          type: "error",
+          message: `Error importing verses: ${error.message}`,
+        };
       } finally {
-        importingCSV.value = false
+        importingCSV.value = false;
       }
-    }
+    };
 
     // Edit collection
     const startEditCollection = (collection) => {
       editingCollection.value = {
-        ...collection
-      }
-      showEditCollectionForm.value = true
-    }
+        ...collection,
+      };
+      showEditCollectionForm.value = true;
+    };
 
     // Save edited collection
     const saveEditedCollection = () => {
       if (editingCollection.value && editingCollection.value.name) {
-        const collection = collections.value.find(c => c.id === editingCollection.value.id)
+        const collection = collections.value.find(
+          (c) => c.id === editingCollection.value.id,
+        );
         if (collection) {
-          collection.name = editingCollection.value.name.trim()
-          collection.description = editingCollection.value.description ? editingCollection.value.description.trim() : ''
-          collection.lastModified = new Date().toISOString() // Track when collection was last modified
-          saveCollections()
-          closeEditCollectionForm()
+          collection.name = editingCollection.value.name.trim();
+          collection.description = editingCollection.value.description
+            ? editingCollection.value.description.trim()
+            : "";
+          collection.lastModified = new Date().toISOString(); // Track when collection was last modified
+          saveCollections();
+          closeEditCollectionForm();
         }
       }
-    }
+    };
 
     // Close edit collection form
     const closeEditCollectionForm = () => {
-      showEditCollectionForm.value = false
-      editingCollection.value = null
-    }
+      showEditCollectionForm.value = false;
+      editingCollection.value = null;
+    };
 
     // Handle delete collection from edit modal
     const handleDeleteCollectionFromModal = () => {
-      if (editingCollection.value && deleteCollection(editingCollection.value.id)) {
-        closeEditCollectionForm()
+      if (
+        editingCollection.value &&
+        deleteCollection(editingCollection.value.id)
+      ) {
+        closeEditCollectionForm();
       }
-    }
+    };
 
     // Delete collection
     const deleteCollection = (collectionId) => {
-      if (confirm('Are you sure you want to delete this collection? Verses will not be deleted, but will be removed from this collection.')) {
+      if (
+        confirm(
+          "Are you sure you want to delete this collection? Verses will not be deleted, but will be removed from this collection.",
+        )
+      ) {
         // Mark as deleted for sync FIRST (before removing from array)
-        markCollectionDeleted(collectionId)
-        
+        markCollectionDeleted(collectionId);
+
         // Verify deletion was saved
-        const deletedAfterMark = getDeletedCollections()
-        console.log('[App] Collection deleted, deletion list:', deletedAfterMark, 'should include:', collectionId)
-        
+        const deletedAfterMark = getDeletedCollections();
+        console.log(
+          "[App] Collection deleted, deletion list:",
+          deletedAfterMark,
+          "should include:",
+          collectionId,
+        );
+
         // Remove collection from all verses
-        verses.value.forEach(verse => {
+        verses.value.forEach((verse) => {
           if (verse.collectionIds) {
-            verse.collectionIds = verse.collectionIds.filter(id => id !== collectionId)
+            verse.collectionIds = verse.collectionIds.filter(
+              (id) => id !== collectionId,
+            );
           }
-        })
-        saveVerses()
-        
+        });
+        saveVerses();
+
         // Remove collection
-        collections.value = collections.value.filter(c => c.id !== collectionId)
-        saveCollections()
-        
+        collections.value = collections.value.filter(
+          (c) => c.id !== collectionId,
+        );
+        saveCollections();
+
         // If viewing this collection, go back to all verses
         if (currentCollectionId.value === collectionId) {
-          currentCollectionId.value = null
+          currentCollectionId.value = null;
         }
-        return true
+        return true;
       }
-      return false
-    }
+      return false;
+    };
 
     // Get verses for current view (all or filtered by collection)
     const getVersesForView = () => {
       if (currentCollectionId.value) {
         // Handle special "master-list" collection
-        if (currentCollectionId.value === 'master-list') {
-          return verses.value
+        if (currentCollectionId.value === "master-list") {
+          return verses.value;
         }
         // Handle "no-collection" - verses that don't belong to any collection
-        if (currentCollectionId.value === 'no-collection') {
-          return verses.value.filter(v => {
-            const ids = v.collectionIds
-            return !ids || (Array.isArray(ids) && ids.length === 0)
-          })
+        if (currentCollectionId.value === "no-collection") {
+          return verses.value.filter((v) => {
+            const ids = v.collectionIds;
+            return !ids || (Array.isArray(ids) && ids.length === 0);
+          });
         }
         // Handle "to-learn" - verses that are not yet mastered
-        if (currentCollectionId.value === 'to-learn') {
-          return verses.value.filter(v => v.memorizationStatus !== 'mastered')
+        if (currentCollectionId.value === "to-learn") {
+          return verses.value.filter(
+            (v) => v.memorizationStatus !== "mastered",
+          );
         }
-        return verses.value.filter(v => v.collectionIds && v.collectionIds.includes(currentCollectionId.value))
+        return verses.value.filter(
+          (v) =>
+            v.collectionIds &&
+            v.collectionIds.includes(currentCollectionId.value),
+        );
       }
       // No collection selected: show all verses when on Verses tab with no user collections
-      if (currentView.value === 'collections' && collections.value.length === 0) {
-        return verses.value
+      if (
+        currentView.value === "collections" &&
+        collections.value.length === 0
+      ) {
+        return verses.value;
       }
-      return []
-    }
+      return [];
+    };
 
     // Get collection name by ID
     const getCollectionName = (collectionId) => {
-      if (collectionId === 'master-list') {
-        return 'All Verses'
+      if (collectionId === "master-list") {
+        return "All Verses";
       }
-      if (collectionId === 'no-collection') {
-        return 'Uncategorized'
+      if (collectionId === "no-collection") {
+        return "Uncategorized";
       }
-      if (collectionId === 'to-learn') {
-        return 'Not Yet Mastered'
+      if (collectionId === "to-learn") {
+        return "Not Yet Mastered";
       }
-      const collection = collections.value.find(c => c.id === collectionId)
-      return collection ? collection.name : 'Unknown'
-    }
+      const collection = collections.value.find(
+        (c) => c.id === collectionId,
+      );
+      return collection ? collection.name : "Unknown";
+    };
 
     // Count the number of verses from a reference string (handles ranges like "1:1-3" and comma-separated references like "5:11-12, 6:1-2")
     const countVersesInReference = (reference) => {
-      if (!reference) return 0
-      
-      let totalCount = 0
-      
+      if (!reference) return 0;
+
+      let totalCount = 0;
+
       // Split by commas to handle multiple parts (e.g., "Hebrews 5:11-12, 6:1-2")
-      const parts = reference.split(',').map(part => part.trim())
-      
+      const parts = reference.split(",").map((part) => part.trim());
+
       for (const part of parts) {
         // Match patterns like "Chapter:Verse" or "Chapter:StartVerse-EndVerse"
         // Examples: "5:11-12", "6:1-2", "1:1", "3:16-18"
         // This pattern matches chapter:verse or chapter:startVerse-endVerse
-        const match = part.match(/(\d+):(\d+)(?:-(\d+))?/i)
-        
+        const match = part.match(/(\d+):(\d+)(?:-(\d+))?/i);
+
         if (match) {
-          const startVerse = parseInt(match[2], 10)
-          const endVerse = match[3] ? parseInt(match[3], 10) : startVerse
-          
+          const startVerse = parseInt(match[2], 10);
+          const endVerse = match[3]
+            ? parseInt(match[3], 10)
+            : startVerse;
+
           // Add the count of verses in the range (inclusive)
-          totalCount += Math.max(1, endVerse - startVerse + 1)
+          totalCount += Math.max(1, endVerse - startVerse + 1);
         } else {
           // If no match in this part, assume it's a single verse
           // This handles edge cases where a part doesn't match the pattern
-          totalCount += 1
+          totalCount += 1;
         }
       }
-      
+
       // If we found at least one match, return the total count
       // Otherwise, assume it's a single verse (fallback for unexpected formats)
-      return totalCount > 0 ? totalCount : 1
-    }
+      return totalCount > 0 ? totalCount : 1;
+    };
 
     // Get verse count for a collection (accounts for verse ranges)
     const getCollectionVerseCount = (collectionId) => {
-      let collectionVerses
-      if (collectionId === 'master-list') {
-        collectionVerses = verses.value
-      } else if (collectionId === 'no-collection') {
-        collectionVerses = verses.value.filter(v => {
-          const ids = v.collectionIds
-          return !ids || (Array.isArray(ids) && ids.length === 0)
-        })
-      } else if (collectionId === 'to-learn') {
-        collectionVerses = verses.value.filter(v => v.memorizationStatus !== 'mastered')
+      let collectionVerses;
+      if (collectionId === "master-list") {
+        collectionVerses = verses.value;
+      } else if (collectionId === "no-collection") {
+        collectionVerses = verses.value.filter((v) => {
+          const ids = v.collectionIds;
+          return !ids || (Array.isArray(ids) && ids.length === 0);
+        });
+      } else if (collectionId === "to-learn") {
+        collectionVerses = verses.value.filter(
+          (v) => v.memorizationStatus !== "mastered",
+        );
       } else {
-        collectionVerses = verses.value.filter(v => v.collectionIds && v.collectionIds.includes(collectionId))
+        collectionVerses = verses.value.filter(
+          (v) =>
+            v.collectionIds && v.collectionIds.includes(collectionId),
+        );
       }
       return collectionVerses.reduce((total, verse) => {
-        return total + countVersesInReference(verse.reference)
-      }, 0)
-    }
+        return total + countVersesInReference(verse.reference);
+      }, 0);
+    };
 
     // Get count of verses due for review in a collection
     const getCollectionDueCount = (collectionId) => {
-      let collectionVerses
-      if (collectionId === 'master-list') {
-        collectionVerses = verses.value
-      } else if (collectionId === 'no-collection') {
-        collectionVerses = verses.value.filter(v => {
-          const ids = v.collectionIds
-          return !ids || (Array.isArray(ids) && ids.length === 0)
-        })
-      } else if (collectionId === 'to-learn') {
-        collectionVerses = verses.value.filter(v => v.memorizationStatus !== 'mastered')
+      let collectionVerses;
+      if (collectionId === "master-list") {
+        collectionVerses = verses.value;
+      } else if (collectionId === "no-collection") {
+        collectionVerses = verses.value.filter((v) => {
+          const ids = v.collectionIds;
+          return !ids || (Array.isArray(ids) && ids.length === 0);
+        });
+      } else if (collectionId === "to-learn") {
+        collectionVerses = verses.value.filter(
+          (v) => v.memorizationStatus !== "mastered",
+        );
       } else {
-        collectionVerses = verses.value.filter(v => v.collectionIds && v.collectionIds.includes(collectionId))
+        collectionVerses = verses.value.filter(
+          (v) =>
+            v.collectionIds && v.collectionIds.includes(collectionId),
+        );
       }
-      return collectionVerses.filter(v => isDueForReview(v)).length
-    }
+      return collectionVerses.filter((v) => isDueForReview(v)).length;
+    };
 
     // Edit verse
     const startEditVerse = (verse) => {
       editingVerse.value = {
         ...verse,
-        collectionIds: verse.collectionIds ? [...verse.collectionIds] : []
-      }
-      showEditVerseForm.value = true
-    }
+        collectionIds: verse.collectionIds
+          ? [...verse.collectionIds]
+          : [],
+      };
+      showEditVerseForm.value = true;
+    };
 
     // Save edited verse
     const saveEditedVerse = () => {
-      if (editingVerse.value && editingVerse.value.reference && editingVerse.value.content) {
-        const verse = verses.value.find(v => v.id === editingVerse.value.id)
+      if (
+        editingVerse.value &&
+        editingVerse.value.reference &&
+        editingVerse.value.content
+      ) {
+        const verse = verses.value.find(
+          (v) => v.id === editingVerse.value.id,
+        );
         if (verse) {
-          verse.reference = editingVerse.value.reference.trim()
-          verse.content = editingVerse.value.content.trim()
-          verse.bibleVersion = editingVerse.value.bibleVersion ? editingVerse.value.bibleVersion.trim().toUpperCase() : ''
-          verse.collectionIds = editingVerse.value.collectionIds || []
-          verse.lastModified = new Date().toISOString() // Track when verse was last modified
-          saveVerses()
-          closeEditVerseForm()
+          verse.reference = editingVerse.value.reference.trim();
+          verse.content = editingVerse.value.content.trim();
+          verse.bibleVersion = editingVerse.value.bibleVersion
+            ? editingVerse.value.bibleVersion.trim().toUpperCase()
+            : "";
+          verse.collectionIds =
+            editingVerse.value.collectionIds || [];
+          verse.lastModified = new Date().toISOString(); // Track when verse was last modified
+          saveVerses();
+          closeEditVerseForm();
         }
       }
-    }
+    };
 
     // Close edit verse form
     const closeEditVerseForm = () => {
-      showEditVerseForm.value = false
-      editingVerse.value = null
-    }
+      showEditVerseForm.value = false;
+      editingVerse.value = null;
+    };
 
     // Handle delete verse from edit modal
     const handleDeleteVerseFromModal = () => {
       if (editingVerse.value && deleteVerse(editingVerse.value.id)) {
-        closeEditVerseForm()
+        closeEditVerseForm();
       }
-    }
+    };
 
     // Delete verse
     const deleteVerse = (verseId) => {
-      if (confirm('Are you sure you want to delete this verse?')) {
+      if (confirm("Are you sure you want to delete this verse?")) {
         // Mark as deleted for sync
-        markVerseDeleted(verseId)
-        
-        verses.value = verses.value.filter(v => v.id !== verseId)
-        saveVerses()
-        return true
+        markVerseDeleted(verseId);
+
+        verses.value = verses.value.filter((v) => v.id !== verseId);
+        saveVerses();
+        return true;
       }
-      return false
-    }
+      return false;
+    };
 
     // View collection
     const viewCollection = (collectionId) => {
-      currentCollectionId.value = collectionId
-      pushNavigationState({ view: 'collection', collectionId })
-    }
+      currentCollectionId.value = collectionId;
+      pushNavigationState({ view: "collection", collectionId });
+    };
 
     // Navigate to review list view
     const navigateToReviewList = () => {
-      currentCollectionId.value = null
-      currentView.value = 'review-list'
-      pushNavigationState({ view: 'review-list' })
-    }
+      currentCollectionId.value = null;
+      currentView.value = "review-list";
+      pushNavigationState({ view: "review-list" });
+    };
 
     // Navigate to collections view
     const navigateToCollections = () => {
-      currentCollectionId.value = null
-      currentView.value = 'collections'
-      pushNavigationState({ view: 'collections' })
-    }
+      currentCollectionId.value = null;
+      currentView.value = "collections";
+      pushNavigationState({ view: "collections" });
+    };
 
     // Navigate to search view
     const navigateToSearch = () => {
-      currentCollectionId.value = null
-      currentView.value = 'search'
-      pushNavigationState({ view: 'search' })
-    }
+      currentCollectionId.value = null;
+      currentView.value = "search";
+      pushNavigationState({ view: "search" });
+    };
 
     const clearSearch = () => {
-      searchQuery.value = ''
-    }
+      searchQuery.value = "";
+    };
 
     // Highlight matching text in search results
     const highlightText = (text, matches, fieldName) => {
       if (!matches || matches.length === 0) {
-        return escapeHtml(text)
+        return escapeHtml(text);
       }
-      
+
       // Find matches for this specific field
-      const fieldMatch = matches.find(m => m.key === fieldName)
-      if (!fieldMatch || !fieldMatch.indices || fieldMatch.indices.length === 0) {
-        return escapeHtml(text)
+      const fieldMatch = matches.find((m) => m.key === fieldName);
+      if (
+        !fieldMatch ||
+        !fieldMatch.indices ||
+        fieldMatch.indices.length === 0
+      ) {
+        return escapeHtml(text);
       }
-      
+
       // Sort indices by start position (descending) to avoid index shifting issues
-      const sortedIndices = [...fieldMatch.indices].sort((a, b) => b[0] - a[0])
-      
-      let highlightedText = text
+      const sortedIndices = [...fieldMatch.indices].sort(
+        (a, b) => b[0] - a[0],
+      );
+
+      let highlightedText = text;
       sortedIndices.forEach(([start, end]) => {
-        const before = highlightedText.substring(0, start)
-        const match = highlightedText.substring(start, end + 1)
-        const after = highlightedText.substring(end + 1)
-        highlightedText = before + '<mark class="bg-yellow-200">' + escapeHtml(match) + '</mark>' + after
-      })
-      
-      return highlightedText
-    }
+        const before = highlightedText.substring(0, start);
+        const match = highlightedText.substring(start, end + 1);
+        const after = highlightedText.substring(end + 1);
+        highlightedText =
+          before +
+          '<mark class="bg-yellow-200">' +
+          escapeHtml(match) +
+          "</mark>" +
+          after;
+      });
+
+      return highlightedText;
+    };
 
     // Escape HTML to prevent XSS
     const escapeHtml = (text) => {
-      const div = document.createElement('div')
-      div.textContent = text
-      return div.innerHTML
-    }
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    };
 
     // Copy verse to clipboard in the format: content\nreference
     const copyVerse = async (verse) => {
       // Handle Vue refs - if verse is a ref, get its value
-      let verseObj = verse
-      if (verse && typeof verse === 'object' && 'value' !== undefined && Object.prototype.hasOwnProperty.call(verse, 'value')) {
-        verseObj = verse.value
+      let verseObj = verse;
+      if (
+        verse &&
+        typeof verse === "object" &&
+        "value" !== undefined &&
+        Object.prototype.hasOwnProperty.call(verse, "value")
+      ) {
+        verseObj = verse.value;
       }
-      
+
       if (!verseObj || !verseObj.content || !verseObj.reference) {
-        console.error('No verse provided to copyVerse', verse, verseObj)
-        showCopyToast('Error: No verse to copy', true)
-        return
+        console.error(
+          "No verse provided to copyVerse",
+          verse,
+          verseObj,
+        );
+        showCopyToast("Error: No verse to copy", true);
+        return;
       }
-      
-      const textToCopy = `${verseObj.content}\n${verseObj.reference}`
-      
+
+      const textToCopy = `${verseObj.content}\n${verseObj.reference}`;
+
       try {
-        await navigator.clipboard.writeText(textToCopy)
-        showCopyToast('Verse copied to clipboard')
+        await navigator.clipboard.writeText(textToCopy);
+        showCopyToast("Verse copied to clipboard");
       } catch (err) {
-        console.error('Failed to copy verse:', err)
+        console.error("Failed to copy verse:", err);
         // Fallback for older browsers
-        const textArea = document.createElement('textarea')
-        textArea.value = textToCopy
-        textArea.style.position = 'fixed'
-        textArea.style.opacity = '0'
-        document.body.appendChild(textArea)
-        textArea.select()
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
         try {
-          document.execCommand('copy')
-          showCopyToast('Verse copied to clipboard')
+          document.execCommand("copy");
+          showCopyToast("Verse copied to clipboard");
         } catch (fallbackErr) {
-          console.error('Fallback copy failed:', fallbackErr)
-          showCopyToast('Failed to copy verse', true)
+          console.error("Fallback copy failed:", fallbackErr);
+          showCopyToast("Failed to copy verse", true);
         }
-        document.body.removeChild(textArea)
+        document.body.removeChild(textArea);
       }
-    }
+    };
 
     // Show copy toast notification
     const showCopyToast = (message, isError = false) => {
-      copyToast.value = { show: true, message, isError }
+      copyToast.value = { show: true, message, isError };
       setTimeout(() => {
-        copyToast.value.show = false
-      }, 2000)
-    }
+        copyToast.value.show = false;
+      }, 2000);
+    };
 
     // View all verses (back from collection view)
     const viewAllVerses = () => {
-      currentCollectionId.value = null
+      currentCollectionId.value = null;
       // Keep current view (review-list or collections)
-      pushNavigationState({ view: currentView.value })
-    }
+      pushNavigationState({ view: currentView.value });
+    };
 
     // Check if we can switch to a given memorization mode
     const canSwitchToMode = (targetMode) => {
-      if (!memorizingVerse.value || !memorizationMode.value) return false
-      
+      if (!memorizingVerse.value || !memorizationMode.value)
+        return false;
+
       // Can switch to any mode when actively memorizing
       // This allows free navigation between learn, memorize, and master modes
-      return true
-    }
+      return true;
+    };
 
     // Switch to a different memorization mode
     const switchToMemorizationMode = (mode) => {
-      if (!memorizingVerse.value) return
-      if (!canSwitchToMode(mode)) return
-      
-      startMemorization(memorizingVerse.value, mode)
-    }
+      if (!memorizingVerse.value) return;
+      if (!canSwitchToMode(mode)) return;
+
+      startMemorization(memorizingVerse.value, mode);
+    };
 
     // Start memorizing a verse
     const startMemorization = (verse, mode) => {
-      memorizingVerse.value = verse
-      memorizationMode.value = mode
-      reviewMistakes.value = 0
-      
+      memorizingVerse.value = verse;
+      memorizationMode.value = mode;
+      reviewMistakes.value = 0;
+
       // Store the source state for navigation (only if not already set, to preserve it during mode advancement)
       if (!memorizationSourceState.value) {
         if (currentCollectionId.value) {
           // Coming from a collection - store collection state
           memorizationSourceState.value = {
-            view: 'collection',
-            collectionId: currentCollectionId.value
-          }
-        } else if (currentView.value === 'review-list') {
+            view: "collection",
+            collectionId: currentCollectionId.value,
+          };
+        } else if (currentView.value === "review-list") {
           // Coming from review list - store review list state
           memorizationSourceState.value = {
-            view: 'review-list'
-          }
-        } else if (currentView.value === 'collections') {
+            view: "review-list",
+          };
+        } else if (currentView.value === "collections") {
           // Coming from collections view - store collections state
           memorizationSourceState.value = {
-            view: 'collections'
-          }
+            view: "collections",
+          };
         }
       }
-      
+
       // Split verse content into words by whitespace
-      const words = verse.content.split(/\s+/).filter(word => word.trim().length > 0)
-      
+      const words = verse.content
+        .split(/\s+/)
+        .filter((word) => word.trim().length > 0);
+
       reviewWords.value = words.map((word, index) => {
         // Get all required letters (handles hyphenated words like "peace-loving")
-        const requiredLetters = getRequiredLetters(word)
+        const requiredLetters = getRequiredLetters(word);
         // Keep firstLetter for backward compatibility
-        const firstLetter = requiredLetters[0]
+        const firstLetter = requiredLetters[0];
         // Store word parts for progressive display
-        const { parts, separators } = splitWordParts(word)
-        
-        let revealed = false
-        let visible = false
-        
+        const { parts, separators } = splitWordParts(word);
+
+        let revealed = false;
+        let visible = false;
+
         // Set initial state based on mode
-        if (mode === 'learn') {
+        if (mode === "learn") {
           // Learn mode: all words visible in grey, none revealed initially
-          visible = true
-          revealed = false
-        } else if (mode === 'memorize') {
+          visible = true;
+          revealed = false;
+        } else if (mode === "memorize") {
           // Memorize mode: every other word visible (odd indices), even indices hidden
-          visible = index % 2 === 0
-          revealed = false
-        } else if (mode === 'master') {
+          visible = index % 2 === 0;
+          revealed = false;
+        } else if (mode === "master") {
           // Master mode: all words hidden
-          visible = false
-          revealed = false
+          visible = false;
+          revealed = false;
         }
-        
+
         return {
           text: word,
           revealed: revealed,
@@ -4107,134 +5525,159 @@ export default {
           parts: parts,
           separators: separators,
           index: index,
-          incorrect: false
-        }
-      })
-      
-      typedLetter.value = ''
-      
+          incorrect: false,
+        };
+      });
+
+      typedLetter.value = "";
+
       // Push navigation state
       pushNavigationState({
-        view: 'memorization',
+        view: "memorization",
         verseId: verse.id,
         mode: mode,
-        collectionId: currentCollectionId.value
-      })
-      
+        collectionId: currentCollectionId.value,
+      });
+
       // Focus input after DOM update
       nextTick(() => {
         if (reviewInput.value) {
-          reviewInput.value.focus()
+          reviewInput.value.focus();
         }
-      })
-    }
+      });
+    };
 
     // Start reviewing a verse (only for mastered verses)
     const startReview = (verse) => {
-      if (verse.memorizationStatus !== 'mastered') {
+      if (verse.memorizationStatus !== "mastered") {
         // If not mastered, start memorization instead
-        const nextMode = getNextMemorizationMode(verse.memorizationStatus)
+        const nextMode = getNextMemorizationMode(
+          verse.memorizationStatus,
+        );
         if (nextMode) {
-          startMemorization(verse, nextMode)
+          startMemorization(verse, nextMode);
         }
-        return
+        return;
       }
-      
+
       // IMPORTANT: Before starting a new review, ensure any previous review was saved
       // This handles the case where nextVerse() was called but save didn't complete
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
-        console.log('[startReview] Saving previous review before starting new one')
-        const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
+      if (
+        reviewingVerse.value &&
+        !currentReviewSaved.value &&
+        allWordsRevealed.value &&
+        meetsAccuracyRequirement.value
+      ) {
+        console.log(
+          "[startReview] Saving previous review before starting new one",
+        );
+        const prevVerse = verses.value.find(
+          (v) => v.id === reviewingVerse.value.id,
+        );
         if (prevVerse) {
-          const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          const totalWords = reviewWords.value.length;
+          const grade = calculateGrade(
+            totalWords,
+            reviewMistakes.value,
+          );
+
           // Check if verse was already reviewed today
-          const wasAlreadyReviewedToday = wasReviewedToday(prevVerse)
-          
+          const wasAlreadyReviewedToday = wasReviewedToday(prevVerse);
+
           // Only update algorithm-affecting fields if this is the first review of the day
           if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(prevVerse, grade, true)
-            
-            prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1
-            prevVerse.nextReviewDate = reviewData.nextReviewDate
-            prevVerse.easeFactor = reviewData.easeFactor
-            prevVerse.interval = reviewData.interval
+            const reviewData = calculateNextReviewDate(
+              prevVerse,
+              grade,
+              true,
+            );
+
+            prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1;
+            prevVerse.nextReviewDate = reviewData.nextReviewDate;
+            prevVerse.easeFactor = reviewData.easeFactor;
+            prevVerse.interval = reviewData.interval;
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
-          prevVerse.lastReviewed = new Date().toISOString()
-          prevVerse.lastGrade = grade
-          prevVerse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-          prevVerse.lastModified = new Date().toISOString()
-          
-          if (!prevVerse.reviewHistory) prevVerse.reviewHistory = []
+          prevVerse.lastReviewed = new Date().toISOString();
+          prevVerse.lastGrade = grade;
+          prevVerse.lastAccuracy = (
+            ((totalWords - reviewMistakes.value) / totalWords) *
+            100
+          ).toFixed(1);
+          prevVerse.lastModified = new Date().toISOString();
+
+          if (!prevVerse.reviewHistory) prevVerse.reviewHistory = [];
           prevVerse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
             accuracy: parseFloat(prevVerse.lastAccuracy),
-            mistakes: reviewMistakes.value
-          })
-          
-          currentReviewSaved.value = true
-          saveVerses()
-          console.log('[startReview] Previous review saved', { lastReviewed: prevVerse.lastReviewed })
+            mistakes: reviewMistakes.value,
+          });
+
+          currentReviewSaved.value = true;
+          saveVerses();
+          console.log("[startReview] Previous review saved", {
+            lastReviewed: prevVerse.lastReviewed,
+          });
         }
       }
-      
-      reviewingVerse.value = verse
-      reviewMistakes.value = 0 // Reset mistake counter
-      currentReviewSaved.value = false // Reset saved flag for new review
-      
+
+      reviewingVerse.value = verse;
+      reviewMistakes.value = 0; // Reset mistake counter
+      currentReviewSaved.value = false; // Reset saved flag for new review
+
       // Store the source list and state for navigation (only if not already set, to preserve it during sequential navigation)
-      const isSequentialNavigation = !!reviewSourceList.value
-      
+      const isSequentialNavigation = !!reviewSourceList.value;
+
       if (!reviewSourceList.value) {
         // Store the original source state
         if (currentCollectionId.value) {
           // Coming from a collection - store sorted collection verses (what user sees)
-          reviewSourceList.value = sortedVerses.value
+          reviewSourceList.value = sortedVerses.value;
           reviewSourceState.value = {
-            view: 'collection',
-            collectionId: currentCollectionId.value
-          }
-        } else if (currentView.value === 'review-list') {
+            view: "collection",
+            collectionId: currentCollectionId.value,
+          };
+        } else if (currentView.value === "review-list") {
           // Coming from review list - store review list verses (what user sees)
-          reviewSourceList.value = reviewSortedVerses.value
+          reviewSourceList.value = reviewSortedVerses.value;
           reviewSourceState.value = {
-            view: 'review-list'
-          }
+            view: "review-list",
+          };
         } else {
           // Fallback: no specific source
-          reviewSourceList.value = null
-          reviewSourceState.value = null
+          reviewSourceList.value = null;
+          reviewSourceState.value = null;
         }
       }
-      
+
       // Push or replace navigation state
       const navigationState = {
-        view: 'review',
+        view: "review",
         verseId: verse.id,
-        collectionId: currentCollectionId.value
-      }
-      
+        collectionId: currentCollectionId.value,
+      };
+
       if (isSequentialNavigation) {
         // Replace state when navigating sequentially (from nextVerse)
-        replaceNavigationState(navigationState)
+        replaceNavigationState(navigationState);
       } else {
         // Push state when starting a new review session
-        pushNavigationState(navigationState)
+        pushNavigationState(navigationState);
       }
       // Split verse content into words by whitespace
-      const words = verse.content.split(/\s+/).filter(word => word.trim().length > 0)
-      reviewWords.value = words.map(word => {
+      const words = verse.content
+        .split(/\s+/)
+        .filter((word) => word.trim().length > 0);
+      reviewWords.value = words.map((word) => {
         // Get all required letters (handles hyphenated words like "peace-loving")
-        const requiredLetters = getRequiredLetters(word)
+        const requiredLetters = getRequiredLetters(word);
         // Keep firstLetter for backward compatibility
-        const firstLetter = requiredLetters[0]
+        const firstLetter = requiredLetters[0];
         // Store word parts for progressive display
-        const { parts, separators } = splitWordParts(word)
-        
+        const { parts, separators } = splitWordParts(word);
+
         return {
           text: word,
           revealed: false,
@@ -4243,198 +5686,233 @@ export default {
           typedLettersIndex: 0, // Track which letter in the sequence we're on
           parts: parts,
           separators: separators,
-          incorrect: false
-        }
-      })
-      typedLetter.value = ''
-      
+          incorrect: false,
+        };
+      });
+      typedLetter.value = "";
+
       // Focus input after DOM update
       nextTick(() => {
         if (reviewInput.value) {
-          reviewInput.value.focus()
+          reviewInput.value.focus();
         }
-      })
-    }
+      });
+    };
 
     // Advance to next memorization mode
     const advanceToNextMode = () => {
-      if (!memorizingVerse.value || !allWordsRevealed.value) return
-      
+      if (!memorizingVerse.value || !allWordsRevealed.value) return;
+
       // Require 90% accuracy to advance
-      if (!meetsAccuracyRequirement.value) return
-      
-      const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
+      if (!meetsAccuracyRequirement.value) return;
+
+      const verse = verses.value.find(
+        (v) => v.id === memorizingVerse.value.id,
+      );
       if (verse) {
-        const currentStatus = verse.memorizationStatus || 'unmemorized'
-        let newStatus = currentStatus
-        
+        const currentStatus =
+          verse.memorizationStatus || "unmemorized";
+        let newStatus = currentStatus;
+
         // Progress through memorization stages based on the mode just completed
         // This allows skipping ahead - if you complete a mode, you advance to that stage
-        const statusOrder = { 'unmemorized': 0, 'learned': 1, 'memorized': 2, 'mastered': 3 }
-        const currentOrder = statusOrder[currentStatus] || 0
-        
-        if (memorizationMode.value === 'learn') {
+        const statusOrder = {
+          unmemorized: 0,
+          learned: 1,
+          memorized: 2,
+          mastered: 3,
+        };
+        const currentOrder = statusOrder[currentStatus] || 0;
+
+        if (memorizationMode.value === "learn") {
           // Completing learn mode sets status to at least 'learned'
           if (currentOrder < 1) {
-            newStatus = 'learned'
+            newStatus = "learned";
           }
-        } else if (memorizationMode.value === 'memorize') {
+        } else if (memorizationMode.value === "memorize") {
           // Completing memorize mode sets status to at least 'memorized'
           if (currentOrder < 2) {
-            newStatus = 'memorized'
+            newStatus = "memorized";
           }
-        } else if (memorizationMode.value === 'master') {
+        } else if (memorizationMode.value === "master") {
           // Completing master mode sets status to 'mastered'
-          newStatus = 'mastered'
+          newStatus = "mastered";
           // Initialize spaced repetition fields when mastering
           if (!verse.nextReviewDate) {
-            const tomorrow = new Date()
-            tomorrow.setDate(tomorrow.getDate() + 1)
-            verse.nextReviewDate = tomorrow.toISOString()
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            verse.nextReviewDate = tomorrow.toISOString();
           }
-          if (verse.reviewCount === undefined || verse.reviewCount === null) {
-            verse.reviewCount = 0
+          if (
+            verse.reviewCount === undefined ||
+            verse.reviewCount === null
+          ) {
+            verse.reviewCount = 0;
           }
           if (!verse.easeFactor) {
-            verse.easeFactor = 2.5
+            verse.easeFactor = 2.5;
           }
-          if (verse.interval === undefined || verse.interval === null) {
-            verse.interval = 0
+          if (
+            verse.interval === undefined ||
+            verse.interval === null
+          ) {
+            verse.interval = 0;
           }
           if (!verse.reviewHistory) {
-            verse.reviewHistory = []
+            verse.reviewHistory = [];
           }
         }
-        
-        verse.memorizationStatus = newStatus
-        verse.lastModified = new Date().toISOString() // Track when verse was last modified
-        saveVerses()
-        
+
+        verse.memorizationStatus = newStatus;
+        verse.lastModified = new Date().toISOString(); // Track when verse was last modified
+        saveVerses();
+
         // Start next mode
-        const nextMode = getNextMemorizationMode(newStatus)
+        const nextMode = getNextMemorizationMode(newStatus);
         if (nextMode) {
-          startMemorization(verse, nextMode)
+          startMemorization(verse, nextMode);
         } else {
           // If no next mode, exit
-          exitMemorization()
+          exitMemorization();
         }
       }
-    }
+    };
 
     // Exit memorization mode
     const exitMemorization = () => {
       // Update memorization status if all words were revealed and accuracy requirement is met
-      if (memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
-        const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
+      if (
+        memorizingVerse.value &&
+        allWordsRevealed.value &&
+        meetsAccuracyRequirement.value
+      ) {
+        const verse = verses.value.find(
+          (v) => v.id === memorizingVerse.value.id,
+        );
         if (verse) {
-          const currentStatus = verse.memorizationStatus || 'unmemorized'
-          
+          const currentStatus =
+            verse.memorizationStatus || "unmemorized";
+
           // If completing master mode, mark as mastered and initialize spaced repetition
-          if (memorizationMode.value === 'master' && currentStatus !== 'mastered') {
-            verse.memorizationStatus = 'mastered'
+          if (
+            memorizationMode.value === "master" &&
+            currentStatus !== "mastered"
+          ) {
+            verse.memorizationStatus = "mastered";
             // Initialize spaced repetition fields when mastering
             if (!verse.nextReviewDate) {
-              const tomorrow = new Date()
-              tomorrow.setDate(tomorrow.getDate() + 1)
-              verse.nextReviewDate = tomorrow.toISOString()
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              verse.nextReviewDate = tomorrow.toISOString();
             }
-            if (verse.reviewCount === undefined || verse.reviewCount === null) {
-              verse.reviewCount = 0
+            if (
+              verse.reviewCount === undefined ||
+              verse.reviewCount === null
+            ) {
+              verse.reviewCount = 0;
             }
             if (!verse.easeFactor) {
-              verse.easeFactor = 2.5
+              verse.easeFactor = 2.5;
             }
-            if (verse.interval === undefined || verse.interval === null) {
-              verse.interval = 0
+            if (
+              verse.interval === undefined ||
+              verse.interval === null
+            ) {
+              verse.interval = 0;
             }
             if (!verse.reviewHistory) {
-              verse.reviewHistory = []
+              verse.reviewHistory = [];
             }
-            verse.lastModified = new Date().toISOString() // Track when verse was last modified
-            saveVerses()
+            verse.lastModified = new Date().toISOString(); // Track when verse was last modified
+            saveVerses();
           }
         }
       }
-      
+
       // Get the source state before clearing it
-      const sourceState = memorizationSourceState.value
-      
+      const sourceState = memorizationSourceState.value;
+
       // Clear source tracking
-      memorizationSourceState.value = null
-      
+      memorizationSourceState.value = null;
+
       // Reset memorization state
-      memorizingVerse.value = null
-      memorizationMode.value = null
-      reviewWords.value = []
-      typedLetter.value = ''
-      reviewMistakes.value = 0
-      
+      memorizingVerse.value = null;
+      memorizationMode.value = null;
+      reviewWords.value = [];
+      typedLetter.value = "";
+      reviewMistakes.value = 0;
+
       // Navigate to source state
       if (sourceState) {
         if (sourceState.collectionId) {
-          currentCollectionId.value = sourceState.collectionId
-          pushNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
-        } else if (sourceState.view === 'review-list') {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
-        } else if (sourceState.view === 'collections') {
-          currentCollectionId.value = null
-          currentView.value = 'collections'
-          pushNavigationState({ view: 'collections' })
-        } else if (sourceState.view === 'search') {
-          currentCollectionId.value = null
-          currentView.value = 'search'
-          pushNavigationState({ view: 'search' })
+          currentCollectionId.value = sourceState.collectionId;
+          pushNavigationState({
+            view: "collection",
+            collectionId: sourceState.collectionId,
+          });
+        } else if (sourceState.view === "review-list") {
+          currentCollectionId.value = null;
+          currentView.value = "review-list";
+          pushNavigationState({ view: "review-list" });
+        } else if (sourceState.view === "collections") {
+          currentCollectionId.value = null;
+          currentView.value = "collections";
+          pushNavigationState({ view: "collections" });
+        } else if (sourceState.view === "search") {
+          currentCollectionId.value = null;
+          currentView.value = "search";
+          pushNavigationState({ view: "search" });
         } else {
           // Fallback
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          currentCollectionId.value = null;
+          currentView.value = "review-list";
+          pushNavigationState({ view: "review-list" });
         }
       } else {
         // Fallback: use browser back if available, otherwise go to collections
         if (!isHandlingBackButton && window.history.length > 1) {
-          window.history.back()
+          window.history.back();
         } else {
-          currentCollectionId.value = null
-          currentView.value = 'collections'
-          pushNavigationState({ view: 'collections' })
+          currentCollectionId.value = null;
+          currentView.value = "collections";
+          pushNavigationState({ view: "collections" });
         }
       }
-    }
+    };
 
     // Retry memorization (reset without saving)
     const retryMemorization = () => {
       if (memorizingVerse.value) {
-        const verse = memorizingVerse.value
-        const currentMode = memorizationMode.value
-        startMemorization(verse, currentMode)
+        const verse = memorizingVerse.value;
+        const currentMode = memorizationMode.value;
+        startMemorization(verse, currentMode);
       }
-    }
+    };
 
     // Retry current review
     const retryReview = () => {
       if (reviewingVerse.value) {
         // Reset the review without saving
-        const verse = reviewingVerse.value
-        startReview(verse)
+        const verse = reviewingVerse.value;
+        startReview(verse);
       }
-    }
+    };
 
     // Move to next verse for review
     const nextVerse = () => {
-      console.log('[nextVerse] Called', {
+      console.log("[nextVerse] Called", {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
-        verseReference: reviewingVerse.value?.reference
-      })
-      
+        verseReference: reviewingVerse.value?.reference,
+      });
+
       if (reviewingVerse.value) {
         // Save current review first (only if accuracy requirement is met and not already saved)
-        const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
-        
-        console.log('[nextVerse] Verse lookup', {
+        const verse = verses.value.find(
+          (v) => v.id === reviewingVerse.value.id,
+        );
+
+        console.log("[nextVerse] Verse lookup", {
           found: !!verse,
           verseId: verse?.id,
           currentReviewSaved: currentReviewSaved.value,
@@ -4443,56 +5921,71 @@ export default {
           accuracy: accuracy.value,
           reviewMistakes: reviewMistakes.value,
           totalWords: reviewWords.value.length,
-          lastReviewedBefore: verse?.lastReviewed
-        })
-        
-        if (verse && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
-          console.log('[nextVerse] Entering save block')
-          
-          const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          lastReviewedBefore: verse?.lastReviewed,
+        });
+
+        if (
+          verse &&
+          !currentReviewSaved.value &&
+          allWordsRevealed.value &&
+          meetsAccuracyRequirement.value
+        ) {
+          console.log("[nextVerse] Entering save block");
+
+          const totalWords = reviewWords.value.length;
+          const grade = calculateGrade(
+            totalWords,
+            reviewMistakes.value,
+          );
+
           // Check if verse was already reviewed today
-          const wasAlreadyReviewedToday = wasReviewedToday(verse)
-          
-          const newLastReviewed = new Date().toISOString()
-          
-          console.log('[nextVerse] Before update', {
+          const wasAlreadyReviewedToday = wasReviewedToday(verse);
+
+          const newLastReviewed = new Date().toISOString();
+
+          console.log("[nextVerse] Before update", {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
             nextReviewDate: verse.nextReviewDate,
             interval: verse.interval,
             easeFactor: verse.easeFactor,
-            wasAlreadyReviewedToday: wasAlreadyReviewedToday
-          })
-          
+            wasAlreadyReviewedToday: wasAlreadyReviewedToday,
+          });
+
           // Only update algorithm-affecting fields if this is the first review of the day
           if (!wasAlreadyReviewedToday) {
             // Calculate next review date and update ease factor
-            const reviewData = calculateNextReviewDate(verse, grade, true)
-            
-            verse.reviewCount = (verse.reviewCount || 0) + 1
-            verse.nextReviewDate = reviewData.nextReviewDate
-            verse.easeFactor = reviewData.easeFactor
-            verse.interval = reviewData.interval
+            const reviewData = calculateNextReviewDate(
+              verse,
+              grade,
+              true,
+            );
+
+            verse.reviewCount = (verse.reviewCount || 0) + 1;
+            verse.nextReviewDate = reviewData.nextReviewDate;
+            verse.easeFactor = reviewData.easeFactor;
+            verse.interval = reviewData.interval;
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
-          verse.lastReviewed = newLastReviewed
-          verse.lastGrade = grade
-          verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-          verse.lastModified = new Date().toISOString() // Track when verse was last modified
-          
+          verse.lastReviewed = newLastReviewed;
+          verse.lastGrade = grade;
+          verse.lastAccuracy = (
+            ((totalWords - reviewMistakes.value) / totalWords) *
+            100
+          ).toFixed(1);
+          verse.lastModified = new Date().toISOString(); // Track when verse was last modified
+
           // Track review history
-          if (!verse.reviewHistory) verse.reviewHistory = []
+          if (!verse.reviewHistory) verse.reviewHistory = [];
           verse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
             accuracy: parseFloat(verse.lastAccuracy),
-            mistakes: reviewMistakes.value
-          })
-          
-          console.log('[nextVerse] After update', {
+            mistakes: reviewMistakes.value,
+          });
+
+          console.log("[nextVerse] After update", {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
             newLastReviewed: newLastReviewed,
@@ -4501,952 +5994,1194 @@ export default {
             easeFactor: verse.easeFactor,
             lastGrade: verse.lastGrade,
             lastAccuracy: verse.lastAccuracy,
-            reviewHistoryLength: verse.reviewHistory.length
-          })
-          
-          currentReviewSaved.value = true // Mark as saved to prevent duplicate saves
-          
-          console.log('[nextVerse] Calling saveVerses()')
-          saveVerses()
-          
+            reviewHistoryLength: verse.reviewHistory.length,
+          });
+
+          currentReviewSaved.value = true; // Mark as saved to prevent duplicate saves
+
+          console.log("[nextVerse] Calling saveVerses()");
+          saveVerses();
+
           // Verify after save
-          const savedVerse = verses.value.find(v => v.id === verse.id)
-          console.log('[nextVerse] After saveVerses()', {
+          const savedVerse = verses.value.find(
+            (v) => v.id === verse.id,
+          );
+          console.log("[nextVerse] After saveVerses()", {
             lastReviewed: savedVerse?.lastReviewed,
-            matches: savedVerse?.lastReviewed === newLastReviewed
-          })
-          
+            matches: savedVerse?.lastReviewed === newLastReviewed,
+          });
+
           // Double-check localStorage directly
           setTimeout(() => {
-            const stored = localStorage.getItem(STORAGE_KEY)
+            const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {
               try {
-                const parsed = JSON.parse(stored)
-                const storedVerse = parsed.find(v => v.id === verse.id)
-                console.log('[nextVerse] localStorage verification (after 100ms)', {
-                  found: !!storedVerse,
-                  lastReviewed: storedVerse?.lastReviewed,
-                  matches: storedVerse?.lastReviewed === newLastReviewed,
-                  verseId: verse.id,
-                  reference: verse.reference
-                })
+                const parsed = JSON.parse(stored);
+                const storedVerse = parsed.find(
+                  (v) => v.id === verse.id,
+                );
+                console.log(
+                  "[nextVerse] localStorage verification (after 100ms)",
+                  {
+                    found: !!storedVerse,
+                    lastReviewed: storedVerse?.lastReviewed,
+                    matches:
+                      storedVerse?.lastReviewed === newLastReviewed,
+                    verseId: verse.id,
+                    reference: verse.reference,
+                  },
+                );
               } catch (e) {
-                console.error('[nextVerse] Error parsing localStorage', e)
+                console.error(
+                  "[nextVerse] Error parsing localStorage",
+                  e,
+                );
               }
             }
-          }, 100)
+          }, 100);
         } else {
-          console.log('[nextVerse] NOT saving - conditions not met', {
+          console.log("[nextVerse] NOT saving - conditions not met", {
             hasVerse: !!verse,
             currentReviewSaved: currentReviewSaved.value,
             allWordsRevealed: allWordsRevealed.value,
-            meetsAccuracyRequirement: meetsAccuracyRequirement.value
-          })
+            meetsAccuracyRequirement: meetsAccuracyRequirement.value,
+          });
         }
-        
+
         // Find next verse in the source list
-        let sourceVerses = null
-        
-        if (reviewSourceList.value && reviewSourceList.value.length > 0) {
+        let sourceVerses = null;
+
+        if (
+          reviewSourceList.value &&
+          reviewSourceList.value.length > 0
+        ) {
           // Use the source list from where we came
-          sourceVerses = reviewSourceList.value
+          sourceVerses = reviewSourceList.value;
         } else {
           // Fallback: use all verses due for review
-          sourceVerses = verses.value.filter(v => isDueForReview(v))
+          sourceVerses = verses.value.filter((v) =>
+            isDueForReview(v),
+          );
         }
-        
+
         if (sourceVerses.length > 0) {
           // Find current verse index in source list
-          const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
-          
+          const currentIndex = sourceVerses.findIndex(
+            (v) => v.id === reviewingVerse.value.id,
+          );
+
           if (currentIndex !== -1) {
             // Find next verse in the list
-            const nextIndex = (currentIndex + 1) % sourceVerses.length
-            startReview(sourceVerses[nextIndex])
+            const nextIndex =
+              (currentIndex + 1) % sourceVerses.length;
+            startReview(sourceVerses[nextIndex]);
           } else {
             // Current verse not in source list, go to first verse
-            startReview(sourceVerses[0])
+            startReview(sourceVerses[0]);
           }
         } else {
           // No more verses in source list, exit review
-          console.log('[nextVerse] No more verses, calling exitReview()')
-          exitReview()
+          console.log(
+            "[nextVerse] No more verses, calling exitReview()",
+          );
+          exitReview();
         }
       } else {
-        console.log('[nextVerse] No reviewingVerse.value, cannot proceed')
+        console.log(
+          "[nextVerse] No reviewingVerse.value, cannot proceed",
+        );
       }
-    }
+    };
 
     // Exit review mode
     const exitReview = () => {
-      console.log('[exitReview] Called', {
+      console.log("[exitReview] Called", {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
         verseReference: reviewingVerse.value?.reference,
         currentReviewSaved: currentReviewSaved.value,
         allWordsRevealed: allWordsRevealed.value,
-        meetsAccuracyRequirement: meetsAccuracyRequirement.value
-      })
-      
+        meetsAccuracyRequirement: meetsAccuracyRequirement.value,
+      });
+
       // Mark verse as reviewed if all words were revealed and accuracy requirement is met (and not already saved)
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
-        const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
-        console.log('[exitReview] Saving review', {
+      if (
+        reviewingVerse.value &&
+        !currentReviewSaved.value &&
+        allWordsRevealed.value &&
+        meetsAccuracyRequirement.value
+      ) {
+        const verse = verses.value.find(
+          (v) => v.id === reviewingVerse.value.id,
+        );
+        console.log("[exitReview] Saving review", {
           found: !!verse,
           verseId: verse?.id,
-          lastReviewedBefore: verse?.lastReviewed
-        })
-        
+          lastReviewedBefore: verse?.lastReviewed,
+        });
+
         if (verse) {
-          const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          const totalWords = reviewWords.value.length;
+          const grade = calculateGrade(
+            totalWords,
+            reviewMistakes.value,
+          );
+
           // Check if verse was already reviewed today
-          const wasAlreadyReviewedToday = wasReviewedToday(verse)
-          
-          const newLastReviewed = new Date().toISOString()
-          
-          console.log('[exitReview] Before update', {
+          const wasAlreadyReviewedToday = wasReviewedToday(verse);
+
+          const newLastReviewed = new Date().toISOString();
+
+          console.log("[exitReview] Before update", {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
             nextReviewDate: verse.nextReviewDate,
             interval: verse.interval,
-            wasAlreadyReviewedToday: wasAlreadyReviewedToday
-          })
-          
+            wasAlreadyReviewedToday: wasAlreadyReviewedToday,
+          });
+
           // Only update algorithm-affecting fields if this is the first review of the day
           if (!wasAlreadyReviewedToday) {
             // Calculate next review date and update ease factor
-            const reviewData = calculateNextReviewDate(verse, grade, true)
-            
-            verse.reviewCount = (verse.reviewCount || 0) + 1
-            verse.nextReviewDate = reviewData.nextReviewDate
-            verse.easeFactor = reviewData.easeFactor
-            verse.interval = reviewData.interval
+            const reviewData = calculateNextReviewDate(
+              verse,
+              grade,
+              true,
+            );
+
+            verse.reviewCount = (verse.reviewCount || 0) + 1;
+            verse.nextReviewDate = reviewData.nextReviewDate;
+            verse.easeFactor = reviewData.easeFactor;
+            verse.interval = reviewData.interval;
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
-          verse.lastReviewed = newLastReviewed
-          verse.lastGrade = grade
-          verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-          verse.lastModified = new Date().toISOString() // Track when verse was last modified
-          
+          verse.lastReviewed = newLastReviewed;
+          verse.lastGrade = grade;
+          verse.lastAccuracy = (
+            ((totalWords - reviewMistakes.value) / totalWords) *
+            100
+          ).toFixed(1);
+          verse.lastModified = new Date().toISOString(); // Track when verse was last modified
+
           // Track review history
-          if (!verse.reviewHistory) verse.reviewHistory = []
+          if (!verse.reviewHistory) verse.reviewHistory = [];
           verse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
             accuracy: parseFloat(verse.lastAccuracy),
-            mistakes: reviewMistakes.value
-          })
-          
-          console.log('[exitReview] After update', {
+            mistakes: reviewMistakes.value,
+          });
+
+          console.log("[exitReview] After update", {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
-            newLastReviewed: newLastReviewed
-          })
-          
-          currentReviewSaved.value = true // Mark as saved to prevent duplicate saves
-          
-          console.log('[exitReview] Calling saveVerses()')
-          saveVerses()
-          
+            newLastReviewed: newLastReviewed,
+          });
+
+          currentReviewSaved.value = true; // Mark as saved to prevent duplicate saves
+
+          console.log("[exitReview] Calling saveVerses()");
+          saveVerses();
+
           // Verify after save
-          const savedVerse = verses.value.find(v => v.id === verse.id)
-          console.log('[exitReview] After saveVerses()', {
+          const savedVerse = verses.value.find(
+            (v) => v.id === verse.id,
+          );
+          console.log("[exitReview] After saveVerses()", {
             lastReviewed: savedVerse?.lastReviewed,
-            matches: savedVerse?.lastReviewed === newLastReviewed
-          })
+            matches: savedVerse?.lastReviewed === newLastReviewed,
+          });
         } else {
-          console.log('[exitReview] NOT saving - conditions not met', {
-            hasReviewingVerse: !!reviewingVerse.value,
-            currentReviewSaved: currentReviewSaved.value,
-            allWordsRevealed: allWordsRevealed.value,
-            meetsAccuracyRequirement: meetsAccuracyRequirement.value
-          })
+          console.log(
+            "[exitReview] NOT saving - conditions not met",
+            {
+              hasReviewingVerse: !!reviewingVerse.value,
+              currentReviewSaved: currentReviewSaved.value,
+              allWordsRevealed: allWordsRevealed.value,
+              meetsAccuracyRequirement:
+                meetsAccuracyRequirement.value,
+            },
+          );
         }
       } else {
-        console.log('[exitReview] No review to save', {
+        console.log("[exitReview] No review to save", {
           hasReviewingVerse: !!reviewingVerse.value,
-          currentReviewSaved: currentReviewSaved.value
-        })
+          currentReviewSaved: currentReviewSaved.value,
+        });
       }
-      
+
       // Navigate back to the source state (collection or review list)
       // This ensures back button always goes up the hierarchy, not to previous verses
-      const sourceState = reviewSourceState.value
-      
+      const sourceState = reviewSourceState.value;
+
       // Clear source tracking
-      reviewSourceList.value = null
-      reviewSourceState.value = null
-      
+      reviewSourceList.value = null;
+      reviewSourceState.value = null;
+
       // Reset review state
-      reviewingVerse.value = null
-      reviewWords.value = []
-      typedLetter.value = ''
-      reviewMistakes.value = 0
-      currentReviewSaved.value = false
-      
+      reviewingVerse.value = null;
+      reviewWords.value = [];
+      typedLetter.value = "";
+      reviewMistakes.value = 0;
+      currentReviewSaved.value = false;
+
       // Navigate to source state
       if (sourceState) {
         if (sourceState.collectionId) {
-          currentCollectionId.value = sourceState.collectionId
-          pushNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
-        } else if (sourceState.view === 'review-list') {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
-        } else if (sourceState.view === 'search') {
-          currentCollectionId.value = null
-          currentView.value = 'search'
-          pushNavigationState({ view: 'search' })
+          currentCollectionId.value = sourceState.collectionId;
+          pushNavigationState({
+            view: "collection",
+            collectionId: sourceState.collectionId,
+          });
+        } else if (sourceState.view === "review-list") {
+          currentCollectionId.value = null;
+          currentView.value = "review-list";
+          pushNavigationState({ view: "review-list" });
+        } else if (sourceState.view === "search") {
+          currentCollectionId.value = null;
+          currentView.value = "search";
+          pushNavigationState({ view: "search" });
         } else {
           // Fallback
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          currentCollectionId.value = null;
+          currentView.value = "review-list";
+          pushNavigationState({ view: "review-list" });
         }
       } else {
         // Fallback: use browser back if available, otherwise go to review list
         if (!isHandlingBackButton && window.history.length > 1) {
-          window.history.back()
+          window.history.back();
         } else {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          currentCollectionId.value = null;
+          currentView.value = "review-list";
+          pushNavigationState({ view: "review-list" });
         }
       }
-    }
+    };
 
     // Focus input when clicking on verse text
     const focusInput = () => {
       if (reviewInput.value) {
-        reviewInput.value.focus()
+        reviewInput.value.focus();
       }
-    }
+    };
 
     // Scroll to the next word to be typed if it's near the bottom
     const scrollToCurrentWord = () => {
       // Find the next unrevealed word index (the one we're about to type)
-      const nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-      
-      if (nextWordIndex === -1) return // All words revealed
-      
+      const nextWordIndex = reviewWords.value.findIndex(
+        (w) => !w.revealed,
+      );
+
+      if (nextWordIndex === -1) return; // All words revealed
+
       // Determine which container to use
-      const container = memorizationMode.value ? memorizationScrollContainer.value : reviewTextContainer.value
-      if (!container) return
-      
+      const container = memorizationMode.value
+        ? memorizationScrollContainer.value
+        : reviewTextContainer.value;
+      if (!container) return;
+
       // Wait for DOM to update
       nextTick(() => {
         // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             // Find the word element by ID
-            const wordId = memorizationMode.value ? `memorize-word-${nextWordIndex}` : `review-word-${nextWordIndex}`
-            let wordElement = document.getElementById(wordId)
-            
+            const wordId = memorizationMode.value
+              ? `memorize-word-${nextWordIndex}`
+              : `review-word-${nextWordIndex}`;
+            let wordElement = document.getElementById(wordId);
+
             // Fallback: try querySelector if getElementById fails
             if (!wordElement) {
-              const prefix = memorizationMode.value ? 'memorize-word-' : 'review-word-'
-              wordElement = container.querySelector(`#${prefix}${nextWordIndex}`)
+              const prefix = memorizationMode.value
+                ? "memorize-word-"
+                : "review-word-";
+              wordElement = container.querySelector(
+                `#${prefix}${nextWordIndex}`,
+              );
             }
-            
+
             // Another fallback: find by index in all word elements
             if (!wordElement) {
-              const allWords = container.querySelectorAll('[id^="' + (memorizationMode.value ? 'memorize-word-' : 'review-word-') + '"]')
+              const allWords = container.querySelectorAll(
+                '[id^="' +
+                  (memorizationMode.value
+                    ? "memorize-word-"
+                    : "review-word-") +
+                  '"]',
+              );
               if (allWords[nextWordIndex]) {
-                wordElement = allWords[nextWordIndex]
+                wordElement = allWords[nextWordIndex];
               }
             }
-            
+
             if (wordElement) {
-              scrollElementIntoView(wordElement, container)
+              scrollElementIntoView(wordElement, container);
             }
-          })
-        })
-      })
-    }
-    
+          });
+        });
+      });
+    };
+
     // Helper function to scroll an element into view within a container
     const scrollElementIntoView = (element, container) => {
-      if (!element || !container) return
-      
-      const containerRect = container.getBoundingClientRect()
-      const elementRect = element.getBoundingClientRect()
-      const containerHeight = containerRect.height
-      const currentScrollTop = container.scrollTop
-      
+      if (!element || !container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const containerHeight = containerRect.height;
+      const currentScrollTop = container.scrollTop;
+
       // Calculate element position relative to container's scrollable content
       // elementRect is relative to viewport, containerRect is relative to viewport
       // The difference + scrollTop gives us position in scrollable content
-      const elementTopInContent = elementRect.top - containerRect.top + currentScrollTop
-      const elementBottomInContent = elementRect.bottom - containerRect.top + currentScrollTop
-      
+      const elementTopInContent =
+        elementRect.top - containerRect.top + currentScrollTop;
+      const elementBottomInContent =
+        elementRect.bottom - containerRect.top + currentScrollTop;
+
       // Visible area in content coordinates
-      const visibleTop = currentScrollTop
-      const visibleBottom = currentScrollTop + containerHeight
-      
+      const visibleTop = currentScrollTop;
+      const visibleBottom = currentScrollTop + containerHeight;
+
       // Check if element is in bottom portion of visible area
-      const distanceFromVisibleBottom = visibleBottom - elementBottomInContent
-      const threshold = containerHeight * 0.4 // Bottom 40%
-      
+      const distanceFromVisibleBottom =
+        visibleBottom - elementBottomInContent;
+      const threshold = containerHeight * 0.4; // Bottom 40%
+
       // Scroll if element is below visible area or in bottom 40%
-      if (elementBottomInContent > visibleBottom || distanceFromVisibleBottom < threshold) {
+      if (
+        elementBottomInContent > visibleBottom ||
+        distanceFromVisibleBottom < threshold
+      ) {
         // Target: position element at 30% from top of visible area
-        const targetScroll = elementTopInContent - (containerHeight * 0.3)
-        
+        const targetScroll =
+          elementTopInContent - containerHeight * 0.3;
+
         container.scrollTo({
           top: Math.max(0, targetScroll),
-          behavior: 'smooth'
-        })
+          behavior: "smooth",
+        });
       }
-    }
+    };
 
     // Handle key press events
     const handleKeyPress = (event) => {
       // Allow backspace, delete, arrow keys, etc.
-      if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'].includes(event.key)) {
-        return
+      if (
+        [
+          "Backspace",
+          "Delete",
+          "ArrowLeft",
+          "ArrowRight",
+          "ArrowUp",
+          "ArrowDown",
+          "Tab",
+          "Enter",
+        ].includes(event.key)
+      ) {
+        return;
       }
-      
+
       // For single character keys, manually update the value and check
       if (event.key.length === 1) {
-        event.preventDefault()
-        const letter = event.key.toLowerCase()
-        typedLetter.value = letter
-        checkLetter()
+        event.preventDefault();
+        const letter = event.key.toLowerCase();
+        typedLetter.value = letter;
+        checkLetter();
       }
-    }
+    };
 
     // Check if typed letter matches next word's first letter
     const checkLetter = () => {
-      if (!typedLetter.value || reviewWords.value.length === 0) return
+      if (!typedLetter.value || reviewWords.value.length === 0)
+        return;
 
-      const letter = typedLetter.value.toLowerCase()
-      
+      const letter = typedLetter.value.toLowerCase();
+
       // For memorization modes, find the next word that should be revealed
       // For review mode, find the first unrevealed word
-      let nextWordIndex = -1
-      
+      let nextWordIndex = -1;
+
       if (memorizationMode.value) {
         // In memorization modes, find next word that needs to be revealed
-        if (memorizationMode.value === 'learn') {
+        if (memorizationMode.value === "learn") {
           // In learn mode, reveal words in order (all are visible but not revealed)
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-        } else if (memorizationMode.value === 'memorize') {
+          nextWordIndex = reviewWords.value.findIndex(
+            (w) => !w.revealed,
+          );
+        } else if (memorizationMode.value === "memorize") {
           // In memorize mode, type all words in order (both visible and hidden)
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-        } else if (memorizationMode.value === 'master') {
+          nextWordIndex = reviewWords.value.findIndex(
+            (w) => !w.revealed,
+          );
+        } else if (memorizationMode.value === "master") {
           // In master mode, reveal all words in order
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
+          nextWordIndex = reviewWords.value.findIndex(
+            (w) => !w.revealed,
+          );
         }
       } else {
         // Review mode: find first unrevealed word
-        nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
+        nextWordIndex = reviewWords.value.findIndex(
+          (w) => !w.revealed,
+        );
       }
-      
+
       if (nextWordIndex !== -1) {
-        const nextWord = reviewWords.value[nextWordIndex]
-        
+        const nextWord = reviewWords.value[nextWordIndex];
+
         // Get the current required letter (for hyphenated words, this advances through the sequence)
         // If requiredLetters is not set, compute it from the word text
-        let requiredLetters = nextWord.requiredLetters
+        let requiredLetters = nextWord.requiredLetters;
         if (!requiredLetters || requiredLetters.length === 0) {
-          requiredLetters = getRequiredLetters(nextWord.text)
+          requiredLetters = getRequiredLetters(nextWord.text);
           // Update the word object with the computed requiredLetters
-          nextWord.requiredLetters = requiredLetters
+          nextWord.requiredLetters = requiredLetters;
           // Also compute and store parts and separators if not already set
           if (!nextWord.parts || !nextWord.separators) {
-            const split = splitWordParts(nextWord.text)
-            nextWord.parts = split.parts
-            nextWord.separators = split.separators
+            const split = splitWordParts(nextWord.text);
+            nextWord.parts = split.parts;
+            nextWord.separators = split.separators;
           }
         }
         // Fallback to firstLetter if still no letters
         if (!requiredLetters || requiredLetters.length === 0) {
-          requiredLetters = [nextWord.firstLetter || nextWord.text.charAt(0).toLowerCase()]
+          requiredLetters = [
+            nextWord.firstLetter ||
+              nextWord.text.charAt(0).toLowerCase(),
+          ];
         }
-        
-        const currentLetterIndex = nextWord.typedLettersIndex || 0
-        
+
+        const currentLetterIndex = nextWord.typedLettersIndex || 0;
+
         // Safety check: ensure we have a valid required letter
         if (currentLetterIndex >= requiredLetters.length) {
           // Already completed all letters, mark as revealed and move on
-          nextWord.revealed = true
-          nextWord.incorrect = false
-          if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
-            nextWord.visible = true
+          nextWord.revealed = true;
+          nextWord.incorrect = false;
+          if (
+            memorizationMode.value === "learn" ||
+            memorizationMode.value === "memorize"
+          ) {
+            nextWord.visible = true;
           }
-          typedLetter.value = ''
+          typedLetter.value = "";
           nextTick(() => {
-            scrollToCurrentWord()
+            scrollToCurrentWord();
             if (reviewInput.value) {
-              reviewInput.value.focus()
+              reviewInput.value.focus();
             }
-          })
-          return
+          });
+          return;
         }
-        
-        const currentRequiredLetter = requiredLetters[currentLetterIndex]
-        
+
+        const currentRequiredLetter =
+          requiredLetters[currentLetterIndex];
+
         // Safety check: ensure currentRequiredLetter is valid
         if (!currentRequiredLetter) {
           // Fallback: mark word as revealed if we can't determine required letter
-          nextWord.revealed = true
-          nextWord.incorrect = false
-          typedLetter.value = ''
-          return
+          nextWord.revealed = true;
+          nextWord.incorrect = false;
+          typedLetter.value = "";
+          return;
         }
-        
+
         // Check if the letter matches the current required letter (with fuzzy typing)
         if (isLetterMatch(letter, currentRequiredLetter)) {
           // Correct letter - advance to next letter in sequence
-          nextWord.typedLettersIndex = currentLetterIndex + 1
-          
+          nextWord.typedLettersIndex = currentLetterIndex + 1;
+
           // Check if all required letters have been typed
           if (nextWord.typedLettersIndex >= requiredLetters.length) {
             // All letters typed - reveal the word normally
-            nextWord.revealed = true
-            nextWord.incorrect = false
-            if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
-              nextWord.visible = true // Make it visible in learn/memorize modes
+            nextWord.revealed = true;
+            nextWord.incorrect = false;
+            if (
+              memorizationMode.value === "learn" ||
+              memorizationMode.value === "memorize"
+            ) {
+              nextWord.visible = true; // Make it visible in learn/memorize modes
             }
-            typedLetter.value = ''
-            
+            typedLetter.value = "";
+
             // Auto-scroll to next word and focus input
             nextTick(() => {
-              scrollToCurrentWord()
+              scrollToCurrentWord();
               if (reviewInput.value) {
-                reviewInput.value.focus()
+                reviewInput.value.focus();
               }
-            })
+            });
           } else {
             // More letters needed - clear input and wait for next letter
-            typedLetter.value = ''
-            
+            typedLetter.value = "";
+
             // Auto-scroll to current word and focus input
             nextTick(() => {
-              scrollToCurrentWord()
+              scrollToCurrentWord();
               if (reviewInput.value) {
-                reviewInput.value.focus()
+                reviewInput.value.focus();
               }
-            })
+            });
           }
         } else {
           // Wrong letter (not correct and not adjacent) - reveal the word but mark it as incorrect
-          nextWord.revealed = true
-          nextWord.incorrect = true
-          if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
-            nextWord.visible = true // Make it visible in learn/memorize modes
+          nextWord.revealed = true;
+          nextWord.incorrect = true;
+          if (
+            memorizationMode.value === "learn" ||
+            memorizationMode.value === "memorize"
+          ) {
+            nextWord.visible = true; // Make it visible in learn/memorize modes
           }
-          reviewMistakes.value++
-          typedLetter.value = ''
-          
+          reviewMistakes.value++;
+          typedLetter.value = "";
+
           // Vibrate on wrong keypress
-          vibrate(50)
-          
+          vibrate(50);
+
           // Auto-scroll to next word and focus input
           nextTick(() => {
-            scrollToCurrentWord()
+            scrollToCurrentWord();
             if (reviewInput.value) {
-              reviewInput.value.focus()
+              reviewInput.value.focus();
             }
-          })
+          });
         }
       }
-    }
+    };
 
     // WebDAV sync functions
     const triggerSync = async (showFeedback = false) => {
       // Don't sync if already syncing or if WebDAV not configured
       if (syncing.value) {
-        console.log('[triggerSync] Already syncing, skipping')
-        return
+        console.log("[triggerSync] Already syncing, skipping");
+        return;
       }
-      
-      const settings = getWebDAVSettings()
-      if (!settings || !settings.url || !settings.username || !settings.password) {
+
+      const settings = getWebDAVSettings();
+      if (
+        !settings ||
+        !settings.url ||
+        !settings.username ||
+        !settings.password
+      ) {
         if (showFeedback) {
-          syncError.value = 'WebDAV not configured. Please configure it in settings.'
-          setTimeout(() => { syncError.value = null }, 5000)
+          syncError.value =
+            "WebDAV not configured. Please configure it in settings.";
+          setTimeout(() => {
+            syncError.value = null;
+          }, 5000);
         }
-        console.log('[triggerSync] WebDAV not configured, skipping')
-        return
+        console.log("[triggerSync] WebDAV not configured, skipping");
+        return;
       }
-      
+
       // Track which verse we're reviewing before sync (if any)
-      const reviewingId = reviewingVerse.value?.id
-      let reviewingVerseBeforeSync = null
+      const reviewingId = reviewingVerse.value?.id;
+      let reviewingVerseBeforeSync = null;
       if (reviewingId) {
-        reviewingVerseBeforeSync = verses.value.find(v => v.id === reviewingId)
-        console.log('[triggerSync] Before sync - reviewing verse state', {
-          id: reviewingVerseBeforeSync?.id,
-          reference: reviewingVerseBeforeSync?.reference,
-          lastReviewed: reviewingVerseBeforeSync?.lastReviewed,
-          reviewCount: reviewingVerseBeforeSync?.reviewCount
-        })
+        reviewingVerseBeforeSync = verses.value.find(
+          (v) => v.id === reviewingId,
+        );
+        console.log(
+          "[triggerSync] Before sync - reviewing verse state",
+          {
+            id: reviewingVerseBeforeSync?.id,
+            reference: reviewingVerseBeforeSync?.reference,
+            lastReviewed: reviewingVerseBeforeSync?.lastReviewed,
+            reviewCount: reviewingVerseBeforeSync?.reviewCount,
+          },
+        );
       }
-      
-      syncing.value = true
-      syncSuccess.value = false
-      syncError.value = null
-      
+
+      syncing.value = true;
+      syncSuccess.value = false;
+      syncError.value = null;
+
       try {
-        const result = await syncData(verses.value, collections.value)
+        const result = await syncData(
+          verses.value,
+          collections.value,
+        );
         if (result.success) {
           // Update local data with merged data from sync
           if (result.verses) {
-            console.log('[triggerSync] Sync complete - updating verses:', result.verses.length, 'local verses before:', verses.value.length)
-            
+            console.log(
+              "[triggerSync] Sync complete - updating verses:",
+              result.verses.length,
+              "local verses before:",
+              verses.value.length,
+            );
+
             // Check if our reviewing verse was affected by merge
             if (reviewingId) {
-              const mergedVerse = result.verses.find(v => v.id === reviewingId)
-              console.log('[triggerSync] After merge - reviewing verse state', {
-                id: mergedVerse?.id,
-                reference: mergedVerse?.reference,
-                lastReviewed: mergedVerse?.lastReviewed,
-                reviewCount: mergedVerse?.reviewCount,
-                lastReviewedChanged: mergedVerse?.lastReviewed !== reviewingVerseBeforeSync?.lastReviewed,
-                lastReviewedOlder: mergedVerse?.lastReviewed && reviewingVerseBeforeSync?.lastReviewed && 
-                  new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)
-              })
-              
+              const mergedVerse = result.verses.find(
+                (v) => v.id === reviewingId,
+              );
+              console.log(
+                "[triggerSync] After merge - reviewing verse state",
+                {
+                  id: mergedVerse?.id,
+                  reference: mergedVerse?.reference,
+                  lastReviewed: mergedVerse?.lastReviewed,
+                  reviewCount: mergedVerse?.reviewCount,
+                  lastReviewedChanged:
+                    mergedVerse?.lastReviewed !==
+                    reviewingVerseBeforeSync?.lastReviewed,
+                  lastReviewedOlder:
+                    mergedVerse?.lastReviewed &&
+                    reviewingVerseBeforeSync?.lastReviewed &&
+                    new Date(mergedVerse.lastReviewed) <
+                      new Date(reviewingVerseBeforeSync.lastReviewed),
+                },
+              );
+
               // If merge overwrote our new lastReviewed with an older one, keep the newer one
-              if (mergedVerse && reviewingVerseBeforeSync && 
-                  mergedVerse.lastReviewed && reviewingVerseBeforeSync.lastReviewed &&
-                  new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)) {
-                console.warn('[triggerSync] WARNING: Merge overwrote newer lastReviewed! Keeping newer value.', {
-                  merged: mergedVerse.lastReviewed,
-                  local: reviewingVerseBeforeSync.lastReviewed
-                })
-                mergedVerse.lastReviewed = reviewingVerseBeforeSync.lastReviewed
-                mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
+              if (
+                mergedVerse &&
+                reviewingVerseBeforeSync &&
+                mergedVerse.lastReviewed &&
+                reviewingVerseBeforeSync.lastReviewed &&
+                new Date(mergedVerse.lastReviewed) <
+                  new Date(reviewingVerseBeforeSync.lastReviewed)
+              ) {
+                console.warn(
+                  "[triggerSync] WARNING: Merge overwrote newer lastReviewed! Keeping newer value.",
+                  {
+                    merged: mergedVerse.lastReviewed,
+                    local: reviewingVerseBeforeSync.lastReviewed,
+                  },
+                );
+                mergedVerse.lastReviewed =
+                  reviewingVerseBeforeSync.lastReviewed;
+                mergedVerse.lastModified =
+                  reviewingVerseBeforeSync.lastModified ||
+                  new Date().toISOString();
               }
             }
-            
+
             // Log a sample of merged verses for debugging (especially those with review dates)
             if (result.verses.length > 0) {
-              const versesWithReview = result.verses.filter(v => v.nextReviewDate)
-              console.log(`[triggerSync] Verses with nextReviewDate: ${versesWithReview.length}`)
+              const versesWithReview = result.verses.filter(
+                (v) => v.nextReviewDate,
+              );
+              console.log(
+                `[triggerSync] Verses with nextReviewDate: ${versesWithReview.length}`,
+              );
               if (versesWithReview.length > 0) {
-                const sample = versesWithReview.slice(0, 3)
-                sample.forEach(v => {
-                  console.log(`[triggerSync] Merged verse ${v.id} (${v.reference}): nextReviewDate=${v.nextReviewDate}, interval=${v.interval}, lastModified=${v.lastModified}, lastReviewed=${v.lastReviewed}`)
-                })
+                const sample = versesWithReview.slice(0, 3);
+                sample.forEach((v) => {
+                  console.log(
+                    `[triggerSync] Merged verse ${v.id} (${v.reference}): nextReviewDate=${v.nextReviewDate}, interval=${v.interval}, lastModified=${v.lastModified}, lastReviewed=${v.lastReviewed}`,
+                  );
+                });
               }
             }
             // Update verses array - create new array reference for Vue reactivity
-            verses.value = [...result.verses]
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
-            
+            verses.value = [...result.verses];
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify(verses.value),
+            );
+
             // Verify the reviewing verse after update
             if (reviewingId) {
-              const finalVerse = verses.value.find(v => v.id === reviewingId)
-              console.log('[triggerSync] Final state - reviewing verse', {
-                id: finalVerse?.id,
-                lastReviewed: finalVerse?.lastReviewed,
-                reviewCount: finalVerse?.reviewCount
-              })
+              const finalVerse = verses.value.find(
+                (v) => v.id === reviewingId,
+              );
+              console.log(
+                "[triggerSync] Final state - reviewing verse",
+                {
+                  id: finalVerse?.id,
+                  lastReviewed: finalVerse?.lastReviewed,
+                  reviewCount: finalVerse?.reviewCount,
+                },
+              );
             }
-            
+
             // Force Vue to update by using nextTick and verify the update
-            await nextTick()
-            
+            await nextTick();
+
             // Verify specific verses were updated correctly - check all verses with review dates
             if (result.verses.length > 0) {
-              const versesWithReview = result.verses.filter(v => v.nextReviewDate)
-              console.log(`[App] Verifying ${versesWithReview.length} verses with nextReviewDate`)
-              
+              const versesWithReview = result.verses.filter(
+                (v) => v.nextReviewDate,
+              );
+              console.log(
+                `[App] Verifying ${versesWithReview.length} verses with nextReviewDate`,
+              );
+
               // Check the reviewing verse specifically if it exists
               if (reviewingId) {
-                const reviewingVerseAfterSync = verses.value.find(v => v.id === reviewingId)
-                const mergedVerse = result.verses.find(v => v.id === reviewingId)
-                console.log('[triggerSync] Reviewing verse after sync update', {
-                  id: reviewingVerseAfterSync?.id,
-                  reference: reviewingVerseAfterSync?.reference,
-                  lastReviewed: reviewingVerseAfterSync?.lastReviewed,
-                  mergedLastReviewed: mergedVerse?.lastReviewed,
-                  matches: reviewingVerseAfterSync?.lastReviewed === mergedVerse?.lastReviewed
-                })
+                const reviewingVerseAfterSync = verses.value.find(
+                  (v) => v.id === reviewingId,
+                );
+                const mergedVerse = result.verses.find(
+                  (v) => v.id === reviewingId,
+                );
+                console.log(
+                  "[triggerSync] Reviewing verse after sync update",
+                  {
+                    id: reviewingVerseAfterSync?.id,
+                    reference: reviewingVerseAfterSync?.reference,
+                    lastReviewed:
+                      reviewingVerseAfterSync?.lastReviewed,
+                    mergedLastReviewed: mergedVerse?.lastReviewed,
+                    matches:
+                      reviewingVerseAfterSync?.lastReviewed ===
+                      mergedVerse?.lastReviewed,
+                  },
+                );
               }
-              
-              let allMatch = true
-              versesWithReview.slice(0, 5).forEach(testVerse => {
-                const localVerse = verses.value.find(v => v.id === testVerse.id)
+
+              let allMatch = true;
+              versesWithReview.slice(0, 5).forEach((testVerse) => {
+                const localVerse = verses.value.find(
+                  (v) => v.id === testVerse.id,
+                );
                 if (localVerse) {
-                  const matches = localVerse.nextReviewDate === testVerse.nextReviewDate
+                  const matches =
+                    localVerse.nextReviewDate ===
+                    testVerse.nextReviewDate;
                   if (!matches) {
-                    allMatch = false
-                    console.log(`[App] MISMATCH - Verse ${testVerse.id} (${testVerse.reference}):`)
-                    console.log(`[App]   Expected: ${testVerse.nextReviewDate}`)
-                    console.log(`[App]   Actual: ${localVerse.nextReviewDate}`)
+                    allMatch = false;
+                    console.log(
+                      `[App] MISMATCH - Verse ${testVerse.id} (${testVerse.reference}):`,
+                    );
+                    console.log(
+                      `[App]   Expected: ${testVerse.nextReviewDate}`,
+                    );
+                    console.log(
+                      `[App]   Actual: ${localVerse.nextReviewDate}`,
+                    );
                   }
                 }
-              })
-              
+              });
+
               // Double-check by reading from localStorage - specifically check reviewing verse
-              const stored = localStorage.getItem(STORAGE_KEY)
+              const stored = localStorage.getItem(STORAGE_KEY);
               if (stored) {
-                const storedVerses = JSON.parse(stored)
-                
+                const storedVerses = JSON.parse(stored);
+
                 // Check reviewing verse specifically
                 if (reviewingId) {
-                  const storedReviewingVerse = storedVerses.find(v => v.id === reviewingId)
-                  const inMemoryVerse = verses.value.find(v => v.id === reviewingId)
-                  console.log('[triggerSync] localStorage verification for reviewing verse', {
-                    id: reviewingId,
-                    storedLastReviewed: storedReviewingVerse?.lastReviewed,
-                    inMemoryLastReviewed: inMemoryVerse?.lastReviewed,
-                    matches: storedReviewingVerse?.lastReviewed === inMemoryVerse?.lastReviewed
-                  })
+                  const storedReviewingVerse = storedVerses.find(
+                    (v) => v.id === reviewingId,
+                  );
+                  const inMemoryVerse = verses.value.find(
+                    (v) => v.id === reviewingId,
+                  );
+                  console.log(
+                    "[triggerSync] localStorage verification for reviewing verse",
+                    {
+                      id: reviewingId,
+                      storedLastReviewed:
+                        storedReviewingVerse?.lastReviewed,
+                      inMemoryLastReviewed:
+                        inMemoryVerse?.lastReviewed,
+                      matches:
+                        storedReviewingVerse?.lastReviewed ===
+                        inMemoryVerse?.lastReviewed,
+                    },
+                  );
                 }
-                
-                const storedVerse = storedVerses.find(v => v.id === versesWithReview[0]?.id)
+
+                const storedVerse = storedVerses.find(
+                  (v) => v.id === versesWithReview[0]?.id,
+                );
                 if (storedVerse && versesWithReview[0]) {
-                  const localStorageMatch = storedVerse.nextReviewDate === versesWithReview[0].nextReviewDate
-                  console.log(`[App] localStorage matches: ${localStorageMatch}`)
+                  const localStorageMatch =
+                    storedVerse.nextReviewDate ===
+                    versesWithReview[0].nextReviewDate;
+                  console.log(
+                    `[App] localStorage matches: ${localStorageMatch}`,
+                  );
                   if (!localStorageMatch) {
-                    console.log(`[App] localStorage mismatch - Expected: ${versesWithReview[0].nextReviewDate}, Got: ${storedVerse.nextReviewDate}`)
+                    console.log(
+                      `[App] localStorage mismatch - Expected: ${versesWithReview[0].nextReviewDate}, Got: ${storedVerse.nextReviewDate}`,
+                    );
                   }
                 }
               }
-              
+
               if (allMatch) {
-                console.log('[App] ✓ All verified verses match correctly')
+                console.log(
+                  "[App] ✓ All verified verses match correctly",
+                );
               }
             }
-            console.log('[App] Verses updated and saved to localStorage')
+            console.log(
+              "[App] Verses updated and saved to localStorage",
+            );
           }
           if (result.collections) {
-            collections.value = result.collections
-            localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
+            collections.value = result.collections;
+            localStorage.setItem(
+              COLLECTIONS_KEY,
+              JSON.stringify(collections.value),
+            );
           }
-          
+
           if (showFeedback) {
             // Show success feedback
-            syncSuccess.value = true
+            syncSuccess.value = true;
             setTimeout(() => {
-              syncSuccess.value = false
-            }, 2000)
+              syncSuccess.value = false;
+            }, 2000);
           }
         } else {
           // Sync failed
-          const errorMsg = result.error || 'Sync failed'
-          console.warn('Sync failed:', errorMsg)
+          const errorMsg = result.error || "Sync failed";
+          console.warn("Sync failed:", errorMsg);
           if (showFeedback) {
-            syncError.value = errorMsg
-            setTimeout(() => { syncError.value = null }, 5000)
+            syncError.value = errorMsg;
+            setTimeout(() => {
+              syncError.value = null;
+            }, 5000);
           }
         }
       } catch (error) {
         // Sync failed
-        const errorMsg = error.message || 'Sync error occurred'
-        console.error('Sync error:', error)
+        const errorMsg = error.message || "Sync error occurred";
+        console.error("Sync error:", error);
         if (showFeedback) {
-          syncError.value = errorMsg
-          setTimeout(() => { syncError.value = null }, 5000)
+          syncError.value = errorMsg;
+          setTimeout(() => {
+            syncError.value = null;
+          }, 5000);
         }
       } finally {
-        syncing.value = false
+        syncing.value = false;
       }
-    }
+    };
 
     // Manual sync (with user feedback)
     const manualSync = () => {
-      triggerSync(true)
-    }
+      triggerSync(true);
+    };
 
     // Load WebDAV settings
     const loadWebDAVSettings = () => {
-      const settings = getWebDAVSettings()
+      const settings = getWebDAVSettings();
       if (settings) {
         webdavSettings.value = {
-          url: settings.url || '',
-          folder: settings.folder || '',
-          username: settings.username || '',
-          password: settings.password || '', // Load password from storage
+          url: settings.url || "",
+          folder: settings.folder || "",
+          username: settings.username || "",
+          password: settings.password || "", // Load password from storage
           useProxy: settings.useProxy || false,
-          proxyUrl: settings.proxyUrl || 'http://localhost:3001'
-        }
+          proxyUrl: settings.proxyUrl || "http://localhost:3001",
+        };
       } else {
         // Initialize with defaults if no settings exist
         webdavSettings.value = {
-          url: '',
-          folder: '',
-          username: '',
-          password: '',
+          url: "",
+          folder: "",
+          username: "",
+          password: "",
           useProxy: false,
-          proxyUrl: 'http://localhost:3001'
-        }
+          proxyUrl: "http://localhost:3001",
+        };
       }
-    }
+    };
 
     // Save WebDAV settings
     const saveWebDAVSettingsForm = async () => {
-      if (!webdavSettings.value.url || !webdavSettings.value.username || !webdavSettings.value.password) {
+      if (
+        !webdavSettings.value.url ||
+        !webdavSettings.value.username ||
+        !webdavSettings.value.password
+      ) {
         syncStatus.value = {
-          type: 'error',
-          message: 'Please fill in all required fields (URL, Username, Password)'
-        }
-        return
+          type: "error",
+          message:
+            "Please fill in all required fields (URL, Username, Password)",
+        };
+        return;
       }
 
       // Create a clean settings object with all fields
       const settingsToSave = {
         url: webdavSettings.value.url.trim(),
-        folder: (webdavSettings.value.folder || '').trim(),
+        folder: (webdavSettings.value.folder || "").trim(),
         username: webdavSettings.value.username.trim(),
         password: webdavSettings.value.password, // Keep password as-is
         useProxy: webdavSettings.value.useProxy || false,
-        proxyUrl: (webdavSettings.value.proxyUrl || 'http://localhost:3001').trim()
-      }
+        proxyUrl: (
+          webdavSettings.value.proxyUrl || "http://localhost:3001"
+        ).trim(),
+      };
 
       // Save to localStorage
-      saveWebDAVSettings(settingsToSave)
-      
+      saveWebDAVSettings(settingsToSave);
+
       // Update the reactive object to match what was saved
-      webdavSettings.value = { ...settingsToSave }
-      
+      webdavSettings.value = { ...settingsToSave };
+
       syncStatus.value = {
-        type: 'success',
-        message: 'Settings saved successfully!'
-      }
+        type: "success",
+        message: "Settings saved successfully!",
+      };
 
       // Close the modal after a brief delay to show success message
       setTimeout(() => {
-        closeSettings()
-      }, 1000)
+        closeSettings();
+      }, 1000);
 
       // Trigger initial sync after saving settings (without user feedback since modal is closing)
       setTimeout(() => {
-        triggerSync(false)
-      }, 500)
-    }
+        triggerSync(false);
+      }, 500);
+    };
 
     // Test WebDAV connection
     const testWebDAVConnection = async () => {
-      if (!webdavSettings.value.url || !webdavSettings.value.username || !webdavSettings.value.password) {
+      if (
+        !webdavSettings.value.url ||
+        !webdavSettings.value.username ||
+        !webdavSettings.value.password
+      ) {
         syncStatus.value = {
-          type: 'error',
-          message: 'Please fill in all required fields first'
-        }
-        return
+          type: "error",
+          message: "Please fill in all required fields first",
+        };
+        return;
       }
 
-      testingConnection.value = true
-      syncStatus.value = null
+      testingConnection.value = true;
+      syncStatus.value = null;
 
       try {
-        const result = await testConnection(webdavSettings.value)
+        const result = await testConnection(webdavSettings.value);
         if (result.success) {
           syncStatus.value = {
-            type: 'success',
-            message: 'Connection successful!'
-          }
+            type: "success",
+            message: "Connection successful!",
+          };
         } else {
           syncStatus.value = {
-            type: 'error',
-            message: `Connection failed: ${result.error || 'Unknown error'}`
-          }
+            type: "error",
+            message: `Connection failed: ${result.error || "Unknown error"}`,
+          };
         }
       } catch (error) {
         syncStatus.value = {
-          type: 'error',
-          message: `Connection failed: ${error.message || 'Unknown error'}`
-        }
+          type: "error",
+          message: `Connection failed: ${error.message || "Unknown error"}`,
+        };
       } finally {
-        testingConnection.value = false
+        testingConnection.value = false;
       }
-    }
+    };
 
     // Close settings modal
     const closeSettings = () => {
-      showSettings.value = false
-      syncStatus.value = null
+      showSettings.value = false;
+      syncStatus.value = null;
       // Reload settings to show saved values (but don't reset password if user is editing)
-      const saved = getWebDAVSettings()
+      const saved = getWebDAVSettings();
       if (saved) {
         // Keep current password if user was editing (don't clear it)
-        const currentPassword = webdavSettings.value.password
-        loadWebDAVSettings()
+        const currentPassword = webdavSettings.value.password;
+        loadWebDAVSettings();
         // If user had entered a password, keep it (they might want to save it)
         if (currentPassword && !saved.password) {
-          webdavSettings.value.password = currentPassword
+          webdavSettings.value.password = currentPassword;
         }
       }
-    }
+    };
 
     // Open settings menu
     const toggleSettingsMenu = () => {
-      showSettingsMenu.value = !showSettingsMenu.value
-    }
+      showSettingsMenu.value = !showSettingsMenu.value;
+    };
 
     // Close settings menu
     const closeSettingsMenu = () => {
-      showSettingsMenu.value = false
-    }
+      showSettingsMenu.value = false;
+    };
 
     // Open WebDAV settings from menu
     const openWebDAVSettings = () => {
-      closeSettingsMenu()
-      showSettings.value = true
-    }
+      closeSettingsMenu();
+      showSettings.value = true;
+    };
 
     // Open backup/import modal from menu
     const openBackupImport = () => {
-      closeSettingsMenu()
-      showBackupImport.value = true
-    }
+      closeSettingsMenu();
+      showBackupImport.value = true;
+    };
 
     // Close backup/import modal
     const closeBackupImport = () => {
-      showBackupImport.value = false
-    }
+      showBackupImport.value = false;
+    };
 
     // Backup all data
     const backupAllData = () => {
       try {
-        const settings = getWebDAVSettings()
+        const settings = getWebDAVSettings();
         const backupData = {
           verses: verses.value,
           collections: collections.value,
           settings: settings,
           backedUpAt: new Date().toISOString(),
-          version: '1.0'
-        }
+          version: "1.0",
+        };
 
-        const jsonStr = JSON.stringify(backupData, null, 2)
-        const blob = new Blob([jsonStr], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        
-        const dateStr = new Date().toISOString().split('T')[0]
-        const filename = `bible-memory-backup-${dateStr}.json`
-        
-        const link = document.createElement('a')
-        link.href = url
-        link.download = filename
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+
+        const dateStr = new Date().toISOString().split("T")[0];
+        const filename = `bible-memory-backup-${dateStr}.json`;
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
         // Save backup timestamp
-        const timestamp = new Date().toISOString()
-        localStorage.setItem('bible-memory-last-backup', timestamp)
-        lastBackupTimestamp.value = timestamp
+        const timestamp = new Date().toISOString();
+        localStorage.setItem("bible-memory-last-backup", timestamp);
+        lastBackupTimestamp.value = timestamp;
       } catch (error) {
-        console.error('Error backing up data:', error)
-        alert('Failed to backup data. Please try again.')
+        console.error("Error backing up data:", error);
+        alert("Failed to backup data. Please try again.");
       }
-    }
+    };
 
     // Import from backup file
     const importFromBackup = async (file) => {
       try {
-        const text = await file.text()
-        const backupData = JSON.parse(text)
+        const text = await file.text();
+        const backupData = JSON.parse(text);
 
         // Validate backup structure
         if (!backupData.verses || !Array.isArray(backupData.verses)) {
-          alert('Invalid backup file: missing verses array')
-          return
+          alert("Invalid backup file: missing verses array");
+          return;
         }
-        if (!backupData.collections || !Array.isArray(backupData.collections)) {
-          alert('Invalid backup file: missing collections array')
-          return
+        if (
+          !backupData.collections ||
+          !Array.isArray(backupData.collections)
+        ) {
+          alert("Invalid backup file: missing collections array");
+          return;
         }
 
         // Show confirmation
         const confirmed = confirm(
-          'This will replace all your current data with the backup data. ' +
-          'This action cannot be undone. Are you sure you want to continue?'
-        )
+          "This will replace all your current data with the backup data. " +
+            "This action cannot be undone. Are you sure you want to continue?",
+        );
 
         if (!confirmed) {
-          return
+          return;
         }
 
         // Replace data
-        verses.value = backupData.verses
-        collections.value = backupData.collections
+        verses.value = backupData.verses;
+        collections.value = backupData.collections;
 
         // Restore settings if present
         if (backupData.settings) {
-          saveWebDAVSettings(backupData.settings)
-          loadWebDAVSettings()
+          saveWebDAVSettings(backupData.settings);
+          loadWebDAVSettings();
         }
 
         // Save to localStorage
-        saveVerses()
-        saveCollections()
+        saveVerses();
+        saveCollections();
 
         // Update last backup timestamp if present
         if (backupData.backedUpAt) {
-          localStorage.setItem('bible-memory-last-backup', backupData.backedUpAt)
-          lastBackupTimestamp.value = backupData.backedUpAt
+          localStorage.setItem(
+            "bible-memory-last-backup",
+            backupData.backedUpAt,
+          );
+          lastBackupTimestamp.value = backupData.backedUpAt;
         }
 
         // Close modal
-        closeBackupImport()
+        closeBackupImport();
 
-        alert('Data imported successfully!')
+        alert("Data imported successfully!");
       } catch (error) {
-        console.error('Error importing backup:', error)
-        alert('Failed to import backup. Please check that the file is valid.')
+        console.error("Error importing backup:", error);
+        alert(
+          "Failed to import backup. Please check that the file is valid.",
+        );
       }
-    }
+    };
 
     // Handle file input for import
     const handleBackupFileSelect = (event) => {
-      const file = event.target.files[0]
+      const file = event.target.files[0];
       if (file) {
-        importFromBackup(file)
+        importFromBackup(file);
         // Reset input
-        event.target.value = ''
+        event.target.value = "";
       }
-    }
+    };
 
     // Get display text for a word (shows partial text for hyphenated words)
     const getWordDisplayText = (word) => {
       // If word is fully revealed, show full text
       if (word.revealed) {
-        return word.text
+        return word.text;
       }
-      
+
       // If word has required letters and is partially typed, show partial text
       if (word.requiredLetters && word.requiredLetters.length > 1) {
-        const typedLettersIndex = word.typedLettersIndex || 0
+        const typedLettersIndex = word.typedLettersIndex || 0;
         if (typedLettersIndex > 0) {
-          return getPartialWordText(word)
+          return getPartialWordText(word);
         }
       }
-      
+
       // Otherwise return empty string (will be replaced with underscores)
-      return ''
-    }
+      return "";
+    };
 
     // Helper function to check verse data (can be called from console)
     window.checkVerseData = (verseIdOrReference) => {
-      const verse = typeof verseIdOrReference === 'string' && verseIdOrReference.includes('-')
-        ? verses.value.find(v => v.id === verseIdOrReference)
-        : verses.value.find(v => v.reference.toLowerCase().includes(verseIdOrReference.toLowerCase()))
-      
+      const verse =
+        typeof verseIdOrReference === "string" &&
+        verseIdOrReference.includes("-")
+          ? verses.value.find((v) => v.id === verseIdOrReference)
+          : verses.value.find((v) =>
+              v.reference
+                .toLowerCase()
+                .includes(verseIdOrReference.toLowerCase()),
+            );
+
       if (!verse) {
-        console.log('Verse not found:', verseIdOrReference)
-        return null
+        console.log("Verse not found:", verseIdOrReference);
+        return null;
       }
-      
-      const stored = localStorage.getItem(STORAGE_KEY)
-      let storedVerse = null
+
+      const stored = localStorage.getItem(STORAGE_KEY);
+      let storedVerse = null;
       if (stored) {
         try {
-          const parsed = JSON.parse(stored)
-          storedVerse = parsed.find(v => v.id === verse.id)
+          const parsed = JSON.parse(stored);
+          storedVerse = parsed.find((v) => v.id === verse.id);
         } catch (e) {
-          console.error('Error parsing localStorage', e)
+          console.error("Error parsing localStorage", e);
         }
       }
-      
+
       const result = {
         id: verse.id,
         reference: verse.reference,
@@ -5455,62 +7190,86 @@ export default {
           lastModified: verse.lastModified,
           reviewCount: verse.reviewCount,
           interval: verse.interval,
-          nextReviewDate: verse.nextReviewDate
+          nextReviewDate: verse.nextReviewDate,
         },
-        inLocalStorage: storedVerse ? {
-          lastReviewed: storedVerse.lastReviewed,
-          lastModified: storedVerse.lastModified,
-          reviewCount: storedVerse.reviewCount,
-          interval: storedVerse.interval,
-          nextReviewDate: storedVerse.nextReviewDate
-        } : null,
-        matches: storedVerse ? verse.lastReviewed === storedVerse.lastReviewed : false
-      }
-      
-      console.log('=== Verse Data Check ===')
-      console.log('Reference:', result.reference)
-      console.log('ID:', result.id)
-      console.log('In Memory - lastReviewed:', result.inMemory.lastReviewed)
-      console.log('In Memory - lastModified:', result.inMemory.lastModified)
-      console.log('In Memory - reviewCount:', result.inMemory.reviewCount)
+        inLocalStorage: storedVerse
+          ? {
+              lastReviewed: storedVerse.lastReviewed,
+              lastModified: storedVerse.lastModified,
+              reviewCount: storedVerse.reviewCount,
+              interval: storedVerse.interval,
+              nextReviewDate: storedVerse.nextReviewDate,
+            }
+          : null,
+        matches: storedVerse
+          ? verse.lastReviewed === storedVerse.lastReviewed
+          : false,
+      };
+
+      console.log("=== Verse Data Check ===");
+      console.log("Reference:", result.reference);
+      console.log("ID:", result.id);
+      console.log(
+        "In Memory - lastReviewed:",
+        result.inMemory.lastReviewed,
+      );
+      console.log(
+        "In Memory - lastModified:",
+        result.inMemory.lastModified,
+      );
+      console.log(
+        "In Memory - reviewCount:",
+        result.inMemory.reviewCount,
+      );
       if (result.inLocalStorage) {
-        console.log('In localStorage - lastReviewed:', result.inLocalStorage.lastReviewed)
-        console.log('In localStorage - lastModified:', result.inLocalStorage.lastModified)
-        console.log('In localStorage - reviewCount:', result.inLocalStorage.reviewCount)
-        console.log('Values match:', result.matches)
+        console.log(
+          "In localStorage - lastReviewed:",
+          result.inLocalStorage.lastReviewed,
+        );
+        console.log(
+          "In localStorage - lastModified:",
+          result.inLocalStorage.lastModified,
+        );
+        console.log(
+          "In localStorage - reviewCount:",
+          result.inLocalStorage.reviewCount,
+        );
+        console.log("Values match:", result.matches);
         if (!result.matches) {
-          console.warn('⚠️ MISMATCH: Memory and localStorage have different lastReviewed values!')
+          console.warn(
+            "⚠️ MISMATCH: Memory and localStorage have different lastReviewed values!",
+          );
         }
       } else {
-        console.warn('⚠️ Verse not found in localStorage!')
+        console.warn("⚠️ Verse not found in localStorage!");
       }
-      console.log('Full object:', result)
-      return result
-    }
-    
+      console.log("Full object:", result);
+      return result;
+    };
+
     // Load verses on mount
     onMounted(async () => {
-      loadCollections()
-      loadVerses()
-      loadWebDAVSettings()
-      
+      loadCollections();
+      loadVerses();
+      loadWebDAVSettings();
+
       // Load last backup timestamp
-      const stored = localStorage.getItem('bible-memory-last-backup')
+      const stored = localStorage.getItem("bible-memory-last-backup");
       if (stored) {
-        lastBackupTimestamp.value = stored
+        lastBackupTimestamp.value = stored;
       }
-      
+
       // Initialize history state tracking for back button
-      initializeHistory()
-      
+      initializeHistory();
+
       // Perform initial sync on app load
-      await triggerSync()
-    })
+      await triggerSync();
+    });
 
     // Cleanup event listener on unmount
     onBeforeUnmount(() => {
-      window.removeEventListener('popstate', handlePopState)
-    })
+      window.removeEventListener("popstate", handlePopState);
+    });
 
     return {
       verses,
@@ -5646,8 +7405,8 @@ export default {
       isPWAInstalled,
       showIOSModal,
       triggerInstall,
-      closeIOSModal
-    }
-  }
-}
+      closeIOSModal,
+    };
+  },
+};
 </script>
