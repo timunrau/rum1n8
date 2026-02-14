@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { clearBibleMemoryStorage, seedStorage } from '../helpers/storage'
+import { clearBibleMemoryStorage, seedStorage, getStoredVerses } from '../helpers/storage'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -62,4 +62,46 @@ test('click verse -> enters review screen', async ({ page }) => {
 test('empty state: no verses due shows appropriate message', async ({ page }) => {
   await page.goto('/?view=review-list')
   await expect(page.getByText(/No verses|all caught up|Review/i).first()).toBeVisible({ timeout: 5000 })
+})
+
+test('established interval preserved on review (no regression to 3 days)', async ({ page }) => {
+  const verseId = 'regression-test-1'
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 3,
+    lastReviewed: yesterday,
+    nextReviewDate: yesterday,
+    easeFactor: 2.5,
+    interval: 14,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+
+  await page.getByText('Psalm 1:1').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+
+  await page.waitForTimeout(200)
+  const verses = (await getStoredVerses(page)) as Array<{ id: string; interval: number; nextReviewDate: string }>
+  const verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  expect(verse!.interval).toBeGreaterThanOrEqual(20)
+  const nextReview = new Date(verse!.nextReviewDate)
+  const now = new Date()
+  expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
 })

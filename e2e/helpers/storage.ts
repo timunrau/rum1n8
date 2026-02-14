@@ -55,3 +55,10 @@ export async function seedStorage(
     }
   )
 }
+
+export async function getStoredVerses(page: Page): Promise<unknown[]> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('bible-memory-verses')
+    return raw ? JSON.parse(raw) : []
+  })
+}
