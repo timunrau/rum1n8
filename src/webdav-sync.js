@@ -376,34 +376,33 @@ function mergeData(localVerses, localCollections, remoteData) {
   const localActiveCollectionIds = new Set((localCollections || []).map(c => c.id))
   const remoteActiveCollectionIds = new Set(remoteCollections.map(c => c.id))
 
-  // Build entries map from local entries, then add any new remote-only deletions
+  // Build entries map from local entries, then selectively add remote deletions.
+  // Only import a remote deletion if the item exists locally (so we know to remove it).
+  // If neither side has the item as active data, the deletion is already effective
+  // and there's no reason to store it locally.
   const verseEntryMap = new Map(localVerseEntries.map(e => [e.id, e]))
   for (const id of remoteDeletedVerseIds) {
-    if (!verseEntryMap.has(id)) {
+    if (!verseEntryMap.has(id) && localActiveVerseIds.has(id)) {
       verseEntryMap.set(id, { id, deletedAt: now })
     }
   }
   const collectionEntryMap = new Map(localCollectionEntries.map(e => [e.id, e]))
   for (const id of remoteDeletedCollectionIds) {
-    if (!collectionEntryMap.has(id)) {
+    if (!collectionEntryMap.has(id) && localActiveCollectionIds.has(id)) {
       collectionEntryMap.set(id, { id, deletedAt: now })
     }
   }
 
-  // Filter: only keep deletions where the item still exists somewhere
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
-  const cutoff = Date.now() - sevenDaysMs
+  // Filter existing local entries: remove those where the item no longer exists anywhere
   for (const [id, entry] of verseEntryMap) {
-    const deletedAtMs = new Date(entry.deletedAt).getTime()
     const stillExists = localActiveVerseIds.has(id) || remoteActiveVerseIds.has(id)
-    if (!stillExists && deletedAtMs <= cutoff) {
+    if (!stillExists) {
       verseEntryMap.delete(id)
     }
   }
   for (const [id, entry] of collectionEntryMap) {
-    const deletedAtMs = new Date(entry.deletedAt).getTime()
     const stillExists = localActiveCollectionIds.has(id) || remoteActiveCollectionIds.has(id)
-    if (!stillExists && deletedAtMs <= cutoff) {
+    if (!stillExists) {
       collectionEntryMap.delete(id)
     }
   }
