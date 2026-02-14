@@ -62,3 +62,19 @@ export async function getStoredVerses(page: Page): Promise<unknown[]> {
     return raw ? JSON.parse(raw) : []
   })
 }
+
+/** WebDAV settings shape expected by the app */
+export interface WebDAVSettings {
+  url: string
+  username: string
+  password: string
+  folder?: string
+  useProxy?: boolean
+  proxyUrl?: string
+}
+
+export async function seedWebDAVSettings(page: Page, settings: WebDAVSettings) {
+  await page.evaluate((data: string) => {
+    localStorage.setItem('bible-memory-webdav-settings', data)
+  }, JSON.stringify(settings))
+}

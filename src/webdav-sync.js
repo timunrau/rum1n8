@@ -476,9 +476,7 @@ function mergeData(localVerses, localCollections, remoteData) {
         if (remoteIsFuture && localTimestamp) {
           useRemote = false
           reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
-        }
-        // Check if local was reviewed today
-        else {
+        } else {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const localReviewedToday = localLastReviewed && new Date(localLastReviewed) >= today
         const remoteReviewedToday = remoteLastReviewed && new Date(remoteLastReviewed) >= today

@@ -84,3 +84,44 @@ export async function mockWebDAV(page: Page, options?: { failSync?: boolean }) {
     await route.continue()
   })
 }
+
+/**
+ * Mock WebDAV sync to return stale remote data with a FUTURE lastReviewed timestamp.
+ * Reproduces the bug: merge incorrectly preferred remote (future date "newer") and
+ * overwrote local's freshly updated nextReviewDate/interval.
+ */
+export async function mockWebDAVWithStaleRemoteWithFutureTimestamp(
+  page: Page,
+  staleVerse: { id: string; reference: string; [k: string]: unknown }
+) {
+  const futureDate = new Date(Date.now() + 10 * 86400000).toISOString()
+  const verseWithFutureTimestamp = {
+    ...staleVerse,
+    lastReviewed: futureDate,
+    lastModified: futureDate,
+    interval: staleVerse.interval ?? 14,
+    nextReviewDate: staleVerse.nextReviewDate ?? new Date(Date.now() - 86400000).toISOString(),
+  }
+  const syncBody = JSON.stringify({
+    verses: [verseWithFutureTimestamp],
+    collections: [],
+    deletedVerses: [],
+    deletedCollections: [],
+    syncedAt: futureDate,
+  })
+
+  await page.route('**/localhost:3001/**', async (route) => {
+    const req = route.request()
+    const url = req.url()
+    const method = req.method()
+    if (method === 'PROPFIND' || method === 'OPTIONS') {
+      await route.fulfill({ status: 207, body: '<?xml version="1.0"?><multistatus/>' })
+      return
+    }
+    if (method === 'GET' && (url.includes('bible-memory-data') || url.includes('bible-memory.json'))) {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: syncBody })
+      return
+    }
+    await route.continue()
+  })
+}

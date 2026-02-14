@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { clearBibleMemoryStorage, seedStorage, getStoredVerses } from '../helpers/storage'
+import {
+  clearBibleMemoryStorage,
+  seedStorage,
+  getStoredVerses,
+  seedWebDAVSettings,
+} from '../helpers/storage'
+import { mockWebDAVWithStaleRemoteWithFutureTimestamp } from '../helpers/mocks'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -64,7 +70,7 @@ test('empty state: no verses due shows appropriate message', async ({ page }) =>
   await expect(page.getByText(/No verses|all caught up|Review/i).first()).toBeVisible({ timeout: 5000 })
 })
 
-test('Luke 11:9-13 exact regression: interval 14 + reviewCount 3 advances (not reset to 3 days)', async ({
+test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does not overwrite local', async ({
   page,
 }) => {
   const verseId = '1769044954411-nie7rnrn9'
@@ -85,6 +91,18 @@ test('Luke 11:9-13 exact regression: interval 14 + reviewCount 3 advances (not r
     reviewHistory: [],
     collectionIds: [],
   }
+
+  // Mock WebDAV to return stale remote data with FUTURE lastReviewed (the actual bug scenario).
+  // Without the fix, merge preferred remote and overwrote local's correct nextReviewDate/interval.
+  await mockWebDAVWithStaleRemoteWithFutureTimestamp(page, lukeVerse)
+
+  await seedWebDAVSettings(page, {
+    url: 'https://example.com/remote.php/webdav/',
+    username: 'test',
+    password: 'test',
+    useProxy: true,
+    proxyUrl: 'http://localhost:3001',
+  })
   await seedStorage(page, [lukeVerse], [])
   await page.reload()
   await page.goto('/?view=review-list')
@@ -98,7 +116,7 @@ test('Luke 11:9-13 exact regression: interval 14 + reviewCount 3 advances (not r
   await expect(nextButton).toBeVisible({ timeout: 5000 })
   await nextButton.click()
 
-  await page.waitForTimeout(200)
+  await page.waitForTimeout(500)
   const verses = (await getStoredVerses(page)) as Array<{
     id: string
     interval: number
