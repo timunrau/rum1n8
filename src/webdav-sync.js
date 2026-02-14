@@ -464,16 +464,26 @@ function mergeData(localVerses, localCollections, remoteData) {
       }
       // Priority 2: If both have memorization, prioritize newer timestamp (recent review)
       // CRITICAL: Always prioritize lastReviewed if it exists, as it indicates a recent review
-      // Special case: If remote timestamp is in the future, it's corrupt/clock skew - prefer local
+      // Special case: If remote timestamp is in the future - only reject when local was RECENTLY
+      // updated (we just reviewed). Otherwise could be clock skew; prefer remote if it has more progress.
       // Special case: If local was reviewed today, always keep local (prevents overwriting fresh reviews)
       else if (remoteHasMemorization && localHasMemorization) {
         const now = new Date()
         const nowMs = now.getTime()
         const oneHourMs = 60 * 60 * 1000
+        const twoHoursMs = 2 * 60 * 60 * 1000
         const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
+        const localTime = localTimestamp ? new Date(localTimestamp).getTime() : 0
         const remoteIsFuture = remoteTime > nowMs + oneHourMs
+        const localIsRecent = localTime > nowMs - twoHoursMs
 
-        if (remoteIsFuture && localTimestamp) {
+        if (remoteIsFuture && localTimestamp && localIsRecent) {
+          useRemote = false
+          reason = `remote timestamp is in the future (${remoteTimestamp}), local was recently updated - keeping local`
+        } else if (remoteIsFuture && verse.interval > existing.interval) {
+          useRemote = true
+          reason = `remote timestamp appears future (clock skew?), but remote has longer interval (${verse.interval} vs ${existing.interval}) - using remote`
+        } else if (remoteIsFuture && localTimestamp) {
           useRemote = false
           reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
         } else {
@@ -541,10 +551,18 @@ function mergeData(localVerses, localCollections, remoteData) {
       }
       // Priority 3: Use timestamp comparison for other cases
       else {
-        const now = new Date()
+        const nowMs = new Date().getTime()
         const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
-        const remoteIsFuture = remoteTime > now.getTime() + 60 * 60 * 1000
-        if (remoteIsFuture && localTimestamp) {
+        const localTime = localTimestamp ? new Date(localTimestamp).getTime() : 0
+        const remoteIsFuture = remoteTime > nowMs + 60 * 60 * 1000
+        const localIsRecent = localTime > nowMs - 2 * 60 * 60 * 1000
+        if (remoteIsFuture && localTimestamp && localIsRecent) {
+          useRemote = false
+          reason = `remote timestamp is in the future (${remoteTimestamp}), local was recently updated - keeping local`
+        } else if (remoteIsFuture && verse.interval > (existing.interval || 0)) {
+          useRemote = true
+          reason = `remote timestamp appears future (clock skew?), but remote has longer interval - using remote`
+        } else if (remoteIsFuture && localTimestamp) {
           useRemote = false
           reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
         } else if (remoteTimestamp && localTimestamp) {
