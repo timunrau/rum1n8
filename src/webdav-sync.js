@@ -47,36 +47,59 @@ function saveSyncState(state) {
 }
 
 /**
- * Get deleted verse IDs
+ * Migrate deletion list from old format (string[]) to new format ({id, deletedAt}[]).
+ * Old bare string IDs get deletedAt = now.
  */
-export function getDeletedVerses() {
-  const stored = localStorage.getItem(DELETED_VERSES_KEY)
-  if (stored) {
-    return JSON.parse(stored)
+function migrateDeletionList(stored) {
+  if (!stored) return []
+  const parsed = JSON.parse(stored)
+  if (!Array.isArray(parsed)) return []
+  if (parsed.length === 0) return []
+  // If first entry is a string, migrate the whole list
+  if (typeof parsed[0] === 'string') {
+    const now = new Date().toISOString()
+    return parsed.map(id => ({ id, deletedAt: now }))
   }
-  return []
+  return parsed
 }
 
 /**
- * Get deleted collection IDs
+ * Get deleted verse entries with timestamps
+ */
+export function getDeletedVerseEntries() {
+  return migrateDeletionList(localStorage.getItem(DELETED_VERSES_KEY))
+}
+
+/**
+ * Get deleted collection entries with timestamps
+ */
+export function getDeletedCollectionEntries() {
+  return migrateDeletionList(localStorage.getItem(DELETED_COLLECTIONS_KEY))
+}
+
+/**
+ * Get deleted verse IDs (convenience — returns just the ID strings)
+ */
+export function getDeletedVerses() {
+  return getDeletedVerseEntries().map(e => e.id)
+}
+
+/**
+ * Get deleted collection IDs (convenience — returns just the ID strings)
  */
 export function getDeletedCollections() {
-  const stored = localStorage.getItem(DELETED_COLLECTIONS_KEY)
-  if (stored) {
-    return JSON.parse(stored)
-  }
-  return []
+  return getDeletedCollectionEntries().map(e => e.id)
 }
 
 /**
  * Add verse ID to deleted list
  */
 export function markVerseDeleted(verseId) {
-  const deleted = getDeletedVerses()
-  if (!deleted.includes(verseId)) {
-    deleted.push(verseId)
-    localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(deleted))
-    console.log('[WebDAV] Marked verse as deleted:', verseId, 'Deleted list:', deleted)
+  const entries = getDeletedVerseEntries()
+  if (!entries.some(e => e.id === verseId)) {
+    entries.push({ id: verseId, deletedAt: new Date().toISOString() })
+    localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(entries))
+    console.log('[WebDAV] Marked verse as deleted:', verseId)
   }
 }
 
@@ -84,21 +107,26 @@ export function markVerseDeleted(verseId) {
  * Add collection ID to deleted list
  */
 export function markCollectionDeleted(collectionId) {
-  const deleted = getDeletedCollections()
-  if (!deleted.includes(collectionId)) {
-    deleted.push(collectionId)
-    localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(deleted))
-    console.log('[WebDAV] Marked collection as deleted:', collectionId, 'Deleted list:', deleted)
+  const entries = getDeletedCollectionEntries()
+  if (!entries.some(e => e.id === collectionId)) {
+    entries.push({ id: collectionId, deletedAt: new Date().toISOString() })
+    localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(entries))
+    console.log('[WebDAV] Marked collection as deleted:', collectionId)
   }
 }
 
 /**
- * Clear deleted IDs that are no longer in remote data (they've been synced)
- * Note: This is now handled in mergeData, but keeping for backward compatibility
+ * Prune deletion entries older than 30 days that no longer appear in remote data.
+ * Both conditions must be true before an entry is removed.
  */
-function clearSyncedDeletions(remoteVerses, remoteCollections) {
-  // Deletion cleanup is now handled in mergeData
-  // This function is kept for backward compatibility but does nothing
+function pruneDeletionList(entries, remoteIds) {
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000
+  const cutoff = Date.now() - thirtyDaysMs
+  return entries.filter(entry => {
+    const age = new Date(entry.deletedAt).getTime()
+    // Keep if younger than 30 days OR still present in remote data
+    return age > cutoff || remoteIds.has(entry.id)
+  })
 }
 
 /**
@@ -216,7 +244,17 @@ function getSyncFilePath(settings) {
 }
 
 /**
- * Download data from WebDAV
+ * Check if an error is a "not found" (404) response
+ */
+function isNotFoundError(err) {
+  return err.status === 404 ||
+    err.message?.includes('404') ||
+    err.message?.includes('Not Found') ||
+    err.message?.includes('not found')
+}
+
+/**
+ * Download data from WebDAV. Returns { data, etag } where etag may be null.
  */
 export async function downloadFromWebDAV() {
   const settings = getWebDAVSettings()
@@ -227,24 +265,23 @@ export async function downloadFromWebDAV() {
   try {
     const client = createWebDAVClient(settings)
     const filePath = getSyncFilePath(settings)
-    
-    // Check if file exists
+
+    // Check if file exists and get its ETag
+    let etag = null
     try {
       const fileInfo = await client.stat(filePath)
       if (!fileInfo) {
         console.log('[WebDAV] File does not exist on server, will upload local data')
-        return null // No file on server yet
+        return { data: null, etag: null }
       }
+      etag = fileInfo.etag || null
     } catch (err) {
-      // File doesn't exist (404 or other error)
-      // Check if it's a 404 or similar "not found" error
-      if (err.status === 404 || err.message?.includes('404') || err.message?.includes('Not Found') || err.message?.includes('not found')) {
+      if (isNotFoundError(err)) {
         console.log('[WebDAV] File does not exist on server (404), will upload local data')
-        return null
+        return { data: null, etag: null }
       }
-      // For other errors, still return null but log them
       console.warn('[WebDAV] Error checking file existence:', err.message || err)
-      return null
+      return { data: null, etag: null }
     }
 
     // Read file content
@@ -252,20 +289,18 @@ export async function downloadFromWebDAV() {
       const content = await client.getFileContents(filePath, { format: 'text' })
       const data = JSON.parse(content)
       console.log('[WebDAV] Successfully downloaded data from server')
-      return data
+      return { data, etag }
     } catch (err) {
-      // If reading fails, treat as if file doesn't exist
-      if (err.status === 404 || err.message?.includes('404') || err.message?.includes('Not Found')) {
+      if (isNotFoundError(err)) {
         console.log('[WebDAV] File does not exist on server (404), will upload local data')
-        return null
+        return { data: null, etag: null }
       }
       throw err
     }
   } catch (error) {
-    // Only throw if it's not a "file not found" error
-    if (error.status === 404 || error.message?.includes('404') || error.message?.includes('Not Found')) {
+    if (isNotFoundError(error)) {
       console.log('[WebDAV] File does not exist on server, will upload local data')
-      return null
+      return { data: null, etag: null }
     }
     console.error('Error downloading from WebDAV:', error)
     throw error
@@ -273,9 +308,11 @@ export async function downloadFromWebDAV() {
 }
 
 /**
- * Upload data to WebDAV
+ * Upload data to WebDAV.
+ * If etag is provided, uses If-Match for optimistic concurrency.
+ * Throws an error with status 412 if the file was modified since download.
  */
-export async function uploadToWebDAV(verses, collections) {
+export async function uploadToWebDAV(verses, collections, etag) {
   const settings = getWebDAVSettings()
   if (!settings) {
     throw new Error('WebDAV not configured')
@@ -325,8 +362,12 @@ export async function uploadToWebDAV(verses, collections) {
       }
     }
     
-    // Upload file
-    await client.putFileContents(filePath, content, { overwrite: true })
+    // Upload file (with optimistic concurrency if ETag available)
+    const putOptions = { overwrite: true }
+    if (etag) {
+      putOptions.headers = { 'If-Match': etag }
+    }
+    await client.putFileContents(filePath, content, putOptions)
     console.log(`[WebDAV] Successfully uploaded data to ${filePath}`)
     
     // Update sync state
@@ -340,447 +381,227 @@ export async function uploadToWebDAV(verses, collections) {
 }
 
 /**
- * Merge local and remote data intelligently
- * Strategy: 
- * - Items with same ID: keep the one with more recent lastModified or lastReviewed
- * - New items: add both
- * - Deleted items: merge deletion lists from remote and local, exclude deleted items
+ * Resolve a conflict between local and remote versions of the same verse.
+ * Returns true if remote should be used, false to keep local.
+ *
+ * Algorithm:
+ *   1. Reject remote if its timestamp is >1hr in the future (clock skew)
+ *   2. Pick whichever has the later lastReviewed
+ *   3. If neither has lastReviewed, pick later lastModified
+ *   4. Tiebreaker: pick longer interval (more review progress)
+ *   5. Default: keep local
+ */
+export function resolveVerseConflict(local, remote) {
+  const oneHourMs = 60 * 60 * 1000
+  const nowMs = Date.now()
+
+  const localLastReviewed = local.lastReviewed ? new Date(local.lastReviewed).getTime() : 0
+  const remoteLastReviewed = remote.lastReviewed ? new Date(remote.lastReviewed).getTime() : 0
+  const localLastModified = local.lastModified ? new Date(local.lastModified).getTime() : (local.createdAt ? new Date(local.createdAt).getTime() : 0)
+  const remoteLastModified = remote.lastModified ? new Date(remote.lastModified).getTime() : (remote.createdAt ? new Date(remote.createdAt).getTime() : 0)
+
+  // Step 1: Reject future remote timestamps (unless remote has strictly more progress)
+  const remoteTimestamp = remoteLastReviewed || remoteLastModified
+  if (remoteTimestamp > nowMs + oneHourMs) {
+    if ((remote.interval || 0) > (local.interval || 0)) {
+      return { useRemote: true, reason: 'remote timestamp future (clock skew?), but remote has more progress' }
+    }
+    return { useRemote: false, reason: 'remote timestamp is in the future, keeping local' }
+  }
+
+  // Step 2: Compare lastReviewed (most important signal)
+  if (localLastReviewed && remoteLastReviewed) {
+    if (remoteLastReviewed > localLastReviewed) {
+      return { useRemote: true, reason: 'remote has newer lastReviewed' }
+    }
+    if (localLastReviewed > remoteLastReviewed) {
+      return { useRemote: false, reason: 'local has newer lastReviewed' }
+    }
+    // lastReviewed is equal — fall through to tiebreaker
+  } else if (remoteLastReviewed && !localLastReviewed) {
+    return { useRemote: true, reason: 'remote has lastReviewed, local does not' }
+  } else if (localLastReviewed && !remoteLastReviewed) {
+    return { useRemote: false, reason: 'local has lastReviewed, remote does not' }
+  }
+
+  // Step 3: Compare lastModified
+  if (localLastModified && remoteLastModified) {
+    if (remoteLastModified > localLastModified) {
+      return { useRemote: true, reason: 'remote has newer lastModified' }
+    }
+    if (localLastModified > remoteLastModified) {
+      return { useRemote: false, reason: 'local has newer lastModified' }
+    }
+  } else if (remoteLastModified && !localLastModified) {
+    return { useRemote: true, reason: 'remote has lastModified, local does not' }
+  } else if (localLastModified && !remoteLastModified) {
+    return { useRemote: false, reason: 'local has lastModified, remote does not' }
+  }
+
+  // Step 4: Tiebreaker — longer interval means more review progress
+  if ((remote.interval || 0) > (local.interval || 0)) {
+    return { useRemote: true, reason: 'timestamps equal, remote has longer interval' }
+  }
+
+  // Step 5: Default — keep local
+  return { useRemote: false, reason: 'keeping local (default)' }
+}
+
+/**
+ * Merge local and remote data.
+ * - Combines deletion lists from both sides
+ * - Excludes deleted items
+ * - Resolves per-item conflicts using resolveVerseConflict
+ * - Cleans deleted collection IDs from verse.collectionIds
  */
 function mergeData(localVerses, localCollections, remoteData) {
   if (!remoteData || (!remoteData.verses && !remoteData.collections)) {
-    // No remote data, return local
-    return {
-      verses: localVerses || [],
-      collections: localCollections || []
-    }
+    return { verses: localVerses || [], collections: localCollections || [] }
   }
 
   const remoteVerses = remoteData.verses || []
   const remoteCollections = remoteData.collections || []
-  
-  // Merge deletion lists from remote and local
-  const remoteDeletedVerses = new Set(remoteData.deletedVerses || [])
-  const remoteDeletedCollections = new Set(remoteData.deletedCollections || [])
-  const localDeletedVerses = new Set(getDeletedVerses())
-  const localDeletedCollections = new Set(getDeletedCollections())
-  
-  console.log('[WebDAV] mergeData - remote deleted collections:', Array.from(remoteDeletedCollections))
-  console.log('[WebDAV] mergeData - local deleted collections:', Array.from(localDeletedCollections))
-  
-  // Combine deletions from both sources
-  const allDeletedVerseIds = new Set([...remoteDeletedVerses, ...localDeletedVerses])
-  const allDeletedCollectionIds = new Set([...remoteDeletedCollections, ...localDeletedCollections])
-  
-  // CRITICAL FIX: If an item is in the LOCAL deletion list, NEVER remove it from the deletion list
-  // even if it exists in the local array. This handles the case where a collection was just deleted
-  // but is still in the local array when mergeData is called (timing issue).
-  const localVerseIds = new Set((localVerses || []).map(v => v.id))
-  const localCollectionIds = new Set((localCollections || []).map(c => c.id))
-  
-  // For verses: Keep in deletion list if deleted remotely OR locally
-  // Only remove if it exists locally AND is NOT in any deletion list (was re-added)
-  const finalDeletedVerseIds = new Set([...allDeletedVerseIds].filter(id => {
-    // Always keep if deleted remotely (another device deleted it)
-    if (remoteDeletedVerses.has(id)) return true
-    // Always keep if deleted locally (we just deleted it) - THIS IS THE KEY FIX
-    if (localDeletedVerses.has(id)) return true
-    // Only remove if it exists locally but wasn't in any deletion list (was re-added)
-    return !localVerseIds.has(id)
-  }))
-  
-  // For collections: Keep in deletion list if deleted remotely OR locally
-  // Only remove if it exists locally AND is NOT in any deletion list (was re-added)
-  const finalDeletedCollectionIds = new Set([...allDeletedCollectionIds].filter(id => {
-    // Always keep if deleted remotely (another device deleted it)
-    if (remoteDeletedCollections.has(id)) return true
-    // Always keep if deleted locally (we just deleted it) - THIS IS THE KEY FIX
-    if (localDeletedCollections.has(id)) return true
-    // Only remove if it exists locally but wasn't in any deletion list (was re-added)
-    return !localCollectionIds.has(id)
-  }))
-  
-  console.log('[WebDAV] mergeData - final deleted collections:', Array.from(finalDeletedCollectionIds))
-  console.log('[WebDAV] mergeData - local collection IDs:', Array.from(localCollectionIds))
-  
-  // Update localStorage with merged deletion lists
-  localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify([...finalDeletedVerseIds]))
-  localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify([...finalDeletedCollectionIds]))
-  
-  console.log('[WebDAV] Merged deletion lists - verses:', Array.from(finalDeletedVerseIds), 'collections:', Array.from(finalDeletedCollectionIds))
+
+  // Build combined deletion sets (union of remote + local)
+  const remoteDeletedVerseIds = new Set(remoteData.deletedVerses || [])
+  const remoteDeletedCollectionIds = new Set(remoteData.deletedCollections || [])
+  const localDeletedVerseIds = new Set(getDeletedVerses())
+  const localDeletedCollectionIds = new Set(getDeletedCollections())
+
+  const deletedVerseIds = new Set([...remoteDeletedVerseIds, ...localDeletedVerseIds])
+  const deletedCollectionIds = new Set([...remoteDeletedCollectionIds, ...localDeletedCollectionIds])
+
+  // Persist merged deletion lists (with timestamps for pruning)
+  const localVerseEntries = getDeletedVerseEntries()
+  const localCollectionEntries = getDeletedCollectionEntries()
+  const now = new Date().toISOString()
+
+  // Build entries map from local entries, then add any new remote-only deletions
+  const verseEntryMap = new Map(localVerseEntries.map(e => [e.id, e]))
+  for (const id of remoteDeletedVerseIds) {
+    if (!verseEntryMap.has(id)) {
+      verseEntryMap.set(id, { id, deletedAt: now })
+    }
+  }
+  const collectionEntryMap = new Map(localCollectionEntries.map(e => [e.id, e]))
+  for (const id of remoteDeletedCollectionIds) {
+    if (!collectionEntryMap.has(id)) {
+      collectionEntryMap.set(id, { id, deletedAt: now })
+    }
+  }
+
+  localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify([...verseEntryMap.values()]))
+  localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify([...collectionEntryMap.values()]))
 
   // Merge verses
   const verseMap = new Map()
-  
-  // Add all local verses (excluding deleted ones)
-  ;(localVerses || []).forEach(verse => {
-    // Skip if this verse was deleted (locally or remotely)
-    if (finalDeletedVerseIds.has(verse.id)) {
-      return
+
+  for (const verse of (localVerses || [])) {
+    if (!deletedVerseIds.has(verse.id)) {
+      verseMap.set(verse.id, verse)
     }
-    verseMap.set(verse.id, { ...verse, source: 'local' })
-  })
-  
-  // Merge remote verses (excluding deleted ones)
-  remoteVerses.forEach(verse => {
-    // Skip if this verse was deleted (locally or remotely)
-    if (finalDeletedVerseIds.has(verse.id)) {
-      return
-    }
-    
+  }
+
+  for (const verse of remoteVerses) {
+    if (deletedVerseIds.has(verse.id)) continue
+
     const existing = verseMap.get(verse.id)
     if (!existing) {
-      // New verse from remote
-      verseMap.set(verse.id, { ...verse, source: 'remote' })
+      verseMap.set(verse.id, verse)
     } else {
-      // Conflict: intelligently merge verses considering memorization completeness
-      // For recently reviewed verses, prioritize lastReviewed over lastModified
-      // Compare lastReviewed first if both exist, then fall back to lastModified, then createdAt
-      const localLastReviewed = existing.lastReviewed || ''
-      const remoteLastReviewed = verse.lastReviewed || ''
-      const localLastModified = existing.lastModified || existing.createdAt || ''
-      const remoteLastModified = verse.lastModified || verse.createdAt || ''
-      
-      // Use lastReviewed for comparison if either has it (recent review is most important)
-      // Otherwise use lastModified
-      const localTimestamp = localLastReviewed || localLastModified
-      const remoteTimestamp = remoteLastReviewed || remoteLastModified
-      
-      // Check memorization completeness
-      const remoteHasMemorization = verse.nextReviewDate && verse.interval > 0
-      const localHasMemorization = existing.nextReviewDate && existing.interval > 0
-      
-      // Log merge decision for debugging
-      console.log(`[WebDAV] Merging verse ${verse.id} (${verse.reference}):`)
-      console.log(`[WebDAV]   Local: lastReviewed=${localLastReviewed || 'none'}, lastModified=${localLastModified || 'none'}, hasMemorization=${localHasMemorization}, interval=${existing.interval || 0}, nextReviewDate=${existing.nextReviewDate || 'none'}`)
-      console.log(`[WebDAV]   Remote: lastReviewed=${remoteLastReviewed || 'none'}, lastModified=${remoteLastModified || 'none'}, hasMemorization=${remoteHasMemorization}, interval=${verse.interval || 0}, nextReviewDate=${verse.nextReviewDate || 'none'}`)
-      
-      let useRemote = false
-      let reason = ''
-      
-      // Priority 1: If remote has memorization progress and local doesn't, prefer remote
-      if (remoteHasMemorization && !localHasMemorization) {
-        useRemote = true
-        reason = 'remote has memorization progress that local lacks'
-      }
-      // Priority 2: If both have memorization, prioritize newer timestamp (recent review)
-      // CRITICAL: Always prioritize lastReviewed if it exists, as it indicates a recent review
-      // Special case: If remote timestamp is in the future - only reject when local was RECENTLY
-      // updated (we just reviewed). Otherwise could be clock skew; prefer remote if it has more progress.
-      // Special case: If local was reviewed today, always keep local (prevents overwriting fresh reviews)
-      else if (remoteHasMemorization && localHasMemorization) {
-        const now = new Date()
-        const nowMs = now.getTime()
-        const oneHourMs = 60 * 60 * 1000
-        const twoHoursMs = 2 * 60 * 60 * 1000
-        const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
-        const localTime = localTimestamp ? new Date(localTimestamp).getTime() : 0
-        const remoteIsFuture = remoteTime > nowMs + oneHourMs
-        const localIsRecent = localTime > nowMs - twoHoursMs
-
-        if (remoteIsFuture && localTimestamp && localIsRecent) {
-          useRemote = false
-          reason = `remote timestamp is in the future (${remoteTimestamp}), local was recently updated - keeping local`
-        } else if (remoteIsFuture && verse.interval > existing.interval) {
-          useRemote = true
-          reason = `remote timestamp appears future (clock skew?), but remote has longer interval (${verse.interval} vs ${existing.interval}) - using remote`
-        } else if (remoteIsFuture && localTimestamp) {
-          useRemote = false
-          reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
-        } else {
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const localReviewedToday = localLastReviewed && new Date(localLastReviewed) >= today
-        const remoteReviewedToday = remoteLastReviewed && new Date(remoteLastReviewed) >= today
-        
-        // If local was reviewed today but remote wasn't - only keep local if remote doesn't have more progress.
-        // (Timezone difference can make "today" differ; remote with longer interval = more reviews = should win)
-        if (localReviewedToday && !remoteReviewedToday) {
-          if (verse.interval > existing.interval) {
-            useRemote = true
-            reason = `local reviewed today but remote has longer interval (${verse.interval} vs ${existing.interval}) - using remote`
-          } else {
-            useRemote = false
-            reason = `local was reviewed today (${localLastReviewed}), keeping local version`
-          }
-        }
-        // If remote was reviewed today but local wasn't, use remote
-        else if (remoteReviewedToday && !localReviewedToday) {
-          useRemote = true
-          reason = `remote was reviewed today (${remoteLastReviewed}), using remote version`
-        }
-        // Both reviewed today or neither, compare timestamps
-        else {
-          // Compare timestamps first - newer timestamp means more recent review
-          // (but we already handled remote-in-future above)
-          if (localTimestamp && remoteTimestamp) {
-            const localTime = new Date(localTimestamp).getTime()
-            const remoteTime = new Date(remoteTimestamp).getTime()
-            const timeDiff = Math.abs(localTime - remoteTime)
-            const oneMinute = 60 * 1000
-            
-            // If timestamps differ by more than 1 minute, use the newer one
-            if (timeDiff > oneMinute) {
-              if (remoteTime > localTime) {
-                useRemote = true
-                reason = `remote has newer timestamp (${remoteTimestamp} vs ${localTimestamp})`
-              } else {
-                useRemote = false
-                reason = `local has newer timestamp (${localTimestamp} vs ${remoteTimestamp})`
-              }
-            } else {
-              // Timestamps are very close (within 1 minute), use interval as tiebreaker
-              if (verse.interval > existing.interval) {
-                useRemote = true
-                reason = `timestamps close, remote has longer interval (${verse.interval} vs ${existing.interval})`
-              } else {
-                useRemote = false
-                reason = `timestamps close, local has longer or equal interval (${existing.interval} vs ${verse.interval})`
-              }
-            }
-          } else if (remoteTimestamp && !localTimestamp) {
-            useRemote = true
-            reason = 'remote has timestamp but local does not'
-          } else if (!remoteTimestamp && localTimestamp) {
-            useRemote = false
-            reason = 'local has timestamp but remote does not'
-          } else {
-            // Neither has timestamp, use interval
-            if (verse.interval > existing.interval) {
-              useRemote = true
-              reason = `no timestamps, remote has longer interval (${verse.interval} vs ${existing.interval})`
-            } else {
-              useRemote = false
-              reason = `no timestamps, local has longer or equal interval (${existing.interval} vs ${verse.interval})`
-            }
-          }
-        }
-        }
-      }
-      // Priority 3: Use timestamp comparison for other cases
-      else {
-        const nowMs = new Date().getTime()
-        const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
-        const localTime = localTimestamp ? new Date(localTimestamp).getTime() : 0
-        const remoteIsFuture = remoteTime > nowMs + 60 * 60 * 1000
-        const localIsRecent = localTime > nowMs - 2 * 60 * 60 * 1000
-        if (remoteIsFuture && localTimestamp && localIsRecent) {
-          useRemote = false
-          reason = `remote timestamp is in the future (${remoteTimestamp}), local was recently updated - keeping local`
-        } else if (remoteIsFuture && verse.interval > (existing.interval || 0)) {
-          useRemote = true
-          reason = `remote timestamp appears future (clock skew?), but remote has longer interval - using remote`
-        } else if (remoteIsFuture && localTimestamp) {
-          useRemote = false
-          reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
-        } else if (remoteTimestamp && localTimestamp) {
-          if (remoteTimestamp > localTimestamp) {
-            useRemote = true
-            reason = `remote has newer timestamp (${remoteTimestamp} vs ${localTimestamp})`
-          } else {
-            useRemote = false
-            reason = `local has newer timestamp (${localTimestamp} vs ${remoteTimestamp})`
-          }
-        } else if (remoteTimestamp && !localTimestamp) {
-          useRemote = true
-          reason = 'remote has timestamp but local does not'
-        } else if (!remoteTimestamp && localTimestamp) {
-          useRemote = false
-          reason = 'local has timestamp but remote does not'
-        } else {
-          useRemote = false
-          reason = 'neither has timestamp, keeping local (default)'
-        }
-      }
-      
+      const { useRemote, reason } = resolveVerseConflict(existing, verse)
+      console.log(`[WebDAV] Merge ${verse.id} (${verse.reference}): ${reason}`)
       if (useRemote) {
-        console.log(`[WebDAV] Using remote version for verse ${verse.id}: ${reason}`)
-        verseMap.set(verse.id, { ...verse, source: 'merged' })
-      } else {
-        console.log(`[WebDAV] Keeping local version for verse ${verse.id}: ${reason}`)
-        // Local version already in map, no action needed
+        verseMap.set(verse.id, verse)
       }
     }
-  })
-  
-  // Remove 'source' property from merged verses (it was only for debugging)
+  }
+
+  // Clean deleted collection IDs from verses
   const mergedVerses = Array.from(verseMap.values()).map(verse => {
-    const { source, ...verseWithoutSource } = verse
-    return verseWithoutSource
+    if (verse.collectionIds && verse.collectionIds.length > 0) {
+      const cleaned = verse.collectionIds.filter(id => !deletedCollectionIds.has(id))
+      return { ...verse, collectionIds: cleaned }
+    }
+    return verse
   })
 
   // Merge collections
   const collectionMap = new Map()
-  
-  console.log('[WebDAV] Merging collections - local:', localCollections.length, 'remote:', remoteCollections.length)
-  console.log('[WebDAV] Deleted collection IDs:', Array.from(finalDeletedCollectionIds))
-  
-  // Add all local collections (excluding deleted ones)
-  ;(localCollections || []).forEach(collection => {
-    // Skip if this collection was deleted (locally or remotely)
-    if (finalDeletedCollectionIds.has(collection.id)) {
-      console.log('[WebDAV] Skipping deleted local collection:', collection.id)
-      return
+
+  for (const collection of (localCollections || [])) {
+    if (!deletedCollectionIds.has(collection.id)) {
+      collectionMap.set(collection.id, collection)
     }
-    collectionMap.set(collection.id, { ...collection, source: 'local' })
-  })
-  
-  // Merge remote collections (excluding deleted ones)
-  remoteCollections.forEach(collection => {
-    // Skip if this collection was deleted (locally or remotely)
-    if (finalDeletedCollectionIds.has(collection.id)) {
-      console.log('[WebDAV] Skipping deleted remote collection:', collection.id)
-      return
-    }
-    
+  }
+
+  for (const collection of remoteCollections) {
+    if (deletedCollectionIds.has(collection.id)) continue
+
     const existing = collectionMap.get(collection.id)
     if (!existing) {
-      // New collection from remote
-      console.log('[WebDAV] Adding new collection from remote:', collection.id)
-      collectionMap.set(collection.id, { ...collection, source: 'remote' })
+      collectionMap.set(collection.id, collection)
     } else {
-      // Conflict: use the one with more recent modification
-      // Prefer lastModified, then createdAt
       const localTime = existing.lastModified || existing.createdAt || ''
       const remoteTime = collection.lastModified || collection.createdAt || ''
-      
-      if (remoteTime && localTime) {
-        if (remoteTime > localTime) {
-          collectionMap.set(collection.id, { ...collection, source: 'merged' })
-        }
-      } else if (remoteTime && !localTime) {
-        collectionMap.set(collection.id, { ...collection, source: 'merged' })
+      if (remoteTime > localTime) {
+        collectionMap.set(collection.id, collection)
       }
-      // Otherwise keep local
     }
-  })
-  
-  // Remove 'source' property from merged collections (it was only for debugging)
-  const mergedCollections = Array.from(collectionMap.values()).map(collection => {
-    const { source, ...collectionWithoutSource } = collection
-    return collectionWithoutSource
-  })
-  console.log('[WebDAV] Merged collections count:', mergedCollections.length)
+  }
 
   return {
     verses: mergedVerses,
-    collections: mergedCollections
+    collections: Array.from(collectionMap.values())
   }
 }
 
 /**
- * Perform two-way sync
+ * Perform two-way sync with optimistic concurrency.
+ * If maxRetries > 0, retries on ETag conflict (412).
  */
-export async function syncData(localVerses, localCollections) {
+export async function syncData(localVerses, localCollections, maxRetries = 1) {
   const settings = getWebDAVSettings()
   if (!settings) {
     return { success: false, error: 'WebDAV not configured' }
   }
 
-  try {
-    // Download from WebDAV
-    console.log('[WebDAV] Starting sync...')
-    const remoteData = await downloadFromWebDAV()
-    
-    // If no remote data exists, just upload local data
-    if (!remoteData) {
-      console.log('[WebDAV] No remote data found, uploading local data')
-      await uploadToWebDAV(localVerses, localCollections)
-      console.log('[WebDAV] Sync complete: uploaded local data')
-      return { 
-        success: true, 
-        action: 'uploaded',
-        verses: localVerses,
-        collections: localCollections
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[WebDAV] Starting sync (attempt ${attempt + 1})...`)
+      const { data: remoteData, etag } = await downloadFromWebDAV()
+
+      // No remote data — just upload local data
+      if (!remoteData) {
+        console.log('[WebDAV] No remote data found, uploading local data')
+        await uploadToWebDAV(localVerses, localCollections)
+        return { success: true, action: 'uploaded', verses: localVerses, collections: localCollections }
       }
-    }
-    
-    // Apply remote deletions to local data before merging
-    // This ensures that items deleted on other devices are removed locally
-    const remoteDeletedVerses = new Set(remoteData.deletedVerses || [])
-    const remoteDeletedCollections = new Set(remoteData.deletedCollections || [])
-    const localDeletedVerses = new Set(getDeletedVerses())
-    const localDeletedCollections = new Set(getDeletedCollections())
-    
-    console.log('[WebDAV] Remote deletions - verses:', Array.from(remoteDeletedVerses), 'collections:', Array.from(remoteDeletedCollections))
-    console.log('[WebDAV] Local deletions before merge - verses:', Array.from(localDeletedVerses), 'collections:', Array.from(localDeletedCollections))
-    
-    // Filter out ALL deleted items (both remote and local) from local arrays
-    // This ensures that locally deleted items don't get re-added from remote
-    let cleanedLocalVerses = (localVerses || []).filter(v => {
-      return !remoteDeletedVerses.has(v.id) && !localDeletedVerses.has(v.id)
-    })
-    let cleanedLocalCollections = (localCollections || []).filter(c => {
-      return !remoteDeletedCollections.has(c.id) && !localDeletedCollections.has(c.id)
-    })
-    
-    console.log('[WebDAV] After filtering ALL deletions - verses:', cleanedLocalVerses.length, 'collections:', cleanedLocalCollections.length)
-    
-    // Remove deleted collection IDs from verses (both remote and local deletions)
-    const allDeletedCollections = new Set([...remoteDeletedCollections, ...localDeletedCollections])
-    cleanedLocalVerses = cleanedLocalVerses.map(verse => {
-      if (verse.collectionIds && verse.collectionIds.length > 0) {
-        const cleanedCollectionIds = verse.collectionIds.filter(id => !allDeletedCollections.has(id))
-        return { ...verse, collectionIds: cleanedCollectionIds }
+
+      // Merge local + remote (mergeData handles all deletion filtering internally)
+      const merged = mergeData(localVerses, localCollections, remoteData)
+
+      // Upload merged data (ETag enables optimistic concurrency)
+      await uploadToWebDAV(merged.verses, merged.collections, etag)
+
+      // Prune old deletion entries after successful sync
+      const remoteVerseIds = new Set((remoteData.verses || []).map(v => v.id))
+      const remoteCollectionIds = new Set((remoteData.collections || []).map(c => c.id))
+      const prunedVerseEntries = pruneDeletionList(getDeletedVerseEntries(), remoteVerseIds)
+      const prunedCollectionEntries = pruneDeletionList(getDeletedCollectionEntries(), remoteCollectionIds)
+      localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(prunedVerseEntries))
+      localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(prunedCollectionEntries))
+
+      return { success: true, action: 'synced', verses: merged.verses, collections: merged.collections }
+    } catch (error) {
+      // Retry on 412 Precondition Failed (ETag mismatch = concurrent edit)
+      const is412 = error.status === 412 || error.message?.includes('412') || error.message?.includes('Precondition Failed')
+      if (is412 && attempt < maxRetries) {
+        console.log('[WebDAV] Conflict detected (412), retrying...')
+        continue
       }
-      return verse
-    })
-    
-    // Merge data (using cleaned local data)
-    const merged = mergeData(cleanedLocalVerses, cleanedLocalCollections, remoteData)
-    
-    // Get the final merged deletion lists (updated by mergeData)
-    const finalDeletedVerses = new Set(getDeletedVerses())
-    const finalDeletedCollections = new Set(getDeletedCollections())
-    
-    console.log('[WebDAV] Final deletion lists after merge - verses:', Array.from(finalDeletedVerses), 'collections:', Array.from(finalDeletedCollections))
-    console.log('[WebDAV] Merged result before final filter - verses:', merged.verses.length, 'collections:', merged.collections.length)
-    
-    // Final safety check: ensure no deleted items are in the merged result
-    const finalVerses = merged.verses.filter(v => {
-      if (finalDeletedVerses.has(v.id)) {
-        console.log('[WebDAV] Filtering out deleted verse:', v.id)
-        return false
-      }
-      return true
-    })
-    const finalCollections = merged.collections.filter(c => {
-      if (finalDeletedCollections.has(c.id)) {
-        console.log('[WebDAV] Filtering out deleted collection:', c.id)
-        return false
-      }
-      return true
-    })
-    
-    // Remove deleted collection IDs from final verses
-    const cleanedFinalVerses = finalVerses.map(verse => {
-      if (verse.collectionIds && verse.collectionIds.length > 0) {
-        const cleanedCollectionIds = verse.collectionIds.filter(id => !finalDeletedCollections.has(id))
-        if (cleanedCollectionIds.length !== verse.collectionIds.length) {
-          console.log('[WebDAV] Removed deleted collection IDs from verse:', verse.id, 'removed:', verse.collectionIds.filter(id => finalDeletedCollections.has(id)))
-        }
-        return { ...verse, collectionIds: cleanedCollectionIds }
-      }
-      return verse
-    })
-    
-    console.log('[WebDAV] Final result after filtering - verses:', cleanedFinalVerses.length, 'collections:', finalCollections.length)
-    
-    // Upload merged data (with deletions included in the upload)
-    await uploadToWebDAV(cleanedFinalVerses, finalCollections)
-    
-    // Clear deletions that have been synced (no longer in remote data)
-    clearSyncedDeletions(remoteData.verses, remoteData.collections)
-    
-    return {
-      success: true,
-      action: 'synced',
-      verses: cleanedFinalVerses,
-      collections: finalCollections
-    }
-  } catch (error) {
-    console.error('Sync error:', error)
-    return {
-      success: false,
-      error: error.message || 'Sync failed'
+      console.error('Sync error:', error)
+      return { success: false, error: error.message || 'Sync failed' }
     }
   }
 }
