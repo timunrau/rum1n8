@@ -2212,9 +2212,30 @@ export default {
         return []
       }
       
+      const query = searchQuery.value.trim()
+
       const fuse = getFuseInstance()
-      const results = fuse.search(searchQuery.value)
-      
+      const results = fuse.search(query)
+
+      // Include verses that contain the full query in content (case-insensitive) when Fuse
+      // excludes them due to long-content scoring (e.g. "if you who are evil" in Luke 11:9-13).
+      const resultIds = new Set(results.map(r => r.item.id))
+      const queryLower = query.toLowerCase()
+      const substringMatches = verses.value.filter(
+        v => !resultIds.has(v.id) && (v.content || '').toLowerCase().includes(queryLower)
+      )
+      substringMatches.forEach(v => {
+        resultIds.add(v.id)
+        const content = v.content || ''
+        const start = content.toLowerCase().indexOf(queryLower)
+        const end = start >= 0 ? start + query.length - 1 : -1
+        const matches = start >= 0
+          ? [{ key: 'content', indices: [[start, end]] }]
+          : []
+        results.push({ item: v, matches, score: 0 })
+      })
+      results.sort((a, b) => (a.score ?? 1) - (b.score ?? 1))
+
       return results.map(result => ({
         item: result.item,
         matches: result.matches || [],
