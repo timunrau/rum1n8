@@ -2030,14 +2030,8 @@ export default {
 
     const allWordsRevealed = computed(() => {
       if (reviewWords.value.length === 0) return false
-      
-      if (memorizationMode.value === 'memorize') {
-        // In memorize mode, all words that were hidden (not visible) should be revealed
-        return reviewWords.value.every(w => w.visible || w.revealed)
-      } else {
-        // In learn, master, or review mode, all words should be revealed
-        return reviewWords.value.every(w => w.revealed)
-      }
+      // Completion = user has typed (revealed) every word. In memorize mode, do not count visible-but-not-typed words.
+      return reviewWords.value.every(w => w.revealed)
     })
 
     // Calculate accuracy percentage
@@ -2452,41 +2446,30 @@ export default {
       return qwertyLayout[letter.toLowerCase()] || []
     }
 
-    // Extract required letters from a word (handles hyphenated words)
-    // For "peace-loving", returns ["p", "l"]
-    // For "hello", returns ["h"]
+    // Indices in text where alphabetic characters appear (for letter-by-letter partial display)
+    const getLetterIndices = (text) => {
+      const indices = []
+      for (let i = 0; i < text.length; i++) {
+        if (/[a-zA-Z]/.test(text[i])) indices.push(i)
+      }
+      return indices
+    }
+
+    // First letter of each hyphen part (one key reveals whole word). For "peace-loving" returns ["p","l"], for "hello" returns ["h"].
     const getRequiredLetters = (word) => {
-      // Handle various hyphen/dash characters:
-      // - U+002D HYPHEN-MINUS (-)
-      // - U+2010 HYPHEN (‐)
-      // - U+2011 NON-BREAKING HYPHEN (‑)
-      // - U+2012 FIGURE DASH (‒)
-      // - U+2013 EN DASH (–)
-      // - U+2014 EM DASH (—)
-      // - U+2015 HORIZONTAL BAR (―)
-      // Split by any type of dash/hyphen character
       const parts = word.split(/[-\u2010-\u2015]/)
       const requiredLetters = []
-      
       for (const part of parts) {
-        // Trim whitespace and find the first alphabetic character (skip punctuation at the start)
         const trimmedPart = part.trim()
         if (trimmedPart.length > 0) {
           const firstLetterMatch = trimmedPart.match(/[a-zA-Z]/)
-          if (firstLetterMatch) {
-            requiredLetters.push(firstLetterMatch[0].toLowerCase())
-          }
+          if (firstLetterMatch) requiredLetters.push(firstLetterMatch[0].toLowerCase())
         }
       }
-      
-      // Fallback: if no letters found, use first character
       if (requiredLetters.length === 0) {
         const firstChar = word.trim().charAt(0)
-        if (firstChar) {
-          requiredLetters.push(firstChar.toLowerCase())
-        }
+        if (firstChar) requiredLetters.push(firstChar.toLowerCase())
       }
-      
       return requiredLetters
     }
 
@@ -2534,27 +2517,17 @@ export default {
     }
 
     // Get partial word text based on how many letters have been typed
-    // For "peace-loving" with typedLettersIndex=1, returns "peace-"
-    // For "peace-loving" with typedLettersIndex=2, returns "peace-loving"
+    // For letter-by-letter: "eternal" with typedLettersIndex=3, returns "ete"
+    // For hyphenated "peace-loving": typedLettersIndex=1 returns "peace-", typedLettersIndex=2 returns "peace-loving"
     const getPartialWordText = (word) => {
       if (!word.requiredLetters || word.requiredLetters.length <= 1) {
-        // Not a hyphenated word
         return ''
       }
       
       const typedLettersIndex = word.typedLettersIndex || 0
-      
-      // If all letters typed, return full word
-      if (typedLettersIndex >= word.requiredLetters.length) {
-        return word.text
-      }
-      
-      // If no letters typed yet, return empty (will show underscores)
-      if (typedLettersIndex === 0) {
-        return ''
-      }
-      
-      // Use stored parts and separators, or compute them if not available
+      if (typedLettersIndex >= word.requiredLetters.length) return word.text
+      if (typedLettersIndex === 0) return ''
+
       let parts = word.parts
       let separators = word.separators
       if (!parts || !separators) {
@@ -2562,46 +2535,37 @@ export default {
         parts = split.parts
         separators = split.separators
       }
-      
-      // Build partial text up to the current part
-      let partialText = ''
-      for (let i = 0; i < typedLettersIndex && i < parts.length; i++) {
-        if (i > 0 && separators[i - 1]) {
-          partialText += separators[i - 1] // Add separator before this part
-        }
-        partialText += parts[i]
+
+      // Single part (no hyphen): show first typedLettersIndex letters by character position
+      if (parts.length === 1) {
+        const indices = getLetterIndices(word.text)
+        const endIdx = indices[typedLettersIndex - 1] + 1
+        return word.text.substring(0, endIdx)
       }
       
-      // Add separator after the last revealed part if there are more parts
+      // Hyphenated: build partial text up to the current part
+      let partialText = ''
+      for (let i = 0; i < typedLettersIndex && i < parts.length; i++) {
+        if (i > 0 && separators[i - 1]) partialText += separators[i - 1]
+        partialText += parts[i]
+      }
       if (typedLettersIndex < parts.length && separators.length > 0 && separators[typedLettersIndex - 1]) {
         partialText += separators[typedLettersIndex - 1]
       }
-      
       return partialText
     }
 
-    // Get remaining (untyped) part of a word for hyphenated words
-    // For "peace-loving" with typedLettersIndex=1, returns "loving"
-    // For "peace-loving" with typedLettersIndex=0, returns "peace-loving"
+    // Get remaining (untyped) part of a word
+    // For letter-by-letter: "eternal" with typedLettersIndex=3, returns "rnal"
     const getRemainingPartText = (word) => {
       if (!word.requiredLetters || word.requiredLetters.length <= 1) {
-        // Not a hyphenated word - return full text
         return word.text
       }
       
       const typedLettersIndex = word.typedLettersIndex || 0
-      
-      // If all letters typed, return empty
-      if (typedLettersIndex >= word.requiredLetters.length) {
-        return ''
-      }
-      
-      // If no letters typed yet, return full text
-      if (typedLettersIndex === 0) {
-        return word.text
-      }
-      
-      // Use stored parts and separators, or compute them if not available
+      if (typedLettersIndex >= word.requiredLetters.length) return ''
+      if (typedLettersIndex === 0) return word.text
+
       let parts = word.parts
       let separators = word.separators
       if (!parts || !separators) {
@@ -2609,16 +2573,20 @@ export default {
         parts = split.parts
         separators = split.separators
       }
-      
-      // Build remaining text from current part onwards
-      let remainingText = ''
-      for (let i = typedLettersIndex; i < parts.length; i++) {
-        if (i > typedLettersIndex && separators[i - 1]) {
-          remainingText += separators[i - 1]
-        }
-        remainingText += parts[i]
+
+      // Single part (no hyphen): remaining from position after typedLettersIndex-th letter
+      if (parts.length === 1) {
+        const indices = getLetterIndices(word.text)
+        const startIdx = indices[typedLettersIndex - 1] + 1
+        return word.text.substring(startIdx)
       }
       
+      // Hyphenated: build remaining from current part onwards
+      let remainingText = ''
+      for (let i = typedLettersIndex; i < parts.length; i++) {
+        if (i > typedLettersIndex && separators[i - 1]) remainingText += separators[i - 1]
+        remainingText += parts[i]
+      }
       return remainingText
     }
 
@@ -4001,7 +3969,7 @@ export default {
           incorrect: false
         }
       })
-      
+
       typedLetter.value = ''
       
       // Push navigation state
