@@ -4476,9 +4476,12 @@ export default {
           if (currentIndex !== -1) {
             // Find next verse in the list
             const nextIndex = (currentIndex + 1) % sourceVerses.length
+            // Focus input now (same user gesture) so mobile keyboard stays up after startReview
+            reviewPracticeRef.value?.focusInput?.()
             startReview(sourceVerses[nextIndex])
           } else {
             // Current verse not in source list, go to first verse
+            reviewPracticeRef.value?.focusInput?.()
             startReview(sourceVerses[0])
           }
         } else {
@@ -4718,6 +4721,18 @@ export default {
 
     // Handle key press events
     const handleKeyPress = (event) => {
+      // When review completion modal is open, Enter goes to next verse (keyboard-only flow)
+      if (
+        event.key === 'Enter' &&
+        reviewingVerse.value &&
+        allWordsRevealed.value &&
+        meetsAccuracyRequirement.value
+      ) {
+        event.preventDefault()
+        nextVerse()
+        return
+      }
+
       // Allow backspace, delete, arrow keys, etc.
       if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'].includes(event.key)) {
         return
