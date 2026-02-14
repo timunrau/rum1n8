@@ -2063,23 +2063,21 @@ export default {
             // Check if verse was already reviewed today
             const wasAlreadyReviewedToday = wasReviewedToday(verse)
             
-            // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
-            const reviewData = calculateNextReviewDate(verse, grade, true)
-            const currentInterval = verse.interval || 0
-            const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
-            if (shouldUpdateAlgorithm) {
+            // Only advance the spaced repetition schedule on the first review of the day
+            if (!wasAlreadyReviewedToday) {
+              const reviewData = calculateNextReviewDate(verse, grade, true)
               verse.reviewCount = (verse.reviewCount || 0) + 1
               verse.nextReviewDate = reviewData.nextReviewDate
               verse.easeFactor = reviewData.easeFactor
               verse.interval = reviewData.interval
             }
-            
+
             // Always update tracking fields regardless of whether it was reviewed today
             verse.lastReviewed = new Date().toISOString()
             verse.lastGrade = grade
             verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
             verse.lastModified = new Date().toISOString()
-            
+
             // Track review history
             if (!verse.reviewHistory) verse.reviewHistory = []
             verse.reviewHistory.push({
@@ -2088,7 +2086,7 @@ export default {
               accuracy: parseFloat(verse.lastAccuracy),
               mistakes: reviewMistakes.value
             })
-            
+
             currentReviewSaved.value = true
             saveVerses()
           }
@@ -4164,11 +4162,9 @@ export default {
           // Check if verse was already reviewed today
           const wasAlreadyReviewedToday = wasReviewedToday(prevVerse)
           
-          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
-          const reviewData = calculateNextReviewDate(prevVerse, grade, true)
-          const currentInterval = prevVerse.interval || 0
-          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
-          if (shouldUpdateAlgorithm) {
+          // Only advance the spaced repetition schedule on the first review of the day
+          if (!wasAlreadyReviewedToday) {
+            const reviewData = calculateNextReviewDate(prevVerse, grade, true)
             prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1
             prevVerse.nextReviewDate = reviewData.nextReviewDate
             prevVerse.easeFactor = reviewData.easeFactor
@@ -4478,11 +4474,9 @@ export default {
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
           
-          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
-          const reviewData = calculateNextReviewDate(verse, grade, true)
-          const currentInterval = verse.interval || 0
-          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
-          if (shouldUpdateAlgorithm) {
+          // Only advance the spaced repetition schedule on the first review of the day
+          if (!wasAlreadyReviewedToday) {
+            const reviewData = calculateNextReviewDate(verse, grade, true)
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
@@ -4626,11 +4620,9 @@ export default {
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
           
-          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
-          const reviewData = calculateNextReviewDate(verse, grade, true)
-          const currentInterval = verse.interval || 0
-          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
-          if (shouldUpdateAlgorithm) {
+          // Only advance the spaced repetition schedule on the first review of the day
+          if (!wasAlreadyReviewedToday) {
+            const reviewData = calculateNextReviewDate(verse, grade, true)
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
