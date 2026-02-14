@@ -214,6 +214,7 @@
     </header>
 
     <VersePracticeView
+      :key="reviewingVerse.id"
       ref="reviewPracticeRef"
       :verse="reviewingVerse"
       :memorization-mode="memorizationMode"
