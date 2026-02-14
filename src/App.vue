@@ -214,7 +214,7 @@
     </header>
 
     <VersePracticeView
-      :key="reviewingVerse.id"
+      :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
       ref="reviewPracticeRef"
       :verse="reviewingVerse"
       :memorization-mode="memorizationMode"
@@ -252,24 +252,12 @@
               >
                 Retry
               </button>
-              <!-- Wrapper so tap focuses an input (opens keyboard on Android PWA), then we advance and focus real input -->
-              <div
-                class="relative inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200 cursor-pointer min-h-[44px] flex items-center justify-center"
-                role="button"
-                aria-label="Next verse"
+              <button
+                @click="nextVerse"
+                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
               >
-                <input
-                  ref="nextVerseTriggerInput"
-                  type="text"
-                  readonly
-                  tabindex="0"
-                  aria-label="Next verse"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  style="min-height: 44px; font-size: 16px;"
-                  @focus="onNextVerseTriggerFocus"
-                />
-                <span class="relative z-0 pointer-events-none select-none">Next Verse</span>
-              </div>
+                Next Verse
+              </button>
             </div>
           </div>
           <div v-else>
@@ -1766,7 +1754,7 @@ export default {
     const memorizationScrollContainer = ref(null)
     const memorizationPracticeRef = ref(null)
     const reviewPracticeRef = ref(null)
-    const nextVerseTriggerInput = ref(null)
+    const reviewInstanceKey = ref(0) // Bump on retry so VersePracticeView remounts (keyboard shows on Android PWA)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const testingConnection = ref(false)
@@ -4114,6 +4102,7 @@ export default {
       }
       
       reviewingVerse.value = verse
+      reviewInstanceKey.value = 0 // Fresh instance so key is verseId-0 (retry bumps this to force remount)
       reviewMistakes.value = 0 // Reset mistake counter
       currentReviewSaved.value = false // Reset saved flag for new review
       
@@ -4179,19 +4168,8 @@ export default {
         }
       })
       typedLetter.value = ''
-      
-      // Focus input after DOM update. Use same 100ms delay as VersePracticeView's onMounted —
-      // that's what makes the keyboard show when first opening a verse; without it (nextVerse path)
-      // the component doesn't remount so onMounted doesn't run and keyboard wouldn't show on Android PWA.
-      nextTick(() => {
-        reviewPracticeRef.value?.focusInput?.()
-        requestAnimationFrame(() => {
-          reviewPracticeRef.value?.focusInput?.()
-        })
-        setTimeout(() => {
-          reviewPracticeRef.value?.focusInput?.()
-        }, 100)
-      })
+      // VersePracticeView is keyed by verse id (+ reviewInstanceKey on retry), so it remounts
+      // and onMounted runs the 100ms focus — that's what shows the keyboard on Android PWA.
     }
 
     // Advance to next memorization mode
@@ -4354,22 +4332,15 @@ export default {
     // Retry current review
     const retryReview = () => {
       if (reviewingVerse.value) {
+        reviewInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows (same as Next Verse)
         // Re-initialize current mode (so user stays in Learn/Memorize if they were in that mode)
         const mode = memorizationMode.value || 'master'
         switchReviewMode(mode)
       }
     }
 
-    // Called when user taps the "Next Verse" overlay input (Android PWA: tap = focus input = keyboard opens)
-    const onNextVerseTriggerFocus = () => {
-      nextVerse()
-    }
-
     // Move to next verse for review
     const nextVerse = () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/7e3542ed-4a3e-48b9-9dae-9b5d363d90e4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.vue:nextVerse',message:'nextVerse entered',data:{hasRef:!!reviewPracticeRef.value,hasFocusInput:!!reviewPracticeRef.value?.focusInput},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
       console.log('[nextVerse] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
@@ -4506,12 +4477,9 @@ export default {
           if (currentIndex !== -1) {
             // Find next verse in the list
             const nextIndex = (currentIndex + 1) % sourceVerses.length
-            // Focus input now (same user gesture) so mobile keyboard stays up after startReview
-            reviewPracticeRef.value?.focusInput?.()
             startReview(sourceVerses[nextIndex])
           } else {
             // Current verse not in source list, go to first verse
-            reviewPracticeRef.value?.focusInput?.()
             startReview(sourceVerses[0])
           }
         } else {
@@ -5510,10 +5478,9 @@ export default {
       startReview,
       retryReview,
       nextVerse,
-      onNextVerseTriggerFocus,
       exitReview,
       focusInput,
-      nextVerseTriggerInput,
+      reviewInstanceKey,
       handleKeyPress,
       checkLetter,
       getWordDisplayText,
