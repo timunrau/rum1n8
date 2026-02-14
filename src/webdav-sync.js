@@ -1,5 +1,3 @@
-import { createClient } from 'webdav'
-
 const STORAGE_KEY = 'bible-memory-verses'
 const COLLECTIONS_KEY = 'bible-memory-collections'
 const WEBDAV_SETTINGS_KEY = 'bible-memory-webdav-settings'
@@ -139,168 +137,76 @@ function isProduction() {
   return hostname === 'bible-memory.unrau.xyz' || hostname.includes('unrau.xyz')
 }
 
+
 /**
- * Create WebDAV client from settings
+ * Build the full URL for the sync file, applying proxy logic.
+ * Returns { url, headers } where headers includes auth and proxy headers.
  */
-function createWebDAVClient(settings) {
-  if (!settings || !settings.url || !settings.username || !settings.password) {
-    throw new Error('WebDAV settings incomplete')
+function buildSyncFileUrl(settings) {
+  let baseUrl = settings.url.trim()
+  const headers = {
+    'Authorization': 'Basic ' + btoa(settings.username + ':' + settings.password)
   }
 
-  let baseUrl = settings.url.trim()
-  let proxyUrl = null
-  let customHeaders = {}
-  
-  // In production, always use the proxy to avoid CORS issues
-  // In development, use proxy if explicitly enabled
   const shouldUseProxy = isProduction() || settings.useProxy
-  
-  console.log('[WebDAV] isProduction:', isProduction())
-  console.log('[WebDAV] shouldUseProxy:', shouldUseProxy)
-  console.log('[WebDAV] Original baseUrl:', baseUrl)
-  
+
   if (shouldUseProxy) {
-    // In production, use the nginx proxy endpoint (absolute URL needed for webdav library)
+    let proxyUrl
     if (isProduction()) {
-      // Use absolute URL so webdav library doesn't try to resolve relative paths
       proxyUrl = window.location.origin + '/api/webdav'
     } else {
-      // In development, use the explicit proxy URL or default
       proxyUrl = (settings.proxyUrl || 'http://localhost:3001').trim()
     }
-    
-    // Parse the Nextcloud URL to get the path
+
+    // Tell the proxy where to forward requests
+    headers['X-WebDAV-Target'] = baseUrl
+
     try {
       const nextcloudUrl = new URL(baseUrl)
-      const nextcloudPath = nextcloudUrl.pathname
-      
-      // For production proxy, pass the target URL via custom header
-      // and use the proxy endpoint with the Nextcloud path
-      if (isProduction()) {
-        // Store the original target URL in a header for the proxy to use
-        const originalTargetUrl = baseUrl
-        customHeaders['X-WebDAV-Target'] = originalTargetUrl
-        // Use proxy endpoint with the Nextcloud path
-        baseUrl = proxyUrl + nextcloudPath
-        console.log('[WebDAV] Production mode - using proxy:', proxyUrl)
-        console.log('[WebDAV] Setting X-WebDAV-Target header to:', originalTargetUrl)
-        console.log('[WebDAV] Final baseUrl for client:', baseUrl)
-      } else {
-        // Use proxy URL as base, but we need to prepend the Nextcloud path to all requests
-        // The webdav library will append paths to the base URL, so we need to include
-        // the Nextcloud path in the base URL when using proxy
-        baseUrl = proxyUrl + nextcloudPath
-        console.log('[WebDAV] Development mode - using proxy:', baseUrl)
-      }
+      baseUrl = proxyUrl + nextcloudUrl.pathname
     } catch (e) {
-      // If URL parsing fails, just use proxy URL
-      if (isProduction()) {
-        customHeaders['X-WebDAV-Target'] = baseUrl
-        baseUrl = proxyUrl
-        console.log('[WebDAV] URL parse error in production, using proxy:', baseUrl)
-      } else {
-        baseUrl = proxyUrl
-        console.log('[WebDAV] URL parse error, using proxy:', baseUrl)
-      }
+      baseUrl = proxyUrl
     }
   }
 
-  // Ensure URL ends with /
-  if (!baseUrl.endsWith('/')) {
-    baseUrl += '/'
-  }
+  if (!baseUrl.endsWith('/')) baseUrl += '/'
 
-  // Add folder path if specified
-  let path = baseUrl
   if (settings.folder && settings.folder.trim()) {
     const folder = settings.folder.trim().replace(/^\//, '').replace(/\/$/, '')
-    if (folder) {
-      path = baseUrl + folder + '/'
-    }
+    if (folder) baseUrl += folder + '/'
   }
 
-  // Build client options
-  const clientOptions = {
-    username: settings.username,
-    password: settings.password
-  }
-  
-  // Add custom headers if using proxy in production
-  if (Object.keys(customHeaders).length > 0) {
-    clientOptions.headers = customHeaders
-  }
-
-  return createClient(path, clientOptions)
+  return { url: baseUrl + SYNC_FILENAME, headers }
 }
 
 /**
- * Get full file path for sync file
- * Note: The folder is already included in the client's baseUrl, so we just return the filename
- */
-function getSyncFilePath(settings) {
-  // The folder is already included in the baseUrl when creating the client,
-  // so we just need to return the filename
-  return SYNC_FILENAME
-}
-
-/**
- * Check if an error is a "not found" (404) response
- */
-function isNotFoundError(err) {
-  return err.status === 404 ||
-    err.message?.includes('404') ||
-    err.message?.includes('Not Found') ||
-    err.message?.includes('not found')
-}
-
-/**
- * Download data from WebDAV. Returns { data, etag } where etag may be null.
+ * Download data from WebDAV.
  */
 export async function downloadFromWebDAV() {
   const settings = getWebDAVSettings()
-  if (!settings) {
-    throw new Error('WebDAV not configured')
-  }
+  if (!settings) throw new Error('WebDAV not configured')
+
+  const { url, headers } = buildSyncFileUrl(settings)
 
   try {
-    const client = createWebDAVClient(settings)
-    const filePath = getSyncFilePath(settings)
+    const response = await fetch(url, { method: 'GET', headers })
 
-    // Check if file exists and get its ETag
-    let etag = null
-    try {
-      const fileInfo = await client.stat(filePath)
-      if (!fileInfo) {
-        console.log('[WebDAV] File does not exist on server, will upload local data')
-        return { data: null, etag: null }
-      }
-      etag = fileInfo.etag || null
-    } catch (err) {
-      if (isNotFoundError(err)) {
-        console.log('[WebDAV] File does not exist on server (404), will upload local data')
-        return { data: null, etag: null }
-      }
-      console.warn('[WebDAV] Error checking file existence:', err.message || err)
-      return { data: null, etag: null }
+    if (response.status === 404) {
+      console.log('[WebDAV] File does not exist on server (404), will upload local data')
+      return { data: null }
     }
 
-    // Read file content
-    try {
-      const content = await client.getFileContents(filePath, { format: 'text' })
-      const data = JSON.parse(content)
-      console.log('[WebDAV] Successfully downloaded data from server')
-      return { data, etag }
-    } catch (err) {
-      if (isNotFoundError(err)) {
-        console.log('[WebDAV] File does not exist on server (404), will upload local data')
-        return { data: null, etag: null }
-      }
-      throw err
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status} ${response.statusText}`)
     }
+
+    const text = await response.text()
+    const data = JSON.parse(text)
+    console.log('[WebDAV] Successfully downloaded data from server')
+    return { data }
   } catch (error) {
-    if (isNotFoundError(error)) {
-      console.log('[WebDAV] File does not exist on server, will upload local data')
-      return { data: null, etag: null }
+    if (error.message?.includes('404')) {
+      return { data: null }
     }
     console.error('Error downloading from WebDAV:', error)
     throw error
@@ -308,76 +214,46 @@ export async function downloadFromWebDAV() {
 }
 
 /**
- * Upload data to WebDAV.
- * If etag is provided, uses If-Match for optimistic concurrency.
- * Throws an error with status 412 if the file was modified since download.
+ * Upload data to WebDAV using a simple PUT request.
  */
-export async function uploadToWebDAV(verses, collections, etag) {
+export async function uploadToWebDAV(verses, collections) {
   const settings = getWebDAVSettings()
-  if (!settings) {
-    throw new Error('WebDAV not configured')
+  if (!settings) throw new Error('WebDAV not configured')
+
+  const { url, headers } = buildSyncFileUrl(settings)
+
+  // Get deleted IDs to include in sync data
+  const deletedVerses = getDeletedVerses()
+  const deletedCollections = getDeletedCollections()
+
+  const data = {
+    verses: verses || [],
+    collections: collections || [],
+    deletedVerses: deletedVerses || [],
+    deletedCollections: deletedCollections || [],
+    syncedAt: new Date().toISOString()
   }
 
-  try {
-    const client = createWebDAVClient(settings)
-    const filePath = getSyncFilePath(settings)
-    
-    console.log(`[WebDAV] Uploading data to: ${filePath}`)
-    
-    // Get deleted IDs to include in sync data
-    const deletedVerses = getDeletedVerses()
-    const deletedCollections = getDeletedCollections()
-    
-    // Prepare data to upload
-    const data = {
-      verses: verses || [],
-      collections: collections || [],
-      deletedVerses: deletedVerses || [],
-      deletedCollections: deletedCollections || [],
-      syncedAt: new Date().toISOString()
-    }
-    
-    const content = JSON.stringify(data, null, 2)
-    console.log(`[WebDAV] Uploading ${data.verses.length} verses and ${data.collections.length} collections`)
-    console.log(`[WebDAV] Uploading ${deletedVerses.length} deleted verses and ${deletedCollections.length} deleted collections`)
-    
-    // Ensure directory exists (for folder option, though Nextcloud paths usually don't need this)
-    if (settings.folder && settings.folder.trim()) {
-      const folder = settings.folder.trim().replace(/^\//, '').replace(/\/$/, '')
-      if (folder) {
-        const folderPath = folder.split('/')
-        let currentPath = ''
-        for (const segment of folderPath) {
-          currentPath += '/' + segment
-          try {
-            await client.createDirectory(currentPath)
-            console.log(`[WebDAV] Created directory: ${currentPath}`)
-          } catch (err) {
-            // Directory might already exist, ignore
-            if (!err.message?.includes('405') && !err.message?.includes('Method Not Allowed')) {
-              console.log(`[WebDAV] Directory ${currentPath} already exists or cannot be created`)
-            }
-          }
-        }
-      }
-    }
-    
-    // Upload file (with optimistic concurrency if ETag available)
-    const putOptions = { overwrite: true }
-    if (etag) {
-      putOptions.headers = { 'If-Match': etag }
-    }
-    await client.putFileContents(filePath, content, putOptions)
-    console.log(`[WebDAV] Successfully uploaded data to ${filePath}`)
-    
-    // Update sync state
-    saveSyncState({ lastSync: new Date().toISOString() })
-    
-    return true
-  } catch (error) {
-    console.error('[WebDAV] Error uploading to WebDAV:', error)
-    throw error
+  const content = JSON.stringify(data, null, 2)
+  console.log(`[WebDAV] Uploading ${data.verses.length} verses and ${data.collections.length} collections`)
+  console.log(`[WebDAV] Uploading ${deletedVerses.length} deleted verses and ${deletedCollections.length} deleted collections`)
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    },
+    body: content
+  })
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
   }
+
+  console.log('[WebDAV] Successfully uploaded data')
+  saveSyncState({ lastSync: new Date().toISOString() })
+  return true
 }
 
 /**
@@ -557,52 +433,43 @@ function mergeData(localVerses, localCollections, remoteData) {
 }
 
 /**
- * Perform two-way sync with optimistic concurrency.
- * If maxRetries > 0, retries on ETag conflict (412).
+ * Perform two-way sync: download, merge, upload.
  */
-export async function syncData(localVerses, localCollections, maxRetries = 1) {
+export async function syncData(localVerses, localCollections) {
   const settings = getWebDAVSettings()
   if (!settings) {
     return { success: false, error: 'WebDAV not configured' }
   }
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`[WebDAV] Starting sync (attempt ${attempt + 1})...`)
-      const { data: remoteData, etag } = await downloadFromWebDAV()
+  try {
+    console.log('[WebDAV] Starting sync...')
+    const { data: remoteData } = await downloadFromWebDAV()
 
-      // No remote data — just upload local data
-      if (!remoteData) {
-        console.log('[WebDAV] No remote data found, uploading local data')
-        await uploadToWebDAV(localVerses, localCollections)
-        return { success: true, action: 'uploaded', verses: localVerses, collections: localCollections }
-      }
-
-      // Merge local + remote (mergeData handles all deletion filtering internally)
-      const merged = mergeData(localVerses, localCollections, remoteData)
-
-      // Upload merged data (ETag enables optimistic concurrency)
-      await uploadToWebDAV(merged.verses, merged.collections, etag)
-
-      // Prune old deletion entries after successful sync
-      const remoteVerseIds = new Set((remoteData.verses || []).map(v => v.id))
-      const remoteCollectionIds = new Set((remoteData.collections || []).map(c => c.id))
-      const prunedVerseEntries = pruneDeletionList(getDeletedVerseEntries(), remoteVerseIds)
-      const prunedCollectionEntries = pruneDeletionList(getDeletedCollectionEntries(), remoteCollectionIds)
-      localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(prunedVerseEntries))
-      localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(prunedCollectionEntries))
-
-      return { success: true, action: 'synced', verses: merged.verses, collections: merged.collections }
-    } catch (error) {
-      // Retry on 412 Precondition Failed (ETag mismatch = concurrent edit)
-      const is412 = error.status === 412 || error.message?.includes('412') || error.message?.includes('Precondition Failed')
-      if (is412 && attempt < maxRetries) {
-        console.log('[WebDAV] Conflict detected (412), retrying...')
-        continue
-      }
-      console.error('Sync error:', error)
-      return { success: false, error: error.message || 'Sync failed' }
+    // No remote data — just upload local data
+    if (!remoteData) {
+      console.log('[WebDAV] No remote data found, uploading local data')
+      await uploadToWebDAV(localVerses, localCollections)
+      return { success: true, action: 'uploaded', verses: localVerses, collections: localCollections }
     }
+
+    // Merge local + remote
+    const merged = mergeData(localVerses, localCollections, remoteData)
+
+    // Upload merged data
+    await uploadToWebDAV(merged.verses, merged.collections)
+
+    // Prune old deletion entries after successful sync
+    const remoteVerseIds = new Set((remoteData.verses || []).map(v => v.id))
+    const remoteCollectionIds = new Set((remoteData.collections || []).map(c => c.id))
+    const prunedVerseEntries = pruneDeletionList(getDeletedVerseEntries(), remoteVerseIds)
+    const prunedCollectionEntries = pruneDeletionList(getDeletedCollectionEntries(), remoteCollectionIds)
+    localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(prunedVerseEntries))
+    localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(prunedCollectionEntries))
+
+    return { success: true, action: 'synced', verses: merged.verses, collections: merged.collections }
+  } catch (error) {
+    console.error('Sync error:', error)
+    return { success: false, error: error.message || 'Sync failed' }
   }
 }
 
@@ -611,45 +478,49 @@ export async function syncData(localVerses, localCollections, maxRetries = 1) {
  */
 export async function testWebDAVConnection(settings) {
   try {
-    const client = createWebDAVClient(settings)
-    const filePath = getSyncFilePath(settings)
-    
-    // Try to list directory (this tests authentication)
-    const parentDir = filePath.substring(0, filePath.lastIndexOf('/') || 0) || '/'
-    await client.getDirectoryContents(parentDir || '/')
-    
+    const { url, headers } = buildSyncFileUrl(settings)
+
+    // Try a PROPFIND on the parent directory to test auth
+    const parentUrl = url.substring(0, url.lastIndexOf('/') + 1)
+    const response = await fetch(parentUrl, {
+      method: 'PROPFIND',
+      headers: {
+        ...headers,
+        'Depth': '0'
+      }
+    })
+
+    if (response.status === 401) {
+      return { success: false, error: 'Authentication failed: Check your username and password are correct.' }
+    }
+    if (response.status === 403) {
+      return { success: false, error: 'Access forbidden: Check your credentials and folder permissions.' }
+    }
+    if (response.status === 404) {
+      return { success: false, error: 'Server not found: Check that the URL is correct and the server is accessible.' }
+    }
+    if (!response.ok && response.status !== 207) {
+      return { success: false, error: `Connection failed: ${response.status} ${response.statusText}` }
+    }
+
     return { success: true }
   } catch (error) {
     let errorMessage = error.message || String(error) || 'Connection failed'
     const errorString = errorMessage.toLowerCase()
-    
-    // Check for CORS/fetch errors (most common issue)
-    if (errorString.includes('failed to fetch') || 
-        errorString.includes('fetch') ||
+
+    if (errorString.includes('failed to fetch') ||
         errorString.includes('cors') ||
         errorString.includes('networkerror') ||
-        (error.name && error.name === 'TypeError' && errorString.includes('fetch'))) {
+        (error.name === 'TypeError' && errorString.includes('fetch'))) {
       errorMessage = 'CORS Error: The WebDAV server is blocking requests from your browser.\n\n' +
         'Possible solutions:\n' +
         '• Configure your WebDAV server to allow CORS (add CORS headers)\n' +
         '• Use a CORS proxy service\n' +
-        '• Verify the URL is correct and accessible\n' +
-        '• Some servers (Nextcloud, ownCloud) may need special configuration for browser access'
-    } else if (errorString.includes('401') || errorString.includes('unauthorized')) {
-      errorMessage = 'Authentication failed: Check your username and password are correct.'
-    } else if (errorString.includes('404') || errorString.includes('not found')) {
-      errorMessage = 'Server not found: Check that the URL is correct and the server is accessible.'
-    } else if (errorString.includes('403') || errorString.includes('forbidden')) {
-      errorMessage = 'Access forbidden: Check your credentials and folder permissions.'
-    } else if (errorString.includes('networkerror') || errorString.includes('network')) {
-      errorMessage = 'Network error: Check your internet connection and that the server URL is correct.'
+        '• Verify the URL is correct and accessible'
     } else if (errorString.includes('timeout')) {
       errorMessage = 'Connection timeout: The server took too long to respond. Check the URL and try again.'
     }
-    
-    return {
-      success: false,
-      error: errorMessage
-    }
+
+    return { success: false, error: errorMessage }
   }
 }

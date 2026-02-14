@@ -105,22 +105,24 @@ app.use((req, res, next) => {
     // Increase body size limit for file uploads
     limit: '50mb',
     onProxyReq: (proxyReq, req) => {
-      // Forward all headers (http-proxy-middleware handles body streaming automatically)
-      Object.keys(req.headers).forEach(key => {
-        if (key !== 'host') {
-          proxyReq.setHeader(key, req.headers[key])
-        }
-      })
-      
+      // Remove internal header so Nextcloud doesn't see it
+      proxyReq.removeHeader('x-webdav-target')
+
       // Set longer timeout on the proxy request
       proxyReq.setTimeout(60000)
     },
     onProxyRes: (proxyRes, req, res) => {
+      // Log non-2xx responses for debugging
+      if (proxyRes.statusCode >= 400) {
+        console.log(`[Proxy] Response ${proxyRes.statusCode} for ${req.method} ${req.path}`)
+        console.log(`[Proxy] Response headers:`, JSON.stringify(proxyRes.headers, null, 2))
+      }
       // Add CORS headers to response
       proxyRes.headers['access-control-allow-origin'] = '*'
       proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK'
       proxyRes.headers['access-control-allow-headers'] = '*'
       proxyRes.headers['access-control-allow-credentials'] = 'true'
+      proxyRes.headers['access-control-expose-headers'] = 'ETag, etag, OC-ETag, Content-Type, Content-Length'
     },
     onError: (err, req, res) => {
       console.error('[Proxy] Error:', err.message)
