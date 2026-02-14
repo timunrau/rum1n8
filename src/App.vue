@@ -251,15 +251,24 @@
               >
                 Retry
               </button>
-              <button
-                type="button"
-                tabindex="-1"
-                @pointerdown="reviewPracticeRef?.focusInput?.()"
-                @click="nextVerse"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              <!-- Wrapper so tap focuses an input (opens keyboard on Android PWA), then we advance and focus real input -->
+              <div
+                class="relative inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200 cursor-pointer min-h-[44px] flex items-center justify-center"
+                role="button"
+                aria-label="Next verse"
               >
-                Next Verse
-              </button>
+                <input
+                  ref="nextVerseTriggerInput"
+                  type="text"
+                  readonly
+                  tabindex="0"
+                  aria-label="Next verse"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  style="min-height: 44px; font-size: 16px;"
+                  @focus="onNextVerseTriggerFocus"
+                />
+                <span class="relative z-0 pointer-events-none select-none">Next Verse</span>
+              </div>
             </div>
           </div>
           <div v-else>
@@ -1756,6 +1765,7 @@ export default {
     const memorizationScrollContainer = ref(null)
     const memorizationPracticeRef = ref(null)
     const reviewPracticeRef = ref(null)
+    const nextVerseTriggerInput = ref(null)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const testingConnection = ref(false)
@@ -4345,6 +4355,11 @@ export default {
       }
     }
 
+    // Called when user taps the "Next Verse" overlay input (Android PWA: tap = focus input = keyboard opens)
+    const onNextVerseTriggerFocus = () => {
+      nextVerse()
+    }
+
     // Move to next verse for review
     const nextVerse = () => {
       // #region agent log
@@ -5490,8 +5505,10 @@ export default {
       startReview,
       retryReview,
       nextVerse,
+      onNextVerseTriggerFocus,
       exitReview,
       focusInput,
+      nextVerseTriggerInput,
       handleKeyPress,
       checkLetter,
       getWordDisplayText,
