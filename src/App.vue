@@ -2063,11 +2063,11 @@ export default {
             // Check if verse was already reviewed today
             const wasAlreadyReviewedToday = wasReviewedToday(verse)
             
-            // Only update algorithm-affecting fields if this is the first review of the day
-            if (!wasAlreadyReviewedToday) {
-              // Calculate next review date and update ease factor
-              const reviewData = calculateNextReviewDate(verse, grade, true)
-              
+            // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
+            const reviewData = calculateNextReviewDate(verse, grade, true)
+            const currentInterval = verse.interval || 0
+            const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
+            if (shouldUpdateAlgorithm) {
               verse.reviewCount = (verse.reviewCount || 0) + 1
               verse.nextReviewDate = reviewData.nextReviewDate
               verse.easeFactor = reviewData.easeFactor
@@ -2815,27 +2815,27 @@ export default {
         newEF = Math.max(1.3, newEF * 0.8)
       } else {
         // Graduated phase: use ease factor to calculate interval
-        if (verse.reviewCount === 0) {
-          // First successful review: 1 day
+        // When verse already has an established interval (>4 days), use it—don't reset based on
+        // reviewCount. This handles imported/synced verses where reviewCount and interval can be out of sync.
+        const previousInterval = verse.interval || 0
+        const hasEstablishedInterval = previousInterval > 4
+
+        if (hasEstablishedInterval) {
+          // Subsequent reviews: previous interval * ease factor (don't reset)
+          interval = previousInterval * newEF
+          if (interval > 90) interval = 90
+        } else if (verse.reviewCount === 0) {
           interval = 1
         } else if (verse.reviewCount === 1) {
-          // Second review: 1 day
           interval = 1
         } else if (verse.reviewCount === 2) {
-          // Third review: 2 days
           interval = 2
         } else if (verse.reviewCount === 3) {
-          // Fourth review: 3 days
           interval = 3
         } else if (verse.reviewCount === 4) {
-          // Fifth review: 4 days
           interval = 4
         } else {
-          // Subsequent reviews: previous interval * ease factor
-          const previousInterval = verse.interval || 1
-          interval = previousInterval * newEF
-          
-          // Cap maximum interval at 90 days (3 months)
+          interval = (previousInterval || 1) * newEF
           if (interval > 90) interval = 90
         }
       }
@@ -2843,11 +2843,7 @@ export default {
       const nextDate = new Date(now)
       nextDate.setDate(nextDate.getDate() + interval)
       
-      return {
-        nextReviewDate: nextDate.toISOString(),
-        easeFactor: newEF,
-        interval: interval
-      }
+      return { nextReviewDate: nextDate.toISOString(), easeFactor: newEF, interval }
     }
 
     // Check if a verse is due for review (only for mastered verses)
@@ -4152,10 +4148,11 @@ export default {
           // Check if verse was already reviewed today
           const wasAlreadyReviewedToday = wasReviewedToday(prevVerse)
           
-          // Only update algorithm-affecting fields if this is the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(prevVerse, grade, true)
-            
+          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
+          const reviewData = calculateNextReviewDate(prevVerse, grade, true)
+          const currentInterval = prevVerse.interval || 0
+          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
+          if (shouldUpdateAlgorithm) {
             prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1
             prevVerse.nextReviewDate = reviewData.nextReviewDate
             prevVerse.easeFactor = reviewData.easeFactor
@@ -4466,11 +4463,11 @@ export default {
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
           
-          // Only update algorithm-affecting fields if this is the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            // Calculate next review date and update ease factor
-            const reviewData = calculateNextReviewDate(verse, grade, true)
-            
+          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
+          const reviewData = calculateNextReviewDate(verse, grade, true)
+          const currentInterval = verse.interval || 0
+          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
+          if (shouldUpdateAlgorithm) {
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
@@ -4614,11 +4611,11 @@ export default {
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
           
-          // Only update algorithm-affecting fields if this is the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            // Calculate next review date and update ease factor
-            const reviewData = calculateNextReviewDate(verse, grade, true)
-            
+          // Update algorithm-affecting fields: first review of day, or recovery (new interval > current)
+          const reviewData = calculateNextReviewDate(verse, grade, true)
+          const currentInterval = verse.interval || 0
+          const shouldUpdateAlgorithm = !wasAlreadyReviewedToday || reviewData.interval > currentInterval
+          if (shouldUpdateAlgorithm) {
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
