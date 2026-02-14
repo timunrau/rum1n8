@@ -56,8 +56,8 @@
     </div>
 
     <!-- Mode buttons: Learn | Memorize | Master -->
-    <div class="mb-6 flex-shrink-0">
-      <div class="flex items-center justify-center gap-2 mb-4">
+    <div class="my-2 flex-shrink-0">
+      <div class="flex items-center justify-center gap-2">
         <div
           v-for="(stage, index) in stages"
           :key="index"
@@ -66,7 +66,7 @@
           <div
             @click="onSwitchMode(stage.mode)"
             :class="[
-              'px-4 py-2 rounded-lg font-semibold transition-colors duration-200',
+              'px-4 py-1 rounded-lg font-semibold transition-colors duration-200',
               memorizationMode === stage.mode
                 ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
                 : isStageComplete(stage)
