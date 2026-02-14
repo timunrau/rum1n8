@@ -114,16 +114,20 @@ export function markCollectionDeleted(collectionId) {
 }
 
 /**
- * Prune deletion entries older than 30 days that no longer appear in remote data.
- * Both conditions must be true before an entry is removed.
+ * Prune deletion entries that are no longer needed.
+ * A deletion entry is only needed if the item still exists in remote data
+ * (so the other side knows to delete it). Once the remote no longer has it,
+ * the deletion has taken effect and can be forgotten.
+ * As a safety margin, keep entries younger than 7 days even if not in remote,
+ * in case remote hasn't synced yet.
  */
 function pruneDeletionList(entries, remoteIds) {
-  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000
-  const cutoff = Date.now() - thirtyDaysMs
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+  const cutoff = Date.now() - sevenDaysMs
   return entries.filter(entry => {
-    const age = new Date(entry.deletedAt).getTime()
-    // Keep if younger than 30 days OR still present in remote data
-    return age > cutoff || remoteIds.has(entry.id)
+    const deletedAtMs = new Date(entry.deletedAt).getTime()
+    // Keep if still present in remote (deletion not yet effective) OR younger than 7 days
+    return remoteIds.has(entry.id) || deletedAtMs > cutoff
   })
 }
 
@@ -215,26 +219,39 @@ export async function downloadFromWebDAV() {
 
 /**
  * Upload data to WebDAV using a simple PUT request.
+ * Only includes deletion IDs that are still relevant (items that exist in
+ * the active verse/collection set being uploaded need not be tracked as deleted).
  */
-export async function uploadToWebDAV(verses, collections) {
+export async function uploadToWebDAV(verses, collections, remoteData) {
   const settings = getWebDAVSettings()
   if (!settings) throw new Error('WebDAV not configured')
 
   const { url, headers } = buildSyncFileUrl(settings)
 
-  // Get deleted IDs to include in sync data
-  const deletedVerses = getDeletedVerses()
-  const deletedCollections = getDeletedCollections()
+  // Only include deletion IDs that still appear in remote data —
+  // if the remote doesn't have the item, the deletion is already effective
+  const activeVerseIds = new Set((verses || []).map(v => v.id))
+  const activeCollectionIds = new Set((collections || []).map(c => c.id))
+  const remoteVerseIds = new Set((remoteData?.verses || []).map(v => v.id))
+  const remoteCollectionIds = new Set((remoteData?.collections || []).map(c => c.id))
+
+  const deletedVerses = getDeletedVerses().filter(id =>
+    !activeVerseIds.has(id) && remoteVerseIds.has(id)
+  )
+  const deletedCollections = getDeletedCollections().filter(id =>
+    !activeCollectionIds.has(id) && remoteCollectionIds.has(id)
+  )
 
   const data = {
     verses: verses || [],
     collections: collections || [],
-    deletedVerses: deletedVerses || [],
-    deletedCollections: deletedCollections || [],
+    deletedVerses,
+    deletedCollections,
     syncedAt: new Date().toISOString()
   }
 
-  const content = JSON.stringify(data, null, 2)
+  // Use compact JSON (no pretty-printing) to minimize payload size
+  const content = JSON.stringify(data)
   console.log(`[WebDAV] Uploading ${data.verses.length} verses and ${data.collections.length} collections`)
   console.log(`[WebDAV] Uploading ${deletedVerses.length} deleted verses and ${deletedCollections.length} deleted collections`)
 
@@ -347,10 +364,17 @@ function mergeData(localVerses, localCollections, remoteData) {
   const deletedVerseIds = new Set([...remoteDeletedVerseIds, ...localDeletedVerseIds])
   const deletedCollectionIds = new Set([...remoteDeletedCollectionIds, ...localDeletedCollectionIds])
 
-  // Persist merged deletion lists (with timestamps for pruning)
+  // Persist merged deletion lists (with timestamps for pruning).
+  // Only keep entries where the item actually exists in local or remote active data —
+  // if neither side has it, the deletion is already effective.
   const localVerseEntries = getDeletedVerseEntries()
   const localCollectionEntries = getDeletedCollectionEntries()
   const now = new Date().toISOString()
+
+  const localActiveVerseIds = new Set((localVerses || []).map(v => v.id))
+  const remoteActiveVerseIds = new Set(remoteVerses.map(v => v.id))
+  const localActiveCollectionIds = new Set((localCollections || []).map(c => c.id))
+  const remoteActiveCollectionIds = new Set(remoteCollections.map(c => c.id))
 
   // Build entries map from local entries, then add any new remote-only deletions
   const verseEntryMap = new Map(localVerseEntries.map(e => [e.id, e]))
@@ -363,6 +387,24 @@ function mergeData(localVerses, localCollections, remoteData) {
   for (const id of remoteDeletedCollectionIds) {
     if (!collectionEntryMap.has(id)) {
       collectionEntryMap.set(id, { id, deletedAt: now })
+    }
+  }
+
+  // Filter: only keep deletions where the item still exists somewhere
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+  const cutoff = Date.now() - sevenDaysMs
+  for (const [id, entry] of verseEntryMap) {
+    const deletedAtMs = new Date(entry.deletedAt).getTime()
+    const stillExists = localActiveVerseIds.has(id) || remoteActiveVerseIds.has(id)
+    if (!stillExists && deletedAtMs <= cutoff) {
+      verseEntryMap.delete(id)
+    }
+  }
+  for (const [id, entry] of collectionEntryMap) {
+    const deletedAtMs = new Date(entry.deletedAt).getTime()
+    const stillExists = localActiveCollectionIds.has(id) || remoteActiveCollectionIds.has(id)
+    if (!stillExists && deletedAtMs <= cutoff) {
+      collectionEntryMap.delete(id)
     }
   }
 
@@ -445,18 +487,18 @@ export async function syncData(localVerses, localCollections) {
     console.log('[WebDAV] Starting sync...')
     const { data: remoteData } = await downloadFromWebDAV()
 
-    // No remote data — just upload local data
+    // No remote data — just upload local data (no deletions needed since remote is empty)
     if (!remoteData) {
       console.log('[WebDAV] No remote data found, uploading local data')
-      await uploadToWebDAV(localVerses, localCollections)
+      await uploadToWebDAV(localVerses, localCollections, null)
       return { success: true, action: 'uploaded', verses: localVerses, collections: localCollections }
     }
 
     // Merge local + remote
     const merged = mergeData(localVerses, localCollections, remoteData)
 
-    // Upload merged data
-    await uploadToWebDAV(merged.verses, merged.collections)
+    // Upload merged data, passing remoteData so we can filter deletion lists
+    await uploadToWebDAV(merged.verses, merged.collections, remoteData)
 
     // Prune old deletion entries after successful sync
     const remoteVerseIds = new Set((remoteData.verses || []).map(v => v.id))
