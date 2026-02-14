@@ -491,10 +491,16 @@ function mergeData(localVerses, localCollections, remoteData) {
         const localReviewedToday = localLastReviewed && new Date(localLastReviewed) >= today
         const remoteReviewedToday = remoteLastReviewed && new Date(remoteLastReviewed) >= today
         
-        // If local was reviewed today but remote wasn't, always keep local
+        // If local was reviewed today but remote wasn't - only keep local if remote doesn't have more progress.
+        // (Timezone difference can make "today" differ; remote with longer interval = more reviews = should win)
         if (localReviewedToday && !remoteReviewedToday) {
-          useRemote = false
-          reason = `local was reviewed today (${localLastReviewed}), keeping local version`
+          if (verse.interval > existing.interval) {
+            useRemote = true
+            reason = `local reviewed today but remote has longer interval (${verse.interval} vs ${existing.interval}) - using remote`
+          } else {
+            useRemote = false
+            reason = `local was reviewed today (${localLastReviewed}), keeping local version`
+          }
         }
         // If remote was reviewed today but local wasn't, use remote
         else if (remoteReviewedToday && !localReviewedToday) {
