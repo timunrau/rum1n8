@@ -175,9 +175,15 @@ export default {
     }
 
     function focusInput() {
+      // #region agent log
+      const hasInput = !!inputRef.value
+      const activeBefore = typeof document !== 'undefined' && document.activeElement ? document.activeElement?.id : null
       if (inputRef.value) {
         inputRef.value.focus()
       }
+      const activeAfter = typeof document !== 'undefined' && document.activeElement ? document.activeElement?.id : null
+      fetch('http://127.0.0.1:7242/ingest/7e3542ed-4a3e-48b9-9dae-9b5d363d90e4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VersePracticeView.vue:focusInput',message:'focusInput',data:{hasInput,inputId:inputRef.value?.id,activeBefore,activeAfter},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
     }
 
     onMounted(() => {

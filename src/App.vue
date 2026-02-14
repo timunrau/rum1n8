@@ -4169,6 +4169,10 @@ export default {
       // Focus input after DOM update
       nextTick(() => {
         reviewPracticeRef.value?.focusInput?.()
+        // Re-focus after paint so mobile keyboard reappears if re-render caused blur
+        requestAnimationFrame(() => {
+          reviewPracticeRef.value?.focusInput?.()
+        })
       })
     }
 
@@ -4340,6 +4344,13 @@ export default {
 
     // Move to next verse for review
     const nextVerse = () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/7e3542ed-4a3e-48b9-9dae-9b5d363d90e4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.vue:nextVerse',message:'nextVerse entered',data:{hasRef:!!reviewPracticeRef.value,hasFocusInput:!!reviewPracticeRef.value?.focusInput},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      // Focus immediately while still in user gesture (helps mobile keyboard stay up)
+      if (reviewingVerse.value) {
+        reviewPracticeRef.value?.focusInput?.()
+      }
       console.log('[nextVerse] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
