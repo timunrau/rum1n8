@@ -105,3 +105,36 @@ test('established interval preserved on review (no regression to 3 days)', async
   const now = new Date()
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
 })
+
+test('review mode: verse with dash (no spaces) treats parts as separate words', async ({ page }) => {
+  const masteredVerseWithDash = {
+    id: 'dash-review',
+    reference: 'Genesis 17:8',
+    content: 'One—two',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerseWithDash], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Genesis 17:8').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('o', { delay: 50 })
+  await page.waitForTimeout(100)
+  await expect(page.getByText('Great job!')).toHaveCount(0)
+
+  await page.keyboard.type('t', { delay: 50 })
+  await page.waitForTimeout(200)
+  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+})

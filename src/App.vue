@@ -81,38 +81,38 @@
           >
             <span v-if="memorizationMode === 'learn'">
               <template v-if="word.revealed">
-                <span :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">{{ word.text }}</span>
+                <span :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ getRemainingPartText(word) }}</span>
+                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else>
-                <span class="text-gray-300">{{ word.text }}</span>
+                <span class="text-gray-300">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
             </span>
             <span v-else-if="memorizationMode === 'memorize'">
               <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-gray-300">
-                {{ word.text }}
+                {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <span v-else-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}
+                {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
               </span>
             </span>
             <span v-else-if="memorizationMode === 'master'">
               <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}
+                {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 font-semibold">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900 font-semibold">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
               </span>
             </span>
           </span>
@@ -325,13 +325,13 @@
               class="inline-block mr-2"
             >
               <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}
+                {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}</span>
+                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}
+                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
               </span>
             </span>
           </div>
@@ -2611,6 +2611,27 @@ export default {
       return requiredLetters
     }
 
+    // Expand verse content into words, splitting tokens that contain dashes into separate entries.
+    // "God—created" (no spaces around dash) becomes two words so each requires its own letter to reveal.
+    const getVerseWords = (content) => {
+      const spaceSplitTokens = content.split(/\s+/).filter(w => w.trim().length > 0)
+      const result = []
+      for (const token of spaceSplitTokens) {
+        const { parts, separators } = splitWordParts(token)
+        if (parts.length > 1) {
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i]
+            if (part.trim().length > 0) {
+              result.push({ text: part, separatorAfter: separators[i] || '' })
+            }
+          }
+        } else {
+          result.push({ text: token, separatorAfter: '' })
+        }
+      }
+      return result
+    }
+
     // Split word into parts by hyphens and get the separator characters
     // Returns { parts: ["peace", "loving"], separators: ["-"] }
     const splitWordParts = (word) => {
@@ -4064,42 +4085,38 @@ export default {
         }
       }
       
-      // Split verse content into words by whitespace
-      const words = verse.content.split(/\s+/).filter(word => word.trim().length > 0)
+      // Split verse content into words (whitespace + dashes without spaces, e.g. "God—created" → two words)
+      const wordEntries = getVerseWords(verse.content)
       
-      reviewWords.value = words.map((word, index) => {
-        // Get all required letters (handles hyphenated words like "peace-loving")
+      reviewWords.value = wordEntries.map((entry, index) => {
+        const word = entry.text
+        // Get all required letters (handles hyphenated words like "peace-loving" within a part)
         const requiredLetters = getRequiredLetters(word)
-        // Keep firstLetter for backward compatibility
         const firstLetter = requiredLetters[0]
-        // Store word parts for progressive display
         const { parts, separators } = splitWordParts(word)
         
         let revealed = false
         let visible = false
         
-        // Set initial state based on mode
         if (mode === 'learn') {
-          // Learn mode: all words visible in grey, none revealed initially
           visible = true
           revealed = false
         } else if (mode === 'memorize') {
-          // Memorize mode: every other word visible (odd indices), even indices hidden
           visible = index % 2 === 0
           revealed = false
         } else if (mode === 'master') {
-          // Master mode: all words hidden
           visible = false
           revealed = false
         }
         
         return {
           text: word,
+          separatorAfter: entry.separatorAfter,
           revealed: revealed,
           visible: visible,
           firstLetter: firstLetter,
           requiredLetters: requiredLetters,
-          typedLettersIndex: 0, // Track which letter in the sequence we're on
+          typedLettersIndex: 0,
           parts: parts,
           separators: separators,
           index: index,
@@ -4222,22 +4239,21 @@ export default {
         // Push state when starting a new review session
         pushNavigationState(navigationState)
       }
-      // Split verse content into words by whitespace
-      const words = verse.content.split(/\s+/).filter(word => word.trim().length > 0)
-      reviewWords.value = words.map(word => {
-        // Get all required letters (handles hyphenated words like "peace-loving")
+      // Split verse content into words (whitespace + dashes without spaces, e.g. "God—created" → two words)
+      const wordEntries = getVerseWords(verse.content)
+      reviewWords.value = wordEntries.map((entry) => {
+        const word = entry.text
         const requiredLetters = getRequiredLetters(word)
-        // Keep firstLetter for backward compatibility
         const firstLetter = requiredLetters[0]
-        // Store word parts for progressive display
         const { parts, separators } = splitWordParts(word)
         
         return {
           text: word,
+          separatorAfter: entry.separatorAfter,
           revealed: false,
           firstLetter: firstLetter,
           requiredLetters: requiredLetters,
-          typedLettersIndex: 0, // Track which letter in the sequence we're on
+          typedLettersIndex: 0,
           parts: parts,
           separators: separators,
           incorrect: false

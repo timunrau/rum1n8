@@ -97,3 +97,100 @@ test('progress indicators: Learn / Memorize / Master tabs reflect current stage'
 
   await expect(page.getByText('Learn')).toHaveClass(/bg-blue-600|text-white/)
 })
+
+test('learn mode: verse with dash (no spaces) treats parts as separate words', async ({ page }) => {
+  const verseWithDash = [
+    {
+      ...sampleVerses[0],
+      id: 'dash-learn',
+      reference: 'Genesis 17:8',
+      content: 'One—two',
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verseWithDash, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Genesis 17:8').first().click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.getByText('Learn')).toHaveClass(/bg-blue-600|text-white/)
+
+  // "One—two" must require 2 letters: "o" for "One", "t" for "two"
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('o', { delay: 50 })
+  await page.waitForTimeout(100)
+  // After "o", "One" should be revealed; "two" still grey - completion modal should NOT appear
+  await expect(page.getByText('Great job!')).toHaveCount(0)
+
+  await page.keyboard.type('t', { delay: 50 })
+  await page.waitForTimeout(200)
+  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+})
+
+test('memorize mode: verse with dash treats parts as separate words', async ({ page }) => {
+  const verseWithDash = [
+    {
+      ...sampleVerses[0],
+      id: 'dash-memorize',
+      reference: 'Test 2:1',
+      content: 'A—B',
+      memorizationStatus: 'learned',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verseWithDash, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Test 2:1').first().click()
+
+  // Click Memorize tab to enter memorize mode
+  await page.getByText('Memorize').click()
+  await page.waitForTimeout(200)
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('a', { delay: 50 })
+  await page.waitForTimeout(100)
+  await expect(page.getByText('Great job!')).toHaveCount(0)
+
+  await page.keyboard.type('b', { delay: 50 })
+  await page.waitForTimeout(200)
+  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+})
+
+test('master mode: verse with dash treats parts as separate words', async ({ page }) => {
+  const verseWithDash = [
+    {
+      ...sampleVerses[0],
+      id: 'dash-master',
+      reference: 'Test 3:1',
+      content: 'X—Y',
+      memorizationStatus: 'memorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verseWithDash, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Test 3:1').first().click()
+
+  await page.getByText('Master').click()
+  await page.waitForTimeout(200)
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('xy', { delay: 50 })
+  await page.waitForTimeout(200)
+  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+})
