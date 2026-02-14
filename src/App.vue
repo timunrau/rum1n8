@@ -65,122 +65,25 @@
       </div>
     </header>
 
-    <div ref="memorizationScrollContainer" class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full sm:px-4">
-     
-
-      <div class="bg-white rounded-lg shadow-xl p-4 mb-4 sm:my-4">
-        <div
-          class="text-xl leading-relaxed text-gray-900 font-serif min-h-[200px]"
-          @click="focusInput"
-        >
-          <span
-            v-for="(word, index) in reviewWords"
-            :key="index"
-            :id="`memorize-word-${index}`"
-            class="inline-block mr-2"
-          >
-            <span v-if="memorizationMode === 'learn'">
-              <template v-if="word.revealed">
-                <span :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
-              </template>
-              <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
-              </template>
-              <template v-else>
-                <span class="text-gray-300">{{ word.text }}{{ word.separatorAfter || '' }}</span>
-              </template>
-            </span>
-            <span v-else-if="memorizationMode === 'memorize'">
-              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-gray-300">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
-              <span v-else-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
-              <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
-              </template>
-              <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
-              </span>
-            </span>
-            <span v-else-if="memorizationMode === 'master'">
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
-              <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 font-semibold">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
-              </template>
-              <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
-              </span>
-            </span>
-          </span>
-        </div>
-      </div>
-
-       <div class="mb-6">
-        
-        <!-- Progress Indicator -->
-        <div class="flex items-center justify-center gap-2 mb-4">
-          <div
-            v-for="(stage, index) in [
-              { name: 'Learn', status: 'unmemorized', mode: 'learn' },
-              { name: 'Memorize', status: 'learned', mode: 'memorize' },
-              { name: 'Master', status: 'memorized', mode: 'master' }
-            ]"
-            :key="index"
-            class="flex items-center"
-          >
-            <div
-              @click="switchToMemorizationMode(stage.mode)"
-              :class="[
-                'px-4 py-2 rounded-lg font-semibold transition-colors duration-200',
-                memorizationMode === stage.mode
-                  ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
-                  : getMemorizationStatus(memorizingVerse) === 'mastered' || 
-                    (stage.status === 'unmemorized' && getMemorizationStatus(memorizingVerse) === 'learned') ||
-                    (stage.status === 'learned' && getMemorizationStatus(memorizingVerse) === 'memorized') ||
-                    (stage.status === 'memorized' && getMemorizationStatus(memorizingVerse) === 'mastered')
-                  ? 'bg-green-100 text-green-800 cursor-pointer hover:bg-green-200'
-                  : canSwitchToMode(stage.mode)
-                  ? 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300'
-                  : 'bg-gray-200 text-gray-400'
-              ]"
-            >
-              {{ stage.name }}
-            </div>
-            <svg
-              v-if="index < 2"
-              class="w-6 h-6 mx-2 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="text-center">
-        <input
-          ref="reviewInput"
-          v-model="typedLetter"
-          @keydown="handleKeyPress"
-          @input="checkLetter"
-          type="text"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-          inputmode="text"
-          name="letter-input"
-          id="letter-input-memorize"
-          class="absolute opacity-0 w-0 h-0"
-        />
-      </div>
+    <div ref="memorizationScrollContainer" class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full flex flex-col">
+      <VersePracticeView
+        ref="memorizationPracticeRef"
+        :verse="memorizingVerse"
+        :memorization-mode="memorizationMode"
+        :review-words="reviewWords"
+        context="memorization"
+        v-model:typed-letter="typedLetter"
+        :get-memorization-status="getMemorizationStatus"
+        :can-switch-to-mode="canSwitchToMode"
+        :is-partially-typed="isPartiallyTyped"
+        :get-partial-word-text="getPartialWordText"
+        :get-remaining-part-text="getRemainingPartText"
+        input-id="letter-input-memorize"
+        :compact="false"
+        @input="checkLetter"
+        @keydown="handleKeyPress"
+        @switch-mode="switchToMemorizationMode"
+      />
 
       <!-- Completion Modal for Memorization -->
       <div
@@ -310,52 +213,24 @@
       </div>
     </header>
 
-    <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
-      <!-- Scrollable text box -->
-      <div ref="reviewTextContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-        <div class="bg-white sm:rounded-lg sm:shadow-xl p-4">
-          <div
-            class="text-xl leading-relaxed text-gray-900 font-serif"
-            @click="focusInput"
-          >
-            <span
-              v-for="(word, index) in reviewWords"
-              :key="index"
-              :id="`review-word-${index}`"
-              class="inline-block mr-2"
-            >
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600' : 'text-gray-900'">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
-              <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900">{{ getPartialWordText(word) }}</span><span class="text-gray-300">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
-              </template>
-              <span v-else class="text-gray-300">
-                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
-              </span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-center">
-        <input
-          ref="reviewInput"
-          v-model="typedLetter"
-          @keydown="handleKeyPress"
-          @input="checkLetter"
-          type="text"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-          inputmode="text"
-          name="letter-input"
-          id="letter-input-review"
-          class="absolute opacity-0 w-0 h-0"
-        />
-      </div>
-    </div>
+    <VersePracticeView
+      ref="reviewPracticeRef"
+      :verse="reviewingVerse"
+      :memorization-mode="memorizationMode"
+      :review-words="reviewWords"
+      context="review"
+      v-model:typed-letter="typedLetter"
+      :get-memorization-status="getMemorizationStatus"
+      :can-switch-to-mode="canSwitchToModeForReview"
+      :is-partially-typed="isPartiallyTyped"
+      :get-partial-word-text="getPartialWordText"
+      :get-remaining-part-text="getRemainingPartText"
+      input-id="letter-input-review"
+      :compact="true"
+      @input="checkLetter"
+      @keydown="handleKeyPress"
+      @switch-mode="switchReviewMode"
+    />
 
       <!-- Completion Modal for Review -->
       <div
@@ -365,7 +240,10 @@
         <div class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
           <div v-if="meetsAccuracyRequirement">
             <p class="text-2xl font-bold text-green-800 mb-2 text-center">🎉 Great job!</p>
-            <p class="text-green-700 text-center mb-6">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</p>
+            <p class="text-green-700 text-center mb-6">
+              <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</template>
+              <template v-else>Practice complete (doesn't count as review).</template>
+            </p>
             <div class="flex justify-center gap-3">
               <button
                 @click="retryReview"
@@ -1841,10 +1719,11 @@ import {
 } from './webdav-sync.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
+import VersePracticeView from './components/VersePracticeView.vue'
 
 export default {
   name: 'App',
-  components: { IOSInstallModal },
+  components: { IOSInstallModal, VersePracticeView },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -1872,6 +1751,8 @@ export default {
     const reviewInput = ref(null)
     const reviewTextContainer = ref(null)
     const memorizationScrollContainer = ref(null)
+    const memorizationPracticeRef = ref(null)
+    const reviewPracticeRef = ref(null)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const testingConnection = ref(false)
@@ -4133,9 +4014,48 @@ export default {
       
       // Focus input after DOM update
       nextTick(() => {
-        if (reviewInput.value) {
-          reviewInput.value.focus()
+        memorizationPracticeRef.value?.focusInput?.()
+      })
+    }
+
+    // For review context, all mode buttons are clickable (verse is always mastered)
+    const canSwitchToModeForReview = () => true
+
+    // Switch mode while on review screen (rebuild words, reset state)
+    const switchReviewMode = (mode) => {
+      if (!reviewingVerse.value) return
+      const verse = reviewingVerse.value
+      const wordEntries = getVerseWords(verse.content)
+      reviewWords.value = wordEntries.map((entry, index) => {
+        const word = entry.text
+        const requiredLetters = getRequiredLetters(word)
+        const firstLetter = requiredLetters[0]
+        const { parts, separators } = splitWordParts(word)
+        let visible = false
+        if (mode === 'learn') {
+          visible = true
+        } else if (mode === 'memorize') {
+          visible = index % 2 === 0
         }
+        return {
+          text: word,
+          separatorAfter: entry.separatorAfter,
+          revealed: false,
+          visible,
+          firstLetter,
+          requiredLetters,
+          typedLettersIndex: 0,
+          parts,
+          separators,
+          index,
+          incorrect: false
+        }
+      })
+      memorizationMode.value = mode
+      typedLetter.value = ''
+      reviewMistakes.value = 0
+      nextTick(() => {
+        reviewPracticeRef.value?.focusInput?.()
       })
     }
 
@@ -4150,9 +4070,8 @@ export default {
         return
       }
       
-      // IMPORTANT: Before starting a new review, ensure any previous review was saved
-      // This handles the case where nextVerse() was called but save didn't complete
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
+      // IMPORTANT: Before starting a new review, ensure any previous review was saved (only counts when in master mode)
+      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
         console.log('[startReview] Saving previous review before starting new one')
         const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
         if (prevVerse) {
@@ -4234,23 +4153,25 @@ export default {
         // Push state when starting a new review session
         pushNavigationState(navigationState)
       }
-      // Split verse content into words (whitespace + dashes without spaces, e.g. "God—created" → two words)
+      // Review always starts in master mode; build words with visible/index like startMemorization
+      memorizationMode.value = 'master'
       const wordEntries = getVerseWords(verse.content)
-      reviewWords.value = wordEntries.map((entry) => {
+      reviewWords.value = wordEntries.map((entry, index) => {
         const word = entry.text
         const requiredLetters = getRequiredLetters(word)
         const firstLetter = requiredLetters[0]
         const { parts, separators } = splitWordParts(word)
-        
         return {
           text: word,
           separatorAfter: entry.separatorAfter,
           revealed: false,
-          firstLetter: firstLetter,
-          requiredLetters: requiredLetters,
+          visible: false,
+          firstLetter,
+          requiredLetters,
           typedLettersIndex: 0,
-          parts: parts,
-          separators: separators,
+          parts,
+          separators,
+          index,
           incorrect: false
         }
       })
@@ -4258,9 +4179,7 @@ export default {
       
       // Focus input after DOM update
       nextTick(() => {
-        if (reviewInput.value) {
-          reviewInput.value.focus()
-        }
+        reviewPracticeRef.value?.focusInput?.()
       })
     }
 
@@ -4424,9 +4343,9 @@ export default {
     // Retry current review
     const retryReview = () => {
       if (reviewingVerse.value) {
-        // Reset the review without saving
-        const verse = reviewingVerse.value
-        startReview(verse)
+        // Re-initialize current mode (so user stays in Learn/Memorize if they were in that mode)
+        const mode = memorizationMode.value || 'master'
+        switchReviewMode(mode)
       }
     }
 
@@ -4454,7 +4373,7 @@ export default {
           lastReviewedBefore: verse?.lastReviewed
         })
         
-        if (verse && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
+        if (verse && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
           console.log('[nextVerse] Entering save block')
           
           const totalWords = reviewWords.value.length
@@ -4594,8 +4513,8 @@ export default {
         meetsAccuracyRequirement: meetsAccuracyRequirement.value
       })
       
-      // Mark verse as reviewed if all words were revealed and accuracy requirement is met (and not already saved)
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
+      // Only count as review (update spaced repetition) when in master mode
+      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
         const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
         console.log('[exitReview] Saving review', {
           found: !!verse,
@@ -4686,6 +4605,7 @@ export default {
       
       // Reset review state
       reviewingVerse.value = null
+      memorizationMode.value = null
       reviewWords.value = []
       typedLetter.value = ''
       reviewMistakes.value = 0
@@ -4724,8 +4644,10 @@ export default {
 
     // Focus input when clicking on verse text
     const focusInput = () => {
-      if (reviewInput.value) {
-        reviewInput.value.focus()
+      if (memorizingVerse.value && memorizationPracticeRef.value) {
+        memorizationPracticeRef.value.focusInput()
+      } else if (reviewingVerse.value && reviewPracticeRef.value) {
+        reviewPracticeRef.value.focusInput()
       }
     }
 
@@ -4736,8 +4658,8 @@ export default {
       
       if (nextWordIndex === -1) return // All words revealed
       
-      // Determine which container to use
-      const container = memorizationMode.value ? memorizationScrollContainer.value : reviewTextContainer.value
+      // Determine which container to use (both screens use VersePracticeView with practice-word- IDs)
+      const container = memorizingVerse.value ? memorizationScrollContainer.value : reviewPracticeRef.value?.scrollContainer?.value
       if (!container) return
       
       // Wait for DOM to update
@@ -4745,19 +4667,18 @@ export default {
         // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            // Find the word element by ID
-            const wordId = memorizationMode.value ? `memorize-word-${nextWordIndex}` : `review-word-${nextWordIndex}`
+            // Find the word element by ID (component uses practice-word-)
+            const wordId = `practice-word-${nextWordIndex}`
             let wordElement = document.getElementById(wordId)
             
             // Fallback: try querySelector if getElementById fails
             if (!wordElement) {
-              const prefix = memorizationMode.value ? 'memorize-word-' : 'review-word-'
-              wordElement = container.querySelector(`#${prefix}${nextWordIndex}`)
+              wordElement = container.querySelector(`#${wordId}`)
             }
             
             // Another fallback: find by index in all word elements
             if (!wordElement) {
-              const allWords = container.querySelectorAll('[id^="' + (memorizationMode.value ? 'memorize-word-' : 'review-word-') + '"]')
+              const allWords = container.querySelectorAll('[id^="practice-word-"]')
               if (allWords[nextWordIndex]) {
                 wordElement = allWords[nextWordIndex]
               }
@@ -4884,9 +4805,7 @@ export default {
           typedLetter.value = ''
           nextTick(() => {
             scrollToCurrentWord()
-            if (reviewInput.value) {
-              reviewInput.value.focus()
-            }
+            focusInput()
           })
           return
         }
@@ -4920,9 +4839,7 @@ export default {
             // Auto-scroll to next word and focus input
             nextTick(() => {
               scrollToCurrentWord()
-              if (reviewInput.value) {
-                reviewInput.value.focus()
-              }
+              focusInput()
             })
           } else {
             // More letters needed - clear input and wait for next letter
@@ -4931,9 +4848,7 @@ export default {
             // Auto-scroll to current word and focus input
             nextTick(() => {
               scrollToCurrentWord()
-              if (reviewInput.value) {
-                reviewInput.value.focus()
-              }
+              focusInput()
             })
           }
         } else {
@@ -4952,9 +4867,7 @@ export default {
           // Auto-scroll to next word and focus input
           nextTick(() => {
             scrollToCurrentWord()
-            if (reviewInput.value) {
-              reviewInput.value.focus()
-            }
+            focusInput()
           })
         }
       }
@@ -5555,6 +5468,8 @@ export default {
       startMemorization,
       canSwitchToMode,
       switchToMemorizationMode,
+      switchReviewMode,
+      canSwitchToModeForReview,
       advanceToNextMode,
       exitMemorization,
       retryMemorization,

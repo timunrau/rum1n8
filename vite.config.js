@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   test: {
-    exclude: ['e2e/**', 'node_modules/**'],
+    exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', '.claude/**'],
   },
   plugins: [
     vue(),

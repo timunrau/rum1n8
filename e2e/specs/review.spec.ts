@@ -251,3 +251,119 @@ test('review mode: verse with dash (no spaces) treats parts as separate words', 
   await page.waitForTimeout(200)
   await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
 })
+
+test('review screen shows Learn, Memorize, Master buttons with Master selected', async ({ page }) => {
+  const masteredVerse = {
+    id: 'review-mode-buttons',
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.getByText('Learn')).toBeVisible()
+  await expect(page.getByText('Memorize')).toBeVisible()
+  await expect(page.getByText('Master')).toBeVisible()
+  await expect(page.getByText('Master').first()).toHaveClass(/bg-blue-600|text-white/)
+})
+
+test('review: completing in Learn mode does not advance spaced repetition', async ({ page }) => {
+  const verseId = 'learn-no-advance'
+  const fixedNextReview = new Date(Date.now() + 86400000 * 7).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 2,
+    lastReviewed: new Date(Date.now() - 86400000).toISOString(),
+    nextReviewDate: fixedNextReview,
+    easeFactor: 2.5,
+    interval: 7,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.getByText('Learn').click()
+  await page.waitForTimeout(200)
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  await expect(page.getByText(/Practice complete|doesn't count as review/i).first()).toBeVisible({ timeout: 5000 })
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 3000 })
+  await nextButton.click()
+
+  await page.waitForTimeout(300)
+  const verses = (await getStoredVerses(page)) as Array<{ id: string; nextReviewDate: string; reviewCount: number; interval: number }>
+  const verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  expect(verse!.nextReviewDate).toBe(fixedNextReview)
+  expect(verse!.reviewCount).toBe(2)
+  expect(verse!.interval).toBe(7)
+})
+
+test('review: completing in Master mode advances spaced repetition', async ({ page }) => {
+  const verseId = 'master-advances'
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 2,
+    lastReviewed: yesterday,
+    nextReviewDate: yesterday,
+    easeFactor: 2.5,
+    interval: 7,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.getByText('Master').first()).toHaveClass(/bg-blue-600|text-white/)
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+
+  await page.waitForTimeout(300)
+  const verses = (await getStoredVerses(page)) as Array<{ id: string; nextReviewDate: string; reviewCount: number }>
+  const verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  expect(verse!.reviewCount).toBe(3)
+  const nextReview = new Date(verse!.nextReviewDate)
+  const now = new Date()
+  expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
+})
