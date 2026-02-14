@@ -4179,13 +4179,17 @@ export default {
       })
       typedLetter.value = ''
       
-      // Focus input after DOM update
+      // Focus input after DOM update. Use same 100ms delay as VersePracticeView's onMounted —
+      // that's what makes the keyboard show when first opening a verse; without it (nextVerse path)
+      // the component doesn't remount so onMounted doesn't run and keyboard wouldn't show on Android PWA.
       nextTick(() => {
         reviewPracticeRef.value?.focusInput?.()
-        // Re-focus after paint so mobile keyboard reappears if re-render caused blur
         requestAnimationFrame(() => {
           reviewPracticeRef.value?.focusInput?.()
         })
+        setTimeout(() => {
+          reviewPracticeRef.value?.focusInput?.()
+        }, 100)
       })
     }
 
