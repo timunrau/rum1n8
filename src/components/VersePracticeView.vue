@@ -113,7 +113,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 
 export default {
   name: 'VersePracticeView',
@@ -161,6 +161,7 @@ export default {
 
     function onSwitchMode(mode) {
       emit('switch-mode', mode)
+      nextTick(() => focusInput())
     }
 
     function onInput(e) {
@@ -178,6 +179,12 @@ export default {
         inputRef.value.focus()
       }
     }
+
+    onMounted(() => {
+      nextTick(() => {
+        setTimeout(() => focusInput(), 100)
+      })
+    })
 
     expose({
       inputRef,
