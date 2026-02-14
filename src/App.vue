@@ -2863,7 +2863,6 @@ export default {
       
       const nextDate = new Date(now)
       nextDate.setDate(nextDate.getDate() + interval)
-      
       return { nextReviewDate: nextDate.toISOString(), easeFactor: newEF, interval }
     }
 
@@ -5024,16 +5023,24 @@ export default {
                   new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)
               })
               
-              // If merge overwrote our new lastReviewed with an older one, keep the newer one
+              // If merge overwrote our new lastReviewed with an older one, keep all local review fields
+              // (merge chose remote incorrectly; we must preserve nextReviewDate, interval, etc.)
               if (mergedVerse && reviewingVerseBeforeSync && 
                   mergedVerse.lastReviewed && reviewingVerseBeforeSync.lastReviewed &&
                   new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)) {
-                console.warn('[triggerSync] WARNING: Merge overwrote newer lastReviewed! Keeping newer value.', {
+                console.warn('[triggerSync] WARNING: Merge overwrote newer review! Restoring all local review fields.', {
                   merged: mergedVerse.lastReviewed,
                   local: reviewingVerseBeforeSync.lastReviewed
                 })
                 mergedVerse.lastReviewed = reviewingVerseBeforeSync.lastReviewed
                 mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
+                mergedVerse.nextReviewDate = reviewingVerseBeforeSync.nextReviewDate
+                mergedVerse.interval = reviewingVerseBeforeSync.interval
+                mergedVerse.easeFactor = reviewingVerseBeforeSync.easeFactor
+                mergedVerse.reviewCount = reviewingVerseBeforeSync.reviewCount
+                if (reviewingVerseBeforeSync.lastGrade != null) mergedVerse.lastGrade = reviewingVerseBeforeSync.lastGrade
+                if (reviewingVerseBeforeSync.lastAccuracy != null) mergedVerse.lastAccuracy = reviewingVerseBeforeSync.lastAccuracy
+                if (reviewingVerseBeforeSync.reviewHistory?.length) mergedVerse.reviewHistory = reviewingVerseBeforeSync.reviewHistory
               }
             }
             

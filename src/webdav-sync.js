@@ -464,10 +464,21 @@ function mergeData(localVerses, localCollections, remoteData) {
       }
       // Priority 2: If both have memorization, prioritize newer timestamp (recent review)
       // CRITICAL: Always prioritize lastReviewed if it exists, as it indicates a recent review
+      // Special case: If remote timestamp is in the future, it's corrupt/clock skew - prefer local
       // Special case: If local was reviewed today, always keep local (prevents overwriting fresh reviews)
       else if (remoteHasMemorization && localHasMemorization) {
-        // Check if local was reviewed today
         const now = new Date()
+        const nowMs = now.getTime()
+        const oneHourMs = 60 * 60 * 1000
+        const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
+        const remoteIsFuture = remoteTime > nowMs + oneHourMs
+
+        if (remoteIsFuture && localTimestamp) {
+          useRemote = false
+          reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
+        }
+        // Check if local was reviewed today
+        else {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const localReviewedToday = localLastReviewed && new Date(localLastReviewed) >= today
         const remoteReviewedToday = remoteLastReviewed && new Date(remoteLastReviewed) >= today
@@ -485,6 +496,7 @@ function mergeData(localVerses, localCollections, remoteData) {
         // Both reviewed today or neither, compare timestamps
         else {
           // Compare timestamps first - newer timestamp means more recent review
+          // (but we already handled remote-in-future above)
           if (localTimestamp && remoteTimestamp) {
             const localTime = new Date(localTimestamp).getTime()
             const remoteTime = new Date(remoteTimestamp).getTime()
@@ -527,10 +539,17 @@ function mergeData(localVerses, localCollections, remoteData) {
             }
           }
         }
+        }
       }
       // Priority 3: Use timestamp comparison for other cases
       else {
-        if (remoteTimestamp && localTimestamp) {
+        const now = new Date()
+        const remoteTime = remoteTimestamp ? new Date(remoteTimestamp).getTime() : 0
+        const remoteIsFuture = remoteTime > now.getTime() + 60 * 60 * 1000
+        if (remoteIsFuture && localTimestamp) {
+          useRemote = false
+          reason = `remote timestamp is in the future (${remoteTimestamp}), keeping local`
+        } else if (remoteTimestamp && localTimestamp) {
           if (remoteTimestamp > localTimestamp) {
             useRemote = true
             reason = `remote has newer timestamp (${remoteTimestamp} vs ${localTimestamp})`
