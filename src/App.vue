@@ -252,6 +252,9 @@
                 Retry
               </button>
               <button
+                type="button"
+                tabindex="-1"
+                @pointerdown="reviewPracticeRef?.focusInput?.()"
                 @click="nextVerse"
                 class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
               >
@@ -4347,10 +4350,6 @@ export default {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/7e3542ed-4a3e-48b9-9dae-9b5d363d90e4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.vue:nextVerse',message:'nextVerse entered',data:{hasRef:!!reviewPracticeRef.value,hasFocusInput:!!reviewPracticeRef.value?.focusInput},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
       // #endregion
-      // Focus immediately while still in user gesture (helps mobile keyboard stay up)
-      if (reviewingVerse.value) {
-        reviewPracticeRef.value?.focusInput?.()
-      }
       console.log('[nextVerse] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
