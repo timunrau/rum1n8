@@ -172,6 +172,53 @@ test('established interval preserved on review (no regression to 3 days)', async
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
 })
 
+test('same-day review does not advance spaced repetition schedule', async ({ page }) => {
+  const verseId = 'same-day-regression'
+  const today = new Date().toISOString()
+  const pastDue = new Date(Date.now() - 86400000).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Luke 11:9',
+    content: 'So I say',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 5,
+    lastReviewed: today, // Already reviewed today
+    nextReviewDate: pastDue, // But still showing as due
+    easeFactor: 2.5,
+    interval: 14,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+
+  await page.getByText('Luke 11:9').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('sisy', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+
+  await page.waitForTimeout(200)
+  const verses = (await getStoredVerses(page)) as Array<{
+    id: string
+    interval: number
+    nextReviewDate: string
+    reviewCount: number
+  }>
+  const verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  // Interval and reviewCount should NOT have advanced since it was already reviewed today
+  expect(verse!.interval).toBe(14)
+  expect(verse!.reviewCount).toBe(5)
+})
+
 test('review mode: verse with dash (no spaces) treats parts as separate words', async ({ page }) => {
   const masteredVerseWithDash = {
     id: 'dash-review',
