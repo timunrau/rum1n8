@@ -164,9 +164,6 @@ test('established interval preserved on review (no regression to 3 days)', async
   await nextButton.click()
 
   await page.waitForTimeout(200)
-  await expect(page.locator('#letter-input-review')).toBeAttached()
-  await expect(page.locator('#letter-input-review')).toBeFocused()
-
   const verses = (await getStoredVerses(page)) as Array<{ id: string; interval: number; nextReviewDate: string }>
   const verse = verses.find((v) => v.id === verseId)
   expect(verse).toBeDefined()
@@ -174,6 +171,59 @@ test('established interval preserved on review (no regression to 3 days)', async
   const nextReview = new Date(verse!.nextReviewDate)
   const now = new Date()
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
+})
+
+test('review: input focused after Next Verse', async ({ page }) => {
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const twoVerses = [
+    {
+      id: 'next-v1',
+      reference: 'Psalm 1:1',
+      content: 'Blessed is',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: yesterday,
+      nextReviewDate: yesterday,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+    {
+      id: 'next-v2',
+      reference: 'Psalm 2:1',
+      content: 'Why the',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: yesterday,
+      nextReviewDate: yesterday,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+  ]
+  await seedStorage(page, twoVerses, [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
 test('same-day review does not advance spaced repetition schedule', async ({ page }) => {
