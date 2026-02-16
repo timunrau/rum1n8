@@ -67,6 +67,7 @@
 
     <div ref="memorizationScrollContainer" class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full flex flex-col">
       <VersePracticeView
+        :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
         ref="memorizationPracticeRef"
         :verse="memorizingVerse"
         :memorization-mode="memorizationMode"
@@ -1755,6 +1756,7 @@ export default {
     const memorizationPracticeRef = ref(null)
     const reviewPracticeRef = ref(null)
     const reviewInstanceKey = ref(0) // Bump on retry so VersePracticeView remounts (keyboard shows on Android PWA)
+    const memorizationInstanceKey = ref(0)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const testingConnection = ref(false)
@@ -4323,6 +4325,7 @@ export default {
     // Retry memorization (reset without saving)
     const retryMemorization = () => {
       if (memorizingVerse.value) {
+        memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows (same as Try Again on review)
         const verse = memorizingVerse.value
         const currentMode = memorizationMode.value
         startMemorization(verse, currentMode)

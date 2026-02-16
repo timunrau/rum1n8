@@ -63,6 +63,7 @@ test('click verse -> enters review screen', async ({ page }) => {
 
   await expect(page.locator('h1')).toContainText('Psalm 1:1')
   await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
 test('empty state: no verses due shows appropriate message', async ({ page }) => {
@@ -163,6 +164,9 @@ test('established interval preserved on review (no regression to 3 days)', async
   await nextButton.click()
 
   await page.waitForTimeout(200)
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
+
   const verses = (await getStoredVerses(page)) as Array<{ id: string; interval: number; nextReviewDate: string }>
   const verse = verses.find((v) => v.id === verseId)
   expect(verse).toBeDefined()
@@ -217,6 +221,42 @@ test('same-day review does not advance spaced repetition schedule', async ({ pag
   // Interval and reviewCount should NOT have advanced since it was already reviewed today
   expect(verse!.interval).toBe(14)
   expect(verse!.reviewCount).toBe(5)
+})
+
+test('review: input focused after Try Again', async ({ page }) => {
+  const masteredVerse = {
+    id: 'try-again-review',
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  // One wrong letter then correct: 1 mistake in 2 words = 50% -> Try Again modal
+  await page.keyboard.type('x', { delay: 50 })
+  await page.keyboard.type('bi', { delay: 50 })
+
+  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
+  await tryAgainBtn.click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
 test('review mode: verse with dash (no spaces) treats parts as separate words', async ({ page }) => {

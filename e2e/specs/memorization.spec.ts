@@ -27,17 +27,16 @@ test('start from verse list -> click verse -> enters memorization screen', async
 
   await expect(page.locator('h1')).toContainText('John 3:16')
   await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.locator('#letter-input-memorize')).toBeFocused()
 })
 
-test.skip('learn mode: first letters reveal words; complete verse -> Great job modal -> advance to Memorize', async ({
-  page,
-}) => {
+test('memorization: input focused after Continue to Memorize', async ({ page }) => {
   const shortVerse = [
     {
       ...sampleVerses[0],
-      id: 'short-1',
+      id: 'short-continue',
       reference: 'John 1:1',
-      content: 'In the beginning',
+      content: 'One two',
       memorizationStatus: 'unmemorized',
     },
   ]
@@ -52,10 +51,47 @@ test.skip('learn mode: first letters reveal words; complete verse -> Great job m
 
   await expect(page.locator('#letter-input-memorize')).toBeAttached()
   await page.locator('#letter-input-memorize').focus()
-  await page.keyboard.type('itb', { delay: 100 })
+  await page.keyboard.type('ot', { delay: 100 })
 
-  const greatJob = page.getByText(/Great job|Ready to memorize/i)
-  await expect(greatJob).toBeVisible({ timeout: 10000 })
+  const continueBtn = page.getByRole('button', { name: /Continue to Memorize/i })
+  await expect(continueBtn).toBeVisible({ timeout: 10000 })
+  await continueBtn.click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.locator('#letter-input-memorize')).toBeFocused()
+})
+
+test('memorization: input focused after Try Again', async ({ page }) => {
+  const twoWordVerse = [
+    {
+      ...sampleVerses[0],
+      id: 'try-again-memo',
+      reference: 'Psalm 1:1',
+      content: 'Blessed is',
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, twoWordVerse, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Psalm 1:1').first().click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await page.locator('#letter-input-memorize').focus()
+  // One wrong letter then correct letters: 1 mistake in 2 words = 50% -> Try Again modal
+  await page.keyboard.type('x', { delay: 50 })
+  await page.keyboard.type('bi', { delay: 50 })
+
+  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
+  await tryAgainBtn.click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.locator('#letter-input-memorize')).toBeFocused()
 })
 
 test('exit memorization: back button -> returns without completing', async ({ page }) => {
