@@ -187,3 +187,40 @@ body {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* Modal Sheet Animations */
+.modal-sheet-enter-active .modal-sheet-backdrop,
+.modal-sheet-leave-active .modal-sheet-backdrop {
+  transition: opacity 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.modal-sheet-enter-from .modal-sheet-backdrop,
+.modal-sheet-leave-to .modal-sheet-backdrop {
+  opacity: 0;
+}
+
+/* Mobile: slide up from bottom */
+.modal-sheet-enter-active .modal-sheet-panel,
+.modal-sheet-leave-active .modal-sheet-panel {
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.modal-sheet-enter-from .modal-sheet-panel,
+.modal-sheet-leave-to .modal-sheet-panel {
+  transform: translateY(100%);
+}
+
+/* Desktop (sm+): fade + scale instead of slide */
+@media (min-width: 640px) {
+  .modal-sheet-enter-from .modal-sheet-panel,
+  .modal-sheet-leave-to .modal-sheet-panel {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0;
+  }
+
+  .modal-sheet-enter-to .modal-sheet-panel,
+  .modal-sheet-leave-from .modal-sheet-panel {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}

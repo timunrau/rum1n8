@@ -1007,479 +1007,403 @@
   </transition>
 
       <!-- Add Verse Form Modal -->
-      <div
-        v-if="showForm"
-        data-testid="modal-add-verse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeForm"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Add New Verse</h2>
-          
-          <form @submit.prevent="addVerse" class="space-y-4">
-            <div>
-              <label for="reference" class="block text-sm font-medium text-text-secondary mb-2">
-                Verse Reference
-              </label>
-              <input
-                id="reference"
-                v-model="newVerse.reference"
-                type="text"
-                placeholder="e.g., John 3:16"
-                required
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
+      <ModalSheet :show="showForm" title="Add New Verse" data-testid="modal-add-verse" @close="closeForm">
+        <form id="add-verse-form" @submit.prevent="addVerse" class="space-y-4">
+          <div>
+            <label for="reference" class="block text-sm font-medium text-text-secondary mb-2">
+              Verse Reference
+            </label>
+            <input
+              id="reference"
+              v-model="newVerse.reference"
+              type="text"
+              placeholder="e.g., John 3:16"
+              required
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
 
-            <div>
-              <label for="bible-version" class="block text-sm font-medium text-text-secondary mb-2">
-                Bible Version
-              </label>
-              <input
-                id="bible-version"
-                v-model="newVerse.bibleVersion"
-                type="text"
-                placeholder="e.g., BSB, NIV, ESV"
-                maxlength="10"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
-                style="text-transform: uppercase;"
-              />
-            </div>
+          <div>
+            <label for="bible-version" class="block text-sm font-medium text-text-secondary mb-2">
+              Bible Version
+            </label>
+            <input
+              id="bible-version"
+              v-model="newVerse.bibleVersion"
+              type="text"
+              placeholder="e.g., BSB, NIV, ESV"
+              maxlength="10"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              style="text-transform: uppercase;"
+            />
+          </div>
 
-            <div>
-              <button
-                type="button"
-                @click="importVerseContent"
-                :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
-                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200 flex items-center space-x-2"
+          <div>
+            <button
+              type="button"
+              @click="importVerseContent"
+              :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
+              class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
+            </button>
+
+            <div v-if="importError" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg">
+              <p class="text-sm text-status-amber-text">{{ importError }}</p>
+              <a
+                v-if="importErrorShowLink"
+                href="https://fetch.bible/content/need/"
+                target="_blank"
+                class="text-sm text-status-purple-text hover:text-status-purple-text underline mt-1 inline-block"
               >
-                <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
-              </button>
-
-              <div v-if="importError" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg">
-                <p class="text-sm text-status-amber-text">{{ importError }}</p>
-                <a
-                  v-if="importErrorShowLink"
-                  href="https://fetch.bible/content/need/"
-                  target="_blank"
-                  class="text-sm text-status-purple-text hover:text-status-purple-text underline mt-1 inline-block"
-                >
-                  Learn more about available translations
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <label for="content" class="block text-sm font-medium text-text-secondary mb-2">
-                Verse Content
-              </label>
-              <textarea
-                id="content"
-                v-model="newVerse.content"
-                rows="6"
-                placeholder="Enter the verse text here..."
-                required
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
-              ></textarea>
-            </div>
-
-            <div v-if="!currentCollectionId || currentCollectionId === 'master-list'">
-              <label class="block text-sm font-medium text-text-secondary mb-2">
-                Collections
-              </label>
-              <div v-if="collections.length > 0" class="space-y-2">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="newVerse.collectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-text-secondary">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p v-else class="text-sm text-text-muted">No collections yet. Create one to organize verses.</p>
-            </div>
-
-            <div class="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                @click="closeForm"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Save Verse
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Edit Verse Form Modal -->
-      <div
-        v-if="showEditVerseForm"
-        data-testid="modal-edit-verse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeEditVerseForm"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Edit Verse</h2>
-          
-          <form @submit.prevent="saveEditedVerse" class="space-y-4" v-if="editingVerse">
-            <div>
-              <label for="edit-reference" class="block text-sm font-medium text-text-secondary mb-2">
-                Verse Reference
-              </label>
-              <input
-                id="edit-reference"
-                v-model="editingVerse.reference"
-                type="text"
-                placeholder="e.g., John 3:16"
-                required
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
-
-            <div>
-              <label for="edit-bible-version" class="block text-sm font-medium text-text-secondary mb-2">
-                Bible Version
-              </label>
-              <input
-                id="edit-bible-version"
-                v-model="editingVerse.bibleVersion"
-                type="text"
-                placeholder="e.g., BSB, NIV, ESV"
-                maxlength="10"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
-                style="text-transform: uppercase;"
-              />
-            </div>
-
-            <div>
-              <label for="edit-content" class="block text-sm font-medium text-text-secondary mb-2">
-                Verse Content
-              </label>
-              <textarea
-                id="edit-content"
-                v-model="editingVerse.content"
-                rows="6"
-                placeholder="Enter the verse text here..."
-                required
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-text-secondary mb-2">
-                Collections
-              </label>
-              <div v-if="collections.length > 0" class="space-y-2">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="editingVerse.collectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-text-secondary">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p v-else class="text-sm text-text-muted">No collections yet.</p>
-            </div>
-
-            <div class="flex justify-between items-center pt-4">
-              <button
-                type="button"
-                @click="handleDeleteVerseFromModal"
-                class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Delete
-              </button>
-              <div class="flex space-x-3">
-                <button
-                  type="button"
-                  @click="closeEditVerseForm"
-                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Add Collection Form Modal -->
-      <div
-        v-if="showCollectionForm"
-        data-testid="modal-add-collection"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-        @click.self="closeCollectionForm"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Create New Collection</h2>
-          
-          <form @submit.prevent="addCollection" class="space-y-4">
-            <div>
-              <label for="collection-name" class="block text-sm font-medium text-text-secondary mb-2">
-                Collection Name
-              </label>
-              <input
-                id="collection-name"
-                v-model="newCollection.name"
-                type="text"
-                placeholder="e.g., Favorite Verses, Daily Devotion"
-                required
-                class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
-
-            <div>
-              <label for="collection-description" class="block text-sm font-medium text-text-secondary mb-2">
-                Description (optional)
-              </label>
-              <textarea
-                id="collection-description"
-                v-model="newCollection.description"
-                rows="3"
-                placeholder="Describe this collection..."
-                class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
-              ></textarea>
-            </div>
-
-            <div class="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                @click="closeCollectionForm"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Create Collection
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Edit Collection Form Modal -->
-      <div
-        v-if="showEditCollectionForm"
-        data-testid="modal-edit-collection"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeEditCollectionForm"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Edit Collection</h2>
-          
-          <form @submit.prevent="saveEditedCollection" class="space-y-4" v-if="editingCollection">
-            <div>
-              <label for="edit-collection-name" class="block text-sm font-medium text-text-secondary mb-2">
-                Collection Name
-              </label>
-              <input
-                id="edit-collection-name"
-                v-model="editingCollection.name"
-                type="text"
-                placeholder="e.g., Favorite Verses, Daily Devotion"
-                required
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
-
-            <div>
-              <label for="edit-collection-description" class="block text-sm font-medium text-text-secondary mb-2">
-                Description (optional)
-              </label>
-              <textarea
-                id="edit-collection-description"
-                v-model="editingCollection.description"
-                rows="3"
-                placeholder="Describe this collection..."
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
-              ></textarea>
-            </div>
-
-            <div class="flex justify-between items-center pt-4">
-              <button
-                type="button"
-                @click="handleDeleteCollectionFromModal"
-                class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Delete
-              </button>
-              <div class="flex space-x-3">
-                <button
-                  type="button"
-                  @click="closeEditCollectionForm"
-                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- CSV Import Modal -->
-      <div
-        v-if="showImportCSV"
-        data-testid="modal-import-csv"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeImportCSV"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Import Verses from CSV</h2>
-          
-          <div class="mb-6">
-            <p class="text-sm text-text-secondary mb-4">
-              Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
-            </p>
-            <div class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mb-4">
-              <p class="text-xs text-status-info-text mb-2"><strong>CSV Format:</strong></p>
-              <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
-John 3:16,"For God so loved the world...",NIV,45,60
-Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
-              <p class="text-xs text-status-info-text mt-2">
-                <strong>Optional columns:</strong> Version, DaysUntilNextReview (days until next review), Interval (review interval in days). 
-                When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
-              </p>
-            </div>
-            
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-text-secondary mb-3">
-                Import CSV
-              </label>
-              
-              <!-- File Upload Option -->
-              <div class="mb-4">
-                <label for="csv-file" class="block text-xs font-medium text-text-secondary mb-2">
-                  Option 1: Upload CSV File
-                </label>
-                <input
-                  id="csv-file"
-                  ref="csvFileInput"
-                  type="file"
-                  accept=".csv"
-                  @change="handleCSVFileSelect"
-                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-                />
-              </div>
-              
-              <!-- Divider -->
-              <div class="flex items-center my-4">
-                <div class="flex-1 border-t border-border-input"></div>
-                <span class="px-3 text-xs text-text-muted uppercase">or</span>
-                <div class="flex-1 border-t border-border-input"></div>
-              </div>
-              
-              <!-- Paste CSV Option -->
-              <div>
-                <label for="csv-text" class="block text-xs font-medium text-text-secondary mb-2">
-                  Option 2: Paste CSV Content
-                </label>
-                <textarea
-                  id="csv-text"
-                  ref="csvTextarea"
-                  v-model="csvPastedText"
-                  @input="handleCSVPaste"
-                  placeholder="Paste your CSV content here..."
-                  rows="6"
-                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
-                ></textarea>
-              </div>
-            </div>
-            
-            <div v-if="csvImportStatus" class="p-3 rounded-lg mb-4" :class="csvImportStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
-              <p class="text-sm whitespace-pre-line">{{ csvImportStatus.message }}</p>
-            </div>
-            
-            <div v-if="csvPreview.length > 0" class="mb-4">
-              <p class="text-sm font-medium text-text-secondary mb-2">Preview (first 5 rows):</p>
-              <div class="border border-border-default rounded-lg overflow-hidden">
-                <div class="overflow-x-auto max-h-64">
-                  <table class="min-w-full divide-y divide-divider text-sm">
-                    <thead class="bg-sunken">
-                      <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Reference</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Content</th>
-                        <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
-                        <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Days Until Review</th>
-                        <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Interval</th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-elevated divide-y divide-divider">
-                      <tr v-for="(row, index) in csvPreview.slice(0, 5)" :key="index">
-                        <td class="px-3 py-2 text-text-primary">{{ row.reference || '' }}</td>
-                        <td class="px-3 py-2 text-text-primary">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
-                        <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-text-primary">{{ row.version || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-text-primary">{{ row.daysUntilNextReview || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-text-primary">{{ row.interval || '' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <p class="text-xs text-text-muted mt-2">Total rows: {{ csvPreview.length }}</p>
-            </div>
-
-            <!-- Collections selector (only when opening from collections screen) -->
-            <div v-if="csvImportFromCollectionsScreen && collections.length > 0" class="mb-4">
-              <label class="block text-sm font-medium text-text-secondary mb-2">Add to collections</label>
-              <div class="space-y-2 max-h-32 overflow-y-auto border border-border-default rounded-xl p-3 bg-overlay">
-                <label
-                  v-for="collection in collections"
-                  :key="collection.id"
-                  class="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="collection.id"
-                    v-model="csvImportTargetCollectionIds"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span class="text-text-secondary">{{ collection.name }}</span>
-                </label>
-              </div>
-              <p class="text-xs text-text-muted mt-1">Select which collections to add imported verses to. Leave empty for master list only.</p>
+                Learn more about available translations
+              </a>
             </div>
           </div>
 
-          <div class="flex justify-end space-x-3 pt-4">
+          <div>
+            <label for="content" class="block text-sm font-medium text-text-secondary mb-2">
+              Verse Content
+            </label>
+            <textarea
+              id="content"
+              v-model="newVerse.content"
+              rows="6"
+              placeholder="Enter the verse text here..."
+              required
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+            ></textarea>
+          </div>
+
+          <CollectionPicker
+            v-if="!currentCollectionId || currentCollectionId === 'master-list'"
+            :collections="collections"
+            v-model="newVerse.collectionIds"
+          />
+        </form>
+
+        <template #footer>
+          <div class="flex justify-end space-x-3">
+            <button
+              type="button"
+              @click="closeForm"
+              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="add-verse-form"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Save Verse
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Edit Verse Form Modal -->
+      <ModalSheet :show="showEditVerseForm" title="Edit Verse" data-testid="modal-edit-verse" @close="closeEditVerseForm">
+        <form id="edit-verse-form" @submit.prevent="saveEditedVerse" class="space-y-4" v-if="editingVerse">
+          <div>
+            <label for="edit-reference" class="block text-sm font-medium text-text-secondary mb-2">
+              Verse Reference
+            </label>
+            <input
+              id="edit-reference"
+              v-model="editingVerse.reference"
+              type="text"
+              placeholder="e.g., John 3:16"
+              required
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
+
+          <div>
+            <label for="edit-bible-version" class="block text-sm font-medium text-text-secondary mb-2">
+              Bible Version
+            </label>
+            <input
+              id="edit-bible-version"
+              v-model="editingVerse.bibleVersion"
+              type="text"
+              placeholder="e.g., BSB, NIV, ESV"
+              maxlength="10"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              style="text-transform: uppercase;"
+            />
+          </div>
+
+          <div>
+            <label for="edit-content" class="block text-sm font-medium text-text-secondary mb-2">
+              Verse Content
+            </label>
+            <textarea
+              id="edit-content"
+              v-model="editingVerse.content"
+              rows="6"
+              placeholder="Enter the verse text here..."
+              required
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+            ></textarea>
+          </div>
+
+          <CollectionPicker
+            :collections="collections"
+            v-model="editingVerse.collectionIds"
+          />
+        </form>
+
+        <template #footer>
+          <div class="flex justify-between items-center">
+            <button
+              type="button"
+              @click="handleDeleteVerseFromModal"
+              class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Delete
+            </button>
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                @click="closeEditVerseForm"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="edit-verse-form"
+                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Add Collection Form Modal -->
+      <ModalSheet :show="showCollectionForm" title="Create New Collection" data-testid="modal-add-collection" max-width="sm:max-w-lg" @close="closeCollectionForm">
+        <form id="add-collection-form" @submit.prevent="addCollection" class="space-y-4">
+          <div>
+            <label for="collection-name" class="block text-sm font-medium text-text-secondary mb-2">
+              Collection Name
+            </label>
+            <input
+              id="collection-name"
+              v-model="newCollection.name"
+              type="text"
+              placeholder="e.g., Favorite Verses, Daily Devotion"
+              required
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
+
+          <div>
+            <label for="collection-description" class="block text-sm font-medium text-text-secondary mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              id="collection-description"
+              v-model="newCollection.description"
+              rows="3"
+              placeholder="Describe this collection..."
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+            ></textarea>
+          </div>
+        </form>
+
+        <template #footer>
+          <div class="flex justify-end space-x-3">
+            <button
+              type="button"
+              @click="closeCollectionForm"
+              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="add-collection-form"
+              class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Create Collection
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Edit Collection Form Modal -->
+      <ModalSheet :show="showEditCollectionForm" title="Edit Collection" data-testid="modal-edit-collection" max-width="sm:max-w-lg" @close="closeEditCollectionForm">
+        <form id="edit-collection-form" @submit.prevent="saveEditedCollection" class="space-y-4" v-if="editingCollection">
+          <div>
+            <label for="edit-collection-name" class="block text-sm font-medium text-text-secondary mb-2">
+              Collection Name
+            </label>
+            <input
+              id="edit-collection-name"
+              v-model="editingCollection.name"
+              type="text"
+              placeholder="e.g., Favorite Verses, Daily Devotion"
+              required
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
+
+          <div>
+            <label for="edit-collection-description" class="block text-sm font-medium text-text-secondary mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              id="edit-collection-description"
+              v-model="editingCollection.description"
+              rows="3"
+              placeholder="Describe this collection..."
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+            ></textarea>
+          </div>
+        </form>
+
+        <template #footer>
+          <div class="flex justify-between items-center">
+            <button
+              type="button"
+              @click="handleDeleteCollectionFromModal"
+              class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Delete
+            </button>
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                @click="closeEditCollectionForm"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="edit-collection-form"
+                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- CSV Import Modal -->
+      <ModalSheet :show="showImportCSV" title="Import Verses from CSV" data-testid="modal-import-csv" @close="closeImportCSV">
+        <div class="space-y-4">
+          <p class="text-sm text-text-secondary">
+            Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
+          </p>
+          <div class="bg-status-info-bg border border-status-info-border rounded-lg p-4">
+            <p class="text-xs text-status-info-text mb-2"><strong>CSV Format:</strong></p>
+            <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
+John 3:16,"For God so loved the world...",NIV,45,60
+Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
+            <p class="text-xs text-status-info-text mt-2">
+              <strong>Optional columns:</strong> Version, DaysUntilNextReview (days until next review), Interval (review interval in days).
+              When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-3">
+              Import CSV
+            </label>
+
+            <!-- File Upload Option -->
+            <div class="mb-4">
+              <label for="csv-file" class="block text-xs font-medium text-text-secondary mb-2">
+                Option 1: Upload CSV File
+              </label>
+              <input
+                id="csv-file"
+                ref="csvFileInput"
+                type="file"
+                accept=".csv"
+                @change="handleCSVFileSelect"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+              />
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center my-4">
+              <div class="flex-1 border-t border-border-input"></div>
+              <span class="px-3 text-xs text-text-muted uppercase">or</span>
+              <div class="flex-1 border-t border-border-input"></div>
+            </div>
+
+            <!-- Paste CSV Option -->
+            <div>
+              <label for="csv-text" class="block text-xs font-medium text-text-secondary mb-2">
+                Option 2: Paste CSV Content
+              </label>
+              <textarea
+                id="csv-text"
+                ref="csvTextarea"
+                v-model="csvPastedText"
+                @input="handleCSVPaste"
+                placeholder="Paste your CSV content here..."
+                rows="6"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
+              ></textarea>
+            </div>
+          </div>
+
+          <div v-if="csvImportStatus" class="p-3 rounded-lg" :class="csvImportStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
+            <p class="text-sm whitespace-pre-line">{{ csvImportStatus.message }}</p>
+          </div>
+
+          <div v-if="csvPreview.length > 0">
+            <p class="text-sm font-medium text-text-secondary mb-2">Preview (first 5 rows):</p>
+            <div class="border border-border-default rounded-lg overflow-hidden">
+              <div class="overflow-x-auto max-h-64">
+                <table class="min-w-full divide-y divide-divider text-sm">
+                  <thead class="bg-sunken">
+                    <tr>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Reference</th>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Content</th>
+                      <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
+                      <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Days Until Review</th>
+                      <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Interval</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-elevated divide-y divide-divider">
+                    <tr v-for="(row, index) in csvPreview.slice(0, 5)" :key="index">
+                      <td class="px-3 py-2 text-text-primary">{{ row.reference || '' }}</td>
+                      <td class="px-3 py-2 text-text-primary">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
+                      <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-text-primary">{{ row.version || '' }}</td>
+                      <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-text-primary">{{ row.daysUntilNextReview || '' }}</td>
+                      <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-text-primary">{{ row.interval || '' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="text-xs text-text-muted mt-2">Total rows: {{ csvPreview.length }}</p>
+          </div>
+
+          <!-- Collections selector (only when opening from collections screen) -->
+          <CollectionPicker
+            v-if="csvImportFromCollectionsScreen && collections.length > 0"
+            :collections="collections"
+            v-model="csvImportTargetCollectionIds"
+            label="Add to collections"
+          />
+          <p v-if="csvImportFromCollectionsScreen && collections.length > 0" class="text-xs text-text-muted -mt-2">Select which collections to add imported verses to. Leave empty for master list only.</p>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end space-x-3">
             <!-- Show Done button after successful import -->
             <button
               v-if="csvImportStatus && csvImportStatus.type === 'success'"
@@ -1489,7 +1413,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
             >
               Done
             </button>
-            
+
             <!-- Show Cancel and Import buttons before/during import -->
             <template v-else>
               <button
@@ -1509,217 +1433,203 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               </button>
             </template>
           </div>
-        </div>
-      </div>
+        </template>
+      </ModalSheet>
 
       <!-- Settings Modal -->
-      <div
-        v-if="showSettings"
-        data-testid="modal-webdav-settings"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeSettings"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">WebDAV Sync Settings</h2>
-          
-          <form @submit.prevent="saveWebDAVSettingsForm" class="space-y-4">
-            <div>
-              <label for="webdav-url" class="block text-sm font-medium text-text-secondary mb-2">
-                WebDAV Server URL
-              </label>
+      <ModalSheet :show="showSettings" title="WebDAV Sync Settings" data-testid="modal-webdav-settings" @close="closeSettings">
+        <form id="webdav-settings-form" @submit.prevent="saveWebDAVSettingsForm" class="space-y-4">
+          <div>
+            <label for="webdav-url" class="block text-sm font-medium text-text-secondary mb-2">
+              WebDAV Server URL
+            </label>
+            <input
+              id="webdav-url"
+              v-model="webdavSettings.url"
+              type="url"
+              placeholder="https://example.com/webdav"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+            <p class="text-xs text-text-muted mt-1">Full URL to your WebDAV server</p>
+          </div>
+
+          <div>
+            <label for="webdav-folder" class="block text-sm font-medium text-text-secondary mb-2">
+              Folder Path (optional)
+            </label>
+            <input
+              id="webdav-folder"
+              v-model="webdavSettings.folder"
+              type="text"
+              placeholder="rum1n8"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+            <p class="text-xs text-text-muted mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
+          </div>
+
+          <div>
+            <label for="webdav-username" class="block text-sm font-medium text-text-secondary mb-2">
+              Username
+            </label>
+            <input
+              id="webdav-username"
+              v-model="webdavSettings.username"
+              type="text"
+              placeholder="your-username"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
+
+          <div>
+            <label for="webdav-password" class="block text-sm font-medium text-text-secondary mb-2">
+              Password
+            </label>
+            <input
+              id="webdav-password"
+              v-model="webdavSettings.password"
+              type="password"
+              placeholder="your-password"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+            />
+          </div>
+
+          <div v-if="isDev" class="border-t border-border-default pt-4 mt-4">
+            <div class="flex items-center space-x-2 mb-4">
               <input
-                id="webdav-url"
-                v-model="webdavSettings.url"
-                type="url"
-                placeholder="https://example.com/webdav"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+                id="use-proxy"
+                v-model="webdavSettings.useProxy"
+                type="checkbox"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <p class="text-xs text-text-muted mt-1">Full URL to your WebDAV server</p>
+              <label for="use-proxy" class="text-sm font-medium text-text-secondary">
+                Use CORS Proxy (for development with Nextcloud)
+              </label>
             </div>
 
-            <div>
-              <label for="webdav-folder" class="block text-sm font-medium text-text-secondary mb-2">
-                Folder Path (optional)
-              </label>
-              <input
-                id="webdav-folder"
-                v-model="webdavSettings.folder"
-                type="text"
-                placeholder="rum1n8"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-              <p class="text-xs text-text-muted mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
-            </div>
-
-            <div>
-              <label for="webdav-username" class="block text-sm font-medium text-text-secondary mb-2">
-                Username
-              </label>
-              <input
-                id="webdav-username"
-                v-model="webdavSettings.username"
-                type="text"
-                placeholder="your-username"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
-
-            <div>
-              <label for="webdav-password" class="block text-sm font-medium text-text-secondary mb-2">
-                Password
-              </label>
-              <input
-                id="webdav-password"
-                v-model="webdavSettings.password"
-                type="password"
-                placeholder="your-password"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-              />
-            </div>
-
-            <div v-if="isDev" class="border-t border-border-default pt-4 mt-4">
-              <div class="flex items-center space-x-2 mb-4">
-                <input
-                  id="use-proxy"
-                  v-model="webdavSettings.useProxy"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label for="use-proxy" class="text-sm font-medium text-text-secondary">
-                  Use CORS Proxy (for development with Nextcloud)
+            <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
+              <div>
+                <label for="proxy-url" class="block text-sm font-medium text-text-secondary mb-2">
+                  Proxy Server URL
                 </label>
+                <input
+                  id="proxy-url"
+                  v-model="webdavSettings.proxyUrl"
+                  type="url"
+                  placeholder="http://localhost:3001"
+                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+                />
+                <p class="text-xs text-text-muted mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
               </div>
-              
-              <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
-                <div>
-                  <label for="proxy-url" class="block text-sm font-medium text-text-secondary mb-2">
-                    Proxy Server URL
-                  </label>
-                  <input
-                    id="proxy-url"
-                    v-model="webdavSettings.proxyUrl"
-                    type="url"
-                    placeholder="http://localhost:3001"
-                    class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-                  />
-                  <p class="text-xs text-text-muted mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
-                </div>
-                
-                <div class="bg-status-warn-bg border border-status-warn-border rounded-lg p-3">
-                  <p class="text-xs text-status-warn-text">
-                    <strong>Setup:</strong> Run the proxy server with:<br/>
-                    <code class="bg-status-warn-bg px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
-                    Or use <code class="bg-status-warn-bg px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
-                  </p>
-                </div>
+
+              <div class="bg-status-warn-bg border border-status-warn-border rounded-lg p-3">
+                <p class="text-xs text-status-warn-text">
+                  <strong>Setup:</strong> Run the proxy server with:<br/>
+                  <code class="bg-status-warn-bg px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
+                  Or use <code class="bg-status-warn-bg px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
+                </p>
               </div>
             </div>
+          </div>
 
-            <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
-              <p class="text-sm whitespace-pre-line">{{ syncStatus.message }}</p>
-            </div>
+          <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
+            <p class="text-sm whitespace-pre-line">{{ syncStatus.message }}</p>
+          </div>
 
-            <div v-if="isDev" class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mt-4">
-              <p class="text-sm text-status-info-text">
-                <strong>Note:</strong> If you see a "CORS Error", enable the CORS proxy option above and run the proxy server. 
-                This is needed for Nextcloud and other servers that don't allow direct browser access.
-              </p>
-            </div>
+          <div v-if="isDev" class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mt-4">
+            <p class="text-sm text-status-info-text">
+              <strong>Note:</strong> If you see a "CORS Error", enable the CORS proxy option above and run the proxy server.
+              This is needed for Nextcloud and other servers that don't allow direct browser access.
+            </p>
+          </div>
+        </form>
 
-            <div class="flex justify-between items-center pt-4">
+        <template #footer>
+          <div class="flex justify-between items-center">
+            <button
+              type="button"
+              @click="testWebDAVConnection"
+              :disabled="testingConnection"
+              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ testingConnection ? 'Testing...' : 'Test' }}
+            </button>
+            <div class="flex gap-3">
               <button
                 type="button"
-                @click="testWebDAVConnection"
-                :disabled="testingConnection"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {{ testingConnection ? 'Testing...' : 'Test' }}
-              </button>
-              <div class="flex gap-3">
-                <button
-                  type="button"
-                  @click="closeSettings"
-                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Backup & Restore Modal -->
-      <div
-        v-if="showBackupImport"
-        data-testid="modal-backup-restore"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-        @click.self="closeBackupImport"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-text-primary mb-6">Backup & Restore</h2>
-          
-          <div class="space-y-6">
-            <!-- Last Backup Info -->
-            <div class="bg-sunken rounded-xl p-4">
-              <p class="text-sm text-text-secondary mb-1">Last backup:</p>
-              <p class="text-lg font-medium text-text-primary">{{ getTimeSinceLastBackup() }}</p>
-            </div>
-
-            <!-- Backup Section -->
-            <div>
-              <h3 class="text-lg font-semibold text-text-primary mb-3">Backup All Data</h3>
-              <p class="text-sm text-text-secondary mb-4">
-                Download a backup file containing all your verses, collections, and settings.
-              </p>
-              <button
-                @click="backupAllData"
-                class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Download Backup
-              </button>
-            </div>
-
-            <!-- Restore Section -->
-            <div class="border-t border-border-default pt-6">
-              <h3 class="text-lg font-semibold text-text-primary mb-3">Restore from Backup</h3>
-              <p class="text-sm text-text-secondary mb-4">
-                Restore your data from a previously saved backup file. This will replace all your current data.
-              </p>
-              <input
-                type="file"
-                accept=".json"
-                @change="handleBackupFileSelect"
-                class="hidden"
-                ref="backupFileInput"
-                id="backup-file-input"
-              />
-              <label
-                for="backup-file-input"
-                class="block w-full px-6 py-3 bg-sunken hover:bg-surface-hover text-text-secondary rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
-              >
-                Choose Backup File
-              </label>
-            </div>
-
-            <!-- Close Button -->
-            <div class="flex justify-end pt-4">
-              <button
-                @click="closeBackupImport"
+                @click="closeSettings"
                 class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
               >
-                Close
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="webdav-settings-form"
+                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Save
               </button>
             </div>
           </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Backup & Restore Modal -->
+      <ModalSheet :show="showBackupImport" title="Backup & Restore" data-testid="modal-backup-restore" @close="closeBackupImport">
+        <div class="space-y-6">
+          <!-- Last Backup Info -->
+          <div class="bg-sunken rounded-xl p-4">
+            <p class="text-sm text-text-secondary mb-1">Last backup:</p>
+            <p class="text-lg font-medium text-text-primary">{{ getTimeSinceLastBackup() }}</p>
+          </div>
+
+          <!-- Backup Section -->
+          <div>
+            <h3 class="text-lg font-semibold text-text-primary mb-3">Backup All Data</h3>
+            <p class="text-sm text-text-secondary mb-4">
+              Download a backup file containing all your verses, collections, and settings.
+            </p>
+            <button
+              @click="backupAllData"
+              class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Download Backup
+            </button>
+          </div>
+
+          <!-- Restore Section -->
+          <div class="border-t border-border-default pt-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-3">Restore from Backup</h3>
+            <p class="text-sm text-text-secondary mb-4">
+              Restore your data from a previously saved backup file. This will replace all your current data.
+            </p>
+            <input
+              type="file"
+              accept=".json"
+              @change="handleBackupFileSelect"
+              class="hidden"
+              ref="backupFileInput"
+              id="backup-file-input"
+            />
+            <label
+              for="backup-file-input"
+              class="block w-full px-6 py-3 bg-sunken hover:bg-surface-hover text-text-secondary rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
+            >
+              Choose Backup File
+            </label>
+          </div>
         </div>
-      </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <button
+              @click="closeBackupImport"
+              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
 
       <!-- About Modal -->
       <div
@@ -1782,10 +1692,12 @@ import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
+import ModalSheet from './components/ModalSheet.vue'
+import CollectionPicker from './components/CollectionPicker.vue'
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView },
+  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker },
   setup() {
     const verses = ref([])
     const collections = ref([])
