@@ -57,10 +57,10 @@ test('select collections -> import -> verses appear in selected collections', as
 John 3:16,"For God so loved the world",BSB`
   await page.getByPlaceholder(/Paste your CSV/i).fill(csvContent)
   await page.waitForTimeout(500)
-  await page.getByLabel('Import Target').check()
+  await page.getByRole('button', { name: 'Import Target' }).click()
   await page.getByRole('button', { name: /Import 1 verse/i }).click()
   await page.getByRole('button', { name: 'Done' }).click()
-  await page.getByText('Import Target').click()
+  await page.getByRole('heading', { name: 'Import Target' }).click()
   await expect(page.getByText('John 3:16')).toBeVisible()
 })
 
