@@ -12,6 +12,7 @@ body {
   /* Prevent body from scrolling when keyboard is open */
   overflow: hidden;
   height: 100dvh;
+  color-scheme: light dark;
 }
 
 #app {

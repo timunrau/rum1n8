@@ -3,12 +3,12 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4"
     @click.self="$emit('close')"
   >
-    <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-w-md w-full p-6 pb-8 sm:pb-6">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">Add to Home Screen</h2>
+    <div class="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-xl max-w-md w-full p-6 pb-8 sm:pb-6">
+      <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Add to Home Screen</h2>
 
       <ol class="space-y-5 mb-6">
         <li class="flex gap-4 items-start">
-          <span class="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600">
+          <span class="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-400">
             <!-- iOS Safari Share button icon -->
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -17,12 +17,12 @@
             </svg>
           </span>
           <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900">Tap the Share button</p>
-            <p class="text-sm text-gray-500">The share icon at the bottom of Safari</p>
+            <p class="font-medium text-gray-900 dark:text-gray-100">Tap the Share button</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">The share icon at the bottom of Safari</p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
-          <span class="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600">
+          <span class="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-400">
             <!-- Add to Home Screen icon (app icon with plus) -->
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="4" />
@@ -31,18 +31,18 @@
             </svg>
           </span>
           <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900">Tap "Add to Home Screen"</p>
-            <p class="text-sm text-gray-500">Scroll down in the menu to find it</p>
+            <p class="font-medium text-gray-900 dark:text-gray-100">Tap "Add to Home Screen"</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Scroll down in the menu to find it</p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
-          <span class="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+          <span class="flex-shrink-0 w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center">
             <!-- Add button (checkmark / confirm) -->
-            <span class="text-blue-600 font-semibold text-sm">Add</span>
+            <span class="text-blue-600 dark:text-blue-400 font-semibold text-sm">Add</span>
           </span>
           <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900">Tap "Add"</p>
-            <p class="text-sm text-gray-500">In the top right corner</p>
+            <p class="font-medium text-gray-900 dark:text-gray-100">Tap "Add"</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">In the top right corner</p>
           </div>
         </li>
       </ol>
