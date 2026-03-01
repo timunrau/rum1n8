@@ -8,20 +8,20 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('app loads with default Collections view', async ({ page }) => {
-  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
   await expect(page.locator('h1')).toContainText(/Verses|Collections|Review/)
 })
 
 test('bottom nav switches between Review, Collections, Search', async ({ page }) => {
   await page.getByTestId('nav-review').click()
-  await expect(page.getByTestId('nav-review')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
   await expect(page.locator('h1')).toContainText('Review')
 
   await page.getByTestId('nav-collections').click()
-  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
 
   await page.getByTestId('nav-search').click()
-  await expect(page.getByTestId('nav-search')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-search')).toHaveClass(/text-nav-active/)
   await expect(page.locator('h1')).toContainText('Search')
 })
 
@@ -50,10 +50,10 @@ test('FAB opens add verse / add collection / import CSV options on Collections v
 
 test('initial load with view=review-list shows Review tab', async ({ page }) => {
   await page.goto('/?view=review-list')
-  await expect(page.getByTestId('nav-review')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
 })
 
 test('initial load with view=search shows Search tab', async ({ page }) => {
   await page.goto('/?view=search')
-  await expect(page.getByTestId('nav-search')).toHaveClass(/text-blue-600/)
+  await expect(page.getByTestId('nav-search')).toHaveClass(/text-nav-active/)
 })

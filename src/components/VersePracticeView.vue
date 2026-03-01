@@ -2,9 +2,9 @@
   <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
     <!-- Scrollable verse text -->
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-      <div class="bg-white dark:bg-gray-800 sm:rounded-lg sm:shadow-xl p-4" :class="{ 'rounded-lg shadow-xl mb-4 sm:my-4': !compact }">
+      <div class="bg-surface sm:rounded-lg sm:shadow-xl p-4" :class="{ 'rounded-lg shadow-xl mb-4 sm:my-4': !compact }">
         <div
-          class="text-xl leading-relaxed text-gray-900 dark:text-gray-100 font-serif min-h-[200px]"
+          class="text-xl leading-relaxed text-text-primary font-serif min-h-[200px]"
           :class="compact ? '' : 'min-h-[200px]'"
           @click="focusInput"
         >
@@ -16,37 +16,37 @@
           >
             <span v-if="memorizationMode === 'learn'">
               <template v-if="word.revealed">
-                <span :class="word.incorrect ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
+                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 dark:text-gray-100">{{ getPartialWordText(word) }}</span><span class="text-gray-300 dark:text-gray-600">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else>
-                <span class="text-gray-300 dark:text-gray-600">{{ word.text }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-word-unrevealed">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
             </span>
             <span v-else-if="memorizationMode === 'memorize'">
-              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-gray-300 dark:text-gray-600">
+              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-word-unrevealed">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
-              <span v-else-if="word.revealed" :class="word.incorrect ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'">
+              <span v-else-if="word.revealed" :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 dark:text-gray-100">{{ getPartialWordText(word) }}</span><span class="text-gray-300 dark:text-gray-600">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
               </template>
-              <span v-else class="text-gray-300 dark:text-gray-600">
+              <span v-else class="text-word-unrevealed">
                 {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
               </span>
             </span>
             <span v-else-if="memorizationMode === 'master'">
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'">
+              <span v-if="word.revealed" :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-gray-900 dark:text-gray-100 font-semibold">{{ getPartialWordText(word) }}</span><span class="text-gray-300 dark:text-gray-600">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-text-primary font-semibold">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
               </template>
-              <span v-else class="text-gray-300 dark:text-gray-600">
+              <span v-else class="text-word-unrevealed">
                 {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
               </span>
             </span>
@@ -70,17 +70,17 @@
               memorizationMode === stage.mode
                 ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
                 : isStageComplete(stage)
-                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 cursor-pointer hover:bg-green-200 dark:hover:bg-green-800'
+                ? 'bg-status-success-bg text-status-success-text cursor-pointer hover:bg-surface-hover'
                 : canSwitch(stage.mode)
-                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                ? 'bg-sunken text-text-secondary cursor-pointer hover:bg-surface-hover'
+                : 'bg-sunken text-text-muted'
             ]"
           >
             {{ stage.name }}
           </div>
           <svg
             v-if="index < 2"
-            class="w-6 h-6 mx-2 text-gray-400 dark:text-gray-500"
+            class="w-6 h-6 mx-2 text-text-muted"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

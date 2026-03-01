@@ -2,21 +2,21 @@
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
-    class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-50 flex flex-col"
+    class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-white dark:bg-gray-900 shadow-sm z-40 flex-shrink-0">
+    <header class="bg-base shadow-sm z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitMemorization"
-          class="p-2 -ml-2 mr-1 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors"
+          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1">
+        <h1 class="text-xl font-semibold text-text-primary flex-1">
           {{ memorizingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
@@ -25,7 +25,7 @@
             v-if="hasWebDAVConfigured"
             @click="manualSync"
             :disabled="syncing"
-            class="p-2 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors relative"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
@@ -91,10 +91,10 @@
         v-if="allWordsRevealed && memorizationMode"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-md w-full p-6">
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-md w-full p-6">
           <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-green-800 dark:text-green-300 mb-2 text-center">🎉 Great job!</p>
-            <p class="text-green-700 dark:text-green-400 text-center mb-6">
+            <p class="text-2xl font-bold text-status-success-text mb-2 text-center">🎉 Great job!</p>
+            <p class="text-status-success-text text-center mb-6">
               <span v-if="memorizationMode === 'learn'">You've learned this verse! Ready to memorize it?</span>
               <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse! Ready to master it?</span>
               <span v-else-if="memorizationMode === 'master'">You've mastered this verse! It's now in your spaced repetition system.</span>
@@ -117,11 +117,11 @@
             </div>
           </div>
           <div v-else>
-            <p class="text-2xl font-bold text-orange-800 dark:text-orange-300 mb-2 text-center">Keep practicing!</p>
-            <p class="text-orange-700 dark:text-orange-400 text-center mb-2">
+            <p class="text-2xl font-bold text-status-orange-text mb-2 text-center">Keep practicing!</p>
+            <p class="text-status-orange-text text-center mb-2">
               Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to advance.
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+            <p class="text-sm text-text-secondary text-center mb-6">
               Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
             </p>
             <div class="flex justify-center">
@@ -141,28 +141,28 @@
   <!-- Review Screen -->
   <div
     v-if="reviewingVerse"
-    class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-50 flex flex-col"
+    class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-white dark:bg-gray-900 shadow-sm z-40 flex-shrink-0">
+    <header class="bg-base shadow-sm z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitReview"
-          class="p-2 -ml-2 mr-1 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors"
+          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1">
+        <h1 class="text-xl font-semibold text-text-primary flex-1">
           {{ reviewingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1">
           <!-- Share Button -->
           <button
             @click="copyVerse(reviewingVerse)"
-            class="p-2 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
             title="Share verse"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +174,7 @@
             v-if="hasWebDAVConfigured"
             @click="manualSync"
             :disabled="syncing"
-            class="p-2 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors relative"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
@@ -239,17 +239,17 @@
         v-if="allWordsRevealed && reviewingVerse"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-md w-full p-6">
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-md w-full p-6">
           <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-green-800 dark:text-green-300 mb-2 text-center">🎉 Great job!</p>
-            <p class="text-green-700 dark:text-green-400 text-center mb-6">
+            <p class="text-2xl font-bold text-status-success-text mb-2 text-center">🎉 Great job!</p>
+            <p class="text-status-success-text text-center mb-6">
               <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</template>
               <template v-else>Practice complete (doesn't count as review).</template>
             </p>
             <div class="flex justify-center gap-3">
               <button
                 @click="retryReview"
-                class="px-6 py-2.5 bg-gray-600 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-xl font-semibold transition-colors duration-200"
+                class="px-6 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-white rounded-xl font-semibold transition-colors duration-200"
               >
                 Retry
               </button>
@@ -262,11 +262,11 @@
             </div>
           </div>
           <div v-else>
-            <p class="text-2xl font-bold text-orange-800 dark:text-orange-300 mb-2 text-center">Keep practicing!</p>
-            <p class="text-orange-700 dark:text-orange-400 text-center mb-2">
+            <p class="text-2xl font-bold text-status-orange-text mb-2 text-center">Keep practicing!</p>
+            <p class="text-status-orange-text text-center mb-2">
               Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to count this as reviewed.
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+            <p class="text-sm text-text-secondary text-center mb-6">
               Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
             </p>
             <div class="flex justify-center">
@@ -283,20 +283,20 @@
   </div>
 
   <!-- Main Content -->
-  <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-gray-50 dark:bg-gray-950">
+  <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-base">
     <!-- Top App Bar -->
-    <header class="bg-white dark:bg-gray-900 shadow-sm fixed top-0 left-0 right-0 z-40">
+    <header class="bg-base shadow-sm fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-4">
         <button
           v-if="currentCollectionId"
           @click="viewAllVerses"
-          class="p-2 -ml-2 mr-1 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors"
+          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
+        <h1 class="text-xl font-semibold text-text-primary flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
           {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'search' ? 'Search' : 'Verses')) }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
@@ -314,7 +314,7 @@
             v-if="hasWebDAVConfigured"
             @click="manualSync"
             :disabled="syncing"
-            class="p-2 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors relative"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
             :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
           >
@@ -356,7 +356,7 @@
               ref="settingsButton"
               data-testid="settings-button"
               @click.stop="toggleSettingsMenu"
-              class="p-2 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800 rounded-full transition-colors relative"
+              class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
               title="Settings"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,19 +373,19 @@
             <div
               v-if="showSettingsMenu"
               v-click-outside="closeSettingsMenu"
-              class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+              class="absolute right-0 top-full mt-2 w-48 bg-elevated rounded-lg shadow-lg border border-border-default py-1 z-50"
             >
               <button
                 data-testid="settings-webdav"
                 @click="openWebDAVSettings"
-                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                class="w-full px-4 py-2 text-left text-sm text-text-secondary hover:bg-surface-hover transition-colors"
               >
                 WebDAV Sync
               </button>
               <button
                 data-testid="settings-backup"
                 @click="openBackupImport"
-                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                class="w-full px-4 py-2 text-left text-sm text-text-secondary hover:bg-surface-hover transition-colors relative"
               >
                 Backup & Restore
                 <span
@@ -402,19 +402,19 @@
     <!-- Sync Error Toast -->
     <div
       v-if="syncError"
-      class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg shadow-lg p-4 max-w-md mx-4"
+      class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-status-due-bg border border-status-due-border rounded-lg shadow-lg p-4 max-w-md mx-4"
     >
       <div class="flex items-start gap-3">
-        <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-status-error-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div class="flex-1">
-          <p class="text-sm font-medium text-red-800 dark:text-red-300">Sync Failed</p>
-          <p class="text-sm text-red-700 dark:text-red-400 mt-1">{{ syncError }}</p>
+          <p class="text-sm font-medium text-status-error-text">Sync Failed</p>
+          <p class="text-sm text-status-error-text mt-1">{{ syncError }}</p>
         </div>
         <button
           @click="syncError = null"
-          class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex-shrink-0"
+          class="text-status-error-text hover:text-status-error-text flex-shrink-0"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -435,22 +435,22 @@
             :key="verse.id"
             @click="handleVerseClick(verse)"
             :class="[
-              'bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 border transition-all duration-200 cursor-pointer active:scale-98',
+              'bg-surface rounded-xl shadow-sm p-3 border transition-all duration-200 cursor-pointer active:scale-98',
               isDueForReview(verse)
-                ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950'
-                : 'border-gray-200 dark:border-gray-700'
+                ? 'border-status-due-border bg-status-due-bg'
+                : 'border-border-default'
             ]"
           >
             <div class="flex items-center justify-between">
-              <h3 class="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">
+              <h3 class="text-base font-semibold text-text-primary flex-1">
                 {{ verse.reference }}
               </h3>
               <span
                 :class="[
                   'px-2 py-1 text-xs font-medium rounded-full ml-2',
                   isDueForReview(verse)
-                    ? 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900'
-                    : 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900'
+                    ? 'text-status-due-text bg-status-due-bg'
+                    : 'text-status-info-text bg-status-info-bg'
                 ]"
               >
                 {{ getTimeUntilReview(verse) }}
@@ -459,12 +459,12 @@
           </div>
 
           <!-- Empty state when no verses to review -->
-          <div v-if="reviewSortedVerses.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="reviewSortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
+            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">No verses to review</p>
-            <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Master some verses to see them here</p>
+            <p class="text-text-muted text-lg">No verses to review</p>
+            <p class="text-text-muted text-sm mt-2">Master some verses to see them here</p>
           </div>
         </div>
       </div>
@@ -476,32 +476,32 @@
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
-            class="bg-blue-50 dark:bg-blue-950 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-blue-200 dark:border-blue-800"
+            class="bg-status-info-bg rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-status-info-border"
           >
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-status-info-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-200">{{ getCollectionName('master-list') }}</h3>
+                <h3 class="text-lg font-semibold text-status-info-text">{{ getCollectionName('master-list') }}</h3>
               </div>
               <div class="flex items-center gap-2">
                 <span
                   v-if="dueVersesCount > 0"
-                  class="px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-full"
+                  class="px-3 py-1 text-xs font-medium text-status-due-text bg-status-due-bg rounded-full"
                 >
                   {{ dueVersesCount }}
                 </span>
                 <span
                   v-else-if="verses.length > 0"
-                  class="px-3 py-1 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900 rounded-full"
+                  class="px-3 py-1 text-xs font-medium text-status-success-text bg-status-success-bg rounded-full"
                 >
                   ✓
                 </span>
               </div>
             </div>
             <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-text-muted">
                 {{ totalVerseCount }} verse{{ totalVerseCount !== 1 ? 's' : '' }}
               </div>
             </div>
@@ -511,32 +511,32 @@
           <div
             v-if="hasNoCollectionVerses"
             @click="viewCollection('no-collection')"
-            class="bg-slate-100 dark:bg-slate-800 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-slate-300 dark:border-slate-600"
+            class="bg-sunken rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-border-default"
           >
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
-                <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ getCollectionName('no-collection') }}</h3>
+                <h3 class="text-lg font-semibold text-text-primary">{{ getCollectionName('no-collection') }}</h3>
               </div>
               <div class="flex items-center gap-2">
                 <span
                   v-if="getCollectionDueCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
                 >
                   {{ getCollectionDueCount('no-collection') }}
                 </span>
                 <span
                   v-else-if="getCollectionVerseCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
                 >
                   ✓
                 </span>
               </div>
             </div>
             <div class="flex items-center justify-between">
-              <div class="text-xs text-slate-500 dark:text-slate-400">
+              <div class="text-xs text-text-muted">
                 {{ getCollectionVerseCount('no-collection') }} verse{{ getCollectionVerseCount('no-collection') !== 1 ? 's' : '' }}
               </div>
             </div>
@@ -546,32 +546,32 @@
           <div
             v-if="hasToLearnVerses"
             @click="viewCollection('to-learn')"
-            class="bg-yellow-50 dark:bg-yellow-950 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-yellow-200 dark:border-yellow-800"
+            class="bg-status-warn-bg rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-status-warn-border"
           >
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-yellow-800 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-status-warn-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 </svg>
-                <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-200">{{ getCollectionName('to-learn') }}</h3>
+                <h3 class="text-lg font-semibold text-status-warn-text">{{ getCollectionName('to-learn') }}</h3>
               </div>
               <div class="flex items-center gap-2">
                 <span
                   v-if="getCollectionDueCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
                 >
                   {{ getCollectionDueCount('to-learn') }}
                 </span>
                 <span
                   v-else-if="getCollectionVerseCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
                 >
                   ✓
                 </span>
               </div>
             </div>
             <div class="flex items-center justify-between">
-              <div class="text-xs text-yellow-800 dark:text-yellow-300">
+              <div class="text-xs text-status-warn-text">
                 {{ getCollectionVerseCount('to-learn') }} verse{{ getCollectionVerseCount('to-learn') !== 1 ? 's' : '' }}
               </div>
             </div>
@@ -582,21 +582,21 @@
             v-for="collection in collections"
             :key="collection.id"
             @click="viewCollection(collection.id)"
-            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-gray-100 dark:border-gray-700"
+            class="bg-surface rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-border-default"
           >
             <div class="flex justify-between">
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex-1">{{ collection.name }}</h3>
+              <h3 class="text-lg font-semibold text-text-primary flex-1">{{ collection.name }}</h3>
 
               <div class="flex items-center gap-2">
                 <span
                   v-if="getCollectionDueCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
                 >
                   {{ getCollectionDueCount(collection.id) }}
                 </span>
                 <span
                   v-else-if="getCollectionVerseCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900 rounded-md"
+                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
                 >
                   ✓
                 </span>
@@ -604,7 +604,7 @@
                             <div class="flex items-center gap-1">
                 <button
                   @click.stop="startEditCollection(collection)"
-                  class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5 rounded-full"
+                  class="text-text-secondary hover:bg-surface-hover p-1.5 rounded-full"
                   title="Edit collection"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -613,9 +613,9 @@
                 </button>
               </div>
             </div>
-            <p v-if="collection.description" class="text-gray-500 dark:text-gray-400 text-sm mb-3 line-clamp-2">{{ collection.description }}</p>
+            <p v-if="collection.description" class="text-text-muted text-sm mb-3 line-clamp-2">{{ collection.description }}</p>
             <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-text-muted">
                 {{ getCollectionVerseCount(collection.id) }} verse{{ getCollectionVerseCount(collection.id) !== 1 ? 's' : '' }}
               </div>
 
@@ -623,12 +623,12 @@
           </div>
 
           <!-- Empty state when no verses exist -->
-          <div v-if="verses.length === 0 && collections.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="verses.length === 0 && collections.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
+            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">No verses yet</p>
-            <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Tap + to add your first verse</p>
+            <p class="text-text-muted text-lg">No verses yet</p>
+            <p class="text-text-muted text-sm mt-2">Tap + to add your first verse</p>
           </div>
         </div>
       </div>
@@ -642,16 +642,16 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search verses..."
-              :class="['w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500', searchQuery.trim() ? 'pr-11' : 'pr-4']"
+              :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
             />
-            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <button
               v-if="searchQuery.trim()"
               type="button"
               @click="clearSearch"
-              class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
               title="Clear search"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -666,15 +666,15 @@
               v-for="result in searchResults"
               :key="result.item.id"
               @click="handleVerseClick(result.item)"
-              class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-3 px-4 border border-gray-200 dark:border-gray-700 transition-all duration-200 cursor-pointer active:scale-98 relative"
+              class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
             >
               <div class="flex flex-col gap-2">
                 <div class="flex items-start justify-between gap-2">
-                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
+                  <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
                   <div class="flex items-center gap-0.5 shrink-0">
                     <button
                       @click.stop="startEditVerse(result.item)"
-                      class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
                       title="Edit verse"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -683,7 +683,7 @@
                     </button>
                     <button
                       @click.stop="copyVerse(result.item)"
-                      class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
                       title="Share verse"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -692,26 +692,26 @@
                     </button>
                   </div>
                 </div>
-                <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
+                <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
               </div>
             </div>
 
             <!-- Empty state when no search query -->
-            <div v-if="!searchQuery.trim()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="!searchQuery.trim()" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
+              <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <p class="text-gray-500 dark:text-gray-400 text-lg">Search verses</p>
-              <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Type to search by reference or content</p>
+              <p class="text-text-muted text-lg">Search verses</p>
+              <p class="text-text-muted text-sm mt-2">Type to search by reference or content</p>
             </div>
 
             <!-- Empty state when no results found -->
-            <div v-else-if="searchQuery.trim() && searchResults.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center mt-8">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-else-if="searchQuery.trim() && searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
+              <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-gray-500 dark:text-gray-400 text-lg">No results found</p>
-              <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Try different search terms</p>
+              <p class="text-text-muted text-lg">No results found</p>
+              <p class="text-text-muted text-sm mt-2">Try different search terms</p>
             </div>
           </div>
         </div>
@@ -726,19 +726,19 @@
           :key="verse.id"
           @click="handleVerseClick(verse)"
           :class="[
-            'bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
+            'bg-surface rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
             verse.memorizationStatus === 'mastered' && isDueForReview(verse)
-              ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950'
+              ? 'border-status-due-border bg-status-due-bg'
               : verse.memorizationStatus === 'mastered'
-              ? 'border-blue-200 dark:border-blue-800'
-              : 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950'
+              ? 'border-status-info-border'
+              : 'border-status-warn-border bg-status-warn-bg'
           ]"
         >
           <div class="flex gap-2 items-start">
             <button
               type="button"
               @click="toggleVerseExpanded(verse, $event)"
-              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-transform duration-200"
+              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-text-primary transition-transform duration-200"
               :class="{ 'rotate-90': isVerseExpanded(verse) }"
               :aria-label="isVerseExpanded(verse) ? 'Collapse verse' : 'Expand verse'"
             >
@@ -749,12 +749,12 @@
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 justify-between">
                 <div class="flex flex-wrap items-center gap-2 min-w-0">
-                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                  <h3 class="text-lg font-semibold text-text-primary">
                     {{ verse.reference }}
                   </h3>
                   <span
                     v-if="verse.bibleVersion"
-                    class="px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-md uppercase tracking-wider"
+                    class="px-2 py-0.5 text-xs font-medium text-text-secondary bg-sunken rounded-md uppercase tracking-wider"
                   >
                     {{ verse.bibleVersion }}
                   </span>
@@ -765,29 +765,29 @@
                       :class="[
                         'px-2 py-0.5 text-xs font-medium rounded-lg',
                         verse.memorizationStatus === 'unmemorized'
-                          ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
+                          ? 'bg-status-warn-bg text-status-warn-text'
                           : verse.memorizationStatus === 'learned'
-                          ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
-                          : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
+                          ? 'bg-status-orange-bg text-status-orange-text'
+                          : 'bg-status-purple-bg text-status-purple-text'
                       ]"
                     >
                       {{ verse.memorizationStatus === 'unmemorized' ? 'Learn' : verse.memorizationStatus === 'learned' ? 'Memorize' : 'Master' }}
                     </span>
                     <span
                       v-else-if="isDueForReview(verse)"
-                      class="px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-lg"
+                      class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-lg"
                     >
                       Due
                     </span>
                     <span
                       v-else
-                      class="px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 rounded-lg"
+                      class="px-2 py-0.5 text-xs font-medium text-status-info-text bg-status-info-bg rounded-lg"
                     >
                       {{ getTimeUntilReview(verse) }}
                     </span>
                                     <button
                     @click.stop="startEditVerse(verse)"
-                    class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5 rounded-full shrink-0"
+                    class="text-text-secondary hover:bg-surface-hover p-1.5 rounded-full shrink-0"
                     title="Edit verse"
                                     >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -798,7 +798,7 @@
               </div>
               <div
                 v-if="isVerseExpanded(verse)"
-                class="mt-2 text-gray-600 dark:text-gray-400 text-sm leading-relaxed"
+                class="mt-2 text-text-secondary text-sm leading-relaxed"
               >
                 {{ verse.content }}
               </div>
@@ -806,12 +806,12 @@
           </div>
         </div>
 
-          <div v-if="sortedVerses.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="sortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
+            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">No verses yet</p>
-            <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Tap + to add a verse</p>
+            <p class="text-text-muted text-lg">No verses yet</p>
+            <p class="text-text-muted text-sm mt-2">Tap + to add a verse</p>
           </div>
         </div>
       </div>
@@ -819,7 +819,7 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-base border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Review Tab -->
         <button
@@ -828,8 +828,8 @@
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'review-list'
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-500 dark:text-gray-400'
+              ? 'text-nav-active'
+              : 'text-text-muted'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -845,8 +845,8 @@
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'collections'
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-500 dark:text-gray-400'
+              ? 'text-nav-active'
+              : 'text-text-muted'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -862,8 +862,8 @@
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
             currentView === 'search'
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-500 dark:text-gray-400'
+              ? 'text-nav-active'
+              : 'text-text-muted'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -896,7 +896,7 @@
           key="verse"
           data-testid="fab-new-verse"
           @click="openNewVerse"
-          class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50 dark:active:bg-gray-700"
+          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -913,7 +913,7 @@
           key="collection"
           data-testid="fab-new-collection"
           @click="openNewCollection"
-          class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50 dark:active:bg-gray-700"
+          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -930,7 +930,7 @@
           key="import"
           data-testid="fab-import-csv"
           @click="openImportCSV"
-          class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-gray-50 dark:active:bg-gray-700"
+          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -997,12 +997,12 @@
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeForm"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Add New Verse</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Add New Verse</h2>
           
           <form @submit.prevent="addVerse" class="space-y-4">
             <div>
-              <label for="reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="reference" class="block text-sm font-medium text-text-secondary mb-2">
                 Verse Reference
               </label>
               <input
@@ -1011,12 +1011,12 @@
                 type="text"
                 placeholder="e.g., John 3:16"
                 required
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
             <div>
-              <label for="bible-version" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="bible-version" class="block text-sm font-medium text-text-secondary mb-2">
                 Bible Version
               </label>
               <input
@@ -1025,7 +1025,7 @@
                 type="text"
                 placeholder="e.g., BSB, NIV, ESV"
                 maxlength="10"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 uppercase tracking-wider"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
                 style="text-transform: uppercase;"
               />
             </div>
@@ -1044,13 +1044,13 @@
                 <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
               </button>
 
-              <div v-if="importError" class="mt-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <p class="text-sm text-amber-800 dark:text-amber-300">{{ importError }}</p>
+              <div v-if="importError" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg">
+                <p class="text-sm text-status-amber-text">{{ importError }}</p>
                 <a
                   v-if="importErrorShowLink"
                   href="https://fetch.bible/content/need/"
                   target="_blank"
-                  class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 underline mt-1 inline-block"
+                  class="text-sm text-status-purple-text hover:text-status-purple-text underline mt-1 inline-block"
                 >
                   Learn more about available translations
                 </a>
@@ -1058,7 +1058,7 @@
             </div>
 
             <div>
-              <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="content" class="block text-sm font-medium text-text-secondary mb-2">
                 Verse Content
               </label>
               <textarea
@@ -1067,12 +1067,12 @@
                 rows="6"
                 placeholder="Enter the verse text here..."
                 required
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
               ></textarea>
             </div>
 
             <div v-if="!currentCollectionId || currentCollectionId === 'master-list'">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-text-secondary mb-2">
                 Collections
               </label>
               <div v-if="collections.length > 0" class="space-y-2">
@@ -1087,17 +1087,17 @@
                     v-model="newVerse.collectionIds"
                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span class="text-gray-700 dark:text-gray-300">{{ collection.name }}</span>
+                  <span class="text-text-secondary">{{ collection.name }}</span>
                 </label>
               </div>
-              <p v-else class="text-sm text-gray-500 dark:text-gray-400">No collections yet. Create one to organize verses.</p>
+              <p v-else class="text-sm text-text-muted">No collections yet. Create one to organize verses.</p>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 @click="closeForm"
-                class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
               >
                 Cancel
               </button>
@@ -1119,12 +1119,12 @@
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeEditVerseForm"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Verse</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Edit Verse</h2>
           
           <form @submit.prevent="saveEditedVerse" class="space-y-4" v-if="editingVerse">
             <div>
-              <label for="edit-reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="edit-reference" class="block text-sm font-medium text-text-secondary mb-2">
                 Verse Reference
               </label>
               <input
@@ -1133,12 +1133,12 @@
                 type="text"
                 placeholder="e.g., John 3:16"
                 required
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
             <div>
-              <label for="edit-bible-version" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="edit-bible-version" class="block text-sm font-medium text-text-secondary mb-2">
                 Bible Version
               </label>
               <input
@@ -1147,13 +1147,13 @@
                 type="text"
                 placeholder="e.g., BSB, NIV, ESV"
                 maxlength="10"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 uppercase tracking-wider"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
                 style="text-transform: uppercase;"
               />
             </div>
 
             <div>
-              <label for="edit-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="edit-content" class="block text-sm font-medium text-text-secondary mb-2">
                 Verse Content
               </label>
               <textarea
@@ -1162,12 +1162,12 @@
                 rows="6"
                 placeholder="Enter the verse text here..."
                 required
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
               ></textarea>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-text-secondary mb-2">
                 Collections
               </label>
               <div v-if="collections.length > 0" class="space-y-2">
@@ -1182,10 +1182,10 @@
                     v-model="editingVerse.collectionIds"
                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span class="text-gray-700 dark:text-gray-300">{{ collection.name }}</span>
+                  <span class="text-text-secondary">{{ collection.name }}</span>
                 </label>
               </div>
-              <p v-else class="text-sm text-gray-500 dark:text-gray-400">No collections yet.</p>
+              <p v-else class="text-sm text-text-muted">No collections yet.</p>
             </div>
 
             <div class="flex justify-between items-center pt-4">
@@ -1200,7 +1200,7 @@
                 <button
                   type="button"
                   @click="closeEditVerseForm"
-                  class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
                 >
                   Cancel
                 </button>
@@ -1223,12 +1223,12 @@
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         @click.self="closeCollectionForm"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Create New Collection</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Create New Collection</h2>
           
           <form @submit.prevent="addCollection" class="space-y-4">
             <div>
-              <label for="collection-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="collection-name" class="block text-sm font-medium text-text-secondary mb-2">
                 Collection Name
               </label>
               <input
@@ -1237,12 +1237,12 @@
                 type="text"
                 placeholder="e.g., Favorite Verses, Daily Devotion"
                 required
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
             <div>
-              <label for="collection-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="collection-description" class="block text-sm font-medium text-text-secondary mb-2">
                 Description (optional)
               </label>
               <textarea
@@ -1250,7 +1250,7 @@
                 v-model="newCollection.description"
                 rows="3"
                 placeholder="Describe this collection..."
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
               ></textarea>
             </div>
 
@@ -1258,7 +1258,7 @@
               <button
                 type="button"
                 @click="closeCollectionForm"
-                class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
               >
                 Cancel
               </button>
@@ -1280,12 +1280,12 @@
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeEditCollectionForm"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Collection</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Edit Collection</h2>
           
           <form @submit.prevent="saveEditedCollection" class="space-y-4" v-if="editingCollection">
             <div>
-              <label for="edit-collection-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="edit-collection-name" class="block text-sm font-medium text-text-secondary mb-2">
                 Collection Name
               </label>
               <input
@@ -1294,12 +1294,12 @@
                 type="text"
                 placeholder="e.g., Favorite Verses, Daily Devotion"
                 required
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
             <div>
-              <label for="edit-collection-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="edit-collection-description" class="block text-sm font-medium text-text-secondary mb-2">
                 Description (optional)
               </label>
               <textarea
@@ -1307,7 +1307,7 @@
                 v-model="editingCollection.description"
                 rows="3"
                 placeholder="Describe this collection..."
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
               ></textarea>
             </div>
 
@@ -1323,7 +1323,7 @@
                 <button
                   type="button"
                   @click="closeEditCollectionForm"
-                  class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
                 >
                   Cancel
                 </button>
@@ -1346,32 +1346,32 @@
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeImportCSV"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Import Verses from CSV</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Import Verses from CSV</h2>
           
           <div class="mb-6">
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p class="text-sm text-text-secondary mb-4">
               Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
             </p>
-            <div class="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-              <p class="text-xs text-blue-800 dark:text-blue-300 mb-2"><strong>CSV Format:</strong></p>
-              <pre class="text-xs text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
+            <div class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mb-4">
+              <p class="text-xs text-status-info-text mb-2"><strong>CSV Format:</strong></p>
+              <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
 John 3:16,"For God so loved the world...",NIV,45,60
 Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
-              <p class="text-xs text-blue-700 dark:text-blue-300 mt-2">
+              <p class="text-xs text-status-info-text mt-2">
                 <strong>Optional columns:</strong> Version, DaysUntilNextReview (days until next review), Interval (review interval in days). 
                 When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
               </p>
             </div>
             
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label class="block text-sm font-medium text-text-secondary mb-3">
                 Import CSV
               </label>
               
               <!-- File Upload Option -->
               <div class="mb-4">
-                <label for="csv-file" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <label for="csv-file" class="block text-xs font-medium text-text-secondary mb-2">
                   Option 1: Upload CSV File
                 </label>
                 <input
@@ -1380,20 +1380,20 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                   type="file"
                   accept=".csv"
                   @change="handleCSVFileSelect"
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
                 />
               </div>
               
               <!-- Divider -->
               <div class="flex items-center my-4">
-                <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-                <span class="px-3 text-xs text-gray-500 dark:text-gray-400 uppercase">or</span>
-                <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+                <div class="flex-1 border-t border-border-input"></div>
+                <span class="px-3 text-xs text-text-muted uppercase">or</span>
+                <div class="flex-1 border-t border-border-input"></div>
               </div>
               
               <!-- Paste CSV Option -->
               <div>
-                <label for="csv-text" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <label for="csv-text" class="block text-xs font-medium text-text-secondary mb-2">
                   Option 2: Paste CSV Content
                 </label>
                 <textarea
@@ -1403,48 +1403,48 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                   @input="handleCSVPaste"
                   placeholder="Paste your CSV content here..."
                   rows="6"
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
                 ></textarea>
               </div>
             </div>
             
-            <div v-if="csvImportStatus" class="p-3 rounded-lg mb-4" :class="csvImportStatus.type === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-300' : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300'">
+            <div v-if="csvImportStatus" class="p-3 rounded-lg mb-4" :class="csvImportStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
               <p class="text-sm whitespace-pre-line">{{ csvImportStatus.message }}</p>
             </div>
             
             <div v-if="csvPreview.length > 0" class="mb-4">
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview (first 5 rows):</p>
-              <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <p class="text-sm font-medium text-text-secondary mb-2">Preview (first 5 rows):</p>
+              <div class="border border-border-default rounded-lg overflow-hidden">
                 <div class="overflow-x-auto max-h-64">
-                  <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50 dark:bg-gray-800">
+                  <table class="min-w-full divide-y divide-divider text-sm">
+                    <thead class="bg-sunken">
                       <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Reference</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Content</th>
-                        <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Version</th>
-                        <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Days Until Review</th>
-                        <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Interval</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Reference</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Content</th>
+                        <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
+                        <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Days Until Review</th>
+                        <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Interval</th>
                       </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody class="bg-elevated divide-y divide-divider">
                       <tr v-for="(row, index) in csvPreview.slice(0, 5)" :key="index">
-                        <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.reference || '' }}</td>
-                        <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
-                        <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.version || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.daysUntilNextReview || '' }}</td>
-                        <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ row.interval || '' }}</td>
+                        <td class="px-3 py-2 text-text-primary">{{ row.reference || '' }}</td>
+                        <td class="px-3 py-2 text-text-primary">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
+                        <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-text-primary">{{ row.version || '' }}</td>
+                        <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-text-primary">{{ row.daysUntilNextReview || '' }}</td>
+                        <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-text-primary">{{ row.interval || '' }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Total rows: {{ csvPreview.length }}</p>
+              <p class="text-xs text-text-muted mt-2">Total rows: {{ csvPreview.length }}</p>
             </div>
 
             <!-- Collections selector (only when opening from collections screen) -->
             <div v-if="csvImportFromCollectionsScreen && collections.length > 0" class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add to collections</label>
-              <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white dark:bg-gray-800">
+              <label class="block text-sm font-medium text-text-secondary mb-2">Add to collections</label>
+              <div class="space-y-2 max-h-32 overflow-y-auto border border-border-default rounded-xl p-3 bg-overlay">
                 <label
                   v-for="collection in collections"
                   :key="collection.id"
@@ -1456,10 +1456,10 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                     v-model="csvImportTargetCollectionIds"
                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span class="text-gray-700 dark:text-gray-300">{{ collection.name }}</span>
+                  <span class="text-text-secondary">{{ collection.name }}</span>
                 </label>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select which collections to add imported verses to. Leave empty for master list only.</p>
+              <p class="text-xs text-text-muted mt-1">Select which collections to add imported verses to. Leave empty for master list only.</p>
             </div>
           </div>
 
@@ -1479,7 +1479,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               <button
                 type="button"
                 @click="closeImportCSV"
-                class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
               >
                 Cancel
               </button>
@@ -1503,12 +1503,12 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeSettings"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">WebDAV Sync Settings</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">WebDAV Sync Settings</h2>
           
           <form @submit.prevent="saveWebDAVSettingsForm" class="space-y-4">
             <div>
-              <label for="webdav-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="webdav-url" class="block text-sm font-medium text-text-secondary mb-2">
                 WebDAV Server URL
               </label>
               <input
@@ -1516,13 +1516,13 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 v-model="webdavSettings.url"
                 type="url"
                 placeholder="https://example.com/webdav"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Full URL to your WebDAV server</p>
+              <p class="text-xs text-text-muted mt-1">Full URL to your WebDAV server</p>
             </div>
 
             <div>
-              <label for="webdav-folder" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="webdav-folder" class="block text-sm font-medium text-text-secondary mb-2">
                 Folder Path (optional)
               </label>
               <input
@@ -1530,13 +1530,13 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 v-model="webdavSettings.folder"
                 type="text"
                 placeholder="bible-memory"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
+              <p class="text-xs text-text-muted mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
             </div>
 
             <div>
-              <label for="webdav-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="webdav-username" class="block text-sm font-medium text-text-secondary mb-2">
                 Username
               </label>
               <input
@@ -1544,12 +1544,12 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 v-model="webdavSettings.username"
                 type="text"
                 placeholder="your-username"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
             <div>
-              <label for="webdav-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="webdav-password" class="block text-sm font-medium text-text-secondary mb-2">
                 Password
               </label>
               <input
@@ -1557,11 +1557,11 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 v-model="webdavSettings.password"
                 type="password"
                 placeholder="your-password"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
-            <div v-if="isDev" class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+            <div v-if="isDev" class="border-t border-border-default pt-4 mt-4">
               <div class="flex items-center space-x-2 mb-4">
                 <input
                   id="use-proxy"
@@ -1569,14 +1569,14 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                   type="checkbox"
                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <label for="use-proxy" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="use-proxy" class="text-sm font-medium text-text-secondary">
                   Use CORS Proxy (for development with Nextcloud)
                 </label>
               </div>
               
               <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
                 <div>
-                  <label for="proxy-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label for="proxy-url" class="block text-sm font-medium text-text-secondary mb-2">
                     Proxy Server URL
                   </label>
                   <input
@@ -1584,27 +1584,27 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                     v-model="webdavSettings.proxyUrl"
                     type="url"
                     placeholder="http://localhost:3001"
-                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
                   />
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
+                  <p class="text-xs text-text-muted mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
                 </div>
                 
-                <div class="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                  <p class="text-xs text-yellow-800 dark:text-yellow-300">
+                <div class="bg-status-warn-bg border border-status-warn-border rounded-lg p-3">
+                  <p class="text-xs text-status-warn-text">
                     <strong>Setup:</strong> Run the proxy server with:<br/>
-                    <code class="bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
-                    Or use <code class="bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
+                    <code class="bg-status-warn-bg px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
+                    Or use <code class="bg-status-warn-bg px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-300' : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300'">
+            <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
               <p class="text-sm whitespace-pre-line">{{ syncStatus.message }}</p>
             </div>
 
-            <div v-if="isDev" class="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
-              <p class="text-sm text-blue-800 dark:text-blue-300">
+            <div v-if="isDev" class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mt-4">
+              <p class="text-sm text-status-info-text">
                 <strong>Note:</strong> If you see a "CORS Error", enable the CORS proxy option above and run the proxy server. 
                 This is needed for Nextcloud and other servers that don't allow direct browser access.
               </p>
@@ -1615,7 +1615,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 type="button"
                 @click="testWebDAVConnection"
                 :disabled="testingConnection"
-                class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ testingConnection ? 'Testing...' : 'Test' }}
               </button>
@@ -1623,7 +1623,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 <button
                   type="button"
                   @click="closeSettings"
-                  class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                  class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
                 >
                   Cancel
                 </button>
@@ -1646,20 +1646,20 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
         @click.self="closeBackupImport"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Backup & Restore</h2>
+        <div class="bg-elevated rounded-3xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <h2 class="text-2xl font-bold text-text-primary mb-6">Backup & Restore</h2>
           
           <div class="space-y-6">
             <!-- Last Backup Info -->
-            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Last backup:</p>
-              <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ getTimeSinceLastBackup() }}</p>
+            <div class="bg-sunken rounded-xl p-4">
+              <p class="text-sm text-text-secondary mb-1">Last backup:</p>
+              <p class="text-lg font-medium text-text-primary">{{ getTimeSinceLastBackup() }}</p>
             </div>
 
             <!-- Backup Section -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Backup All Data</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <h3 class="text-lg font-semibold text-text-primary mb-3">Backup All Data</h3>
+              <p class="text-sm text-text-secondary mb-4">
                 Download a backup file containing all your verses, collections, and settings.
               </p>
               <button
@@ -1671,9 +1671,9 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
             </div>
 
             <!-- Restore Section -->
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Restore from Backup</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <div class="border-t border-border-default pt-6">
+              <h3 class="text-lg font-semibold text-text-primary mb-3">Restore from Backup</h3>
+              <p class="text-sm text-text-secondary mb-4">
                 Restore your data from a previously saved backup file. This will replace all your current data.
               </p>
               <input
@@ -1686,7 +1686,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               />
               <label
                 for="backup-file-input"
-                class="block w-full px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
+                class="block w-full px-6 py-3 bg-sunken hover:bg-surface-hover text-text-secondary rounded-xl font-semibold text-center cursor-pointer transition-colors duration-200"
               >
                 Choose Backup File
               </label>
@@ -1696,7 +1696,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
             <div class="flex justify-end pt-4">
               <button
                 @click="closeBackupImport"
-                class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 font-medium"
+                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
               >
                 Close
               </button>
@@ -3849,7 +3849,7 @@ export default {
         const before = highlightedText.substring(0, start)
         const match = highlightedText.substring(start, end + 1)
         const after = highlightedText.substring(end + 1)
-        highlightedText = before + '<mark class="bg-yellow-200 dark:bg-yellow-700">' + escapeHtml(match) + '</mark>' + after
+        highlightedText = before + '<mark class="bg-highlight">' + escapeHtml(match) + '</mark>' + after
       })
       
       return highlightedText

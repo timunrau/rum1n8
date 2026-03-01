@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted } from 'vue'
 
 const LIGHT_THEME_COLOR = '#ffffff'
-const DARK_THEME_COLOR = '#111827' // Tailwind gray-900
+const DARK_THEME_COLOR = '#000000' // Pure OLED black
 
 export function useColorScheme() {
   let mediaQuery = null
