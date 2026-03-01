@@ -5,6 +5,7 @@
 @layer base {
   :root {
     --color-bg-base: #f8f8f8;
+    --color-bg-chrome: #ffffff;
     --color-bg-surface: #ffffff;
     --color-bg-elevated: #ffffff;
     --color-bg-sunken: #f3f4f6;
@@ -49,6 +50,7 @@
 
   .dark {
     --color-bg-base: #000000;
+    --color-bg-chrome: #000000;
     --color-bg-surface: #1a1a1a;
     --color-bg-elevated: #2a2a2a;
     --color-bg-sunken: #111111;
@@ -99,6 +101,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-base);
   /* Prevent body from scrolling when keyboard is open */
   overflow: hidden;
   height: 100dvh;

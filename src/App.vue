@@ -6,7 +6,7 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-base shadow-sm z-40 flex-shrink-0">
+    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitMemorization"
@@ -145,7 +145,7 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-base shadow-sm z-40 flex-shrink-0">
+    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitReview"
@@ -285,7 +285,7 @@
   <!-- Main Content -->
   <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-base">
     <!-- Top App Bar -->
-    <header class="bg-base shadow-sm fixed top-0 left-0 right-0 z-40">
+    <header class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-4">
         <button
           v-if="currentCollectionId"
@@ -819,7 +819,7 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-base border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Review Tab -->
         <button

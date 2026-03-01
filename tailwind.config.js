@@ -9,6 +9,7 @@ export default {
     extend: {
       colors: {
         base: 'var(--color-bg-base)',
+        chrome: 'var(--color-bg-chrome)',
         surface: 'var(--color-bg-surface)',
         elevated: 'var(--color-bg-elevated)',
         sunken: 'var(--color-bg-sunken)',
