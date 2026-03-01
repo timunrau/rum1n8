@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: 'icons/icon-192x192.png',
       manifest: {
-        name: 'Bible Memory',
-        short_name: 'Bible Memory',
+        name: 'rum1n8',
+        short_name: 'rum1n8',
         description: 'A PWA for memorizing Bible verses',
         theme_color: '#ffffff',
         background_color: '#ffffff',

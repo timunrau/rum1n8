@@ -1,6 +1,9 @@
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
+import { migrateStorage } from './migrate-storage.js'
+
+migrateStorage()
 
 const app = createApp(App)
 

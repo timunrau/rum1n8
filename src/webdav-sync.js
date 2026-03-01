@@ -1,12 +1,13 @@
-const STORAGE_KEY = 'bible-memory-verses'
-const COLLECTIONS_KEY = 'bible-memory-collections'
-const WEBDAV_SETTINGS_KEY = 'bible-memory-webdav-settings'
-const SYNC_STATE_KEY = 'bible-memory-sync-state'
-const DELETED_VERSES_KEY = 'bible-memory-deleted-verses'
-const DELETED_COLLECTIONS_KEY = 'bible-memory-deleted-collections'
+const STORAGE_KEY = 'rum1n8-verses'
+const COLLECTIONS_KEY = 'rum1n8-collections'
+const WEBDAV_SETTINGS_KEY = 'rum1n8-webdav-settings'
+const SYNC_STATE_KEY = 'rum1n8-sync-state'
+const DELETED_VERSES_KEY = 'rum1n8-deleted-verses'
+const DELETED_COLLECTIONS_KEY = 'rum1n8-deleted-collections'
 
 // Default filename for synced data
-const SYNC_FILENAME = 'bible-memory-data.json'
+const SYNC_FILENAME = 'rum1n8-data.json'
+const LEGACY_SYNC_FILENAME = 'bible-memory-data.json'
 
 /**
  * Get WebDAV settings from localStorage
@@ -146,7 +147,7 @@ function isProduction() {
  * Build the full URL for the sync file, applying proxy logic.
  * Returns { url, headers } where headers includes auth and proxy headers.
  */
-function buildSyncFileUrl(settings) {
+function buildSyncFileUrl(settings, filename = SYNC_FILENAME) {
   let baseUrl = settings.url.trim()
   const headers = {
     'Authorization': 'Basic ' + btoa(settings.username + ':' + settings.password)
@@ -180,7 +181,7 @@ function buildSyncFileUrl(settings) {
     if (folder) baseUrl += folder + '/'
   }
 
-  return { url: baseUrl + SYNC_FILENAME, headers }
+  return { url: baseUrl + filename, headers }
 }
 
 /**
@@ -190,28 +191,47 @@ export async function downloadFromWebDAV() {
   const settings = getWebDAVSettings()
   if (!settings) throw new Error('WebDAV not configured')
 
+  // Try new filename first
   const { url, headers } = buildSyncFileUrl(settings)
 
   try {
     const response = await fetch(url, { method: 'GET', headers })
 
-    if (response.status === 404) {
-      console.log('[WebDAV] File does not exist on server (404), will upload local data')
-      return { data: null }
+    if (response.ok) {
+      const data = JSON.parse(await response.text())
+      console.log('[WebDAV] Successfully downloaded data from server')
+      return { data }
     }
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 404) {
       throw new Error(`Download failed: ${response.status} ${response.statusText}`)
     }
-
-    const text = await response.text()
-    const data = JSON.parse(text)
-    console.log('[WebDAV] Successfully downloaded data from server')
-    return { data }
   } catch (error) {
-    if (error.message?.includes('404')) {
+    if (!error.message?.includes('404')) {
+      console.error('Error downloading from WebDAV:', error)
+      throw error
+    }
+  }
+
+  // Fallback to legacy filename
+  const legacy = buildSyncFileUrl(settings, LEGACY_SYNC_FILENAME)
+  try {
+    const response = await fetch(legacy.url, { method: 'GET', headers: legacy.headers })
+
+    if (response.ok) {
+      const data = JSON.parse(await response.text())
+      console.log('[WebDAV] Downloaded data from legacy filename (bible-memory-data.json)')
+      return { data }
+    }
+
+    if (response.status === 404) {
+      console.log('[WebDAV] No data file found on server, will upload local data')
       return { data: null }
     }
+
+    throw new Error(`Download failed: ${response.status} ${response.statusText}`)
+  } catch (error) {
+    if (error.message?.includes('404')) return { data: null }
     console.error('Error downloading from WebDAV:', error)
     throw error
   }

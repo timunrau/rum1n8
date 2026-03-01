@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { clearBibleMemoryStorage } from '../helpers/storage'
+import { clearAppStorage } from '../helpers/storage'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await clearBibleMemoryStorage(page)
+  await clearAppStorage(page)
   await page.reload()
 })
 
@@ -21,7 +21,7 @@ test('download backup: Settings -> Backup/Import -> Download -> file download tr
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: /Download|Backup/i }).click()
   const download = await downloadPromise
-  expect(download.suggestedFilename()).toMatch(/bible-memory-backup.*\.json/)
+  expect(download.suggestedFilename()).toMatch(/rum1n8-backup.*\.json/)
 })
 
 test('restore: Settings -> choose backup file -> confirm -> data replaced', async ({ page }) => {

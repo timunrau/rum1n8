@@ -67,7 +67,7 @@ export async function mockWebDAV(page: Page, options?: { failSync?: boolean }) {
       await route.fulfill({ status: 500 })
       return
     }
-    if (method === 'GET' && route.request().url().includes('bible-memory')) {
+    if (method === 'GET' && (route.request().url().includes('rum1n8') || route.request().url().includes('bible-memory'))) {
       await route.fulfill({ status: 404 })
       return
     }
@@ -118,7 +118,7 @@ export async function mockWebDAVWithStaleRemoteWithFutureTimestamp(
       await route.fulfill({ status: 207, body: '<?xml version="1.0"?><multistatus/>' })
       return
     }
-    if (method === 'GET' && (url.includes('bible-memory-data') || url.includes('bible-memory.json'))) {
+    if (method === 'GET' && (url.includes('rum1n8-data') || url.includes('bible-memory-data'))) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: syncBody })
       return
     }

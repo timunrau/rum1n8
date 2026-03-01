@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { clearBibleMemoryStorage } from '../helpers/storage'
+import { clearAppStorage } from '../helpers/storage'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await clearBibleMemoryStorage(page)
+  await clearAppStorage(page)
   await page.reload()
 })
 

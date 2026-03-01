@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import {
-  clearBibleMemoryStorage,
+  clearAppStorage,
   seedStorage,
   getStoredVerses,
   seedWebDAVSettings,
@@ -9,7 +9,7 @@ import { mockWebDAVWithStaleRemoteWithFutureTimestamp } from '../helpers/mocks'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await clearBibleMemoryStorage(page)
+  await clearAppStorage(page)
   await page.reload()
 })
 

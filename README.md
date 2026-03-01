@@ -1,8 +1,8 @@
-# Bible Memory PWA
+# rum1n8
 
 A Progressive Web App for memorizing Bible verses using spaced repetition and progressive memorization techniques.
 
-Hosted at https://bible-memory.unrau.xyz
+Hosted at https://rum1n8.unrau.xyz
 
 ## How It Works
 
@@ -95,8 +95,8 @@ The app runs as three Docker containers: the main app (Nginx serving static file
 ### Setup
 
 ```bash
-git clone https://github.com/timunrau/bible-memory.git
-cd bible-memory
+git clone https://github.com/timunrau/rum1n8.git
+cd rum1n8
 docker compose up -d
 ```
 
@@ -109,7 +109,7 @@ Watchtower runs as a service in the compose stack and polls GitHub Container Reg
 ### Useful Commands
 
 ```bash
-docker compose logs -f bible-memory     # App logs
+docker compose logs -f rum1n8            # App logs
 docker compose logs -f webdav-proxy     # WebDAV proxy logs
 docker compose logs -f watchtower       # Auto-update logs
 docker compose ps                       # Running containers
@@ -118,7 +118,7 @@ docker compose down                     # Stop everything
 
 ### Troubleshooting
 
-- If the app doesn't load, check the logs: `docker compose logs bible-memory`
+- If the app doesn't load, check the logs: `docker compose logs rum1n8`
 - If WebDAV sync isn't working, check the proxy logs: `docker compose logs webdav-proxy`
 - To completely reset: `docker compose down -v && docker compose up -d`
 - To temporarily disable auto-updates: `docker compose stop watchtower`

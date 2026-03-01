@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { clearBibleMemoryStorage, seedStorage } from '../helpers/storage'
+import { clearAppStorage, seedStorage } from '../helpers/storage'
 import { mockBibleApi } from '../helpers/mocks'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -12,7 +12,7 @@ const sampleVerses = JSON.parse(
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await clearBibleMemoryStorage(page)
+  await clearAppStorage(page)
   await page.reload()
 })
 

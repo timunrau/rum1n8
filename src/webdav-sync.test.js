@@ -131,7 +131,7 @@ describe('mergeData (via localStorage mock)', () => {
 
   it('migrateDeletionList: handles old string[] format', async () => {
     // Seed old-format deletion list
-    localStorage.setItem('bible-memory-deleted-verses', JSON.stringify(['id-1', 'id-2']))
+    localStorage.setItem('rum1n8-deleted-verses', JSON.stringify(['id-1', 'id-2']))
 
     const { getDeletedVerses, getDeletedVerseEntries } = await import('./webdav-sync.js')
     const ids = getDeletedVerses()
@@ -145,7 +145,7 @@ describe('mergeData (via localStorage mock)', () => {
 
   it('migrateDeletionList: handles new {id, deletedAt}[] format', async () => {
     const now = new Date().toISOString()
-    localStorage.setItem('bible-memory-deleted-verses', JSON.stringify([
+    localStorage.setItem('rum1n8-deleted-verses', JSON.stringify([
       { id: 'id-1', deletedAt: now },
     ]))
 

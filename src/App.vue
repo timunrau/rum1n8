@@ -1529,7 +1529,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 id="webdav-folder"
                 v-model="webdavSettings.folder"
                 type="text"
-                placeholder="bible-memory"
+                placeholder="rum1n8"
                 class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
               />
               <p class="text-xs text-text-muted mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
@@ -1779,7 +1779,7 @@ export default {
     const importingCSV = ref(false)
     const expandedVerseIds = ref({})
     const copyToast = ref({ show: false, message: '' })
-    const lastBackupTimestamp = ref(localStorage.getItem('bible-memory-last-backup'))
+    const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
 
     // Color scheme (auto dark/light mode)
     useColorScheme()
@@ -1821,8 +1821,8 @@ export default {
       proxyUrl: 'http://localhost:3001'
     })
 
-    const STORAGE_KEY = 'bible-memory-verses'
-    const COLLECTIONS_KEY = 'bible-memory-collections'
+    const STORAGE_KEY = 'rum1n8-verses'
+    const COLLECTIONS_KEY = 'rum1n8-collections'
 
     // Navigation state tracking for back button handling
     let isHandlingBackButton = false
@@ -5254,7 +5254,7 @@ export default {
         const url = URL.createObjectURL(blob)
         
         const dateStr = new Date().toISOString().split('T')[0]
-        const filename = `bible-memory-backup-${dateStr}.json`
+        const filename = `rum1n8-backup-${dateStr}.json`
         
         const link = document.createElement('a')
         link.href = url
@@ -5266,7 +5266,7 @@ export default {
 
         // Save backup timestamp
         const timestamp = new Date().toISOString()
-        localStorage.setItem('bible-memory-last-backup', timestamp)
+        localStorage.setItem('rum1n8-last-backup', timestamp)
         lastBackupTimestamp.value = timestamp
       } catch (error) {
         console.error('Error backing up data:', error)
@@ -5316,7 +5316,7 @@ export default {
 
         // Update last backup timestamp if present
         if (backupData.backedUpAt) {
-          localStorage.setItem('bible-memory-last-backup', backupData.backedUpAt)
+          localStorage.setItem('rum1n8-last-backup', backupData.backedUpAt)
           lastBackupTimestamp.value = backupData.backedUpAt
         }
 
@@ -5429,7 +5429,7 @@ export default {
       loadWebDAVSettings()
       
       // Load last backup timestamp
-      const stored = localStorage.getItem('bible-memory-last-backup')
+      const stored = localStorage.getItem('rum1n8-last-backup')
       if (stored) {
         lastBackupTimestamp.value = stored
       }

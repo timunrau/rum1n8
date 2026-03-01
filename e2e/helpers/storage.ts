@@ -1,21 +1,21 @@
 /**
  * localStorage utilities for E2E test isolation.
- * Clears and seeds bible-memory app data before/after tests.
+ * Clears and seeds rum1n8 app data before/after tests.
  */
 
 import type { Page } from '@playwright/test'
 
 const STORAGE_KEYS = [
-  'bible-memory-verses',
-  'bible-memory-collections',
-  'bible-memory-webdav-settings',
-  'bible-memory-sync-state',
-  'bible-memory-deleted-verses',
-  'bible-memory-deleted-collections',
-  'bible-memory-last-backup',
+  'rum1n8-verses',
+  'rum1n8-collections',
+  'rum1n8-webdav-settings',
+  'rum1n8-sync-state',
+  'rum1n8-deleted-verses',
+  'rum1n8-deleted-collections',
+  'rum1n8-last-backup',
 ]
 
-export async function clearBibleMemoryStorage(page: Page) {
+export async function clearAppStorage(page: Page) {
   await page.evaluate((keys: string[]) => {
     keys.forEach((key) => localStorage.removeItem(key))
   }, STORAGE_KEYS)
@@ -24,7 +24,7 @@ export async function clearBibleMemoryStorage(page: Page) {
 export async function seedVerses(page: Page, verses: unknown[]) {
   await page.evaluate(
     (data: string) => {
-      localStorage.setItem('bible-memory-verses', data)
+      localStorage.setItem('rum1n8-verses', data)
     },
     JSON.stringify(verses)
   )
@@ -33,7 +33,7 @@ export async function seedVerses(page: Page, verses: unknown[]) {
 export async function seedCollections(page: Page, collections: unknown[]) {
   await page.evaluate(
     (data: string) => {
-      localStorage.setItem('bible-memory-collections', data)
+      localStorage.setItem('rum1n8-collections', data)
     },
     JSON.stringify(collections)
   )
@@ -46,8 +46,8 @@ export async function seedStorage(
 ) {
   await page.evaluate(
     ({ versesData, collectionsData }: { versesData: string; collectionsData: string }) => {
-      localStorage.setItem('bible-memory-verses', versesData)
-      localStorage.setItem('bible-memory-collections', collectionsData)
+      localStorage.setItem('rum1n8-verses', versesData)
+      localStorage.setItem('rum1n8-collections', collectionsData)
     },
     {
       versesData: JSON.stringify(verses),
@@ -58,7 +58,7 @@ export async function seedStorage(
 
 export async function getStoredVerses(page: Page): Promise<unknown[]> {
   return page.evaluate(() => {
-    const raw = localStorage.getItem('bible-memory-verses')
+    const raw = localStorage.getItem('rum1n8-verses')
     return raw ? JSON.parse(raw) : []
   })
 }
@@ -75,6 +75,6 @@ export interface WebDAVSettings {
 
 export async function seedWebDAVSettings(page: Page, settings: WebDAVSettings) {
   await page.evaluate((data: string) => {
-    localStorage.setItem('bible-memory-webdav-settings', data)
+    localStorage.setItem('rum1n8-webdav-settings', data)
   }, JSON.stringify(settings))
 }

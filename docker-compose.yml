@@ -1,10 +1,10 @@
 services:
-  bible-memory:
-    image: ghcr.io/timunrau/bible-memory:latest
+  rum1n8:
+    image: ghcr.io/timunrau/rum1n8:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bible-memory
+    container_name: rum1n8
     ports:
       - "1234:80"
     restart: unless-stopped
@@ -18,11 +18,11 @@ services:
       start_period: 40s
 
   webdav-proxy:
-    image: ghcr.io/timunrau/bible-memory-proxy:latest
+    image: ghcr.io/timunrau/rum1n8-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile.proxy
-    container_name: bible-memory-proxy
+    container_name: rum1n8-proxy
     restart: unless-stopped
     environment:
       - PROXY_PORT=3001
@@ -43,4 +43,4 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=60
       - WATCHTOWER_ROLLING_RESTART=true
-    command: bible-memory bible-memory-proxy
+    command: rum1n8 rum1n8-proxy
