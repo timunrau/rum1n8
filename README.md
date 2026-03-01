@@ -85,90 +85,43 @@ npm run test:e2e
 
 ## Hosting with Docker Compose
 
-This app can be hosted using Docker Compose, which includes both the application and a WebDAV proxy server.
+The app runs as three Docker containers: the main app (Nginx serving static files), a WebDAV proxy for sync, and Watchtower for automatic updates. Pre-built images are pulled from GitHub Container Registry.
 
 ### Prerequisites
 
 - Docker and Docker Compose installed on your server
+- A reverse proxy (e.g., Nginx, Caddy) for TLS termination, forwarding to port 1234
 
-### Initial Setup
+### Setup
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone <repository-url>
-   cd bible-memory
-   ```
+```bash
+git clone https://github.com/timunrau/bible-memory.git
+cd bible-memory
+docker compose up -d
+```
 
+That's it. The app is available at `http://localhost:1234`.
 
-3. **Build and start the services**:
-   ```bash
-   docker-compose up -d --build
-   ```
+### Automatic Updates
 
-4. **Verify the services are running**:
-   ```bash
-   docker-compose ps
-   ```
+Watchtower runs as a service in the compose stack and polls GitHub Container Registry every 60 seconds. When new images are available (pushed by GitHub Actions after tests pass), Watchtower automatically pulls them and recreates the containers. No manual intervention needed.
 
-The application will be available at `http://localhost:1234` (or your server's IP address).
+### Useful Commands
 
-### Updating After Pulling New Code
-
-When you pull new code from git, you need to rebuild and restart the containers:
-
-1. **Pull the latest code**:
-   ```bash
-   git pull
-   ```
-
-2. **Rebuild and restart the containers**:
-   ```bash
-   docker-compose up -d --build
-   ```
-
-   This command will:
-   - Rebuild the Docker images with the new code
-   - Restart the containers with the updated images
-   - Run in detached mode (`-d`) so it continues running in the background
-
-3. **Verify the update**:
-   ```bash
-   docker-compose ps
-   docker-compose logs bible-memory
-   ```
-
-### Useful Docker Compose Commands
-
-- **View logs**:
-  ```bash
-  docker-compose logs -f bible-memory
-  docker-compose logs -f webdav-proxy
-  ```
-
-- **Stop the services**:
-  ```bash
-  docker-compose down
-  ```
-
-- **Restart without rebuilding**:
-  ```bash
-  docker-compose restart
-  ```
-
-- **View running containers**:
-  ```bash
-  docker-compose ps
-  ```
+```bash
+docker compose logs -f bible-memory     # App logs
+docker compose logs -f webdav-proxy     # WebDAV proxy logs
+docker compose logs -f watchtower       # Auto-update logs
+docker compose ps                       # Running containers
+docker compose down                     # Stop everything
+```
 
 ### Troubleshooting
 
-- If the app doesn't load, check the logs: `docker-compose logs bible-memory`
-- If the WebDAV sync isn't working, check the proxy logs: `docker-compose logs webdav-proxy`
-- To completely reset (removes containers and volumes):
-  ```bash
-  docker-compose down -v
-  docker-compose up -d --build
-  ```
+- If the app doesn't load, check the logs: `docker compose logs bible-memory`
+- If WebDAV sync isn't working, check the proxy logs: `docker compose logs webdav-proxy`
+- To completely reset: `docker compose down -v && docker compose up -d`
+- To temporarily disable auto-updates: `docker compose stop watchtower`
 
 ## Technologies
 
