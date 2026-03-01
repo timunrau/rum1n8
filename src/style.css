@@ -50,13 +50,13 @@
   .dark {
     --color-bg-base: #000000;
     --color-bg-surface: #1a1a1a;
-    --color-bg-elevated: #232323;
+    --color-bg-elevated: #2a2a2a;
     --color-bg-sunken: #111111;
-    --color-bg-overlay: #2a2a2a;
-    --color-bg-hover: #333333;
-    --color-bg-active: #3a3a3a;
-    --color-border-default: #333333;
-    --color-border-input: #3a3a3a;
+    --color-bg-overlay: #363636;
+    --color-bg-hover: #404040;
+    --color-bg-active: #4a4a4a;
+    --color-border-default: #3a3a3a;
+    --color-border-input: #444444;
     --color-divider: #2a2a2a;
     --color-text-primary: #e5e5e5;
     --color-text-secondary: #a3a3a3;

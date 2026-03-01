@@ -896,7 +896,7 @@
           key="verse"
           data-testid="fab-new-verse"
           @click="openNewVerse"
-          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -906,14 +906,14 @@
           </div>
           <span class="text-sm font-medium">New Verse</span>
         </button>
-        
+
         <!-- New Collection Option (only on collections screen) -->
         <button
           v-if="!currentCollectionId && currentView === 'collections'"
           key="collection"
           data-testid="fab-new-collection"
           @click="openNewCollection"
-          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -923,14 +923,14 @@
           </div>
           <span class="text-sm font-medium">New Collection</span>
         </button>
-        
+
         <!-- Import CSV Option (collections screen or inside collection) -->
         <button
           v-if="currentCollectionId || (!currentCollectionId && currentView === 'collections')"
           key="import"
           data-testid="fab-import-csv"
           @click="openImportCSV"
-          class="bg-surface text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
