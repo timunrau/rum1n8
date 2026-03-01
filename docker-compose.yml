@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   bible-memory:
+    image: ghcr.io/timunrau/bible-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,6 +18,7 @@ services:
       start_period: 40s
 
   webdav-proxy:
+    image: ghcr.io/timunrau/bible-memory-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile.proxy
@@ -32,3 +32,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=60
+      - WATCHTOWER_ROLLING_RESTART=true
+    command: bible-memory bible-memory-proxy
