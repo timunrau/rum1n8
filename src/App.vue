@@ -1017,7 +1017,7 @@
               id="reference"
               v-model="newVerse.reference"
               type="text"
-              placeholder="e.g., John 3:16"
+              placeholder="e.g., Joshua 1:8-9"
               required
               class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
             />
@@ -1117,7 +1117,7 @@
               id="edit-reference"
               v-model="editingVerse.reference"
               type="text"
-              placeholder="e.g., John 3:16"
+              placeholder="e.g., Joshua 1:8-9"
               required
               class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
             />
