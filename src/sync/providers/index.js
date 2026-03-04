@@ -2,8 +2,8 @@ import webdavProvider from './webdav-provider.js'
 import gdriveProvider from './gdrive-provider.js'
 
 const providers = {
-  webdav: webdavProvider,
-  gdrive: gdriveProvider
+  gdrive: gdriveProvider,
+  webdav: webdavProvider
 }
 
 export function getProvider(id) {

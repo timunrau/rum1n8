@@ -2095,8 +2095,12 @@ export default {
       })
     })
 
+    // Reactive trigger for sync config changes (localStorage isn't reactive)
+    const syncConfigVersion = ref(0)
+
     // Check if any sync provider is configured
     const hasSyncConfigured = computed(() => {
+      syncConfigVersion.value // track dependency
       return isSyncConfigured()
     })
 
@@ -4926,6 +4930,8 @@ export default {
 
     // Callback when sync settings are saved
     const onSyncSettingsSaved = () => {
+      // Bump reactive trigger so hasSyncConfigured recomputes
+      syncConfigVersion.value++
       // Trigger sync after saving settings
       setTimeout(() => {
         triggerSync(false)

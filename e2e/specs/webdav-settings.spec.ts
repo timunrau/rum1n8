@@ -21,6 +21,7 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 }) => {
   await page.getByTestId('settings-button').click()
   await page.getByTestId('settings-sync').click()
+  await page.getByRole('button', { name: /^WebDAV$/i }).click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')
@@ -41,6 +42,7 @@ test('test connection: mock WebDAV -> Test -> success message', async ({ page })
   await mockWebDAV(page)
   await page.getByTestId('settings-button').click()
   await page.getByTestId('settings-sync').click()
+  await page.getByRole('button', { name: /^WebDAV$/i }).click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')
