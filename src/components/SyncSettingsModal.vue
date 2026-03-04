@@ -248,14 +248,14 @@ export default {
       try {
         const settings = await startOAuthFlow()
         oauthEmail.value = settings.email || ''
-        // Auto-save: set Google Drive as the active provider immediately
+        // Set Google Drive as the active provider, show success briefly, then close + sync
         setActiveProviderId('gdrive')
-        status.value = { type: 'success', message: 'Connected to Google Drive!' }
+        status.value = { type: 'success', message: `Connected as ${settings.email || 'Google account'}. Syncing...` }
         setTimeout(() => {
           emit('saved')
           emit('close')
           status.value = null
-        }, 1000)
+        }, 1500)
       } catch (error) {
         if (error.message !== 'Sign-in window was closed') {
           status.value = { type: 'error', message: error.message }

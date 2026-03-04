@@ -226,11 +226,15 @@ export function startOAuthFlow() {
       return
     }
 
+    let receivedMessage = false
+
     const handleMessage = async (event) => {
       if (event.origin !== window.location.origin) return
       if (!event.data?.code && !event.data?.error) return
 
+      receivedMessage = true
       window.removeEventListener('message', handleMessage)
+      clearInterval(checkClosed)
 
       if (event.data.error) {
         reject(new Error(event.data.error))
@@ -288,7 +292,7 @@ export function startOAuthFlow() {
 
     // Detect popup closed without completing auth
     const checkClosed = setInterval(() => {
-      if (popup.closed) {
+      if (popup.closed && !receivedMessage) {
         clearInterval(checkClosed)
         window.removeEventListener('message', handleMessage)
         reject(new Error('Sign-in window was closed'))
