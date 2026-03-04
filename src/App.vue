@@ -1539,6 +1539,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
           </div>
         </div>
       </div>
+
 </template>
 
 <script>

@@ -39,6 +39,9 @@ jobs:
           tags: |
             ghcr.io/timunrau/rum1n8:latest
             ghcr.io/timunrau/rum1n8:${{ github.sha }}
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
