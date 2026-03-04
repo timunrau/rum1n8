@@ -8,29 +8,29 @@ test.beforeEach(async ({ page }) => {
   await page.reload()
 })
 
-test('open WebDAV settings: Settings gear -> WebDAV Sync', async ({ page }) => {
+test('open sync settings: Settings gear -> Sync', async ({ page }) => {
   await page.getByTestId('settings-button').click()
-  await page.getByTestId('settings-webdav').click()
+  await page.getByTestId('settings-sync').click()
 
-  await expect(page.getByTestId('modal-webdav-settings')).toBeVisible()
-  await expect(page.getByText(/WebDAV Sync Settings/i)).toBeVisible()
+  await expect(page.getByTestId('modal-sync-settings')).toBeVisible()
+  await expect(page.getByText(/Sync Settings/i)).toBeVisible()
 })
 
 test('fill URL, username, password -> Save -> settings persist (reopen modal, values present)', async ({
   page,
 }) => {
   await page.getByTestId('settings-button').click()
-  await page.getByTestId('settings-webdav').click()
+  await page.getByTestId('settings-sync').click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')
   await page.getByLabel(/Password/i).fill('testpass')
   await page.getByRole('button', { name: /^Save$/i }).click()
 
-  await expect(page.getByTestId('modal-webdav-settings')).not.toBeVisible()
+  await expect(page.getByTestId('modal-sync-settings')).not.toBeVisible()
 
   await page.getByTestId('settings-button').click()
-  await page.getByTestId('settings-webdav').click()
+  await page.getByTestId('settings-sync').click()
 
   await expect(page.getByLabel(/WebDAV Server URL/i)).toHaveValue(/test\.example\.com/)
   await expect(page.getByLabel(/Username/i)).toHaveValue('testuser')
@@ -40,7 +40,7 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 test('test connection: mock WebDAV -> Test -> success message', async ({ page }) => {
   await mockWebDAV(page)
   await page.getByTestId('settings-button').click()
-  await page.getByTestId('settings-webdav').click()
+  await page.getByTestId('settings-sync').click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')

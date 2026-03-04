@@ -9,6 +9,8 @@ const STORAGE_KEYS = [
   'rum1n8-verses',
   'rum1n8-collections',
   'rum1n8-webdav-settings',
+  'rum1n8-gdrive-settings',
+  'rum1n8-sync-provider',
   'rum1n8-sync-state',
   'rum1n8-deleted-verses',
   'rum1n8-deleted-collections',

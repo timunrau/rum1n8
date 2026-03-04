@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Signing in...</title></head>
+<body>
+<p>Signing in... this window will close automatically.</p>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+
+  if (window.opener) {
+    window.opener.postMessage(
+      code ? { code } : { error: error || 'Authorization failed' },
+      window.location.origin
+    );
+  }
+
+  window.close();
+</script>
+</body>
+</html>

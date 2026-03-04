@@ -22,12 +22,12 @@
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Sync Button -->
           <button
-            v-if="hasWebDAVConfigured"
+            v-if="hasSyncConfigured"
             @click="manualSync"
             :disabled="syncing"
             class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
+            :title="syncing ? 'Syncing...' : 'Sync'"
           >
             <!-- Spinning sync icon -->
             <svg 
@@ -171,12 +171,12 @@
           </button>
           <!-- Sync Button -->
           <button
-            v-if="hasWebDAVConfigured"
+            v-if="hasSyncConfigured"
             @click="manualSync"
             :disabled="syncing"
             class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
+            :title="syncing ? 'Syncing...' : 'Sync'"
           >
             <!-- Spinning sync icon -->
             <svg 
@@ -311,12 +311,12 @@
           </button>
           <!-- Sync Button -->
           <button
-            v-if="hasWebDAVConfigured"
+            v-if="hasSyncConfigured"
             @click="manualSync"
             :disabled="syncing"
             class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync with WebDAV'"
+            :title="syncing ? 'Syncing...' : 'Sync'"
           >
             <!-- Spinning sync icon -->
             <svg 
@@ -376,14 +376,14 @@
               class="absolute right-0 top-full mt-2 w-56 bg-elevated rounded-lg shadow-lg border border-border-default py-1 z-50"
             >
               <button
-                data-testid="settings-webdav"
-                @click="openWebDAVSettings"
+                data-testid="settings-sync"
+                @click="openSyncSettings"
                 class="w-full px-4 py-2.5 text-left text-base text-text-secondary hover:bg-surface-hover transition-colors flex items-center gap-3"
               >
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                 </svg>
-                WebDAV Sync
+                Sync
               </button>
               <button
                 data-testid="settings-backup"
@@ -1436,142 +1436,8 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         </template>
       </ModalSheet>
 
-      <!-- Settings Modal -->
-      <ModalSheet :show="showSettings" title="WebDAV Sync Settings" data-testid="modal-webdav-settings" @close="closeSettings">
-        <form id="webdav-settings-form" @submit.prevent="saveWebDAVSettingsForm" class="space-y-4">
-          <div>
-            <label for="webdav-url" class="block text-sm font-medium text-text-secondary mb-2">
-              WebDAV Server URL
-            </label>
-            <input
-              id="webdav-url"
-              v-model="webdavSettings.url"
-              type="url"
-              placeholder="https://example.com/webdav"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-            />
-            <p class="text-xs text-text-muted mt-1">Full URL to your WebDAV server</p>
-          </div>
-
-          <div>
-            <label for="webdav-folder" class="block text-sm font-medium text-text-secondary mb-2">
-              Folder Path (optional)
-            </label>
-            <input
-              id="webdav-folder"
-              v-model="webdavSettings.folder"
-              type="text"
-              placeholder="rum1n8"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-            />
-            <p class="text-xs text-text-muted mt-1">Subfolder path on your WebDAV server (leave empty for root)</p>
-          </div>
-
-          <div>
-            <label for="webdav-username" class="block text-sm font-medium text-text-secondary mb-2">
-              Username
-            </label>
-            <input
-              id="webdav-username"
-              v-model="webdavSettings.username"
-              type="text"
-              placeholder="your-username"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-            />
-          </div>
-
-          <div>
-            <label for="webdav-password" class="block text-sm font-medium text-text-secondary mb-2">
-              Password
-            </label>
-            <input
-              id="webdav-password"
-              v-model="webdavSettings.password"
-              type="password"
-              placeholder="your-password"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-            />
-          </div>
-
-          <div v-if="isDev" class="border-t border-border-default pt-4 mt-4">
-            <div class="flex items-center space-x-2 mb-4">
-              <input
-                id="use-proxy"
-                v-model="webdavSettings.useProxy"
-                type="checkbox"
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label for="use-proxy" class="text-sm font-medium text-text-secondary">
-                Use CORS Proxy (for development with Nextcloud)
-              </label>
-            </div>
-
-            <div v-if="webdavSettings.useProxy" class="ml-6 space-y-3">
-              <div>
-                <label for="proxy-url" class="block text-sm font-medium text-text-secondary mb-2">
-                  Proxy Server URL
-                </label>
-                <input
-                  id="proxy-url"
-                  v-model="webdavSettings.proxyUrl"
-                  type="url"
-                  placeholder="http://localhost:3001"
-                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
-                />
-                <p class="text-xs text-text-muted mt-1">URL of the CORS proxy server (default: http://localhost:3001)</p>
-              </div>
-
-              <div class="bg-status-warn-bg border border-status-warn-border rounded-lg p-3">
-                <p class="text-xs text-status-warn-text">
-                  <strong>Setup:</strong> Run the proxy server with:<br/>
-                  <code class="bg-status-warn-bg px-2 py-1 rounded">NEXTCLOUD_URL={{ webdavSettings.url || 'YOUR_NEXTCLOUD_URL' }} npm run dev:proxy</code><br/>
-                  Or use <code class="bg-status-warn-bg px-2 py-1 rounded">npm run dev:all</code> to run both the app and proxy together.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="syncStatus" class="p-3 rounded-lg" :class="syncStatus.type === 'success' ? 'bg-status-success-bg text-status-success-text' : 'bg-status-error-bg text-status-error-text'">
-            <p class="text-sm whitespace-pre-line">{{ syncStatus.message }}</p>
-          </div>
-
-          <div v-if="isDev" class="bg-status-info-bg border border-status-info-border rounded-lg p-4 mt-4">
-            <p class="text-sm text-status-info-text">
-              <strong>Note:</strong> If you see a "CORS Error", enable the CORS proxy option above and run the proxy server.
-              This is needed for Nextcloud and other servers that don't allow direct browser access.
-            </p>
-          </div>
-        </form>
-
-        <template #footer>
-          <div class="flex justify-between items-center">
-            <button
-              type="button"
-              @click="testWebDAVConnection"
-              :disabled="testingConnection"
-              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ testingConnection ? 'Testing...' : 'Test' }}
-            </button>
-            <div class="flex gap-3">
-              <button
-                type="button"
-                @click="closeSettings"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="webdav-settings-form"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </template>
-      </ModalSheet>
+      <!-- Sync Settings Modal -->
+      <SyncSettingsModal :show="showSettings" @close="closeSettings" @saved="onSyncSettingsSaved" />
 
       <!-- Backup & Restore Modal -->
       <ModalSheet :show="showBackupImport" title="Backup & Restore" data-testid="modal-backup-restore" @close="closeBackupImport">
@@ -1679,25 +1545,29 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import Fuse from 'fuse.js'
 import { BibleClient } from '@gracious.tech/fetch-client'
-import { 
-  getWebDAVSettings, 
-  saveWebDAVSettings, 
-  syncData, 
-  testWebDAVConnection as testConnection,
+import {
+  syncData,
   markVerseDeleted,
   markCollectionDeleted,
-  getDeletedCollections
-} from './webdav-sync.js'
+  getDeletedCollections,
+  isSyncConfigured,
+  migrateProviderSetting,
+  getActiveProviderId,
+  setActiveProviderId,
+  getActiveProvider
+} from './sync/sync-manager.js'
+import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
 import ModalSheet from './components/ModalSheet.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
+import SyncSettingsModal from './components/SyncSettingsModal.vue'
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker },
+  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker, SyncSettingsModal },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -1732,8 +1602,6 @@ export default {
     const memorizationInstanceKey = ref(0)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
-    const testingConnection = ref(false)
-    const syncStatus = ref(null)
     const syncing = ref(false)
     const syncSuccess = ref(false)
     const syncError = ref(null)
@@ -1781,16 +1649,6 @@ export default {
     const newCollection = ref({
       name: '',
       description: ''
-    })
-
-    // WebDAV settings
-    const webdavSettings = ref({
-      url: '',
-      folder: '',
-      username: '',
-      password: '',
-      useProxy: false,
-      proxyUrl: 'http://localhost:3001'
     })
 
     const STORAGE_KEY = 'rum1n8-verses'
@@ -2236,10 +2094,9 @@ export default {
       })
     })
 
-    // Check if WebDAV is configured
-    const hasWebDAVConfigured = computed(() => {
-      const settings = getWebDAVSettings()
-      return settings && settings.url && settings.username && settings.password
+    // Check if any sync provider is configured
+    const hasSyncConfigured = computed(() => {
+      return isSyncConfigured()
     })
 
     // Get last backup timestamp (reactive)
@@ -2275,7 +2132,7 @@ export default {
     // Check if backup reminder should be shown
     const shouldShowBackupReminder = computed(() => {
       // Only show if WebDAV is not configured
-      if (hasWebDAVConfigured.value) {
+      if (hasSyncConfigured.value) {
         return false
       }
       
@@ -4854,21 +4711,20 @@ export default {
       }
     }
 
-    // WebDAV sync functions
+    // Sync functions
     const triggerSync = async (showFeedback = false) => {
-      // Don't sync if already syncing or if WebDAV not configured
+      // Don't sync if already syncing or if no provider configured
       if (syncing.value) {
         console.log('[triggerSync] Already syncing, skipping')
         return
       }
-      
-      const settings = getWebDAVSettings()
-      if (!settings || !settings.url || !settings.username || !settings.password) {
+
+      if (!isSyncConfigured()) {
         if (showFeedback) {
-          syncError.value = 'WebDAV not configured. Please configure it in settings.'
+          syncError.value = 'Sync not configured. Please configure it in settings.'
           setTimeout(() => { syncError.value = null }, 5000)
         }
-        console.log('[triggerSync] WebDAV not configured, skipping')
+        console.log('[triggerSync] No sync provider configured, skipping')
         return
       }
       
@@ -5062,124 +4918,17 @@ export default {
       triggerSync(true)
     }
 
-    // Load WebDAV settings
-    const loadWebDAVSettings = () => {
-      const settings = getWebDAVSettings()
-      if (settings) {
-        webdavSettings.value = {
-          url: settings.url || '',
-          folder: settings.folder || '',
-          username: settings.username || '',
-          password: settings.password || '', // Load password from storage
-          useProxy: settings.useProxy || false,
-          proxyUrl: settings.proxyUrl || 'http://localhost:3001'
-        }
-      } else {
-        // Initialize with defaults if no settings exist
-        webdavSettings.value = {
-          url: '',
-          folder: '',
-          username: '',
-          password: '',
-          useProxy: false,
-          proxyUrl: 'http://localhost:3001'
-        }
-      }
-    }
-
-    // Save WebDAV settings
-    const saveWebDAVSettingsForm = async () => {
-      if (!webdavSettings.value.url || !webdavSettings.value.username || !webdavSettings.value.password) {
-        syncStatus.value = {
-          type: 'error',
-          message: 'Please fill in all required fields (URL, Username, Password)'
-        }
-        return
-      }
-
-      // Create a clean settings object with all fields
-      const settingsToSave = {
-        url: webdavSettings.value.url.trim(),
-        folder: (webdavSettings.value.folder || '').trim(),
-        username: webdavSettings.value.username.trim(),
-        password: webdavSettings.value.password, // Keep password as-is
-        useProxy: webdavSettings.value.useProxy || false,
-        proxyUrl: (webdavSettings.value.proxyUrl || 'http://localhost:3001').trim()
-      }
-
-      // Save to localStorage
-      saveWebDAVSettings(settingsToSave)
-      
-      // Update the reactive object to match what was saved
-      webdavSettings.value = { ...settingsToSave }
-      
-      syncStatus.value = {
-        type: 'success',
-        message: 'Settings saved successfully!'
-      }
-
-      // Close the modal after a brief delay to show success message
-      setTimeout(() => {
-        closeSettings()
-      }, 1000)
-
-      // Trigger initial sync after saving settings (without user feedback since modal is closing)
-      setTimeout(() => {
-        triggerSync(false)
-      }, 500)
-    }
-
-    // Test WebDAV connection
-    const testWebDAVConnection = async () => {
-      if (!webdavSettings.value.url || !webdavSettings.value.username || !webdavSettings.value.password) {
-        syncStatus.value = {
-          type: 'error',
-          message: 'Please fill in all required fields first'
-        }
-        return
-      }
-
-      testingConnection.value = true
-      syncStatus.value = null
-
-      try {
-        const result = await testConnection(webdavSettings.value)
-        if (result.success) {
-          syncStatus.value = {
-            type: 'success',
-            message: 'Connection successful!'
-          }
-        } else {
-          syncStatus.value = {
-            type: 'error',
-            message: `Connection failed: ${result.error || 'Unknown error'}`
-          }
-        }
-      } catch (error) {
-        syncStatus.value = {
-          type: 'error',
-          message: `Connection failed: ${error.message || 'Unknown error'}`
-        }
-      } finally {
-        testingConnection.value = false
-      }
-    }
-
     // Close settings modal
     const closeSettings = () => {
       showSettings.value = false
-      syncStatus.value = null
-      // Reload settings to show saved values (but don't reset password if user is editing)
-      const saved = getWebDAVSettings()
-      if (saved) {
-        // Keep current password if user was editing (don't clear it)
-        const currentPassword = webdavSettings.value.password
-        loadWebDAVSettings()
-        // If user had entered a password, keep it (they might want to save it)
-        if (currentPassword && !saved.password) {
-          webdavSettings.value.password = currentPassword
-        }
-      }
+    }
+
+    // Callback when sync settings are saved
+    const onSyncSettingsSaved = () => {
+      // Trigger sync after saving settings
+      setTimeout(() => {
+        triggerSync(false)
+      }, 500)
     }
 
     // Open settings menu
@@ -5192,8 +4941,8 @@ export default {
       showSettingsMenu.value = false
     }
 
-    // Open WebDAV settings from menu
-    const openWebDAVSettings = () => {
+    // Open sync settings from menu
+    const openSyncSettings = () => {
       closeSettingsMenu()
       showSettings.value = true
     }
@@ -5221,13 +4970,18 @@ export default {
     // Backup all data
     const backupAllData = () => {
       try {
-        const settings = getWebDAVSettings()
+        const webdavProvider = getProvider('webdav')
+        const gdriveProvider = getProvider('gdrive')
         const backupData = {
           verses: verses.value,
           collections: collections.value,
-          settings: settings,
+          settings: {
+            activeProvider: getActiveProviderId(),
+            webdav: webdavProvider ? webdavProvider.getSettings() : null,
+            gdrive: gdriveProvider ? gdriveProvider.getSettings() : null
+          },
           backedUpAt: new Date().toISOString(),
-          version: '1.0'
+          version: '2.0'
         }
 
         const jsonStr = JSON.stringify(backupData, null, 2)
@@ -5287,8 +5041,22 @@ export default {
 
         // Restore settings if present
         if (backupData.settings) {
-          saveWebDAVSettings(backupData.settings)
-          loadWebDAVSettings()
+          if (backupData.version === '2.0' || backupData.settings.activeProvider !== undefined) {
+            // v2.0 format: nested provider settings
+            const { activeProvider, webdav, gdrive } = backupData.settings
+            const webdavProvider = getProvider('webdav')
+            const gdriveProvider = getProvider('gdrive')
+            if (webdav && webdavProvider) webdavProvider.saveSettings(webdav)
+            if (gdrive && gdriveProvider) gdriveProvider.saveSettings(gdrive)
+            if (activeProvider) {
+              setActiveProviderId(activeProvider)
+            }
+          } else {
+            // v1.0 format: flat WebDAV settings object
+            const webdavProvider = getProvider('webdav')
+            if (webdavProvider) webdavProvider.saveSettings(backupData.settings)
+            setActiveProviderId('webdav')
+          }
         }
 
         // Save to localStorage
@@ -5407,7 +5175,7 @@ export default {
     onMounted(async () => {
       loadCollections()
       loadVerses()
-      loadWebDAVSettings()
+      migrateProviderSetting()
       
       // Load last backup timestamp
       const stored = localStorage.getItem('rum1n8-last-backup')
@@ -5522,13 +5290,11 @@ export default {
       showSettingsMenu,
       showBackupImport,
       isDev,
-      webdavSettings,
-      saveWebDAVSettingsForm,
-      testWebDAVConnection,
       closeSettings,
       toggleSettingsMenu,
       closeSettingsMenu,
-      openWebDAVSettings,
+      openSyncSettings,
+      onSyncSettingsSaved,
       openBackupImport,
       closeBackupImport,
       showAbout,
@@ -5538,11 +5304,9 @@ export default {
       importFromBackup,
       handleBackupFileSelect,
       getTimeSinceLastBackup,
-      hasWebDAVConfigured,
+      hasSyncConfigured,
       shouldShowBackupReminder,
       backupFileInput,
-      testingConnection,
-      syncStatus,
       manualSync,
       syncing,
       syncSuccess,

@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Accept Google Drive OAuth credentials as build args
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_GOOGLE_CLIENT_SECRET
+
 # Build the application
 RUN npm run build
 
