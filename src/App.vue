@@ -4163,10 +4163,40 @@ export default {
     // Retry memorization (reset without saving)
     const retryMemorization = () => {
       if (memorizingVerse.value) {
-        memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows (same as Try Again on review)
+        memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows
         const verse = memorizingVerse.value
-        const currentMode = memorizationMode.value
-        startMemorization(verse, currentMode)
+        const mode = memorizationMode.value
+        const wordEntries = getVerseWords(verse.content)
+        reviewWords.value = wordEntries.map((entry, index) => {
+          const word = entry.text
+          const requiredLetters = getRequiredLetters(word)
+          const firstLetter = requiredLetters[0]
+          const { parts, separators } = splitWordParts(word)
+          let visible = false
+          if (mode === 'learn') {
+            visible = true
+          } else if (mode === 'memorize') {
+            visible = index % 2 === 0
+          }
+          return {
+            text: word,
+            separatorAfter: entry.separatorAfter,
+            revealed: false,
+            visible,
+            firstLetter,
+            requiredLetters,
+            typedLettersIndex: 0,
+            parts,
+            separators,
+            index,
+            incorrect: false
+          }
+        })
+        typedLetter.value = ''
+        reviewMistakes.value = 0
+        nextTick(() => {
+          memorizationPracticeRef.value?.focusInput?.()
+        })
       }
     }
 
