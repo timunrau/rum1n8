@@ -4512,80 +4512,81 @@ export default {
       }
     }
 
-    // Scroll to the next word to be typed if it's near the bottom
+    // Scroll when the user reaches the first word of the last visible line.
+    // Scrolls just enough to keep a couple of already-typed lines at the top.
     const scrollToCurrentWord = () => {
-      // Find the next unrevealed word index (the one we're about to type)
       const nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-      
-      if (nextWordIndex === -1) return // All words revealed
-      
-      // Determine which container to use (both screens use VersePracticeView with practice-word- IDs)
-      const container = memorizingVerse.value ? memorizationScrollContainer.value : reviewPracticeRef.value?.scrollContainer?.value
+      if (nextWordIndex === -1) return
+
+      const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
+      const container = practiceRef?.scrollContainer?.value ?? practiceRef?.scrollContainer
       if (!container) return
-      
-      // Wait for DOM to update
+
       nextTick(() => {
-        // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // Find the word element by ID (component uses practice-word-)
-            const wordId = `practice-word-${nextWordIndex}`
-            let wordElement = document.getElementById(wordId)
-            
-            // Fallback: try querySelector if getElementById fails
-            if (!wordElement) {
-              wordElement = container.querySelector(`#${wordId}`)
+          const allWords = container.querySelectorAll('[id^="practice-word-"]')
+          if (!allWords.length || nextWordIndex >= allWords.length) return
+
+          const wordEl = allWords[nextWordIndex]
+          const containerRect = container.getBoundingClientRect()
+          const wordRect = wordEl.getBoundingClientRect()
+
+          // Group visible words into lines by their vertical position
+          const lineTopThreshold = 4 // px tolerance for same-line grouping
+          const lines = []
+          let currentLineTop = null
+          let currentLine = []
+
+          for (const el of allWords) {
+            const rect = el.getBoundingClientRect()
+            if (currentLineTop === null || Math.abs(rect.top - currentLineTop) > lineTopThreshold) {
+              if (currentLine.length) lines.push(currentLine)
+              currentLine = [el]
+              currentLineTop = rect.top
+            } else {
+              currentLine.push(el)
             }
-            
-            // Another fallback: find by index in all word elements
-            if (!wordElement) {
-              const allWords = container.querySelectorAll('[id^="practice-word-"]')
-              if (allWords[nextWordIndex]) {
-                wordElement = allWords[nextWordIndex]
-              }
+          }
+          if (currentLine.length) lines.push(currentLine)
+
+          // Find the last line whose top is within the visible container area
+          const visibleBottom = containerRect.bottom
+          let lastVisibleLineIndex = -1
+          for (let i = 0; i < lines.length; i++) {
+            const lineTop = lines[i][0].getBoundingClientRect().top
+            if (lineTop < visibleBottom) {
+              lastVisibleLineIndex = i
             }
-            
-            if (wordElement) {
-              scrollElementIntoView(wordElement, container)
-            }
+          }
+
+          if (lastVisibleLineIndex < 0) return
+
+          // Check if the current word is on the last visible line (or beyond)
+          const lastVisibleLine = lines[lastVisibleLineIndex]
+          const wordIsOnLastLine = lastVisibleLine.includes(wordEl)
+          const wordIsBeyondView = wordRect.top >= visibleBottom
+
+          if (!wordIsOnLastLine && !wordIsBeyondView) return
+
+          // Only trigger on the first word of that line (or if beyond view)
+          if (wordIsOnLastLine && lastVisibleLine[0] !== wordEl) return
+
+          // Scroll so that 2 already-typed lines remain visible at the top.
+          // Find the line the current word is on, then go back 2 lines.
+          let currentWordLineIndex = lines.findIndex(line => line.includes(wordEl))
+          if (currentWordLineIndex < 0) currentWordLineIndex = lines.length - 1
+
+          const keepLines = 2
+          const targetLineIndex = Math.max(0, currentWordLineIndex - keepLines)
+          const targetEl = lines[targetLineIndex][0]
+          const targetTop = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop
+
+          container.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: 'smooth'
           })
         })
       })
-    }
-    
-    // Helper function to scroll an element into view within a container
-    const scrollElementIntoView = (element, container) => {
-      if (!element || !container) return
-      
-      const containerRect = container.getBoundingClientRect()
-      const elementRect = element.getBoundingClientRect()
-      const containerHeight = containerRect.height
-      const currentScrollTop = container.scrollTop
-      
-      // Calculate element position relative to container's scrollable content
-      // elementRect is relative to viewport, containerRect is relative to viewport
-      // The difference + scrollTop gives us position in scrollable content
-      const elementTopInContent = elementRect.top - containerRect.top + currentScrollTop
-      const elementBottomInContent = elementRect.bottom - containerRect.top + currentScrollTop
-      
-      // Visible area in content coordinates
-      const visibleTop = currentScrollTop
-      const visibleBottom = currentScrollTop + containerHeight
-      
-      // Check if element is in bottom portion of visible area
-      const distanceFromVisibleBottom = visibleBottom - elementBottomInContent
-      const threshold = containerHeight * 0.4 // Bottom 40%
-      
-      // Scroll if element is below visible area or in bottom 40%
-      if (elementBottomInContent > visibleBottom || distanceFromVisibleBottom < threshold) {
-        // Target: position element at 30% from top of visible area
-        const targetScroll = elementTopInContent - (containerHeight * 0.3)
-        
-        container.scrollTo({
-          top: Math.max(0, targetScroll),
-          behavior: 'smooth'
-        })
-      }
     }
 
     // Handle key press events
@@ -5368,7 +5369,12 @@ export default {
       isPWAInstalled,
       showIOSModal,
       triggerInstall,
-      closeIOSModal
+      closeIOSModal,
+      memorizationScrollContainer,
+      memorizationPracticeRef,
+      memorizationInstanceKey,
+      reviewPracticeRef,
+      reviewTextContainer
     }
   }
 }
