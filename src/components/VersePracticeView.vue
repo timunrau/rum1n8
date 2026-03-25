@@ -33,10 +33,10 @@
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </template>
-              <span v-else class="text-word-unrevealed">
-                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
+              <span v-else>
+                <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
             <span v-else-if="memorizationMode === 'master'">
@@ -44,10 +44,10 @@
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-text-primary font-semibold">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ '_'.repeat(getRemainingPartText(word).length) }}{{ word.separatorAfter || '' }}</span>
+                <span class="text-text-primary font-semibold">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </template>
-              <span v-else class="text-word-unrevealed">
-                {{ '_'.repeat(word.text.length) }}{{ word.separatorAfter || '' }}
+              <span v-else>
+                <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
           </span>
