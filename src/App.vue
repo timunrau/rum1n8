@@ -92,7 +92,7 @@
   <Transition name="result-tray">
     <div
       v-if="allWordsRevealed && memorizationMode"
-      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl shadow-xl p-5 pb-8"
+      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl border-t border-border-default p-5 pb-8" style="box-shadow: 0 -8px 24px -4px rgba(0,0,0,0.12), 0 -2px 8px -2px rgba(0,0,0,0.08);"
     >
       <div v-if="meetsAccuracyRequirement">
         <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
@@ -239,7 +239,7 @@
   <Transition name="result-tray">
     <div
       v-if="allWordsRevealed && reviewingVerse"
-      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl shadow-xl p-5 pb-8"
+      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl border-t border-border-default p-5 pb-8" style="box-shadow: 0 -8px 24px -4px rgba(0,0,0,0.12), 0 -2px 8px -2px rgba(0,0,0,0.08);"
     >
       <div v-if="meetsAccuracyRequirement">
         <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
