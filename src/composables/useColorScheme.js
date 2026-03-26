@@ -1,20 +1,22 @@
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const LIGHT_THEME_COLOR = '#ffffff'
 const DARK_THEME_COLOR = '#000000' // Pure OLED black
 
 export function useColorScheme() {
   let mediaQuery = null
+  const isDark = ref(false)
 
-  function applyTheme(isDark) {
-    if (isDark) {
+  function applyTheme(dark) {
+    isDark.value = dark
+    if (dark) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) {
-      meta.setAttribute('content', isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR)
+      meta.setAttribute('content', dark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR)
     }
   }
 
@@ -33,4 +35,6 @@ export function useColorScheme() {
       mediaQuery.removeEventListener('change', onChange)
     }
   })
+
+  return { isDark }
 }

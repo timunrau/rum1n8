@@ -297,7 +297,7 @@
           </svg>
         </button>
         <h1 class="text-xl font-semibold text-text-primary flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
-          {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'search' ? 'Search' : 'Verses')) }}
+          {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'stats' ? 'Stats' : 'Verses')) }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Install app button (top-level verses screen only) -->
@@ -487,8 +487,74 @@
 
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
-        
-        <div class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
+
+        <!-- Search Input -->
+        <div class="relative mt-4">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search verses..."
+            :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
+          />
+          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button
+            v-if="searchQuery.trim()"
+            type="button"
+            @click="clearSearch"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
+            title="Clear search"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Results (when searching) -->
+        <div v-if="searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
+          <div
+            v-for="result in searchResults"
+            :key="result.item.id"
+            @click="handleVerseClick(result.item)"
+            class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
+          >
+            <div class="flex flex-col gap-2">
+              <div class="flex items-start justify-between gap-2">
+                <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
+                <div class="flex items-center gap-0.5 shrink-0">
+                  <button
+                    @click.stop="startEditVerse(result.item)"
+                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                    title="Edit verse"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click.stop="copyVerse(result.item)"
+                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                    title="Share verse"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
+            </div>
+          </div>
+          <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
+            <p class="text-text-muted text-lg">No results found</p>
+            <p class="text-text-muted text-sm mt-2">Try different search terms</p>
+          </div>
+        </div>
+
+        <!-- Collection Cards (when not searching) -->
+        <div v-else class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
@@ -649,94 +715,137 @@
         </div>
       </div>
 
-      <!-- Search View -->
-      <div v-if="currentView === 'search' && !currentCollectionId" class="">
-        <div class="py-4">
-          <!-- Search Input -->
-          <div class="relative mb-4">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search verses..."
-              :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
-            />
-            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <button
-              v-if="searchQuery.trim()"
-              type="button"
-              @click="clearSearch"
-              class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
-              title="Clear search"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      <!-- Stats View -->
+      <div v-if="currentView === 'stats' && !currentCollectionId" class="">
+        <div class="space-y-4 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 8rem);">
+
+          <!-- Streak Card -->
+          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
+            <h3 class="text-base font-semibold text-text-primary mb-3">Current Streak</h3>
+            <div class="flex items-baseline gap-1">
+              <span class="text-4xl font-bold text-text-primary">{{ currentStreak }}</span>
+              <span class="text-lg text-text-muted">day{{ currentStreak !== 1 ? 's' : '' }}</span>
+            </div>
           </div>
 
-          <!-- Search Results -->
-          <div class="space-y-3 overflow-y-auto" style="max-height: calc(100vh - 12rem);">
-            <div
-              v-for="result in searchResults"
-              :key="result.item.id"
-              @click="handleVerseClick(result.item)"
-              class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
-            >
-              <div class="flex flex-col gap-2">
-                <div class="flex items-start justify-between gap-2">
-                  <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
-                  <div class="flex items-center gap-0.5 shrink-0">
-                    <button
-                      @click.stop="startEditVerse(result.item)"
-                      class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                      title="Edit verse"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      @click.stop="copyVerse(result.item)"
-                      class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                      title="Share verse"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                      </svg>
-                    </button>
+          <!-- Daily Activity Card -->
+          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
+            <h3 class="text-base font-semibold text-text-primary mb-3">Daily Activity</h3>
+            <div v-if="dailyActivityData.labels.length > 0">
+              <!-- Legend -->
+              <div class="flex items-center gap-4 mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-sm" :style="{ backgroundColor: chartColors.accent + 'AA' }"></span>
+                  <span class="text-xs text-text-secondary">Reviews</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-sm" :style="{ backgroundColor: chartColors.success + 'AA' }"></span>
+                  <span class="text-xs text-text-secondary">Mastered</span>
+                </div>
+              </div>
+              <!-- Chart with fixed y-axis -->
+              <div class="flex">
+                <!-- Fixed y-axis labels -->
+                <div class="shrink-0 flex flex-col justify-between pr-1 text-right" style="height: 170px; width: 24px; padding-bottom: 0px;">
+                  <span v-for="label in yAxisLabels" :key="label" class="text-text-muted leading-none" style="font-size: 10px;">{{ label }}</span>
+                </div>
+                <!-- Scrollable chart -->
+                <div ref="dailyActivityScrollRef" class="overflow-x-auto flex-1" style="height: 200px;">
+                  <div :style="{ width: Math.max(dailyActivityData.labels.length * 40, 300) + 'px', height: '200px' }">
+                    <Bar :key="'bar-' + isDark" :data="dailyBarChartData" :options="barChartOptions" />
                   </div>
                 </div>
-                <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
               </div>
             </div>
-
-            <!-- Empty state when no search query -->
-            <div v-if="!searchQuery.trim()" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
-              <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <p class="text-text-muted text-lg">Search verses</p>
-              <p class="text-text-muted text-sm mt-2">Type to search by reference or content</p>
-            </div>
-
-            <!-- Empty state when no results found -->
-            <div v-else-if="searchQuery.trim() && searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
-              <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="text-text-muted text-lg">No results found</p>
-              <p class="text-text-muted text-sm mt-2">Try different search terms</p>
+            <div v-else class="py-8 text-center">
+              <p class="text-text-muted text-sm">No review activity yet</p>
             </div>
           </div>
+
+          <!-- Mastered Over Time Card -->
+          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
+            <h3 class="text-base font-semibold text-text-primary mb-3">Verses Mastered</h3>
+            <div v-if="masteredOverTimeData.labels.length > 0" class="h-48">
+              <Line :key="'line-' + isDark" :data="masteredChartData" :options="lineChartOptions" />
+            </div>
+            <div v-else class="py-8 text-center">
+              <p class="text-text-muted text-sm">No mastered verses yet</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- Collection View -->
       <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
+
+        <!-- Search Input (when no collections exist, top-level verse list) -->
+        <div v-if="!currentCollectionId" class="relative mt-4">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search verses..."
+            :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
+          />
+          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button
+            v-if="searchQuery.trim()"
+            type="button"
+            @click="clearSearch"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
+            title="Clear search"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Results (when searching from verse list) -->
+        <div v-if="!currentCollectionId && searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
+          <div
+            v-for="result in searchResults"
+            :key="result.item.id"
+            @click="handleVerseClick(result.item)"
+            class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
+          >
+            <div class="flex flex-col gap-2">
+              <div class="flex items-start justify-between gap-2">
+                <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
+                <div class="flex items-center gap-0.5 shrink-0">
+                  <button
+                    @click.stop="startEditVerse(result.item)"
+                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                    title="Edit verse"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click.stop="copyVerse(result.item)"
+                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                    title="Share verse"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
+            </div>
+          </div>
+          <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
+            <p class="text-text-muted text-lg">No results found</p>
+            <p class="text-text-muted text-sm mt-2">Try different search terms</p>
+          </div>
+        </div>
+
         <!-- Verse List -->
-        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
+        <div v-else class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
@@ -871,28 +980,28 @@
           <span class="text-xs font-medium">Verses</span>
         </button>
         
-        <!-- Search Tab -->
+        <!-- Stats Tab -->
         <button
-          data-testid="nav-search"
-          @click="navigateToSearch"
+          data-testid="nav-stats"
+          @click="navigateToStats"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'search'
+            currentView === 'stats'
               ? 'text-nav-active'
               : 'text-text-muted'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span class="text-xs font-medium">Search</span>
+          <span class="text-xs font-medium">Stats</span>
         </button>
       </div>
     </nav>
 
     <!-- Floating Action Button with Menu -->
     <div 
-      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'search'"
+      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
       :class="[
         'fixed right-6 z-30',
         !currentCollectionId
@@ -975,7 +1084,7 @@
 
     <!-- Backdrop to close menu when clicking outside -->
     <div
-      v-if="fabMenuOpen && !memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'search'"
+      v-if="fabMenuOpen && !memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
       @click="fabMenuOpen = false"
       class="fixed inset-0 z-20"
     ></div>
@@ -1543,7 +1652,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, nextTick, watch } from 'vue'
 import Fuse from 'fuse.js'
 import { BibleClient } from '@gracious.tech/fetch-client'
 import {
@@ -1560,15 +1669,34 @@ import {
 import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
+import { countVersesInReference } from './utils/verse-count.js'
+import { Line, Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
 import ModalSheet from './components/ModalSheet.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
 
+ChartJS.register(
+  CategoryScale, LinearScale, PointElement, LineElement,
+  BarElement, Title, Tooltip, Legend, Filler
+)
+
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker, SyncSettingsModal },
+  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker, SyncSettingsModal, Line, Bar },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -1584,7 +1712,7 @@ export default {
     const editingVerse = ref(null)
     const editingCollection = ref(null)
     const currentCollectionId = ref(null) // null = all verses, string = specific collection
-    const currentView = ref('collections') // 'review-list', 'collections', or 'search'
+    const currentView = ref('collections') // 'review-list', 'collections', or 'stats'
     const searchQuery = ref('')
     const reviewingVerse = ref(null)
     const reviewSourceList = ref(null) // Track the source list when starting a review
@@ -1620,10 +1748,11 @@ export default {
     const importingCSV = ref(false)
     const expandedVerseIds = ref({})
     const copyToast = ref({ show: false, message: '' })
+    const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
 
     // Color scheme (auto dark/light mode)
-    useColorScheme()
+    const { isDark } = useColorScheme()
 
     // PWA install
     const {
@@ -1744,7 +1873,7 @@ export default {
       
       // Restore main view (review-list, collections, or search) before starting review/memorization
       // so that startReview can determine the correct source list
-      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search') {
+      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search' || state.view === 'stats') {
         currentView.value = state.view
       } else if (state.view === 'collection') {
         // Collection view is handled above
@@ -1843,7 +1972,7 @@ export default {
       const urlParams = new URLSearchParams(window.location.search)
       const viewParam = urlParams.get('view')
       
-      if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'search') {
+      if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'search' || viewParam === 'stats') {
         currentView.value = viewParam
       } else if (viewParam === 'collection') {
         const collectionId = urlParams.get('collection')
@@ -1907,6 +2036,250 @@ export default {
     // Check if "To Learn" has any verses
     const hasToLearnVerses = computed(() => {
       return verses.value.some(v => v.memorizationStatus !== 'mastered')
+    })
+
+    // --- Stats computeds ---
+
+    const currentStreak = computed(() => {
+      const reviewDatesSet = new Set()
+      verses.value.forEach(v => {
+        if (v.reviewHistory) {
+          v.reviewHistory.forEach(r => {
+            // Use local date to avoid timezone issues
+            const d = new Date(r.date)
+            const localDate = d.getFullYear() + '-' +
+              String(d.getMonth() + 1).padStart(2, '0') + '-' +
+              String(d.getDate()).padStart(2, '0')
+            reviewDatesSet.add(localDate)
+          })
+        }
+      })
+
+      if (reviewDatesSet.size === 0) return 0
+
+      const now = new Date()
+      const todayStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0')
+
+      const yesterdayDate = new Date(now)
+      yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+      const yesterdayStr = yesterdayDate.getFullYear() + '-' +
+        String(yesterdayDate.getMonth() + 1).padStart(2, '0') + '-' +
+        String(yesterdayDate.getDate()).padStart(2, '0')
+
+      // Streak must include today or yesterday to be active
+      if (!reviewDatesSet.has(todayStr) && !reviewDatesSet.has(yesterdayStr)) return 0
+
+      let streak = 0
+      let checkDate = new Date(now)
+      // Start from today if reviewed today, otherwise from yesterday
+      if (!reviewDatesSet.has(todayStr)) {
+        checkDate.setDate(checkDate.getDate() - 1)
+      }
+
+      while (true) {
+        const dateStr = checkDate.getFullYear() + '-' +
+          String(checkDate.getMonth() + 1).padStart(2, '0') + '-' +
+          String(checkDate.getDate()).padStart(2, '0')
+        if (reviewDatesSet.has(dateStr)) {
+          streak++
+          checkDate.setDate(checkDate.getDate() - 1)
+        } else {
+          break
+        }
+      }
+
+      return streak
+    })
+
+    const masteredOverTimeData = computed(() => {
+      const countByDate = {}
+      verses.value.forEach(v => {
+        if (v.memorizationStatus === 'mastered' && v.masteredAt) {
+          const d = v.masteredAt.substring(0, 10)
+          const verseCount = countVersesInReference(v.reference)
+          countByDate[d] = (countByDate[d] || 0) + verseCount
+        }
+      })
+      const allDates = Object.keys(countByDate).sort()
+      if (allDates.length === 0) return { labels: [], data: [] }
+
+      const labels = []
+      const data = []
+      let cumulative = 0
+      allDates.forEach(d => {
+        cumulative += countByDate[d]
+        labels.push(d)
+        data.push(cumulative)
+      })
+      return { labels, data }
+    })
+
+    const dailyActivityData = computed(() => {
+      const reviewsByDate = {}
+      const masteredByDate = {}
+
+      // Only show last 30 days
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - 30)
+      const cutoffStr = cutoff.toISOString().substring(0, 10)
+
+      verses.value.forEach(v => {
+        const verseCount = countVersesInReference(v.reference)
+        if (v.reviewHistory) {
+          v.reviewHistory.forEach(r => {
+            const date = r.date.substring(0, 10)
+            if (date >= cutoffStr) {
+              reviewsByDate[date] = (reviewsByDate[date] || 0) + verseCount
+            }
+          })
+        }
+        if (v.memorizationStatus === 'mastered' && v.masteredAt) {
+          const d = v.masteredAt.substring(0, 10)
+          if (d >= cutoffStr) {
+            masteredByDate[d] = (masteredByDate[d] || 0) + verseCount
+          }
+        }
+      })
+
+      const allDates = [...new Set([
+        ...Object.keys(reviewsByDate),
+        ...Object.keys(masteredByDate)
+      ])].sort()
+
+      return {
+        labels: allDates,
+        reviews: allDates.map(d => reviewsByDate[d] || 0),
+        mastered: allDates.map(d => masteredByDate[d] || 0)
+      }
+    })
+
+    // Chart helpers
+    const getCssVar = (name) => {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    }
+
+    const chartColors = computed(() => {
+      // isDark.value is read here to trigger reactivity on theme change
+      const _ = isDark.value
+      return {
+        text: getCssVar('--color-text-secondary'),
+        muted: getCssVar('--color-text-muted'),
+        grid: getCssVar('--color-border-default'),
+        accent: getCssVar('--color-nav-active'),
+        success: getCssVar('--color-status-success-text'),
+      }
+    })
+
+    const masteredChartData = computed(() => ({
+      labels: masteredOverTimeData.value.labels.map(d =>
+        new Date(d + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })
+      ),
+      datasets: [{
+        label: 'Mastered',
+        data: masteredOverTimeData.value.data,
+        borderColor: chartColors.value.accent,
+        backgroundColor: chartColors.value.accent + '20',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2,
+        pointHoverRadius: 5
+      }]
+    }))
+
+    const lineChartOptions = computed(() => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          ticks: { color: chartColors.value.muted, maxTicksLimit: 6 },
+          grid: { color: chartColors.value.grid + '40' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: chartColors.value.muted, precision: 0 },
+          grid: { color: chartColors.value.grid + '40' }
+        }
+      }
+    }))
+
+    const dailyBarChartData = computed(() => ({
+      labels: dailyActivityData.value.labels.map(d =>
+        new Date(d + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })
+      ),
+      datasets: [
+        {
+          label: 'Reviews',
+          data: dailyActivityData.value.reviews,
+          backgroundColor: chartColors.value.accent + 'AA',
+          borderRadius: 4
+        },
+        {
+          label: 'Mastered',
+          data: dailyActivityData.value.mastered,
+          backgroundColor: chartColors.value.success + 'AA',
+          borderRadius: 4
+        }
+      ]
+    }))
+
+    const dailyActivityMax = computed(() => {
+      const data = dailyActivityData.value
+      let max = 0
+      for (let i = 0; i < data.labels.length; i++) {
+        const total = (data.reviews[i] || 0) + (data.mastered[i] || 0)
+        if (total > max) max = total
+      }
+      return Math.max(max, 1)
+    })
+
+    const yAxisLabels = computed(() => {
+      const max = dailyActivityMax.value
+      // Generate ~4 evenly spaced labels from max down to 0
+      const step = Math.ceil(max / 4) || 1
+      const labels = []
+      for (let v = Math.ceil(max / step) * step; v >= 0; v -= step) {
+        labels.push(v)
+      }
+      return labels
+    })
+
+    const barChartOptions = computed(() => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: chartColors.value.muted, maxRotation: 45, font: { size: 10 } },
+          grid: { display: false }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { display: false },
+          grid: { color: chartColors.value.grid + '40' }
+        }
+      }
+    }))
+
+    // Auto-scroll daily activity chart to the right when stats view is shown
+    watch(currentView, (view) => {
+      if (view === 'stats') {
+        nextTick(() => {
+          if (dailyActivityScrollRef.value) {
+            dailyActivityScrollRef.value.scrollLeft = dailyActivityScrollRef.value.scrollWidth
+          }
+        })
+      }
     })
 
     // Biblical book order for sorting
@@ -2223,6 +2596,14 @@ export default {
           // Add lastModified if missing (use createdAt or current time as fallback)
           if (!verse.hasOwnProperty('lastModified')) {
             verse.lastModified = verse.lastReviewed || verse.createdAt || new Date().toISOString()
+          }
+          // Add masteredAt if missing
+          if (!verse.hasOwnProperty('masteredAt')) {
+            if (verse.memorizationStatus === 'mastered') {
+              verse.masteredAt = verse.createdAt || new Date().toISOString()
+            } else {
+              verse.masteredAt = null
+            }
           }
           return verse
         })
@@ -2679,6 +3060,7 @@ export default {
           easeFactor: 2.5, // Default ease factor (SM-2 standard)
           interval: 0,
           reviewHistory: [],
+          masteredAt: null,
           collectionIds: collectionIds
         }
         verses.value.unshift(verse)
@@ -3510,38 +3892,7 @@ export default {
       return collection ? collection.name : 'Unknown'
     }
 
-    // Count the number of verses from a reference string (handles ranges like "1:1-3" and comma-separated references like "5:11-12, 6:1-2")
-    const countVersesInReference = (reference) => {
-      if (!reference) return 0
-      
-      let totalCount = 0
-      
-      // Split by commas to handle multiple parts (e.g., "Hebrews 5:11-12, 6:1-2")
-      const parts = reference.split(',').map(part => part.trim())
-      
-      for (const part of parts) {
-        // Match patterns like "Chapter:Verse" or "Chapter:StartVerse-EndVerse"
-        // Examples: "5:11-12", "6:1-2", "1:1", "3:16-18"
-        // This pattern matches chapter:verse or chapter:startVerse-endVerse
-        const match = part.match(/(\d+):(\d+)(?:-(\d+))?/i)
-        
-        if (match) {
-          const startVerse = parseInt(match[2], 10)
-          const endVerse = match[3] ? parseInt(match[3], 10) : startVerse
-          
-          // Add the count of verses in the range (inclusive)
-          totalCount += Math.max(1, endVerse - startVerse + 1)
-        } else {
-          // If no match in this part, assume it's a single verse
-          // This handles edge cases where a part doesn't match the pattern
-          totalCount += 1
-        }
-      }
-      
-      // If we found at least one match, return the total count
-      // Otherwise, assume it's a single verse (fallback for unexpected formats)
-      return totalCount > 0 ? totalCount : 1
-    }
+    // countVersesInReference imported from ./utils/verse-count.js
 
     // Get verse count for a collection (accounts for verse ranges)
     const getCollectionVerseCount = (collectionId) => {
@@ -3642,6 +3993,7 @@ export default {
     const navigateToReviewList = () => {
       currentCollectionId.value = null
       currentView.value = 'review-list'
+      searchQuery.value = ''
       pushNavigationState({ view: 'review-list' })
     }
 
@@ -3652,11 +4004,12 @@ export default {
       pushNavigationState({ view: 'collections' })
     }
 
-    // Navigate to search view
-    const navigateToSearch = () => {
+    // Navigate to stats view
+    const navigateToStats = () => {
       currentCollectionId.value = null
-      currentView.value = 'search'
-      pushNavigationState({ view: 'search' })
+      currentView.value = 'stats'
+      searchQuery.value = ''
+      pushNavigationState({ view: 'stats' })
     }
 
     const clearSearch = () => {
@@ -4088,6 +4441,7 @@ export default {
           // If completing master mode, mark as mastered and initialize spaced repetition
           if (memorizationMode.value === 'master' && currentStatus !== 'mastered') {
             verse.memorizationStatus = 'mastered'
+            verse.masteredAt = new Date().toISOString()
             // Initialize spaced repetition fields when mastering
             if (!verse.nextReviewDate) {
               const tomorrow = new Date()
@@ -4138,10 +4492,10 @@ export default {
           currentCollectionId.value = null
           currentView.value = 'collections'
           pushNavigationState({ view: 'collections' })
-        } else if (sourceState.view === 'search') {
+        } else if (sourceState.view === 'stats') {
           currentCollectionId.value = null
-          currentView.value = 'search'
-          pushNavigationState({ view: 'search' })
+          currentView.value = 'stats'
+          pushNavigationState({ view: 'stats' })
         } else {
           // Fallback
           currentCollectionId.value = null
@@ -4481,10 +4835,10 @@ export default {
           currentCollectionId.value = null
           currentView.value = 'review-list'
           pushNavigationState({ view: 'review-list' })
-        } else if (sourceState.view === 'search') {
+        } else if (sourceState.view === 'stats') {
           currentCollectionId.value = null
-          currentView.value = 'search'
-          pushNavigationState({ view: 'search' })
+          currentView.value = 'stats'
+          pushNavigationState({ view: 'stats' })
         } else {
           // Fallback
           currentCollectionId.value = null
@@ -5312,11 +5666,22 @@ export default {
       reviewSortedVerses,
       navigateToReviewList,
       navigateToCollections,
-      navigateToSearch,
+      navigateToStats,
       clearSearch,
       searchQuery,
       searchResults,
       highlightText,
+      isDark,
+      currentStreak,
+      masteredOverTimeData,
+      dailyActivityData,
+      masteredChartData,
+      lineChartOptions,
+      dailyBarChartData,
+      barChartOptions,
+      chartColors,
+      yAxisLabels,
+      dailyActivityScrollRef,
       copyVerse,
       copyToast,
       startEditVerse,

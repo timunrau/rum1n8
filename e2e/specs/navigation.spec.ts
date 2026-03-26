@@ -12,7 +12,7 @@ test('app loads with default Collections view', async ({ page }) => {
   await expect(page.locator('h1')).toContainText(/Verses|Collections|Review/)
 })
 
-test('bottom nav switches between Review, Collections, Search', async ({ page }) => {
+test('bottom nav switches between Review, Collections, Stats', async ({ page }) => {
   await page.getByTestId('nav-review').click()
   await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
   await expect(page.locator('h1')).toContainText('Review')
@@ -20,9 +20,9 @@ test('bottom nav switches between Review, Collections, Search', async ({ page })
   await page.getByTestId('nav-collections').click()
   await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
 
-  await page.getByTestId('nav-search').click()
-  await expect(page.getByTestId('nav-search')).toHaveClass(/text-nav-active/)
-  await expect(page.locator('h1')).toContainText('Search')
+  await page.getByTestId('nav-stats').click()
+  await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+  await expect(page.locator('h1')).toContainText('Stats')
 })
 
 test('URL updates when switching views', async ({ page }) => {
@@ -32,8 +32,8 @@ test('URL updates when switching views', async ({ page }) => {
   await page.getByTestId('nav-collections').click()
   await expect(page).toHaveURL(/\?view=collections/)
 
-  await page.getByTestId('nav-search').click()
-  await expect(page).toHaveURL(/\?view=search/)
+  await page.getByTestId('nav-stats').click()
+  await expect(page).toHaveURL(/\?view=stats/)
 })
 
 test('FAB opens add verse / add collection / import CSV options on Collections view', async ({
@@ -53,7 +53,12 @@ test('initial load with view=review-list shows Review tab', async ({ page }) => 
   await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
 })
 
-test('initial load with view=search shows Search tab', async ({ page }) => {
-  await page.goto('/?view=search')
-  await expect(page.getByTestId('nav-search')).toHaveClass(/text-nav-active/)
+test('initial load with view=stats shows Stats tab', async ({ page }) => {
+  await page.goto('/?view=stats')
+  await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+})
+
+test('FAB is hidden on Stats view', async ({ page }) => {
+  await page.getByTestId('nav-stats').click()
+  await expect(page.getByTestId('fab-trigger')).not.toBeVisible()
 })

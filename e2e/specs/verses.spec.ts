@@ -49,9 +49,9 @@ test.skip('add verse with Bible import: mock API -> enter reference + version ->
   await expect(contentArea).not.toHaveValue('')
 })
 
-test('edit verse: open verse card -> edit -> change content -> save', async ({ page }) => {
+test('edit verse: search on Verses tab -> edit -> change content -> save', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=search')
+  await page.goto('/?view=collections')
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
   await page.getByRole('button', { name: 'Edit verse' }).first().click()
@@ -67,18 +67,36 @@ test('edit verse: open verse card -> edit -> change content -> save', async ({ p
 test('copy verse: copy button triggers copy', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-write', 'clipboard-read'])
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=search')
+  await page.goto('/?view=collections')
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
   await page.getByRole('button', { name: 'Share verse' }).first().click()
   await expect(page.getByText(/Verse copied| copied/i)).toBeVisible({ timeout: 3000 })
 })
 
-test('search: add verses -> search by reference/content -> results filtered', async ({ page }) => {
+test('search: type in search bar on Verses tab -> results filtered', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=search')
+  await page.goto('/?view=collections')
   await page.getByPlaceholder(/Search verses/i).fill('Psalm')
   await page.waitForTimeout(500)
   await expect(page.getByText('Psalm 23:1')).toBeVisible()
   await expect(page.getByText('John 3:16')).not.toBeVisible()
+})
+
+test('search: clearing search restores collection cards', async ({ page }) => {
+  const collections = [
+    { id: 'col-1', name: 'My Collection', createdAt: '2024-01-01T00:00:00.000Z', lastModified: '2024-01-01T00:00:00.000Z' },
+  ]
+  await seedStorage(page, sampleVerses, collections)
+  await page.goto('/?view=collections')
+  const searchInput = page.getByPlaceholder(/Search verses/i)
+
+  await searchInput.fill('John')
+  await page.waitForTimeout(500)
+  await expect(page.getByText('John 3:16')).toBeVisible()
+
+  await searchInput.fill('')
+  await page.waitForTimeout(500)
+  // Collection cards should be visible again
+  await expect(page.getByText('All Verses')).toBeVisible()
 })
