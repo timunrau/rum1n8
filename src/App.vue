@@ -4113,7 +4113,10 @@ export default {
       memorizingVerse.value = verse
       memorizationMode.value = mode
       reviewMistakes.value = 0
-      
+
+      // Track whether we're already in a session before potentially setting the source state
+      const alreadyInSession = !!memorizationSourceState.value
+
       // Store the source state for navigation (only if not already set, to preserve it during mode advancement)
       if (!memorizationSourceState.value) {
         if (currentCollectionId.value) {
@@ -4176,13 +4179,18 @@ export default {
 
       typedLetter.value = ''
       
-      // Push navigation state
-      pushNavigationState({
+      // Push navigation state (replace if already in a memorization session to avoid back-stepping through modes)
+      const navState = {
         view: 'memorization',
         verseId: verse.id,
         mode: mode,
         collectionId: currentCollectionId.value
-      })
+      }
+      if (alreadyInSession) {
+        replaceNavigationState(navState)
+      } else {
+        pushNavigationState(navState)
+      }
       
       // Focus input after DOM update
       nextTick(() => {
@@ -4467,28 +4475,29 @@ export default {
       typedLetter.value = ''
       reviewMistakes.value = 0
       
-      // Navigate to source state
+      // Navigate to source state — replace the memorization history entry so back button
+      // returns to the screen before memorization, not back into the memorization flow
       if (sourceState) {
         if (sourceState.collectionId) {
           currentCollectionId.value = sourceState.collectionId
-          pushNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
+          replaceNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
         } else if (sourceState.view === 'review-list') {
           currentCollectionId.value = null
           currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          replaceNavigationState({ view: 'review-list' })
         } else if (sourceState.view === 'collections') {
           currentCollectionId.value = null
           currentView.value = 'collections'
-          pushNavigationState({ view: 'collections' })
+          replaceNavigationState({ view: 'collections' })
         } else if (sourceState.view === 'stats') {
           currentCollectionId.value = null
           currentView.value = 'stats'
-          pushNavigationState({ view: 'stats' })
+          replaceNavigationState({ view: 'stats' })
         } else {
           // Fallback
           currentCollectionId.value = null
           currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          replaceNavigationState({ view: 'review-list' })
         }
       } else {
         // Fallback: use browser back if available, otherwise go to collections
