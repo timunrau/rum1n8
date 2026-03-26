@@ -135,6 +135,11 @@ body {
   transform-origin: center;
 }
 
+.animate-spin-reverse {
+  animation: spin 1s linear infinite reverse !important;
+  transform-origin: center;
+}
+
 /* FAB Menu Animations */
 .fab-menu-enter-active,
 .fab-menu-leave-active {

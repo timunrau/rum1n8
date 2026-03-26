@@ -124,7 +124,7 @@
             <!-- Spinning sync icon -->
             <svg 
               v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
+              class="w-6 h-6 animate-spin-reverse" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -274,7 +274,7 @@
             <!-- Spinning sync icon -->
             <svg 
               v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
+              class="w-6 h-6 animate-spin-reverse" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -425,7 +425,7 @@
             <!-- Spinning sync icon -->
             <svg
               v-if="syncing"
-              class="w-6 h-6 animate-spin"
+              class="w-6 h-6 animate-spin-reverse"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
