@@ -287,6 +287,43 @@
     <!-- Top App Bar -->
     <header class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-4">
+        <!-- Search expanded state -->
+        <template v-if="searchActive && currentView === 'collections' && !currentCollectionId">
+          <button
+            @click="clearSearch"
+            class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div class="flex-1 relative">
+            <input
+              ref="searchInputRef"
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search verses..."
+              class="w-full px-3 py-2 pl-10 border border-border-input rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted text-base"
+              @keydown.escape="clearSearch"
+            />
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <button
+            v-if="searchQuery.trim()"
+            @click="searchQuery = ''"
+            class="p-2 ml-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+            title="Clear text"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </template>
+
+        <!-- Default header state -->
+        <template v-else>
         <button
           v-if="currentCollectionId"
           @click="viewAllVerses"
@@ -309,6 +346,17 @@
           >
             Install app
           </button>
+          <!-- Search Button (collections view, top-level only) -->
+          <button
+            v-if="currentView === 'collections' && !currentCollectionId"
+            @click="openSearch"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+            title="Search verses"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
           <!-- Sync Button -->
           <button
             v-if="hasSyncConfigured"
@@ -319,32 +367,32 @@
             :title="syncing ? 'Syncing...' : 'Sync'"
           >
             <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-if="syncing"
+              class="w-6 h-6 animate-spin"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
               style="transform-origin: center;"
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else-if="syncSuccess"
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              v-else
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -412,6 +460,7 @@
             </div>
           </div>
         </div>
+        </template>
       </div>
     </header>
 
@@ -487,30 +536,6 @@
 
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
-
-        <!-- Search Input -->
-        <div class="relative mt-4">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search verses..."
-            :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
-          />
-          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <button
-            v-if="searchQuery.trim()"
-            type="button"
-            @click="clearSearch"
-            class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
-            title="Clear search"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
 
         <!-- Search Results (when searching) -->
         <div v-if="searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
@@ -778,30 +803,6 @@
 
       <!-- Collection View -->
       <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
-
-        <!-- Search Input (when no collections exist, top-level verse list) -->
-        <div v-if="!currentCollectionId" class="relative mt-4">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search verses..."
-            :class="['w-full px-4 py-3 pl-12 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted', searchQuery.trim() ? 'pr-11' : 'pr-4']"
-          />
-          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <button
-            v-if="searchQuery.trim()"
-            type="button"
-            @click="clearSearch"
-            class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
-            title="Clear search"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
 
         <!-- Search Results (when searching from verse list) -->
         <div v-if="!currentCollectionId && searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
@@ -1714,6 +1715,8 @@ export default {
     const currentCollectionId = ref(null) // null = all verses, string = specific collection
     const currentView = ref('collections') // 'review-list', 'collections', or 'stats'
     const searchQuery = ref('')
+    const searchActive = ref(false)
+    const searchInputRef = ref(null)
     const reviewingVerse = ref(null)
     const reviewSourceList = ref(null) // Track the source list when starting a review
     const reviewSourceState = ref(null) // Track the original source navigation state
@@ -3994,6 +3997,7 @@ export default {
       currentCollectionId.value = null
       currentView.value = 'review-list'
       searchQuery.value = ''
+      searchActive.value = false
       pushNavigationState({ view: 'review-list' })
     }
 
@@ -4009,11 +4013,20 @@ export default {
       currentCollectionId.value = null
       currentView.value = 'stats'
       searchQuery.value = ''
+      searchActive.value = false
       pushNavigationState({ view: 'stats' })
     }
 
     const clearSearch = () => {
       searchQuery.value = ''
+      searchActive.value = false
+    }
+
+    const openSearch = () => {
+      searchActive.value = true
+      nextTick(() => {
+        searchInputRef.value?.focus()
+      })
     }
 
     // Highlight matching text in search results
@@ -4099,6 +4112,8 @@ export default {
     // View all verses (back from collection view)
     const viewAllVerses = () => {
       currentCollectionId.value = null
+      searchQuery.value = ''
+      searchActive.value = false
       // Keep current view (review-list or collections)
       pushNavigationState({ view: currentView.value })
     }
@@ -5668,6 +5683,9 @@ export default {
       navigateToCollections,
       navigateToStats,
       clearSearch,
+      openSearch,
+      searchActive,
+      searchInputRef,
       searchQuery,
       searchResults,
       highlightText,
