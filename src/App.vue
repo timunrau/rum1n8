@@ -86,56 +86,57 @@
         @switch-mode="switchToMemorizationMode"
       />
 
-      <!-- Completion Modal for Memorization -->
-      <div
-        v-if="allWordsRevealed && memorizationMode"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-md w-full p-6">
-          <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-status-success-text mb-2 text-center">🎉 Great job!</p>
-            <p class="text-status-success-text text-center mb-6">
-              <span v-if="memorizationMode === 'learn'">You've learned this verse! Ready to memorize it?</span>
-              <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse! Ready to master it?</span>
-              <span v-else-if="memorizationMode === 'master'">You've mastered this verse! It's now in your spaced repetition system.</span>
-            </p>
-            <div class="flex justify-center">
-              <button
-                v-if="memorizationMode !== 'master'"
-                @click="advanceToNextMode"
-                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
-              >
-                Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
-              </button>
-              <button
-                v-else
-                @click="exitMemorization"
-                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-          <div v-else>
-            <p class="text-2xl font-bold text-status-orange-text mb-2 text-center">Keep practicing!</p>
-            <p class="text-status-orange-text text-center mb-2">
-              Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to advance.
-            </p>
-            <p class="text-sm text-text-secondary text-center mb-6">
-              Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
-            </p>
-            <div class="flex justify-center">
-              <button
-                @click="retryMemorization"
-                class="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-colors duration-200"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+    </div>
+
+  <!-- Completion Tray for Memorization -->
+  <Transition name="result-tray">
+    <div
+      v-if="allWordsRevealed && memorizationMode"
+      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl shadow-xl p-5 pb-8"
+    >
+      <div v-if="meetsAccuracyRequirement">
+        <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
+        <p class="text-status-success-text text-sm text-center mb-4">
+          <span v-if="memorizationMode === 'learn'">You've learned this verse! Ready to memorize it?</span>
+          <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse! Ready to master it?</span>
+          <span v-else-if="memorizationMode === 'master'">You've mastered this verse! It's now in your spaced repetition system.</span>
+        </p>
+        <div class="flex justify-center">
+          <button
+            v-if="memorizationMode !== 'master'"
+            @click="advanceToNextMode"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
+          </button>
+          <button
+            v-else
+            @click="exitMemorization"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+      <div v-else>
+        <p class="text-xl font-bold text-status-orange-text mb-1 text-center">Keep practicing!</p>
+        <p class="text-status-orange-text text-sm text-center mb-1">
+          Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to advance.
+        </p>
+        <p class="text-xs text-text-secondary text-center mb-4">
+          Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
+        </p>
+        <div class="flex justify-center">
+          <button
+            @click="retryMemorization"
+            class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     </div>
+  </Transition>
   </div>
 
   <!-- Review Screen -->
@@ -234,52 +235,52 @@
       @switch-mode="switchReviewMode"
     />
 
-      <!-- Completion Modal for Review -->
-      <div
-        v-if="allWordsRevealed && reviewingVerse"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
-      >
-        <div class="bg-elevated rounded-3xl shadow-xl max-w-md w-full p-6">
-          <div v-if="meetsAccuracyRequirement">
-            <p class="text-2xl font-bold text-status-success-text mb-2 text-center">🎉 Great job!</p>
-            <p class="text-status-success-text text-center mb-6">
-              <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</template>
-              <template v-else>Practice complete (doesn't count as review).</template>
-            </p>
-            <div class="flex justify-center gap-3">
-              <button
-                @click="retryReview"
-                class="px-6 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Retry
-              </button>
-              <button
-                @click="nextVerse"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Next Verse
-              </button>
-            </div>
-          </div>
-          <div v-else>
-            <p class="text-2xl font-bold text-status-orange-text mb-2 text-center">Keep practicing!</p>
-            <p class="text-status-orange-text text-center mb-2">
-              Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to count this as reviewed.
-            </p>
-            <p class="text-sm text-text-secondary text-center mb-6">
-              Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
-            </p>
-            <div class="flex justify-center">
-              <button
-                @click="retryReview"
-                class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+  <!-- Completion Tray for Review -->
+  <Transition name="result-tray">
+    <div
+      v-if="allWordsRevealed && reviewingVerse"
+      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl shadow-xl p-5 pb-8"
+    >
+      <div v-if="meetsAccuracyRequirement">
+        <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
+        <p class="text-status-success-text text-sm text-center mb-4">
+          <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</template>
+          <template v-else>Practice complete (doesn't count as review).</template>
+        </p>
+        <div class="flex justify-center gap-3">
+          <button
+            @click="retryReview"
+            class="px-6 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Retry
+          </button>
+          <button
+            @click="nextVerse"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Next Verse
+          </button>
         </div>
       </div>
+      <div v-else>
+        <p class="text-xl font-bold text-status-orange-text mb-1 text-center">Keep practicing!</p>
+        <p class="text-status-orange-text text-sm text-center mb-1">
+          Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to count this as reviewed.
+        </p>
+        <p class="text-xs text-text-secondary text-center mb-4">
+          Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
+        </p>
+        <div class="flex justify-center">
+          <button
+            @click="retryReview"
+            class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
   </div>
 
   <!-- Main Content -->
@@ -5762,3 +5763,14 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.result-tray-enter-active,
+.result-tray-leave-active {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.result-tray-enter-from,
+.result-tray-leave-to {
+  transform: translateY(100%);
+}
+</style>
