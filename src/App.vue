@@ -2160,7 +2160,7 @@ export default {
         fill: true,
         tension: 0.3,
         pointRadius: 2,
-        pointHoverRadius: 5
+        pointHoverRadius: 0
       }]
     }))
 
@@ -2169,7 +2169,7 @@ export default {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { mode: 'index', intersect: false }
+        tooltip: { enabled: false }
       },
       scales: {
         x: {
@@ -2230,7 +2230,7 @@ export default {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { mode: 'index', intersect: false }
+        tooltip: { enabled: false }
       },
       scales: {
         x: {
