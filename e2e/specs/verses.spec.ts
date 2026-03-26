@@ -82,8 +82,9 @@ test('search: type in search bar on Verses tab -> results filtered', async ({ pa
   await page.getByTitle('Search verses').click()
   await page.getByPlaceholder(/Search verses/i).fill('Psalm')
   await page.waitForTimeout(500)
-  await expect(page.getByText('Psalm 23:1')).toBeVisible()
-  await expect(page.getByText('John 3:16')).not.toBeVisible()
+  const searchScreen = page.getByTestId('search-screen')
+  await expect(searchScreen.getByRole('heading', { name: /Psalm 23:1/ })).toBeVisible()
+  await expect(searchScreen.getByRole('heading', { name: /John 3:16/ })).not.toBeVisible()
 })
 
 test('search: clearing search restores collection cards', async ({ page }) => {
@@ -99,8 +100,9 @@ test('search: clearing search restores collection cards', async ({ page }) => {
   await page.waitForTimeout(500)
   await expect(page.getByText('John 3:16')).toBeVisible()
 
-  await searchInput.fill('')
-  await page.waitForTimeout(500)
+  // Close the search overlay via the back button
+  await page.locator('header button').first().click()
+  await page.waitForTimeout(300)
   // Collection cards should be visible again
   await expect(page.getByText('All Verses')).toBeVisible()
 })

@@ -1,4 +1,96 @@
 <template>
+  <!-- Search Screen -->
+  <div
+    v-if="searchActive"
+    data-testid="search-screen"
+    class="fixed inset-0 bg-base z-50 flex flex-col"
+    style="height: 100dvh;"
+  >
+    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
+      <div class="h-16 flex items-center px-4 gap-2">
+        <button
+          @click="clearSearch"
+          class="p-2 -ml-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div class="flex-1 relative">
+          <input
+            ref="searchInputRef"
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search verses..."
+            class="w-full py-2 pl-10 border border-border-input rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted text-base"
+            :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
+            @keydown.escape="clearSearch"
+          />
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button
+            v-if="searchQuery.trim()"
+            @click="searchQuery = ''"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-secondary rounded-full transition-colors"
+            title="Clear text"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <div class="flex-1 overflow-y-auto px-4 pt-3 pb-8">
+      <div v-if="searchQuery.trim()" class="space-y-3">
+        <div
+          v-for="result in searchResults"
+          :key="result.item.id"
+          @click="handleVerseClick(result.item); clearSearch()"
+          class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
+        >
+          <div class="flex flex-col gap-2">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
+              <div class="flex items-center gap-0.5 shrink-0">
+                <button
+                  @click.stop="startEditVerse(result.item)"
+                  class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                  title="Edit verse"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  @click.stop="copyVerse(result.item)"
+                  class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
+                  title="Share verse"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
+          </div>
+        </div>
+        <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
+          <p class="text-text-muted text-lg">No results found</p>
+          <p class="text-text-muted text-sm mt-2">Try different search terms</p>
+        </div>
+      </div>
+      <div v-else class="flex flex-col items-center justify-center pt-16 text-text-muted">
+        <svg class="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <p class="text-sm">Search across all your verses</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
@@ -288,43 +380,6 @@
     <!-- Top App Bar -->
     <header class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-4">
-        <!-- Search expanded state -->
-        <template v-if="searchActive && currentView === 'collections' && !currentCollectionId">
-          <button
-            @click="clearSearch"
-            class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div class="flex-1 relative">
-            <input
-              ref="searchInputRef"
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search verses..."
-              class="w-full px-3 py-2 pl-10 border border-border-input rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted text-base"
-              @keydown.escape="clearSearch"
-            />
-            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <button
-            v-if="searchQuery.trim()"
-            @click="searchQuery = ''"
-            class="p-2 ml-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
-            title="Clear text"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </template>
-
-        <!-- Default header state -->
-        <template v-else>
         <button
           v-if="currentCollectionId"
           @click="viewAllVerses"
@@ -461,7 +516,6 @@
             </div>
           </div>
         </div>
-        </template>
       </div>
     </header>
 
@@ -538,49 +592,8 @@
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
 
-        <!-- Search Results (when searching) -->
-        <div v-if="searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
-          <div
-            v-for="result in searchResults"
-            :key="result.item.id"
-            @click="handleVerseClick(result.item)"
-            class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
-          >
-            <div class="flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-2">
-                <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
-                <div class="flex items-center gap-0.5 shrink-0">
-                  <button
-                    @click.stop="startEditVerse(result.item)"
-                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                    title="Edit verse"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    @click.stop="copyVerse(result.item)"
-                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                    title="Share verse"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
-            </div>
-          </div>
-          <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
-            <p class="text-text-muted text-lg">No results found</p>
-            <p class="text-text-muted text-sm mt-2">Try different search terms</p>
-          </div>
-        </div>
-
-        <!-- Collection Cards (when not searching) -->
-        <div v-else class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
+        <!-- Collection Cards -->
+        <div class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
@@ -805,49 +818,8 @@
       <!-- Collection View -->
       <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
 
-        <!-- Search Results (when searching from verse list) -->
-        <div v-if="!currentCollectionId && searchQuery.trim()" class="space-y-3 overflow-y-auto pt-3 pb-24" style="max-height: calc(100vh - 12rem);">
-          <div
-            v-for="result in searchResults"
-            :key="result.item.id"
-            @click="handleVerseClick(result.item)"
-            class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
-          >
-            <div class="flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-2">
-                <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
-                <div class="flex items-center gap-0.5 shrink-0">
-                  <button
-                    @click.stop="startEditVerse(result.item)"
-                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                    title="Edit verse"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    @click.stop="copyVerse(result.item)"
-                    class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                    title="Share verse"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
-            </div>
-          </div>
-          <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
-            <p class="text-text-muted text-lg">No results found</p>
-            <p class="text-text-muted text-sm mt-2">Try different search terms</p>
-          </div>
-        </div>
-
         <!-- Verse List -->
-        <div v-else class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
+        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
