@@ -52,6 +52,7 @@ test.skip('add verse with Bible import: mock API -> enter reference + version ->
 test('edit verse: search on Verses tab -> edit -> change content -> save', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
   await page.goto('/?view=collections')
+  await page.getByTitle('Search verses').click()
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
   await page.getByRole('button', { name: 'Edit verse' }).first().click()
@@ -68,6 +69,7 @@ test('copy verse: copy button triggers copy', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-write', 'clipboard-read'])
   await seedStorage(page, sampleVerses, [])
   await page.goto('/?view=collections')
+  await page.getByTitle('Search verses').click()
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
   await page.getByRole('button', { name: 'Share verse' }).first().click()
@@ -77,6 +79,7 @@ test('copy verse: copy button triggers copy', async ({ page }) => {
 test('search: type in search bar on Verses tab -> results filtered', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
   await page.goto('/?view=collections')
+  await page.getByTitle('Search verses').click()
   await page.getByPlaceholder(/Search verses/i).fill('Psalm')
   await page.waitForTimeout(500)
   await expect(page.getByText('Psalm 23:1')).toBeVisible()
@@ -89,6 +92,7 @@ test('search: clearing search restores collection cards', async ({ page }) => {
   ]
   await seedStorage(page, sampleVerses, collections)
   await page.goto('/?view=collections')
+  await page.getByTitle('Search verses').click()
   const searchInput = page.getByPlaceholder(/Search verses/i)
 
   await searchInput.fill('John')
