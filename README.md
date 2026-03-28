@@ -19,7 +19,7 @@ Uses a modified SM-2 algorithm to schedule reviews at optimal intervals. Reviews
 The app guides you through three memorization stages, each requiring 90% accuracy to advance:
 
 - **Learn**: All words visible but muted. Type first letters to reveal and begin learning.
-- **Memorize**: Every other word hidden. Type first letters of hidden words to practice recall.
+- **Memorize**: Every other word hidden. Type first letters of all words in sequence; the visible words act as anchors while the hidden ones test recall.
 - **Master**: All words hidden. Type first letters to reveal the complete verse from memory.
 
 Once a verse is mastered, it enters the spaced repetition review cycle.
@@ -30,14 +30,13 @@ Instead of typing complete words, you type just the first letter of each word to
 
 ## Privacy & Data Storage
 
-**Your data stays on your device.** All verses, progress, and review history are stored locally in your browser's storage. No cloud services or third-party servers are involved.
+**Your data stays on your device.** All verses, progress, and review history are stored locally in your browser's storage.
 
 You can:
 - **Backup manually** to a JSON file that you control
-- **Sync with your own WebDAV server** (like Nextcloud) for multi-device access
+- **Sync with Google Drive** for multi-device access (uses your own Google account; no third-party servers involved)
+- **Sync with your own WebDAV server** (like Nextcloud) for self-hosted multi-device access
 - **Import from CSV** to migrate from other memorization apps
-
-
 
 ## How to import from biblememory.com
 
@@ -101,10 +100,16 @@ The app runs as three Docker containers: the main app (Nginx serving static file
 ```bash
 git clone https://github.com/timunrau/rum1n8.git
 cd rum1n8
+cp .env.example .env
+```
+
+If you want Google Drive sync, fill in your OAuth credentials in `.env` (see `.env.example` for instructions). Without them the app still works, but Google Drive sync will be unavailable.
+
+```bash
 docker compose up -d
 ```
 
-That's it. The app is available at `http://localhost:1234`.
+The app is available at `http://localhost:1234`.
 
 ### Automatic Updates
 
@@ -134,33 +139,31 @@ docker compose down                     # Stop everything
 - Vite
 - PWA Plugin
 
-## WebDAV Sync Setup
+## Sync Setup
 
-This app supports two-way sync with WebDAV servers (like Nextcloud).
+The app supports two-way sync via Google Drive or a self-hosted WebDAV server.
 
-### For Nextcloud (Development)
+### Google Drive
 
-Due to CORS restrictions, you'll need to use a proxy server for development:
+Google Drive sync uses OAuth and the Google Drive REST API directly from the browser — no proxy or server-side component needed.
 
-1. **Start the proxy server** with your Nextcloud URL:
+1. Open **Settings → Sync** and select **Google Drive**.
+2. Click **Connect** and sign in with your Google account.
+3. The app creates a `rum1n8` folder in your Google Drive containing `rum1n8-data.json`.
+
+### WebDAV (Nextcloud, etc.)
+
+**Development:** Due to CORS restrictions, use the included proxy:
+
+1. Start the proxy with your WebDAV URL:
    ```bash
    NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:proxy
    ```
-
-2. **Or run both the app and proxy together**:
+   Or run both the app and proxy together:
    ```bash
    NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:all
    ```
 
-3. **In the app settings**:
-   - Enter your Nextcloud URL (e.g., `https://your-nextcloud.com/remote.php/webdav`)
-   - Enter your username and password
-   - Check "Use CORS Proxy"
-   - The proxy URL should be `http://localhost:3001` (default)
+2. In the app settings, enter your WebDAV URL, username, and password; check **Use CORS Proxy** and set the proxy URL to `http://localhost:3001`.
 
-### For Production
-
-For production, you'll need to either:
-- Configure your WebDAV server to allow CORS requests
-- Use a server-side proxy
-- Deploy the app from the same origin as your WebDAV server
+**Production:** Either configure your WebDAV server to allow CORS, use a server-side proxy, or deploy the app from the same origin as your WebDAV server.
