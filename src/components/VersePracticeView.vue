@@ -4,8 +4,7 @@
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
       <div class="bg-surface sm:rounded-lg sm:shadow-xl p-4" :class="{ 'rounded-lg shadow-xl mb-4 sm:my-4': !compact }">
         <div
-          class="text-xl leading-relaxed text-text-primary font-serif min-h-[200px]"
-          :class="compact ? '' : 'min-h-[200px]'"
+          class="text-xl leading-relaxed text-text-primary font-serif"
           @click="focusInput"
         >
           <span
@@ -56,7 +55,7 @@
     </div>
 
     <!-- Mode buttons: Learn | Memorize | Master -->
-    <div class="my-2 flex-shrink-0">
+    <div v-if="!showTray" class="my-2 flex-shrink-0">
       <div class="flex items-center justify-center gap-2">
         <div
           v-for="(stage, index) in stages"
@@ -129,7 +128,8 @@ export default {
     getPartialWordText: { type: Function, required: true },
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
-    compact: { type: Boolean, default: false }
+    compact: { type: Boolean, default: false },
+    showTray: { type: Boolean, default: false }
   },
   emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode'],
   setup(props, { emit, expose }) {

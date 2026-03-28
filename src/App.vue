@@ -94,7 +94,7 @@
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
-    class="fixed inset-0 bg-base z-50 flex flex-col"
+    class="fixed inset-0 bg-surface z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
@@ -157,7 +157,7 @@
       </div>
     </header>
 
-    <div ref="memorizationScrollContainer" class="flex-1 overflow-y-auto max-w-4xl mx-auto w-full flex flex-col">
+    <div class="relative flex-1 min-h-0 flex flex-col">
       <VersePracticeView
         :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
         ref="memorizationPracticeRef"
@@ -173,68 +173,37 @@
         :get-remaining-part-text="getRemainingPartText"
         input-id="letter-input-memorize"
         :compact="false"
+        :show-tray="allWordsRevealed && !!memorizationMode"
         @input="checkLetter"
         @keydown="handleKeyPress"
         @switch-mode="switchToMemorizationMode"
       />
-
+      <Transition name="result-overlay">
+        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
+      </Transition>
     </div>
 
   <!-- Completion Tray for Memorization -->
   <Transition name="result-tray">
-    <div
+    <CompletionTray
       v-if="allWordsRevealed && memorizationMode"
-      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl border-t border-border-default p-5 pb-8" style="box-shadow: 0 -8px 24px -4px rgba(0,0,0,0.12), 0 -2px 8px -2px rgba(0,0,0,0.08);"
-    >
-      <div v-if="meetsAccuracyRequirement">
-        <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
-        <p class="text-status-success-text text-sm text-center mb-4">
-          <span v-if="memorizationMode === 'learn'">You've learned this verse! Ready to memorize it?</span>
-          <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse! Ready to master it?</span>
-          <span v-else-if="memorizationMode === 'master'">You've mastered this verse! It's now in your spaced repetition system.</span>
-        </p>
-        <div class="flex justify-center">
-          <button
-            v-if="memorizationMode !== 'master'"
-            @click="advanceToNextMode"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
-          </button>
-          <button
-            v-else
-            @click="exitMemorization"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Done
-          </button>
-        </div>
-      </div>
-      <div v-else>
-        <p class="text-xl font-bold text-status-orange-text mb-1 text-center">Keep practicing!</p>
-        <p class="text-status-orange-text text-sm text-center mb-1">
-          Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to advance.
-        </p>
-        <p class="text-xs text-text-secondary text-center mb-4">
-          Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
-        </p>
-        <div class="flex justify-center">
-          <button
-            @click="retryMemorization"
-            class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    </div>
+      context="memorization"
+      :meets-accuracy-requirement="meetsAccuracyRequirement"
+      :accuracy="accuracy"
+      :review-mistakes="reviewMistakes"
+      :review-words-length="reviewWords.length"
+      :memorization-mode="memorizationMode"
+      @advance="advanceToNextMode"
+      @exit="exitMemorization"
+      @retry="retryMemorization"
+    />
   </Transition>
   </div>
 
   <!-- Review Screen -->
   <div
     v-if="reviewingVerse"
-    class="fixed inset-0 bg-base z-50 flex flex-col"
+    class="fixed inset-0 bg-surface z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
@@ -307,71 +276,45 @@
       </div>
     </header>
 
-    <VersePracticeView
-      :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
-      ref="reviewPracticeRef"
-      :verse="reviewingVerse"
-      :memorization-mode="memorizationMode"
-      :review-words="reviewWords"
-      context="review"
-      v-model:typed-letter="typedLetter"
-      :get-memorization-status="getMemorizationStatus"
-      :can-switch-to-mode="canSwitchToModeForReview"
-      :is-partially-typed="isPartiallyTyped"
-      :get-partial-word-text="getPartialWordText"
-      :get-remaining-part-text="getRemainingPartText"
-      input-id="letter-input-review"
-      :compact="true"
-      @input="checkLetter"
-      @keydown="handleKeyPress"
-      @switch-mode="switchReviewMode"
-    />
+    <div class="relative flex-1 min-h-0 flex flex-col">
+      <VersePracticeView
+        :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
+        ref="reviewPracticeRef"
+        :verse="reviewingVerse"
+        :memorization-mode="memorizationMode"
+        :review-words="reviewWords"
+        context="review"
+        v-model:typed-letter="typedLetter"
+        :get-memorization-status="getMemorizationStatus"
+        :can-switch-to-mode="canSwitchToModeForReview"
+        :is-partially-typed="isPartiallyTyped"
+        :get-partial-word-text="getPartialWordText"
+        :get-remaining-part-text="getRemainingPartText"
+        input-id="letter-input-review"
+        :compact="true"
+        :show-tray="allWordsRevealed && !!reviewingVerse"
+        @input="checkLetter"
+        @keydown="handleKeyPress"
+        @switch-mode="switchReviewMode"
+      />
+      <Transition name="result-overlay">
+        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
+      </Transition>
+    </div>
 
   <!-- Completion Tray for Review -->
   <Transition name="result-tray">
-    <div
+    <CompletionTray
       v-if="allWordsRevealed && reviewingVerse"
-      class="absolute bottom-0 left-0 right-0 z-50 bg-elevated rounded-t-3xl border-t border-border-default p-5 pb-8" style="box-shadow: 0 -8px 24px -4px rgba(0,0,0,0.12), 0 -2px 8px -2px rgba(0,0,0,0.08);"
-    >
-      <div v-if="meetsAccuracyRequirement">
-        <p class="text-xl font-bold text-status-success-text mb-1 text-center">🎉 Great job!</p>
-        <p class="text-status-success-text text-sm text-center mb-4">
-          <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy!</template>
-          <template v-else>Practice complete (doesn't count as review).</template>
-        </p>
-        <div class="flex justify-center gap-3">
-          <button
-            @click="retryReview"
-            class="px-6 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Retry
-          </button>
-          <button
-            @click="nextVerse"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Next Verse
-          </button>
-        </div>
-      </div>
-      <div v-else>
-        <p class="text-xl font-bold text-status-orange-text mb-1 text-center">Keep practicing!</p>
-        <p class="text-status-orange-text text-sm text-center mb-1">
-          Your accuracy is {{ accuracy.toFixed(1) }}%. You need 90% accuracy to count this as reviewed.
-        </p>
-        <p class="text-xs text-text-secondary text-center mb-4">
-          Mistakes: {{ reviewMistakes }} / {{ reviewWords.length }} words
-        </p>
-        <div class="flex justify-center">
-          <button
-            @click="retryReview"
-            class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    </div>
+      context="review"
+      :meets-accuracy-requirement="meetsAccuracyRequirement"
+      :accuracy="accuracy"
+      :review-mistakes="reviewMistakes"
+      :review-words-length="reviewWords.length"
+      :memorization-mode="memorizationMode"
+      @retry="retryReview"
+      @next-verse="nextVerse"
+    />
   </Transition>
   </div>
 
@@ -1659,6 +1602,7 @@ import {
 } from 'chart.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
+import CompletionTray from './components/CompletionTray.vue'
 import ModalSheet from './components/ModalSheet.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
@@ -1670,7 +1614,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, ModalSheet, CollectionPicker, SyncSettingsModal, Line, Bar },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, SyncSettingsModal, Line, Bar },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -1700,7 +1644,6 @@ export default {
     const typedLetter = ref('')
     const reviewInput = ref(null)
     const reviewTextContainer = ref(null)
-    const memorizationScrollContainer = ref(null)
     const memorizationPracticeRef = ref(null)
     const reviewPracticeRef = ref(null)
     const reviewInstanceKey = ref(0) // Bump on retry so VersePracticeView remounts (keyboard shows on Android PWA)
@@ -5740,7 +5683,6 @@ export default {
       showIOSModal,
       triggerInstall,
       closeIOSModal,
-      memorizationScrollContainer,
       memorizationPracticeRef,
       memorizationInstanceKey,
       reviewPracticeRef,
@@ -5758,5 +5700,13 @@ export default {
 .result-tray-enter-from,
 .result-tray-leave-to {
   transform: translateY(100%);
+}
+.result-overlay-enter-active,
+.result-overlay-leave-active {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.result-overlay-enter-from,
+.result-overlay-leave-to {
+  opacity: 0;
 }
 </style>
