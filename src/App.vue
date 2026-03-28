@@ -1839,6 +1839,10 @@ export default {
       showSettings.value = false
       showImportCSV.value = false
       fabMenuOpen.value = false
+      if (state.view !== 'search') {
+        searchActive.value = false
+        searchQuery.value = ''
+      }
       
       // Restore collection view
       if (state.collectionId) {
@@ -3997,6 +4001,7 @@ export default {
 
     const openSearch = () => {
       searchActive.value = true
+      pushNavigationState({ view: 'search' })
       nextTick(() => {
         searchInputRef.value?.focus()
       })
