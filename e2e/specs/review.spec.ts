@@ -457,3 +457,138 @@ test('review: completing in Master mode advances spaced repetition', async ({ pa
   const now = new Date()
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
 })
+
+test('failed review (<90% accuracy) still updates SRS schedule', async ({ page }) => {
+  const verseId = 'failed-review-srs'
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Psalm 1:1',
+    // Wrong letter on first word reveals it incorrectly, then cascades to next word.
+    // With 2 words: typing 'x' fails word 1, then 'b' fails word 2 ('is' starts with 'i') -> 0% accuracy, grade 0
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 5,
+    lastReviewed: yesterday,
+    nextReviewDate: yesterday,
+    easeFactor: 2.5,
+    interval: 14,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  // Type wrong letter: 'x' fails "Blessed", 'b' then fails "is" (expects 'i') -> 2/2 mistakes = 0% = grade 0
+  await page.keyboard.type('x', { delay: 50 })
+  await page.keyboard.type('bi', { delay: 50 })
+
+  // Should show "Keep practicing" since accuracy < 90%
+  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+
+  // But SRS should have been updated (interval reduced due to poor performance)
+  await page.waitForTimeout(300)
+  const verses = (await getStoredVerses(page)) as Array<{
+    id: string
+    interval: number
+    easeFactor: number
+    reviewCount: number
+    lastGrade: number
+  }>
+  const verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  // Grade 0 (0% accuracy) reduces interval to minimum (1 day)
+  expect(verse!.interval).toBe(1)
+  // Ease factor should have decreased from 2.5
+  expect(verse!.easeFactor).toBeLessThan(2.5)
+  // Review count should have incremented
+  expect(verse!.reviewCount).toBe(6)
+  // Last grade should reflect the poor performance (grade 0 = complete failure)
+  expect(verse!.lastGrade).toBe(0)
+})
+
+test('retry after failed review does not overwrite SRS from first attempt', async ({ page }) => {
+  const verseId = 'retry-no-overwrite'
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const masteredVerse = {
+    id: verseId,
+    reference: 'Psalm 1:1',
+    content: 'Blessed is',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 5,
+    lastReviewed: yesterday,
+    nextReviewDate: yesterday,
+    easeFactor: 2.5,
+    interval: 14,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+  await page.goto('/?view=review-list')
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  // First attempt: 0% accuracy (x fails "Blessed", b fails "is") -> grade 0
+  await page.keyboard.type('x', { delay: 50 })
+  await page.keyboard.type('bi', { delay: 50 })
+
+  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+
+  // Capture SRS state after first (failed) attempt
+  await page.waitForTimeout(300)
+  let verses = (await getStoredVerses(page)) as Array<{
+    id: string
+    interval: number
+    easeFactor: number
+    reviewCount: number
+    lastGrade: number
+  }>
+  let verse = verses.find((v) => v.id === verseId)
+  const intervalAfterFail = verse!.interval
+  const efAfterFail = verse!.easeFactor
+  const gradeAfterFail = verse!.lastGrade
+  expect(gradeAfterFail).toBe(0) // Verify failed grade was saved
+
+  // Now retry and get 100% accuracy
+  const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
+  await tryAgainBtn.click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  // Should now show success
+  await expect(page.getByText(/Great job/i)).toBeVisible({ timeout: 5000 })
+
+  // Click Next Verse to trigger any save path
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await nextButton.click()
+  await page.waitForTimeout(300)
+
+  // Verify SRS was NOT overwritten by the successful retry
+  verses = (await getStoredVerses(page)) as Array<{
+    id: string
+    interval: number
+    easeFactor: number
+    reviewCount: number
+    lastGrade: number
+  }>
+  verse = verses.find((v) => v.id === verseId)
+  expect(verse).toBeDefined()
+  expect(verse!.interval).toBe(intervalAfterFail)
+  expect(verse!.easeFactor).toBe(efAfterFail)
+  expect(verse!.lastGrade).toBe(gradeAfterFail)
+  // reviewCount should still be 6 (only incremented once)
+  expect(verse!.reviewCount).toBe(6)
+})

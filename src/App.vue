@@ -312,6 +312,7 @@
       :review-mistakes="reviewMistakes"
       :review-words-length="reviewWords.length"
       :memorization-mode="memorizationMode"
+      :next-review-label="reviewingVerseNextReviewLabel"
       @retry="retryReview"
       @next-verse="nextVerse"
     />
@@ -1587,6 +1588,7 @@ import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
 import { countVersesInReference } from './utils/verse-count.js'
+import { calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -1650,6 +1652,8 @@ export default {
     const memorizationInstanceKey = ref(0)
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
+    const firstAttemptGrade = ref(null) // Grade from first completed attempt (drives SRS regardless of accuracy)
+    const firstAttemptMistakes = ref(null) // Mistakes from first completed attempt
     const syncing = ref(false)
     const syncSuccess = ref(false)
     const syncError = ref(null)
@@ -1825,16 +1829,17 @@ export default {
         }
       } else {
         // Exit memorization/review if we're going back
-        // Save review before exiting if it was completed successfully
-        if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
+        // Save review before exiting if it was completed (fallback — watcher usually handles this)
+        if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
           const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
           if (verse) {
             const totalWords = reviewWords.value.length
-            const grade = calculateGrade(totalWords, reviewMistakes.value)
-            
+            const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
+            const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
+
             // Check if verse was already reviewed today
             const wasAlreadyReviewedToday = wasReviewedToday(verse)
-            
+
             // Only advance the spaced repetition schedule on the first review of the day
             if (!wasAlreadyReviewedToday) {
               const reviewData = calculateNextReviewDate(verse, grade, true)
@@ -1845,9 +1850,10 @@ export default {
             }
 
             // Always update tracking fields regardless of whether it was reviewed today
+            const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
             verse.lastReviewed = new Date().toISOString()
             verse.lastGrade = grade
-            verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
+            verse.lastAccuracy = firstAttemptAccuracy
             verse.lastModified = new Date().toISOString()
 
             // Track review history
@@ -1855,8 +1861,8 @@ export default {
             verse.reviewHistory.push({
               date: new Date().toISOString(),
               grade: grade,
-              accuracy: parseFloat(verse.lastAccuracy),
-              mistakes: reviewMistakes.value
+              accuracy: parseFloat(firstAttemptAccuracy),
+              mistakes: mistakes
             })
 
             currentReviewSaved.value = true
@@ -1934,6 +1940,58 @@ export default {
     // Check if accuracy meets the 90% requirement
     const meetsAccuracyRequirement = computed(() => {
       return accuracy.value >= 90
+    })
+
+    const reviewingVerseNextReviewLabel = computed(() => {
+      if (!reviewingVerse.value) return null
+      const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
+      if (!verse) return null
+      return getTimeUntilReview(verse)
+    })
+
+    // When a review attempt completes (all words revealed) for the first time,
+    // capture the grade and save SRS immediately — even if accuracy is below 90%.
+    // The user must still retry to reach 90% to proceed, but the SRS schedule
+    // reflects the honest first-attempt performance, not a polished retry.
+    watch(allWordsRevealed, (revealed) => {
+      if (!revealed || !reviewingVerse.value || memorizationMode.value !== 'master') return
+      if (firstAttemptGrade.value !== null) return // Already captured
+
+      const totalWords = reviewWords.value.length
+      const grade = calculateGrade(totalWords, reviewMistakes.value)
+      firstAttemptGrade.value = grade
+      firstAttemptMistakes.value = reviewMistakes.value
+
+      // Save SRS immediately from first attempt
+      const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
+      if (!verse) return
+
+      const wasAlreadyReviewedToday = wasReviewedToday(verse)
+
+      if (!wasAlreadyReviewedToday) {
+        const reviewData = calculateNextReviewDate(verse, grade, true)
+        verse.reviewCount = (verse.reviewCount || 0) + 1
+        verse.nextReviewDate = reviewData.nextReviewDate
+        verse.easeFactor = reviewData.easeFactor
+        verse.interval = reviewData.interval
+      }
+
+      const firstAttemptAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
+      verse.lastReviewed = new Date().toISOString()
+      verse.lastGrade = grade
+      verse.lastAccuracy = firstAttemptAccuracy
+      verse.lastModified = new Date().toISOString()
+
+      if (!verse.reviewHistory) verse.reviewHistory = []
+      verse.reviewHistory.push({
+        date: new Date().toISOString(),
+        grade: grade,
+        accuracy: parseFloat(firstAttemptAccuracy),
+        mistakes: reviewMistakes.value
+      })
+
+      currentReviewSaved.value = true
+      saveVerses()
     })
 
     // Count verses due for review
@@ -2786,99 +2844,8 @@ export default {
       }
     }
 
-    // Calculate grade (0-5) based on accuracy
-    // Grade 5 = perfect, 4 = excellent, 3 = good, 2 = hard, 1 = again, 0 = complete failure
-    const calculateGrade = (totalWords, mistakes) => {
-      if (totalWords === 0) return 0
-      
-      const accuracy = (totalWords - mistakes) / totalWords
-      
-      if (accuracy >= 1.0) return 5 // Perfect
-      if (accuracy >= 0.9) return 4 // Excellent (90-99%)
-      if (accuracy >= 0.7) return 3 // Good (70-89%)
-      if (accuracy >= 0.5) return 2 // Hard (50-69%)
-      if (accuracy >= 0.3) return 1 // Again (30-49%)
-      return 0 // Complete failure (<30%)
-    }
-
-    // Update ease factor based on grade (SM-2 algorithm)
-    const updateEaseFactor = (currentEF, grade) => {
-      // EF starts at 2.5, adjusts based on performance
-      // Formula: EF' = EF + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
-      let newEF = currentEF + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
-      
-      // Minimum ease factor is 1.3
-      if (newEF < 1.3) newEF = 1.3
-      
-      return newEF
-    }
-
-    // Check if verse was reviewed today
-    const wasReviewedToday = (verse) => {
-      if (!verse.lastReviewed) return false
-      const lastReviewed = new Date(verse.lastReviewed)
-      const now = new Date()
-      return lastReviewed.toDateString() === now.toDateString()
-    }
-
-    // Calculate next review date using SM-2-inspired algorithm with shorter intervals
-    const calculateNextReviewDate = (verse, grade, isNewReview = false) => {
-      const now = new Date()
-      let interval = 0
-      let newEF = verse.easeFactor || 2.5
-      
-      // If reviewed today (and this is NOT a new review), don't advance the interval - keep the same next review date
-      // When isNewReview is true, we're actively reviewing now, so always calculate a new date
-      if (!isNewReview && wasReviewedToday(verse) && verse.nextReviewDate) {
-        return {
-          nextReviewDate: verse.nextReviewDate,
-          easeFactor: newEF,
-          interval: verse.interval || 0
-        }
-      }
-      
-      // Update ease factor based on grade
-      newEF = updateEaseFactor(newEF, grade)
-      
-      // If grade < 3 (not good enough), reset to learning phase
-      if (grade < 3) {
-        // Learning phase: very short intervals (minutes/hours)
-        const learningSteps = [10, 30, 60, 120] // minutes
-        const stepIndex = Math.min(verse.reviewCount || 0, learningSteps.length - 1)
-        interval = learningSteps[stepIndex] / (24 * 60) // Convert minutes to days
-        // Reset ease factor slightly but don't go below 1.3
-        newEF = Math.max(1.3, newEF * 0.8)
-      } else {
-        // Graduated phase: use ease factor to calculate interval
-        // When verse already has an established interval (>4 days), use it—don't reset based on
-        // reviewCount. This handles imported/synced verses where reviewCount and interval can be out of sync.
-        const previousInterval = verse.interval || 0
-        const hasEstablishedInterval = previousInterval > 4
-
-        if (hasEstablishedInterval) {
-          // Subsequent reviews: previous interval * ease factor (don't reset)
-          interval = previousInterval * newEF
-          if (interval > 90) interval = 90
-        } else if (verse.reviewCount === 0) {
-          interval = 1
-        } else if (verse.reviewCount === 1) {
-          interval = 1
-        } else if (verse.reviewCount === 2) {
-          interval = 2
-        } else if (verse.reviewCount === 3) {
-          interval = 3
-        } else if (verse.reviewCount === 4) {
-          interval = 4
-        } else {
-          interval = (previousInterval || 1) * newEF
-          if (interval > 90) interval = 90
-        }
-      }
-      
-      const nextDate = new Date(now)
-      nextDate.setDate(nextDate.getDate() + interval)
-      return { nextReviewDate: nextDate.toISOString(), easeFactor: newEF, interval }
-    }
+    // SRS functions (calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate)
+    // are imported from ./srs.js
 
     // Check if a verse is due for review (only for mastered verses)
     const isDueForReview = (verse) => {
@@ -4199,16 +4166,18 @@ export default {
       }
       
       // IMPORTANT: Before starting a new review, ensure any previous review was saved (only counts when in master mode)
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
-        console.log('[startReview] Saving previous review before starting new one')
+      // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
+      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+        console.log('[startReview] Saving previous review before starting new one (fallback)')
         const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
         if (prevVerse) {
           const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
+          const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
+
           // Check if verse was already reviewed today
           const wasAlreadyReviewedToday = wasReviewedToday(prevVerse)
-          
+
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
             const reviewData = calculateNextReviewDate(prevVerse, grade, true)
@@ -4217,21 +4186,22 @@ export default {
             prevVerse.easeFactor = reviewData.easeFactor
             prevVerse.interval = reviewData.interval
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
+          const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
           prevVerse.lastReviewed = new Date().toISOString()
           prevVerse.lastGrade = grade
-          prevVerse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
+          prevVerse.lastAccuracy = firstAttemptAccuracy
           prevVerse.lastModified = new Date().toISOString()
-          
+
           if (!prevVerse.reviewHistory) prevVerse.reviewHistory = []
           prevVerse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
-            accuracy: parseFloat(prevVerse.lastAccuracy),
-            mistakes: reviewMistakes.value
+            accuracy: parseFloat(firstAttemptAccuracy),
+            mistakes: mistakes
           })
-          
+
           currentReviewSaved.value = true
           saveVerses()
           console.log('[startReview] Previous review saved', { lastReviewed: prevVerse.lastReviewed })
@@ -4242,6 +4212,8 @@ export default {
       reviewInstanceKey.value = 0 // Fresh instance so key is verseId-0 (retry bumps this to force remount)
       reviewMistakes.value = 0 // Reset mistake counter
       currentReviewSaved.value = false // Reset saved flag for new review
+      firstAttemptGrade.value = null // Reset first-attempt tracking for new review
+      firstAttemptMistakes.value = null
       
       // Store the source list and state for navigation (only if not already set, to preserve it during sequential navigation)
       const isSequentialNavigation = !!reviewSourceList.value
@@ -4533,17 +4505,18 @@ export default {
           lastReviewedBefore: verse?.lastReviewed
         })
         
-        if (verse && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
-          console.log('[nextVerse] Entering save block')
-          
+        if (verse && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+          console.log('[nextVerse] Entering save block (fallback)')
+
           const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
+          const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
+
           // Check if verse was already reviewed today
           const wasAlreadyReviewedToday = wasReviewedToday(verse)
-          
+
           const newLastReviewed = new Date().toISOString()
-          
+
           console.log('[nextVerse] Before update', {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
@@ -4552,7 +4525,7 @@ export default {
             easeFactor: verse.easeFactor,
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
-          
+
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
             const reviewData = calculateNextReviewDate(verse, grade, true)
@@ -4561,20 +4534,21 @@ export default {
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
+          const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
           verse.lastReviewed = newLastReviewed
           verse.lastGrade = grade
-          verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-          verse.lastModified = new Date().toISOString() // Track when verse was last modified
-          
+          verse.lastAccuracy = firstAttemptAccuracy
+          verse.lastModified = new Date().toISOString()
+
           // Track review history
           if (!verse.reviewHistory) verse.reviewHistory = []
           verse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
-            accuracy: parseFloat(verse.lastAccuracy),
-            mistakes: reviewMistakes.value
+            accuracy: parseFloat(firstAttemptAccuracy),
+            mistakes: mistakes
           })
           
           console.log('[nextVerse] After update', {
@@ -4674,23 +4648,25 @@ export default {
       })
       
       // Only count as review (update spaced repetition) when in master mode
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && meetsAccuracyRequirement.value && memorizationMode.value === 'master') {
+      // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
+      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
         const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
-        console.log('[exitReview] Saving review', {
+        console.log('[exitReview] Saving review (fallback)', {
           found: !!verse,
           verseId: verse?.id,
           lastReviewedBefore: verse?.lastReviewed
         })
-        
+
         if (verse) {
           const totalWords = reviewWords.value.length
-          const grade = calculateGrade(totalWords, reviewMistakes.value)
-          
+          const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
+          const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
+
           // Check if verse was already reviewed today
           const wasAlreadyReviewedToday = wasReviewedToday(verse)
-          
+
           const newLastReviewed = new Date().toISOString()
-          
+
           console.log('[exitReview] Before update', {
             reviewCount: verse.reviewCount,
             lastReviewed: verse.lastReviewed,
@@ -4698,7 +4674,7 @@ export default {
             interval: verse.interval,
             wasAlreadyReviewedToday: wasAlreadyReviewedToday
           })
-          
+
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
             const reviewData = calculateNextReviewDate(verse, grade, true)
@@ -4707,20 +4683,21 @@ export default {
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
           }
-          
+
           // Always update tracking fields regardless of whether it was reviewed today
+          const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
           verse.lastReviewed = newLastReviewed
           verse.lastGrade = grade
-          verse.lastAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
-          verse.lastModified = new Date().toISOString() // Track when verse was last modified
-          
+          verse.lastAccuracy = firstAttemptAccuracy
+          verse.lastModified = new Date().toISOString()
+
           // Track review history
           if (!verse.reviewHistory) verse.reviewHistory = []
           verse.reviewHistory.push({
             date: new Date().toISOString(),
             grade: grade,
-            accuracy: parseFloat(verse.lastAccuracy),
-            mistakes: reviewMistakes.value
+            accuracy: parseFloat(firstAttemptAccuracy),
+            mistakes: mistakes
           })
           
           console.log('[exitReview] After update', {
@@ -5582,6 +5559,7 @@ export default {
       isPartiallyTyped,
       accuracy,
       meetsAccuracyRequirement,
+      reviewingVerseNextReviewLabel,
       collections,
       currentCollectionId,
       showCollectionForm,
