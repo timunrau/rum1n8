@@ -5,13 +5,9 @@
     <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-    <style>
-      @media (prefers-color-scheme: dark) {
-        html, body { background-color: #000000; }
-      }
-    </style>
+    <meta name="theme-color" content="#ffffff" />
+    <style>@media(prefers-color-scheme:dark){html,body{background:#000}}</style>
+    <script>if(window.matchMedia('(prefers-color-scheme:dark)').matches)document.querySelector('meta[name="theme-color"]').content='#000000'</script>
     <meta name="description" content="A PWA for memorizing Bible verses" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

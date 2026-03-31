@@ -20,7 +20,7 @@ export default defineConfig({
         name: 'rum1n8',
         short_name: 'rum1n8',
         description: 'A PWA for memorizing Bible verses',
-        theme_color: '#000000',
+        theme_color: '#ffffff',
         background_color: '#1a1a1a',
         display: 'standalone',
         orientation: 'portrait',
