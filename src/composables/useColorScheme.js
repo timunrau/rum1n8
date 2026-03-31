@@ -14,10 +14,13 @@ export function useColorScheme() {
     } else {
       document.documentElement.classList.remove('dark')
     }
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) {
-      meta.setAttribute('content', dark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR)
-    }
+    const lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]')
+    const darkMeta = document.querySelector('meta[name="theme-color"][media*="dark"]')
+    if (lightMeta) lightMeta.setAttribute('content', LIGHT_THEME_COLOR)
+    if (darkMeta) darkMeta.setAttribute('content', DARK_THEME_COLOR)
+    // Fallback for single meta tag
+    const singleMeta = document.querySelector('meta[name="theme-color"]:not([media])')
+    if (singleMeta) singleMeta.setAttribute('content', dark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR)
   }
 
   function onChange(e) {
