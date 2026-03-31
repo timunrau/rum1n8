@@ -1650,6 +1650,8 @@ export default {
     const reviewPracticeRef = ref(null)
     const reviewInstanceKey = ref(0) // Bump on retry so VersePracticeView remounts (keyboard shows on Android PWA)
     const memorizationInstanceKey = ref(0)
+    const memorizeRetryCount = ref(0) // Alternates which words are hidden on each retry in memorize mode
+    const reviewMemorizeRetryCount = ref(0) // Same for review mode
     const reviewMistakes = ref(0) // Track mistakes during review
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const firstAttemptGrade = ref(null) // Grade from first completed attempt (drives SRS regardless of accuracy)
@@ -4028,6 +4030,7 @@ export default {
       memorizingVerse.value = verse
       memorizationMode.value = mode
       reviewMistakes.value = 0
+      if (mode === 'memorize') memorizeRetryCount.value += 1 // Alternate pattern each time
 
       // Track whether we're already in a session before potentially setting the source state
       const alreadyInSession = !!memorizationSourceState.value
@@ -4070,7 +4073,7 @@ export default {
           visible = true
           revealed = false
         } else if (mode === 'memorize') {
-          visible = index % 2 === 0
+          visible = (index + memorizeRetryCount.value) % 2 === 0
           revealed = false
         } else if (mode === 'master') {
           visible = false
@@ -4119,6 +4122,7 @@ export default {
     // Switch mode while on review screen (rebuild words, reset state)
     const switchReviewMode = (mode) => {
       if (!reviewingVerse.value) return
+      if (mode === 'memorize') reviewMemorizeRetryCount.value += 1
       const verse = reviewingVerse.value
       const wordEntries = getVerseWords(verse.content)
       reviewWords.value = wordEntries.map((entry, index) => {
@@ -4130,7 +4134,7 @@ export default {
         if (mode === 'learn') {
           visible = true
         } else if (mode === 'memorize') {
-          visible = index % 2 === 0
+          visible = (index + reviewMemorizeRetryCount.value) % 2 === 0
         }
         return {
           text: word,
@@ -4437,6 +4441,7 @@ export default {
         memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows
         const verse = memorizingVerse.value
         const mode = memorizationMode.value
+        if (mode === 'memorize') memorizeRetryCount.value += 1
         const wordEntries = getVerseWords(verse.content)
         reviewWords.value = wordEntries.map((entry, index) => {
           const word = entry.text
@@ -4447,7 +4452,7 @@ export default {
           if (mode === 'learn') {
             visible = true
           } else if (mode === 'memorize') {
-            visible = index % 2 === 0
+            visible = (index + memorizeRetryCount.value) % 2 === 0
           }
           return {
             text: word,
