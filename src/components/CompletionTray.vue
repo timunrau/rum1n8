@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative z-10 flex-shrink-0 bg-surface rounded-t-3xl border-t border-border-default p-5 pb-8"
+    class="relative z-10 flex-shrink-0 bg-surface dark:bg-black rounded-t-3xl border-t border-border-default p-5 pb-8"
     style="box-shadow: 0 -8px 24px -4px rgba(0,0,0,0.12), 0 -2px 8px -2px rgba(0,0,0,0.08);"
   >
     <div v-if="meetsAccuracyRequirement">

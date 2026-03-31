@@ -3,6 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
+    strictPort: !!process.env.PORT,
+    host: true,
+  },
   test: {
     exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', '.claude/**'],
   },

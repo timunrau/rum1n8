@@ -94,7 +94,7 @@
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
-    class="fixed inset-0 bg-surface z-50 flex flex-col"
+    class="fixed inset-0 bg-surface dark:bg-black z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
@@ -203,7 +203,7 @@
   <!-- Review Screen -->
   <div
     v-if="reviewingVerse"
-    class="fixed inset-0 bg-surface z-50 flex flex-col"
+    class="fixed inset-0 bg-surface dark:bg-black z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
