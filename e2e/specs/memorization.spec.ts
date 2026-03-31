@@ -202,6 +202,111 @@ test('memorize mode: verse with dash treats parts as separate words', async ({ p
   await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
 })
 
+test('memorize mode: alternates hidden words on initial entry', async ({ page }) => {
+  // 4-word verse: indices 0,1,2,3 = "One","Two","Three","Four"
+  // First entry: count=1 → (index+1)%2===0 → odd indices (1,3) visible; even indices (0,2) hidden
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'alt-memo-1',
+      reference: 'Alt 1:1',
+      content: 'One Two Three Four',
+      memorizationStatus: 'learned',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Alt 1:1').first().click()
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  // Even indices (0,2) should be hidden (text-transparent span present)
+  await expect(page.locator('#practice-word-0 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-2 .text-transparent')).toBeAttached()
+  // Odd indices (1,3) should be visible (no text-transparent span)
+  await expect(page.locator('#practice-word-1 .text-transparent')).not.toBeAttached()
+  await expect(page.locator('#practice-word-3 .text-transparent')).not.toBeAttached()
+})
+
+test('memorize mode: pressing Memorize button again flips hidden words', async ({ page }) => {
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'alt-memo-2',
+      reference: 'Alt 2:1',
+      content: 'One Two Three Four',
+      memorizationStatus: 'learned',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Alt 2:1').first().click()
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  // First entry: even indices hidden, odd visible
+  await expect(page.locator('#practice-word-0 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-1 .text-transparent')).not.toBeAttached()
+
+  // Press Memorize button again: count increments → pattern flips
+  await page.getByText('Memorize').click()
+  await page.waitForTimeout(200)
+
+  // Now odd indices hidden, even visible
+  await expect(page.locator('#practice-word-0 .text-transparent')).not.toBeAttached()
+  await expect(page.locator('#practice-word-1 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-2 .text-transparent')).not.toBeAttached()
+  await expect(page.locator('#practice-word-3 .text-transparent')).toBeAttached()
+})
+
+test('memorize mode: retry flips hidden words', async ({ page }) => {
+  // Use a 2-word verse so we can complete it quickly and hit retry
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'alt-memo-3',
+      reference: 'Alt 3:1',
+      content: 'Alpha Beta',
+      memorizationStatus: 'learned',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await page.reload()
+  await page.goto('/?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Alt 3:1').first().click()
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  // First entry (count=1): index 0 hidden, index 1 visible
+  await expect(page.locator('#practice-word-0 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-1 .text-transparent')).not.toBeAttached()
+
+  // Trigger Try Again: type a wrong letter then correct letters (1 mistake / 2 words = 50%)
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('x', { delay: 50 }) // wrong
+  await page.keyboard.type('ab', { delay: 50 }) // correct: 'a' for Alpha, 'b' for Beta
+
+  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  await page.getByRole('button', { name: 'Try Again' }).click()
+  await page.waitForTimeout(200)
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+
+  // After retry (count=2): pattern flips → index 0 visible, index 1 hidden
+  await expect(page.locator('#practice-word-0 .text-transparent')).not.toBeAttached()
+  await expect(page.locator('#practice-word-1 .text-transparent')).toBeAttached()
+})
+
 test('master mode: verse with dash treats parts as separate words', async ({ page }) => {
   const verseWithDash = [
     {
