@@ -4,8 +4,9 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--host"],
+      "runtimeArgs": ["run", "dev"],
       "port": 5173,
+      "autoPort": true,
       "env": {
         "NEXTCLOUD_URL": "https://nc.unrau.xyz/remote.php/dav/files/timu"
       }
