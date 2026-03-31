@@ -22,6 +22,12 @@
       <div class="flex justify-center gap-3">
         <template v-if="context === 'memorization'">
           <button
+            @click="$emit('retry')"
+            class="px-6 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-white rounded-xl font-semibold transition-colors duration-200"
+          >
+            Retry
+          </button>
+          <button
             v-if="memorizationMode !== 'master'"
             @click="$emit('advance')"
             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
