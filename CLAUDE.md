@@ -15,4 +15,6 @@ When changing or adding functionality, write adequate test coverage for the new 
 
 ## Git
 
-You have permission to run git commands (commit, push, pull, etc.) without asking for confirmation first.
+You have permission to run git commands (commit, pull, etc.) without asking for confirmation first.
+
+Do not push unless explicitly asked. When asked to push, do so without asking for confirmation.
