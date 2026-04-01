@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
     <!-- Scrollable verse text -->
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-      <div class="bg-surface dark:bg-black sm:rounded-lg sm:shadow-xl p-4" :class="{ 'rounded-lg shadow-xl mb-4 sm:my-4': !compact }">
+      <div class="bg-surface dark:bg-black p-4 my-2 sm:my-4">
         <div
           class="text-xl leading-relaxed text-text-primary font-serif"
           @click="focusInput"
@@ -128,7 +128,6 @@ export default {
     getPartialWordText: { type: Function, required: true },
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
-    compact: { type: Boolean, default: false },
     showTray: { type: Boolean, default: false }
   },
   emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode'],
