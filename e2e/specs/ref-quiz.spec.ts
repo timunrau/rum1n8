@@ -189,32 +189,16 @@ test('wrong answer highlights red and is disabled; must tap correct to advance',
   await expect(page.getByText('2 / 4')).toBeVisible({ timeout: 3000 })
 })
 
-test('Show full verse link expands snippet for long verses', async ({ page }) => {
+test('full verse content is always shown (no snippet truncation)', async ({ page }) => {
   await seedStorage(page, FOUR_VERSES, [])
   await page.reload()
   await page.getByTestId('nav-references').click()
   await page.getByRole('button', { name: /Start Quiz/i }).click()
 
-  // John 3:16 is longer than 12 words so "Show full verse" should appear on its question
-  // Navigate until we see the show full verse link
-  let showFullVerseVisible = false
-  for (let i = 0; i < 4; i++) {
-    const link = page.getByText('Show full verse')
-    if (await link.isVisible()) {
-      showFullVerseVisible = true
-      await link.click()
-      await expect(link).not.toBeVisible()
-      break
-    }
-    // Advance by tapping correct answer
-    const choices = page.locator('.space-y-3 button')
-    const allRefs = [VERSE_A.reference, VERSE_B.reference, VERSE_C.reference, VERSE_D.reference]
-    const choiceTexts = await choices.allTextContents()
-    const correctText = choiceTexts.find(t => allRefs.includes(t.trim()))!
-    await choices.filter({ hasText: correctText.trim() }).click()
-    await page.waitForTimeout(900)
-  }
-  expect(showFullVerseVisible).toBe(true)
+  // Full verse content should always be visible; no "Show full verse" link
+  await expect(page.getByText('Show full verse')).not.toBeVisible()
+  const snippet = page.getByTestId('ref-quiz-snippet')
+  await expect(snippet).toBeVisible()
 })
 
 test('completing all due questions shows completion screen', async ({ page }) => {

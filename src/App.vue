@@ -108,8 +108,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-text-primary flex-1">
-          {{ memorizingVerse.reference }}
+        <h1 class="text-xl font-semibold text-text-primary flex-1 flex items-baseline min-w-0">
+          <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Read Aloud / Stop Button -->
@@ -124,47 +124,6 @@
             </svg>
             <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
-            </svg>
-          </button>
-          <!-- Sync Button -->
-          <button
-            v-if="hasSyncConfigured"
-            @click="manualSync"
-            :disabled="syncing"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
-            :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync'"
-          >
-            <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin-reverse" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              style="transform-origin: center;"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
@@ -230,8 +189,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-text-primary flex-1">
-          {{ reviewingVerse.reference }}
+        <h1 class="text-xl font-semibold text-text-primary flex-1 flex items-baseline min-w-0">
+          <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
           <!-- Read Aloud / Stop Button -->
@@ -256,47 +215,6 @@
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-          </button>
-          <!-- Sync Button -->
-          <button
-            v-if="hasSyncConfigured"
-            @click="manualSync"
-            :disabled="syncing"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
-            :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync'"
-          >
-            <!-- Spinning sync icon -->
-            <svg 
-              v-if="syncing" 
-              class="w-6 h-6 animate-spin-reverse" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              style="transform-origin: center;"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <!-- Success checkmark -->
-            <svg 
-              v-else-if="syncSuccess" 
-              class="w-6 h-6 text-green-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <!-- Default sync icon -->
-            <svg 
-              v-else 
-              class="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
@@ -583,23 +501,18 @@
         </header>
 
         <!-- Quiz content -->
-        <div v-if="refQuizCurrentVerse" class="flex-1 flex flex-col p-6 overflow-y-auto">
-          <!-- Verse snippet -->
-          <div class="flex-1 flex flex-col justify-center mb-8">
-            <p data-testid="ref-quiz-snippet" class="text-xl leading-relaxed text-text-primary text-center italic">
-              "{{ refQuizShowFullVerse ? refQuizCurrentVerse.content : getVerseSnippet(refQuizCurrentVerse.content) }}"
-            </p>
-            <button
-              v-if="!refQuizShowFullVerse && refQuizCurrentVerse.content.split(/\s+/).length > 12"
-              @click="refQuizShowFullVerse = true"
-              class="mt-3 text-sm text-accent-primary text-center"
-            >
-              Show full verse
-            </button>
+        <div v-if="refQuizCurrentVerse" class="flex-1 flex flex-col overflow-hidden">
+          <!-- Verse content (scrollable) -->
+          <div class="flex-1 overflow-y-auto px-6 pt-6">
+            <div class="flex flex-col justify-center min-h-full pb-4">
+              <p data-testid="ref-quiz-snippet" class="text-xl leading-relaxed text-text-primary text-center italic">
+                "{{ refQuizCurrentVerse.content }}"
+              </p>
+            </div>
           </div>
 
-          <!-- Choices -->
-          <div class="space-y-3 pb-6">
+          <!-- Choices (always visible, never scrolls) -->
+          <div class="flex-shrink-0 space-y-3 px-6 pb-6 pt-3">
             <button
               v-for="choice in refQuizChoices"
               :key="choice"
@@ -4227,8 +4140,45 @@ export default {
       return 'Psalm 119:105' // fallback
     }
 
+    const REF_QUIZ_SESSION_KEY = 'rum1n8-refquiz-session'
+
+    const saveRefQuizSession = () => {
+      const today = new Date().toISOString().slice(0, 10)
+      const session = {
+        date: today,
+        queueIds: refQuizQueue.value.map(v => v.id),
+        index: refQuizIndex.value
+      }
+      localStorage.setItem(REF_QUIZ_SESSION_KEY, JSON.stringify(session))
+    }
+
+    const clearRefQuizSession = () => {
+      localStorage.removeItem(REF_QUIZ_SESSION_KEY)
+    }
+
     // Start reference quiz session
     const startRefQuiz = () => {
+      const today = new Date().toISOString().slice(0, 10)
+      const saved = (() => {
+        try { return JSON.parse(localStorage.getItem(REF_QUIZ_SESSION_KEY)) } catch { return null }
+      })()
+
+      // Restore saved session if it's from today and not yet completed
+      if (saved && saved.date === today && Array.isArray(saved.queueIds) && saved.index < saved.queueIds.length) {
+        const verseMap = Object.fromEntries(verses.value.map(v => [v.id, v]))
+        const restoredQueue = saved.queueIds.map(id => verseMap[id]).filter(Boolean)
+        const restoredIndex = Math.min(saved.index, restoredQueue.length)
+        if (restoredQueue.length > 0 && restoredIndex < restoredQueue.length) {
+          refQuizQueue.value = restoredQueue
+          refQuizIndex.value = restoredIndex
+          refQuizSessionCount.value = 0
+          refQuizActive.value = true
+          setupRefQuizQuestion()
+          pushNavigationState({ view: 'reference-quiz' })
+          return
+        }
+      }
+
       const now = new Date()
       // Sort eligible verses: due first (by refNextReviewDate ascending)
       const sorted = [...refQuizEligibleVerses.value].sort((a, b) => {
@@ -4314,8 +4264,10 @@ export default {
       refQuizIndex.value = nextIndex
       if (nextIndex >= refQuizQueue.value.length) {
         // All done — index is past end, refQuizCurrentVerse returns null → shows completion screen
+        clearRefQuizSession()
         return
       }
+      saveRefQuizSession()
       setupRefQuizQuestion()
     }
 
@@ -4324,6 +4276,10 @@ export default {
       if (refQuizAutoAdvanceTimer.value) {
         clearTimeout(refQuizAutoAdvanceTimer.value)
         refQuizAutoAdvanceTimer.value = null
+      }
+      // Save progress so we can resume later today if mid-session
+      if (refQuizIndex.value < refQuizQueue.value.length) {
+        saveRefQuizSession()
       }
       refQuizActive.value = false
     }
