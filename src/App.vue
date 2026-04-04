@@ -788,10 +788,10 @@
               </svg>
             </button>
             <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 justify-between">
+              <div class="flex items-center gap-2 justify-between">
                 <div class="flex flex-wrap items-center gap-2 min-w-0">
-                  <h3 class="text-lg font-semibold text-text-primary">
-                    {{ verse.reference }}
+                  <h3 class="text-lg font-semibold text-text-primary flex items-baseline min-w-0">
+                    <span class="truncate min-w-0">{{ splitReference(verse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(verse.reference).verseRef">&nbsp;{{ splitReference(verse.reference).verseRef }}</span>
                   </h3>
                   <span
                     v-if="verse.bibleVersion"
@@ -800,7 +800,7 @@
                     {{ verse.bibleVersion }}
                   </span>
                 </div>
-                  <div class="flex items-center">
+                  <div class="flex items-center shrink-0">
                     <span
                       v-if="verse.memorizationStatus !== 'mastered'"
                       :class="[
@@ -2910,6 +2910,11 @@ export default {
     }
 
     // Get time until review (or overdue) in a human-readable format
+    const splitReference = (reference) => {
+      const match = reference.match(/^(.*?)\s+(\d.*)$/)
+      return match ? { book: match[1], verseRef: match[2] } : { book: reference, verseRef: '' }
+    }
+
     const getTimeUntilReview = (verse) => {
       if (!verse.nextReviewDate) return 'Now'
       const now = new Date()
@@ -5547,6 +5552,7 @@ export default {
       isDueForReview,
       getDaysUntilReview,
       getTimeUntilReview,
+      splitReference,
       reviewMistakes,
       memorizingVerse,
       memorizationMode,
