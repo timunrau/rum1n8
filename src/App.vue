@@ -1994,6 +1994,15 @@ export default {
       saveVerses()
     })
 
+    // When completion tray appears, scroll verse content so end of verse is visible
+    watch(allWordsRevealed, (revealed) => {
+      if (!revealed) return
+      nextTick(() => {
+        const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
+        practiceRef?.scrollToEnd?.()
+      })
+    })
+
     // Count verses due for review
     const dueVersesCount = computed(() => {
       return verses.value.filter(v => isDueForReview(v)).length

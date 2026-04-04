@@ -185,10 +185,20 @@ export default {
       })
     })
 
+    function scrollToEnd() {
+      if (!scrollContainer.value) return
+      const words = scrollContainer.value.querySelectorAll('[id^="practice-word-"]')
+      const lastWord = words[words.length - 1]
+      if (lastWord) {
+        lastWord.scrollIntoView({ block: 'nearest' })
+      }
+    }
+
     expose({
       inputRef,
       scrollContainer,
-      focusInput
+      focusInput,
+      scrollToEnd
     })
 
     return {
