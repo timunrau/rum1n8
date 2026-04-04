@@ -112,6 +112,20 @@
           {{ memorizingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
+          <!-- Read Aloud / Stop Button -->
+          <button
+            @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse)"
+            class="p-2 rounded-full transition-colors"
+            :class="isSpeaking ? 'text-blue-600' : 'text-text-secondary active:bg-surface-active'"
+            :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
+          >
+            <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
+            </svg>
+          </button>
           <!-- Sync Button -->
           <button
             v-if="hasSyncConfigured"
@@ -220,6 +234,20 @@
           {{ reviewingVerse.reference }}
         </h1>
         <div class="flex items-center gap-1 ml-1">
+          <!-- Read Aloud / Stop Button -->
+          <button
+            @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse)"
+            class="p-2 rounded-full transition-colors"
+            :class="isSpeaking ? 'text-blue-600' : 'text-text-secondary active:bg-surface-active'"
+            :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
+          >
+            <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
+            </svg>
+          </button>
           <!-- Share Button -->
           <button
             @click="copyVerse(reviewingVerse)"
@@ -1660,6 +1688,7 @@ export default {
     const currentReviewSaved = ref(false) // Track if current review has been saved
     const firstAttemptGrade = ref(null) // Grade from first completed attempt (drives SRS regardless of accuracy)
     const firstAttemptMistakes = ref(null) // Mistakes from first completed attempt
+    const isSpeaking = ref(false)
     const syncing = ref(false)
     const syncSuccess = ref(false)
     const syncError = ref(null)
@@ -3970,6 +3999,22 @@ export default {
       return div.innerHTML
     }
 
+    const speakVerse = (verse) => {
+      window.speechSynthesis.cancel()
+      const verseObj = verse?.value || verse
+      if (!verseObj?.content || !verseObj?.reference) return
+      const utterance = new SpeechSynthesisUtterance(`${verseObj.reference}. ${verseObj.content}`)
+      utterance.onend = () => { isSpeaking.value = false }
+      utterance.onerror = () => { isSpeaking.value = false }
+      isSpeaking.value = true
+      window.speechSynthesis.speak(utterance)
+    }
+
+    const stopSpeaking = () => {
+      window.speechSynthesis.cancel()
+      isSpeaking.value = false
+    }
+
     // Copy verse to clipboard in the format: content\nreference
     const copyVerse = async (verse) => {
       // Handle Vue refs - if verse is a ref, get its value
@@ -4370,6 +4415,7 @@ export default {
 
     // Exit memorization mode
     const exitMemorization = () => {
+      stopSpeaking()
       // Update memorization status if all words were revealed and accuracy requirement is met
       if (memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
         const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
@@ -4661,6 +4707,7 @@ export default {
 
     // Exit review mode
     const exitReview = () => {
+      stopSpeaking()
       console.log('[exitReview] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
@@ -5633,6 +5680,9 @@ export default {
       yAxisLabels,
       dailyActivityScrollRef,
       copyVerse,
+      speakVerse,
+      stopSpeaking,
+      isSpeaking,
       copyToast,
       startEditVerse,
       saveEditedVerse,
