@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('open sync settings: Settings gear -> Sync', async ({ page }) => {
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-sync').click()
 
   await expect(page.getByTestId('modal-sync-settings')).toBeVisible()
@@ -19,7 +19,7 @@ test('open sync settings: Settings gear -> Sync', async ({ page }) => {
 test('fill URL, username, password -> Save -> settings persist (reopen modal, values present)', async ({
   page,
 }) => {
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-sync').click()
   await page.getByRole('button', { name: /^WebDAV$/i }).click()
 
@@ -30,7 +30,7 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 
   await expect(page.getByTestId('modal-sync-settings')).not.toBeVisible()
 
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-sync').click()
 
   await expect(page.getByLabel(/WebDAV Server URL/i)).toHaveValue(/test\.example\.com/)
@@ -40,7 +40,7 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 
 test('test connection: mock WebDAV -> Test -> success message', async ({ page }) => {
   await mockWebDAV(page)
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-sync').click()
   await page.getByRole('button', { name: /^WebDAV$/i }).click()
 

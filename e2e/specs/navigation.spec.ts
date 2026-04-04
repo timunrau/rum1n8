@@ -9,20 +9,18 @@ test.beforeEach(async ({ page }) => {
 
 test('app loads with default Collections view', async ({ page }) => {
   await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
-  await expect(page.locator('h1')).toContainText(/Verses|Collections|Review/)
+  await expect(page.getByTestId('search-bar')).toBeVisible()
 })
 
 test('bottom nav switches between Review, Collections, Stats', async ({ page }) => {
   await page.getByTestId('nav-review').click()
   await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
-  await expect(page.locator('h1')).toContainText('Review')
 
   await page.getByTestId('nav-collections').click()
   await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
 
   await page.getByTestId('nav-stats').click()
   await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
-  await expect(page.locator('h1')).toContainText('Stats')
 })
 
 test('URL updates when switching views', async ({ page }) => {

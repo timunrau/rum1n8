@@ -22,7 +22,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search verses..."
-            class="w-full py-2 pl-10 border border-border-input rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-overlay placeholder-text-muted text-base"
+            class="w-full py-2 pl-10 border border-border-default rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
             :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
             @keydown.escape="clearSearch"
           />
@@ -265,41 +265,66 @@
 
   <!-- Main Content -->
   <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-base">
-    <!-- Top App Bar -->
-    <header class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
-      <div class="h-16 flex items-center px-4">
+    <!-- Top App Bar (verses/collections screen only) -->
+    <header v-if="currentView === 'collections'" class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
+      <div class="h-16 flex items-center px-2">
+        <!-- Hamburger menu button (top-level only) -->
+        <button
+          v-if="!currentCollectionId"
+          @click="toggleDrawer"
+          data-testid="hamburger-button"
+          class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative flex-shrink-0"
+          title="Menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span
+            v-if="shouldShowBackupReminder"
+            class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"
+          ></span>
+        </button>
+        <!-- Back button (inside collection) -->
         <button
           v-if="currentCollectionId"
           @click="viewAllVerses"
-          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+          class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors flex-shrink-0"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-text-primary flex-1 ml-2" :class="{ 'mr-2': !currentCollectionId || currentCollectionId }">
-          {{ currentCollectionId ? getCollectionName(currentCollectionId) : (currentView === 'review-list' ? 'Review' : (currentView === 'stats' ? 'Stats' : 'Verses')) }}
+
+        <!-- Search bar (top-level verses screen) -->
+        <div
+          v-if="!currentCollectionId"
+          class="flex-1 mx-2 cursor-pointer"
+          data-testid="search-bar"
+          @click="openSearch"
+        >
+          <div class="flex items-center h-10 bg-surface rounded-full px-4 gap-2 border border-border-default">
+            <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span class="text-text-muted text-sm flex-1">Search verses...</span>
+          </div>
+        </div>
+
+        <!-- Collection title -->
+        <h1 v-if="currentCollectionId" class="text-xl font-semibold text-text-primary flex-1 ml-2 truncate">
+          {{ getCollectionName(currentCollectionId) }}
         </h1>
-        <div class="flex items-center gap-1 ml-1 relative">
+
+        <!-- Right side actions -->
+        <div class="flex items-center gap-1 flex-shrink-0">
           <!-- Install app button (top-level verses screen only) -->
           <button
-            v-if="!isPWAInstalled() && currentView === 'collections' && !currentCollectionId"
+            v-if="!isPWAInstalled() && !currentCollectionId"
             data-testid="install-app-header"
             @click="triggerInstall"
             class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
           >
             Install app
-          </button>
-          <!-- Search Button (collections view, top-level only) -->
-          <button
-            v-if="currentView === 'collections' && !currentCollectionId"
-            @click="openSearch"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
-            title="Search verses"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
           </button>
           <!-- Sync Button -->
           <button
@@ -310,7 +335,6 @@
             :class="{ 'opacity-50 cursor-not-allowed': syncing }"
             :title="syncing ? 'Syncing...' : 'Sync'"
           >
-            <!-- Spinning sync icon -->
             <svg
               v-if="syncing"
               class="w-6 h-6 animate-spin-reverse"
@@ -321,7 +345,6 @@
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <!-- Success checkmark -->
             <svg
               v-else-if="syncSuccess"
               class="w-6 h-6 text-green-600"
@@ -331,7 +354,6 @@
             >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            <!-- Default sync icon -->
             <svg
               v-else
               class="w-6 h-6"
@@ -342,70 +364,72 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
-              <!-- Settings Button -->
-          <div class="relative">
-            <button
-              ref="settingsButton"
-              data-testid="settings-button"
-              @click.stop="toggleSettingsMenu"
-              class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
-              title="Settings"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <!-- Reminder dot -->
-              <span
-                v-if="shouldShowBackupReminder"
-                class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"
-              ></span>
-            </button>
-            <!-- Settings Menu Dropdown -->
-            <div
-              v-if="showSettingsMenu"
-              v-click-outside="closeSettingsMenu"
-              class="absolute right-0 top-full mt-2 w-56 bg-elevated rounded-lg shadow-lg border border-border-default py-1 z-50"
-            >
-              <button
-                data-testid="settings-sync"
-                @click="openSyncSettings"
-                class="w-full px-4 py-2.5 text-left text-base text-text-secondary hover:bg-surface-hover transition-colors flex items-center gap-3"
-              >
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-                Sync
-              </button>
-              <button
-                data-testid="settings-backup"
-                @click="openBackupImport"
-                class="w-full px-4 py-2.5 text-left text-base text-text-secondary hover:bg-surface-hover transition-colors flex items-center gap-3 relative"
-              >
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Backup & Restore
-                <span
-                  v-if="shouldShowBackupReminder"
-                  class="absolute right-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"
-                ></span>
-              </button>
-              <button
-                data-testid="settings-about"
-                @click="openAbout"
-                class="w-full px-4 py-2.5 text-left text-base text-text-secondary hover:bg-surface-hover transition-colors flex items-center gap-3"
-              >
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                About
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </header>
+
+    <!-- Navigation Drawer -->
+    <div
+      v-show="drawerOpen"
+      class="fixed inset-0 z-[60] pointer-events-none"
+    >
+      <!-- Backdrop -->
+      <div
+        class="absolute inset-0 bg-black/40 transition-opacity duration-300 pointer-events-auto"
+        :class="drawerOpen ? 'opacity-100' : 'opacity-0'"
+        @click="closeDrawer"
+      />
+      <!-- Drawer panel -->
+      <div
+        class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto"
+        :class="drawerOpen ? 'translate-x-0' : '-translate-x-full'"
+        style="border-radius: 0 16px 16px 0;"
+      >
+        <!-- App header -->
+        <div class="px-6 pt-10 pb-5" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
+          <h2 class="text-xl font-bold text-text-primary tracking-tight">rum1n8</h2>
+          <p class="text-sm text-text-muted mt-0.5">Bible verse memorization</p>
+        </div>
+        <div class="border-t border-border-default mx-4 mb-2" />
+        <!-- Settings items -->
+        <nav class="flex-1 px-3 py-2 overflow-y-auto">
+          <button
+            data-testid="settings-sync"
+            @click="openSyncSettings"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+            Sync
+          </button>
+          <button
+            data-testid="settings-backup"
+            @click="openBackupImport"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors relative"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Backup & Restore
+            <span
+              v-if="shouldShowBackupReminder"
+              class="ml-auto w-2 h-2 bg-red-500 rounded-full flex-shrink-0"
+            ></span>
+          </button>
+          <button
+            data-testid="settings-about"
+            @click="openAbout"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            About
+          </button>
+        </nav>
+      </div>
+    </div>
 
     <!-- Sync Error Toast -->
     <div
@@ -431,13 +455,13 @@
       </div>
     </div>
 
-    <!-- Content Area with top padding for fixed header -->
-    <div class="pt-16 pb-24 px-4">
+    <!-- Content Area: fixed header + bottom nav padding only on collections/verses screen -->
+    <div :class="['px-4', currentView === 'collections' ? 'pt-16 pb-24' : '']">
       <div class="max-w-4xl mx-auto">
 
       <!-- Review List View -->
       <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
-        <div class="space-y-2 py-4 overflow-y-auto" style="max-height: calc(100vh - 8rem);">
+        <div class="space-y-2 py-4 overflow-y-auto" style="max-height: calc(100vh - 4rem);">
           <div
             v-for="verse in reviewSortedVerses"
             :key="verse.id"
@@ -552,7 +576,7 @@
 
       <!-- References View -->
       <div v-if="currentView === 'references' && !currentCollectionId && !refQuizActive" class="">
-        <div class="flex flex-col items-center justify-center py-12 px-6" style="min-height: calc(100vh - 12rem);">
+        <div class="flex flex-col items-center justify-center py-12 px-6" style="min-height: calc(100vh - 4rem);">
           <!-- Has eligible verses -->
           <template v-if="refQuizEligibleVerses.length >= 4">
             <div class="text-center mb-8">
@@ -750,7 +774,7 @@
 
       <!-- Stats View -->
       <div v-if="currentView === 'stats' && !currentCollectionId" class="">
-        <div class="space-y-4 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 8rem);">
+        <div class="space-y-4 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 4rem);">
 
           <!-- Streak Card -->
           <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
@@ -913,28 +937,22 @@
 
     <!-- Bottom Navigation -->
     <nav v-if="!memorizingVerse && !reviewingVerse && !refQuizActive && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
-      <div class="flex-row-reverse flex items-center justify-around h-16 max-w-4xl mx-auto">
-        <!-- References Tab (first in DOM = rightmost with flex-row-reverse) -->
+      <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
+        <!-- Verses Tab (far left) -->
         <button
-          data-testid="nav-references"
-          @click="navigateToReferences"
+          data-testid="nav-collections"
+          @click="navigateToCollections"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'references'
+            currentView === 'collections'
               ? 'text-nav-active'
               : 'text-text-muted'
           ]"
         >
-          <div class="relative">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-            </svg>
-            <span
-              v-if="dueRefQuizCount > 0"
-              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
-            >{{ dueRefQuizCount > 99 ? '99+' : dueRefQuizCount }}</span>
-          </div>
-          <span class="text-xs font-medium">Ref. Quiz</span>
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span class="text-xs font-medium">Verses</span>
         </button>
 
         <!-- Review Tab -->
@@ -961,24 +979,30 @@
           <span class="text-xs font-medium">Review</span>
         </button>
 
-        <!-- Collections Tab -->
+        <!-- Ref. Quiz Tab -->
         <button
-          data-testid="nav-collections"
-          @click="navigateToCollections"
+          data-testid="nav-references"
+          @click="navigateToReferences"
           :class="[
             'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'collections'
+            currentView === 'references'
               ? 'text-nav-active'
               : 'text-text-muted'
           ]"
         >
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          <span class="text-xs font-medium">Verses</span>
+          <div class="relative">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+            </svg>
+            <span
+              v-if="dueRefQuizCount > 0"
+              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
+            >{{ dueRefQuizCount > 99 ? '99+' : dueRefQuizCount }}</span>
+          </div>
+          <span class="text-xs font-medium">Ref. Quiz</span>
         </button>
 
-        <!-- Stats Tab -->
+        <!-- Stats Tab (far right) -->
         <button
           data-testid="nav-stats"
           @click="navigateToStats"
@@ -1706,6 +1730,7 @@ export default {
     const showEditCollectionForm = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
+    const drawerOpen = ref(false)
     const showBackupImport = ref(false)
     const showAbout = ref(false)
     const showImportCSV = ref(false)
@@ -5662,15 +5687,26 @@ export default {
       showSettingsMenu.value = false
     }
 
+    // Navigation drawer
+    const toggleDrawer = () => {
+      drawerOpen.value = !drawerOpen.value
+    }
+
+    const closeDrawer = () => {
+      drawerOpen.value = false
+    }
+
     // Open sync settings from menu
     const openSyncSettings = () => {
       closeSettingsMenu()
+      closeDrawer()
       showSettings.value = true
     }
 
     // Open backup/import modal from menu
     const openBackupImport = () => {
       closeSettingsMenu()
+      closeDrawer()
       showBackupImport.value = true
     }
 
@@ -5681,6 +5717,7 @@ export default {
 
     const openAbout = () => {
       closeSettingsMenu()
+      closeDrawer()
       showAbout.value = true
     }
 
@@ -6046,6 +6083,9 @@ export default {
       deleteVerse,
       showSettings,
       showSettingsMenu,
+      drawerOpen,
+      toggleDrawer,
+      closeDrawer,
       showBackupImport,
       isDev,
       closeSettings,

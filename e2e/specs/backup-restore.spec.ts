@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test('download backup: Settings -> Backup/Import -> Download -> file download triggered', async ({
   page,
 }) => {
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-backup').click()
 
   await expect(page.getByTestId('modal-backup-restore')).toBeVisible()
@@ -26,7 +26,7 @@ test('download backup: Settings -> Backup/Import -> Download -> file download tr
 
 test('restore: Settings -> choose backup file -> confirm -> data replaced', async ({ page }) => {
   page.on('dialog', (dialog) => dialog.accept())
-  await page.getByTestId('settings-button').click()
+  await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-backup').click()
 
   await expect(page.getByTestId('modal-backup-restore')).toBeVisible()
