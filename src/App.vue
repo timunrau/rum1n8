@@ -873,9 +873,15 @@
               : 'text-text-muted'
           ]"
         >
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <div class="relative">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span
+              v-if="dueVersesCount > 0"
+              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
+            >{{ dueVersesCount > 99 ? '99+' : dueVersesCount }}</span>
+          </div>
           <span class="text-xs font-medium">Review</span>
         </button>
         
