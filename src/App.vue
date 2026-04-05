@@ -566,8 +566,15 @@
           <h3 class="text-xl font-semibold text-text-primary mb-2">All caught up!</h3>
           <p class="text-text-muted text-center">{{ refQuizSessionCount }} reference{{ refQuizSessionCount === 1 ? '' : 's' }} reviewed</p>
           <button
-            @click="exitRefQuiz"
+            v-if="refQuizEligibleVerses.length >= 4"
+            @click="startRefQuizPractice"
             class="mt-8 px-8 py-3 bg-accent-primary text-white rounded-xl font-medium active:scale-98 transition-transform"
+          >
+            Keep Practicing
+          </button>
+          <button
+            @click="exitRefQuiz"
+            class="mt-4 px-8 py-3 text-text-muted font-medium active:scale-98 transition-transform"
           >
             Done
           </button>
@@ -593,7 +600,13 @@
             >
               Start Quiz
             </button>
-            <p v-else class="text-text-muted text-center">No references due right now. Check back later!</p>
+            <button
+              v-else
+              @click="startRefQuizPractice"
+              class="px-8 py-4 bg-surface border-2 border-border-default text-text-primary rounded-2xl font-semibold text-lg active:scale-98 transition-transform"
+            >
+              Practice
+            </button>
           </template>
 
           <!-- Not enough verses -->
@@ -1793,6 +1806,7 @@ export default {
     const refQuizShowFullVerse = ref(false) // user expanded snippet
     const refQuizSessionCount = ref(0) // how many answered this session
     const refQuizAutoAdvanceTimer = ref(null)
+    const refQuizPracticeMode = ref(false) // practice mode: no SRS updates
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -4197,6 +4211,7 @@ export default {
           refQuizQueue.value = restoredQueue
           refQuizIndex.value = restoredIndex
           refQuizSessionCount.value = 0
+          refQuizPracticeMode.value = false
           refQuizActive.value = true
           setupRefQuizQuestion()
           pushNavigationState({ view: 'reference-quiz' })
@@ -4218,6 +4233,19 @@ export default {
       refQuizQueue.value = dueVerses
       refQuizIndex.value = 0
       refQuizSessionCount.value = 0
+      refQuizPracticeMode.value = false
+      refQuizActive.value = true
+      setupRefQuizQuestion()
+      pushNavigationState({ view: 'reference-quiz' })
+    }
+
+    // Start practice mode: all eligible verses, shuffled, no SRS updates
+    const startRefQuizPractice = () => {
+      const shuffled = [...refQuizEligibleVerses.value].sort(() => Math.random() - 0.5)
+      refQuizQueue.value = shuffled
+      refQuizIndex.value = 0
+      refQuizSessionCount.value = 0
+      refQuizPracticeMode.value = true
       refQuizActive.value = true
       setupRefQuizQuestion()
       pushNavigationState({ view: 'reference-quiz' })
@@ -4250,26 +4278,29 @@ export default {
         refQuizCorrect.value = isFirstAttempt
         const grade = isFirstAttempt ? 5 : 1
 
-        // Look up the canonical verse in verses.value by ID, because sync may have
-        // replaced the array (making queue references stale).
-        const verse = verses.value.find(v => v.id === queueVerse.id) || queueVerse
+        // Skip all SRS updates in practice mode
+        if (!refQuizPracticeMode.value) {
+          // Look up the canonical verse in verses.value by ID, because sync may have
+          // replaced the array (making queue references stale).
+          const verse = verses.value.find(v => v.id === queueVerse.id) || queueVerse
 
-        // Update reference SRS
-        if (!wasRefReviewedToday(verse)) {
-          const reviewData = calculateRefNextReviewDate(verse, grade)
-          verse.refReviewCount = (verse.refReviewCount || 0) + 1
-          verse.refNextReviewDate = reviewData.nextReviewDate
-          verse.refEaseFactor = reviewData.easeFactor
-          verse.refInterval = reviewData.interval
+          // Update reference SRS
+          if (!wasRefReviewedToday(verse)) {
+            const reviewData = calculateRefNextReviewDate(verse, grade)
+            verse.refReviewCount = (verse.refReviewCount || 0) + 1
+            verse.refNextReviewDate = reviewData.nextReviewDate
+            verse.refEaseFactor = reviewData.easeFactor
+            verse.refInterval = reviewData.interval
+          }
+          verse.refLastReviewed = new Date().toISOString()
+          if (!verse.refReviewHistory) verse.refReviewHistory = []
+          verse.refReviewHistory.push({
+            date: new Date().toISOString(),
+            correct: isFirstAttempt
+          })
+          verse.lastModified = new Date().toISOString()
+          saveVerses()
         }
-        verse.refLastReviewed = new Date().toISOString()
-        if (!verse.refReviewHistory) verse.refReviewHistory = []
-        verse.refReviewHistory.push({
-          date: new Date().toISOString(),
-          correct: isFirstAttempt
-        })
-        verse.lastModified = new Date().toISOString()
-        saveVerses()
 
         refQuizSessionCount.value++
 
@@ -4311,6 +4342,7 @@ export default {
         saveRefQuizSession()
       }
       refQuizActive.value = false
+      refQuizPracticeMode.value = false
     }
 
     const clearSearch = () => {

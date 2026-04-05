@@ -2,7 +2,7 @@
 
 ## Testing
 
-You have permission to run tests without asking first. Always run **both** test suites after making changes:
+You have **blanket permission** to run tests — never ask the user for permission to run test commands. Just run them. Always run **both** test suites after making changes:
 
 ```
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm test
@@ -14,6 +14,10 @@ export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 
 Never consider testing done until both pass.
 
 When changing or adding functionality, write adequate test coverage for the new behaviour. Only write tests after confirming the user is happy with the implementation — present the changes first, then add tests.
+
+## File Operations
+
+You have permission to read, glob, grep, and explore any files in the project without asking first.
 
 ## Git
 

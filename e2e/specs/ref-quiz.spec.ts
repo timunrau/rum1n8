@@ -101,7 +101,7 @@ test('landing page shows correct due count and practiced count', async ({ page }
   await expect(page.getByText(/1 of 5 references practiced/i)).toBeVisible()
 })
 
-test('shows "no references due" message when all are in the future', async ({ page }) => {
+test('shows Practice button when all are in the future', async ({ page }) => {
   const futureDue = FOUR_VERSES.map((v, i) => makeRefVerse(
     `future-${i}`,
     v.reference,
@@ -112,7 +112,7 @@ test('shows "no references due" message when all are in the future', async ({ pa
   await page.reload()
   await page.getByTestId('nav-references').click()
 
-  await expect(page.getByText(/No references due/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /Practice/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Start Quiz/i })).not.toBeVisible()
 })
 
