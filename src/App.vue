@@ -4240,15 +4240,19 @@ export default {
 
     // Handle tapping a reference quiz choice
     const handleRefQuizChoice = (chosenRef) => {
-      const verse = refQuizCurrentVerse.value
-      if (!verse) return
+      const queueVerse = refQuizCurrentVerse.value
+      if (!queueVerse) return
 
-      if (chosenRef === verse.reference) {
+      if (chosenRef === queueVerse.reference) {
         // Correct answer
         refQuizAnswered.value = true
         const isFirstAttempt = refQuizDisabledChoices.value.length === 0
         refQuizCorrect.value = isFirstAttempt
         const grade = isFirstAttempt ? 5 : 1
+
+        // Look up the canonical verse in verses.value by ID, because sync may have
+        // replaced the array (making queue references stale).
+        const verse = verses.value.find(v => v.id === queueVerse.id) || queueVerse
 
         // Update reference SRS
         if (!wasRefReviewedToday(verse)) {

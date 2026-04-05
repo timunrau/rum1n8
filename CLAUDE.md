@@ -2,12 +2,14 @@
 
 ## Testing
 
-Always run **both** test suites after making changes:
+You have permission to run tests without asking first. Always run **both** test suites after making changes:
 
 ```
-npm test          # vitest unit tests
-npm run test:e2e  # Playwright e2e tests (~58 tests, takes ~1-2 min)
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm test
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npx playwright test
 ```
+
+**Never run tests in the background** (`run_in_background`). They hang or produce no output. Always run them in the foreground with a sufficient timeout (300000ms for e2e).
 
 Never consider testing done until both pass.
 
