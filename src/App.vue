@@ -603,7 +603,7 @@
             <button
               v-else
               @click="startRefQuizPractice"
-              class="px-8 py-4 bg-surface border-2 border-border-default text-text-primary rounded-2xl font-semibold text-lg active:scale-98 transition-transform"
+              class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-lg active:scale-98 transition-transform shadow-md"
             >
               Practice
             </button>
@@ -6087,6 +6087,7 @@ export default {
       learnedRefCount,
       getVerseSnippet,
       startRefQuiz,
+      startRefQuizPractice,
       handleRefQuizChoice,
       exitRefQuiz,
       clearSearch,
