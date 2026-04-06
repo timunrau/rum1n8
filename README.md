@@ -67,6 +67,14 @@ npm install
 npm run dev
 ```
 
+The local dev server runs at `http://127.0.0.1:5173` by default.
+
+If you want to expose the dev server to your local network, start it with:
+
+```bash
+HOST=0.0.0.0 npm run dev
+```
+
 ### Build for Production
 
 ```bash
@@ -109,7 +117,7 @@ If you want Google Drive sync, fill in your OAuth credentials in `.env` (see `.e
 docker compose up -d
 ```
 
-The app is available at `http://localhost:1234`.
+The Docker deployment is available at `http://localhost:1234`.
 
 ### Automatic Updates
 

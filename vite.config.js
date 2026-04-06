@@ -6,7 +6,9 @@ export default defineConfig({
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     strictPort: !!process.env.PORT,
-    host: true,
+    // Default to localhost for safer, more portable local development.
+    // Set HOST=true or HOST=0.0.0.0 when you explicitly want LAN access.
+    host: process.env.HOST === 'true' ? true : (process.env.HOST || '127.0.0.1'),
   },
   test: {
     exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', '.claude/**'],
