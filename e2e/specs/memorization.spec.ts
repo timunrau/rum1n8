@@ -252,7 +252,8 @@ test('reference typing shows full reference and requires shorthand to complete',
   await page.getByText('John 3:16').first().click()
 
   await expect(page.locator('#practice-word-2')).toContainText('John')
-  await expect(page.locator('#practice-word-3')).toContainText('3:16')
+  await expect(page.locator('#practice-word-3')).toContainText('3:')
+  await expect(page.locator('#practice-word-4')).toContainText('16')
 
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('ot', { delay: 50 })
