@@ -20,26 +20,59 @@ export function normalizeReferenceForTyping(reference = '') {
 
 export function buildReferencePracticeUnits(reference = '') {
   const tokens = reference.trim().split(/\s+/).filter(Boolean)
+  const units = []
 
-  return tokens.map((token, index) => {
-    const alphanumericChars = token.match(/[a-zA-Z0-9]/g) || []
+  for (const token of tokens) {
     const hasLetters = /[a-zA-Z]/.test(token)
-    const requiredLetters = hasLetters
-      ? [(token.match(/[a-zA-Z0-9]/) || [''])[0].toLowerCase()]
-      : alphanumericChars.map(char => char.toLowerCase())
+    if (hasLetters) {
+      units.push({
+        text: token,
+        separatorAfter: '',
+        firstLetter: (token.match(/[a-zA-Z0-9]/) || [''])[0].toLowerCase(),
+        requiredLetters: [(token.match(/[a-zA-Z0-9]/) || [''])[0].toLowerCase()],
+        typedLettersIndex: 0,
+        revealed: false,
+        visible: false,
+        incorrect: false,
+        isReferenceUnit: true,
+      })
+      continue
+    }
 
-    return {
+    const numberParts = [...token.matchAll(/(\d+)([:,-]?)/g)]
+    if (numberParts.length > 0) {
+      for (const [, digits, separatorAfter] of numberParts) {
+        units.push({
+          text: digits,
+          separatorAfter: separatorAfter || '',
+          firstLetter: digits[0].toLowerCase(),
+          requiredLetters: digits.split('').map(char => char.toLowerCase()),
+          typedLettersIndex: 0,
+          revealed: false,
+          visible: false,
+          incorrect: false,
+          isReferenceUnit: true,
+        })
+      }
+      continue
+    }
+
+    units.push({
       text: token,
       separatorAfter: '',
-      firstLetter: requiredLetters[0],
-      requiredLetters,
+      firstLetter: token.charAt(0).toLowerCase(),
+      requiredLetters: [token.charAt(0).toLowerCase()],
       typedLettersIndex: 0,
       revealed: false,
       visible: false,
       incorrect: false,
-      index,
       isReferenceUnit: true,
-      isReferenceStart: index === 0
-    }
-  })
+    })
+  }
+
+  return units.map((unit, index) => ({
+    ...unit,
+    index,
+    isReferenceStart: index === 0,
+  }))
 }

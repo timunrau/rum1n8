@@ -11,7 +11,7 @@
             v-for="(word, index) in reviewWords"
             :key="index"
             :id="`practice-word-${index}`"
-            class="inline-block mr-2"
+            :class="word.isReferenceUnit && word.separatorAfter ? 'inline-block' : 'inline-block mr-2'"
           >
             <span v-if="memorizationMode === 'learn'">
               <template v-if="word.revealed">

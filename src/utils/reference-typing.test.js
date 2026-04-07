@@ -24,8 +24,15 @@ describe('buildReferencePracticeUnits', () => {
         isReferenceStart: true,
       }),
       expect.objectContaining({
-        text: '3:16',
-        requiredLetters: ['3', '1', '6'],
+        text: '3',
+        separatorAfter: ':',
+        requiredLetters: ['3'],
+        isReferenceStart: false,
+      }),
+      expect.objectContaining({
+        text: '16',
+        separatorAfter: '',
+        requiredLetters: ['1', '6'],
         isReferenceStart: false,
       }),
     ])
@@ -42,21 +49,66 @@ describe('buildReferencePracticeUnits', () => {
         requiredLetters: ['j'],
       }),
       expect.objectContaining({
-        text: '4:19',
-        requiredLetters: ['4', '1', '9'],
+        text: '4',
+        separatorAfter: ':',
+        requiredLetters: ['4'],
+      }),
+      expect.objectContaining({
+        text: '19',
+        separatorAfter: '',
+        requiredLetters: ['1', '9'],
       }),
     ])
   })
 
-  it('keeps verse ranges as one visible token but requires each digit in order', () => {
+  it('splits verse ranges into separate visible placeholders', () => {
     expect(buildReferencePracticeUnits('Philippians 4:6-7')).toEqual([
       expect.objectContaining({
         text: 'Philippians',
         requiredLetters: ['p'],
       }),
       expect.objectContaining({
-        text: '4:6-7',
-        requiredLetters: ['4', '6', '7'],
+        text: '4',
+        separatorAfter: ':',
+        requiredLetters: ['4'],
+      }),
+      expect.objectContaining({
+        text: '6',
+        separatorAfter: '-',
+        requiredLetters: ['6'],
+      }),
+      expect.objectContaining({
+        text: '7',
+        separatorAfter: '',
+        requiredLetters: ['7'],
+      }),
+    ])
+  })
+
+  it('splits multi-digit ranges into chapter and verse groups', () => {
+    expect(buildReferencePracticeUnits('1 Thessalonians 5:16-22')).toEqual([
+      expect.objectContaining({
+        text: '1',
+        requiredLetters: ['1'],
+      }),
+      expect.objectContaining({
+        text: 'Thessalonians',
+        requiredLetters: ['t'],
+      }),
+      expect.objectContaining({
+        text: '5',
+        separatorAfter: ':',
+        requiredLetters: ['5'],
+      }),
+      expect.objectContaining({
+        text: '16',
+        separatorAfter: '-',
+        requiredLetters: ['1', '6'],
+      }),
+      expect.objectContaining({
+        text: '22',
+        separatorAfter: '',
+        requiredLetters: ['2', '2'],
       }),
     ])
   })
