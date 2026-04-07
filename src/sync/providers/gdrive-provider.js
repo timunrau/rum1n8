@@ -1,4 +1,5 @@
 import { getDeletedVerses, getDeletedCollections } from '../sync-manager.js'
+import { getAppSettingsRecord } from '../../app-settings.js'
 
 const GDRIVE_SETTINGS_KEY = 'rum1n8-gdrive-settings'
 const SYNC_FILENAME = 'rum1n8-data.json'
@@ -376,7 +377,7 @@ export default {
     return { data }
   },
 
-  async upload(settings, verses, collections, remoteData) {
+  async upload(settings, verses, collections, remoteData, appSettingsRecord = getAppSettingsRecord()) {
     const token = await getValidToken(settings)
     const folderId = await ensureFolder(token, settings)
     const fileId = await findFile(token, folderId)
@@ -396,6 +397,8 @@ export default {
     const data = {
       verses: verses || [],
       collections: collections || [],
+      appSettings: appSettingsRecord.appSettings,
+      appSettingsLastModified: appSettingsRecord.appSettingsLastModified,
       deletedVerses,
       deletedCollections,
       syncedAt: new Date().toISOString()

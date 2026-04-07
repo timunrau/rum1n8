@@ -1,4 +1,5 @@
 import { getProvider, getAllProviders } from './providers/index.js'
+import { getAppSettingsRecord, saveAppSettingsRecord, mergeAppSettingsRecords } from '../app-settings.js'
 
 const SYNC_STATE_KEY = 'rum1n8-sync-state'
 const SYNC_PROVIDER_KEY = 'rum1n8-sync-provider'
@@ -188,8 +189,15 @@ export function resolveVerseConflict(local, remote) {
  * - Cleans deleted collection IDs from verse.collectionIds
  */
 export function mergeData(localVerses, localCollections, remoteData) {
+  const mergedAppSettingsRecord = mergeAppSettingsRecords(getAppSettingsRecord(), remoteData)
+
   if (!remoteData || (!remoteData.verses && !remoteData.collections)) {
-    return { verses: localVerses || [], collections: localCollections || [] }
+    return {
+      verses: localVerses || [],
+      collections: localCollections || [],
+      appSettings: mergedAppSettingsRecord.appSettings,
+      appSettingsLastModified: mergedAppSettingsRecord.appSettingsLastModified
+    }
   }
 
   const remoteVerses = remoteData.verses || []
@@ -293,7 +301,9 @@ export function mergeData(localVerses, localCollections, remoteData) {
 
   return {
     verses: mergedVerses,
-    collections: Array.from(collectionMap.values())
+    collections: Array.from(collectionMap.values()),
+    appSettings: mergedAppSettingsRecord.appSettings,
+    appSettingsLastModified: mergedAppSettingsRecord.appSettingsLastModified
   }
 }
 
@@ -325,13 +335,28 @@ export async function syncData(localVerses, localCollections) {
 
     if (!remoteData) {
       console.log(`[Sync] No remote data found, uploading local data`)
-      await provider.upload(settings, localVerses, localCollections, null)
+      const localAppSettingsRecord = getAppSettingsRecord()
+      await provider.upload(settings, localVerses, localCollections, null, localAppSettingsRecord)
       saveSyncState({ lastSync: new Date().toISOString() })
-      return { success: true, action: 'uploaded', verses: localVerses, collections: localCollections }
+      return {
+        success: true,
+        action: 'uploaded',
+        verses: localVerses,
+        collections: localCollections,
+        appSettings: localAppSettingsRecord.appSettings,
+        appSettingsLastModified: localAppSettingsRecord.appSettingsLastModified
+      }
     }
 
     const merged = mergeData(localVerses, localCollections, remoteData)
-    await provider.upload(settings, merged.verses, merged.collections, remoteData)
+    saveAppSettingsRecord({
+      appSettings: merged.appSettings,
+      appSettingsLastModified: merged.appSettingsLastModified
+    })
+    await provider.upload(settings, merged.verses, merged.collections, remoteData, {
+      appSettings: merged.appSettings,
+      appSettingsLastModified: merged.appSettingsLastModified
+    })
     saveSyncState({ lastSync: new Date().toISOString() })
 
     // Prune old deletion entries
@@ -342,7 +367,14 @@ export async function syncData(localVerses, localCollections) {
     localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(prunedVerseEntries))
     localStorage.setItem(DELETED_COLLECTIONS_KEY, JSON.stringify(prunedCollectionEntries))
 
-    return { success: true, action: 'synced', verses: merged.verses, collections: merged.collections }
+    return {
+      success: true,
+      action: 'synced',
+      verses: merged.verses,
+      collections: merged.collections,
+      appSettings: merged.appSettings,
+      appSettingsLastModified: merged.appSettingsLastModified
+    }
   } catch (error) {
     console.error('Sync error:', error)
     return { success: false, error: error.message || 'Sync failed' }

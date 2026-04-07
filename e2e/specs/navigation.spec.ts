@@ -60,3 +60,20 @@ test('FAB is hidden on Stats view', async ({ page }) => {
   await page.getByTestId('nav-stats').click()
   await expect(page.getByTestId('fab-trigger')).not.toBeVisible()
 })
+
+test('practice settings toggle persists across reload', async ({ page }) => {
+  await page.locator('header button').first().click()
+  await page.getByTestId('settings-practice').click()
+
+  const toggle = page.getByRole('switch')
+  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-checked', 'true')
+
+  await page.getByRole('button', { name: 'Done' }).click()
+  await page.reload()
+
+  await page.locator('header button').first().click()
+  await page.getByTestId('settings-practice').click()
+  await expect(page.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
+})

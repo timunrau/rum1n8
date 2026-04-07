@@ -15,6 +15,7 @@ const STORAGE_KEYS = [
   'rum1n8-deleted-verses',
   'rum1n8-deleted-collections',
   'rum1n8-last-backup',
+  'rum1n8-app-settings',
 ]
 
 export async function clearAppStorage(page: Page) {
@@ -54,6 +55,25 @@ export async function seedStorage(
     {
       versesData: JSON.stringify(verses),
       collectionsData: JSON.stringify(collections),
+    }
+  )
+}
+
+export async function seedAppSettings(
+  page: Page,
+  settings: Record<string, unknown>,
+  appSettingsLastModified = new Date().toISOString()
+) {
+  await page.evaluate(
+    ({ appSettings, modifiedAt }: { appSettings: Record<string, unknown>; modifiedAt: string }) => {
+      localStorage.setItem('rum1n8-app-settings', JSON.stringify({
+        appSettings,
+        appSettingsLastModified: modifiedAt,
+      }))
+    },
+    {
+      appSettings: settings,
+      modifiedAt: appSettingsLastModified,
     }
   )
 }

@@ -10,6 +10,7 @@
 ## Testing
 
 - Always run both test suites after making code changes.
+- Do not add or update tests for new features until the user explicitly confirms the feature behavior is good.
 - Unit tests: `npm test`
 - End-to-end tests: `npm run test:e2e`
 - Playwright starts the app server automatically from `playwright.config.ts`; do not manually start a separate dev server unless intentionally reusing one.

@@ -1,4 +1,5 @@
 import { getDeletedVerses, getDeletedCollections } from '../sync-manager.js'
+import { getAppSettingsRecord } from '../../app-settings.js'
 
 const WEBDAV_SETTINGS_KEY = 'rum1n8-webdav-settings'
 const SYNC_FILENAME = 'rum1n8-data.json'
@@ -205,7 +206,7 @@ export default {
     }
   },
 
-  async upload(settings, verses, collections, remoteData) {
+  async upload(settings, verses, collections, remoteData, appSettingsRecord = getAppSettingsRecord()) {
     const { url, headers } = buildSyncFileUrl(settings)
 
     const activeVerseIds = new Set((verses || []).map(v => v.id))
@@ -223,6 +224,8 @@ export default {
     const data = {
       verses: verses || [],
       collections: collections || [],
+      appSettings: appSettingsRecord.appSettings,
+      appSettingsLastModified: appSettingsRecord.appSettingsLastModified,
       deletedVerses,
       deletedCollections,
       syncedAt: new Date().toISOString()

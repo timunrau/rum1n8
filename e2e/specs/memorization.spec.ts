@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { clearAppStorage, seedStorage } from '../helpers/storage'
+import { clearAppStorage, seedAppSettings, seedStorage } from '../helpers/storage'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleVerses = JSON.parse(
@@ -230,6 +230,37 @@ test('memorize mode: alternates hidden words on initial entry', async ({ page })
   // Odd indices (1,3) should be visible (no text-transparent span)
   await expect(page.locator('#practice-word-1 .text-transparent')).not.toBeAttached()
   await expect(page.locator('#practice-word-3 .text-transparent')).not.toBeAttached()
+})
+
+test('reference typing shows full reference and requires shorthand to complete', async ({ page }) => {
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'reference-tail',
+      reference: 'John 3:16',
+      content: 'One two',
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await seedAppSettings(page, { requireReferenceTyping: true })
+  await page.reload()
+  await page.goto('/?view=collections')
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('John 3:16').first().click()
+
+  await expect(page.locator('#practice-word-2')).toContainText('John')
+  await expect(page.locator('#practice-word-3')).toContainText('3:16')
+
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('ot', { delay: 50 })
+  await page.waitForTimeout(150)
+  await expect(page.getByText('Great job!')).toHaveCount(0)
+
+  await page.keyboard.type('j316', { delay: 50 })
+  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('memorize mode: pressing Memorize button again flips hidden words', async ({ page }) => {

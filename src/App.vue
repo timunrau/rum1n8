@@ -163,7 +163,7 @@
       :meets-accuracy-requirement="meetsAccuracyRequirement"
       :accuracy="accuracy"
       :review-mistakes="reviewMistakes"
-      :review-words-length="reviewWords.length"
+      :review-words-length="totalPracticeUnitCount"
       :memorization-mode="memorizationMode"
       @advance="advanceToNextMode"
       @exit="exitMemorization"
@@ -254,7 +254,7 @@
       :meets-accuracy-requirement="meetsAccuracyRequirement"
       :accuracy="accuracy"
       :review-mistakes="reviewMistakes"
-      :review-words-length="reviewWords.length"
+      :review-words-length="totalPracticeUnitCount"
       :memorization-mode="memorizationMode"
       :next-review-label="reviewingVerseNextReviewLabel"
       @retry="retryReview"
@@ -393,6 +393,17 @@
         <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->
         <nav class="flex-1 px-3 py-2 overflow-y-auto">
+          <button
+            data-testid="settings-practice"
+            @click="openPracticeSettings"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 4.75c.83-1.67 2.17-1.67 3 0l.2.4a1.7 1.7 0 002.12.82l.43-.14c1.8-.59 2.75.36 2.16 2.16l-.14.43a1.7 1.7 0 00.82 2.12l.4.2c1.67.83 1.67 2.17 0 3l-.4.2a1.7 1.7 0 00-.82 2.12l.14.43c.59 1.8-.36 2.75-2.16 2.16l-.43-.14a1.7 1.7 0 00-2.12.82l-.2.4c-.83 1.67-2.17 1.67-3 0l-.2-.4a1.7 1.7 0 00-2.12-.82l-.43.14c-1.8.59-2.75-.36-2.16-2.16l.14-.43a1.7 1.7 0 00-.82-2.12l-.4-.2c-1.67-.83-1.67-2.17 0-3l.4-.2a1.7 1.7 0 00.82-2.12l-.14-.43c-.59-1.8.36-2.75 2.16-2.16l.43.14a1.7 1.7 0 002.12-.82z" />
+              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </svg>
+            Settings
+          </button>
           <button
             data-testid="settings-sync"
             @click="openSyncSettings"
@@ -1580,6 +1591,46 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         </template>
       </ModalSheet>
 
+      <ModalSheet :show="showPracticeSettings" title="Settings" data-testid="modal-practice-settings" max-width="sm:max-w-lg" @close="closePracticeSettings">
+        <div class="space-y-4">
+          <div class="rounded-2xl bg-sunken p-4">
+            <label class="flex items-start gap-4 cursor-pointer">
+              <div class="flex-1">
+                <p class="text-base font-semibold text-text-primary">Require typing the reference after the verse</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="appSettings.requireReferenceTyping"
+                :class="[
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                  appSettings.requireReferenceTyping ? 'bg-blue-600' : 'bg-border-default'
+                ]"
+                @click="updateRequireReferenceTyping(!appSettings.requireReferenceTyping)"
+              >
+                <span
+                  :class="[
+                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                    appSettings.requireReferenceTyping ? 'translate-x-6' : 'translate-x-1'
+                  ]"
+                />
+              </button>
+            </label>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <button
+              @click="closePracticeSettings"
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+            >
+              Done
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
       <!-- Sync Settings Modal -->
       <SyncSettingsModal :show="showSettings" @close="closeSettings" @saved="onSyncSettingsSaved" />
 
@@ -1704,7 +1755,9 @@ import {
 import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
+import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
 import { countVersesInReference } from './utils/verse-count.js'
+import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate, calculateRefNextReviewDate, wasRefReviewedToday } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
@@ -1741,6 +1794,7 @@ export default {
     const showCollectionForm = ref(false)
     const showEditVerseForm = ref(false)
     const showEditCollectionForm = ref(false)
+    const showPracticeSettings = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
     const drawerOpen = ref(false)
@@ -1794,6 +1848,7 @@ export default {
     const copyToast = ref({ show: false, message: '' })
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
+    const appSettings = ref(getAppSettings())
 
     // Reference quiz state
     const refQuizActive = ref(false)
@@ -1840,6 +1895,15 @@ export default {
 
     const STORAGE_KEY = 'rum1n8-verses'
     const COLLECTIONS_KEY = 'rum1n8-collections'
+
+    const saveAppSettingsLocally = (settings, shouldSync = true) => {
+      const savedRecord = saveAppSettings(settings)
+      appSettings.value = { ...savedRecord.appSettings }
+      if (shouldSync) {
+        triggerSync()
+      }
+      return savedRecord
+    }
 
     // Navigation state tracking for back button handling
     let isHandlingBackButton = false
@@ -1972,7 +2036,7 @@ export default {
         if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
           const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
           if (verse) {
-            const totalWords = reviewWords.value.length
+            const totalWords = totalPracticeUnitCount.value
             const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
             const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
@@ -2068,16 +2132,19 @@ export default {
       return reviewWords.value.filter(w => w.revealed).length
     })
 
+    const totalPracticeUnitCount = computed(() => {
+      return reviewWords.value.length
+    })
+
     const allWordsRevealed = computed(() => {
       if (reviewWords.value.length === 0) return false
-      // Completion = user has typed (revealed) every word. In memorize mode, do not count visible-but-not-typed words.
       return reviewWords.value.every(w => w.revealed)
     })
 
     // Calculate accuracy percentage
     const accuracy = computed(() => {
-      if (reviewWords.value.length === 0) return 0
-      return ((reviewWords.value.length - reviewMistakes.value) / reviewWords.value.length) * 100
+      if (totalPracticeUnitCount.value === 0) return 0
+      return ((totalPracticeUnitCount.value - reviewMistakes.value) / totalPracticeUnitCount.value) * 100
     })
 
     // Check if accuracy meets the 90% requirement
@@ -2100,7 +2167,7 @@ export default {
       if (!revealed || !reviewingVerse.value || memorizationMode.value !== 'master') return
       if (firstAttemptGrade.value !== null) return // Already captured
 
-      const totalWords = reviewWords.value.length
+      const totalWords = totalPracticeUnitCount.value
       const grade = calculateGrade(totalWords, reviewMistakes.value)
       firstAttemptGrade.value = grade
       firstAttemptMistakes.value = reviewMistakes.value
@@ -2866,11 +2933,11 @@ export default {
       return qwertyLayout[letter.toLowerCase()] || []
     }
 
-    // Indices in text where alphabetic characters appear (for letter-by-letter partial display)
+    // Indices in text where typeable characters appear (for partial display in words and references)
     const getLetterIndices = (text) => {
       const indices = []
       for (let i = 0; i < text.length; i++) {
-        if (/[a-zA-Z]/.test(text[i])) indices.push(i)
+        if (/[a-zA-Z0-9]/.test(text[i])) indices.push(i)
       }
       return indices
     }
@@ -2893,6 +2960,10 @@ export default {
       return requiredLetters
     }
 
+    const shouldRequireReferenceTyping = (verse) => {
+      return !!(appSettings.value.requireReferenceTyping && normalizeReferenceForTyping(verse?.reference))
+    }
+
     // Expand verse content into words, splitting tokens that contain dashes into separate entries.
     // "God—created" (no spaces around dash) becomes two words so each requires its own letter to reveal.
     const getVerseWords = (content) => {
@@ -2912,6 +2983,52 @@ export default {
         }
       }
       return result
+    }
+
+    const buildContentPracticeWords = (content, mode, retryOffset = 0) => {
+      const wordEntries = getVerseWords(content)
+      return wordEntries.map((entry, index) => {
+        const word = entry.text
+        const requiredLetters = getRequiredLetters(word)
+        const firstLetter = requiredLetters[0]
+        const { parts, separators } = splitWordParts(word)
+
+        let visible = false
+        if (mode === 'learn') {
+          visible = true
+        } else if (mode === 'memorize') {
+          visible = (index + retryOffset) % 2 === 0
+        }
+
+        return {
+          text: word,
+          separatorAfter: entry.separatorAfter,
+          revealed: false,
+          visible,
+          firstLetter,
+          requiredLetters,
+          typedLettersIndex: 0,
+          parts,
+          separators,
+          index,
+          incorrect: false
+        }
+      })
+    }
+
+    const resetPracticeSequence = (verse, mode, retryOffset = 0) => {
+      const contentWords = buildContentPracticeWords(verse.content, mode, retryOffset)
+      const referenceWords = shouldRequireReferenceTyping(verse)
+        ? buildReferencePracticeUnits(verse.reference).map((unit) => ({
+            ...unit,
+            visible: mode === 'learn'
+          }))
+        : []
+      reviewWords.value = [...contentWords, ...referenceWords].map((word, index) => ({
+        ...word,
+        index
+      }))
+      typedLetter.value = ''
     }
 
     // Split word into parts by hyphens and get the separator characters
@@ -4511,46 +4628,7 @@ export default {
         }
       }
       
-      // Split verse content into words (whitespace + dashes without spaces, e.g. "God—created" → two words)
-      const wordEntries = getVerseWords(verse.content)
-      
-      reviewWords.value = wordEntries.map((entry, index) => {
-        const word = entry.text
-        // Get all required letters (handles hyphenated words like "peace-loving" within a part)
-        const requiredLetters = getRequiredLetters(word)
-        const firstLetter = requiredLetters[0]
-        const { parts, separators } = splitWordParts(word)
-        
-        let revealed = false
-        let visible = false
-        
-        if (mode === 'learn') {
-          visible = true
-          revealed = false
-        } else if (mode === 'memorize') {
-          visible = (index + memorizeRetryCount.value) % 2 === 0
-          revealed = false
-        } else if (mode === 'master') {
-          visible = false
-          revealed = false
-        }
-        
-        return {
-          text: word,
-          separatorAfter: entry.separatorAfter,
-          revealed: revealed,
-          visible: visible,
-          firstLetter: firstLetter,
-          requiredLetters: requiredLetters,
-          typedLettersIndex: 0,
-          parts: parts,
-          separators: separators,
-          index: index,
-          incorrect: false
-        }
-      })
-
-      typedLetter.value = ''
+      resetPracticeSequence(verse, mode, memorizeRetryCount.value)
       
       // Push navigation state (replace if already in a memorization session to avoid back-stepping through modes)
       const navState = {
@@ -4579,34 +4657,8 @@ export default {
       if (!reviewingVerse.value) return
       if (mode === 'memorize') reviewMemorizeRetryCount.value += 1
       const verse = reviewingVerse.value
-      const wordEntries = getVerseWords(verse.content)
-      reviewWords.value = wordEntries.map((entry, index) => {
-        const word = entry.text
-        const requiredLetters = getRequiredLetters(word)
-        const firstLetter = requiredLetters[0]
-        const { parts, separators } = splitWordParts(word)
-        let visible = false
-        if (mode === 'learn') {
-          visible = true
-        } else if (mode === 'memorize') {
-          visible = (index + reviewMemorizeRetryCount.value) % 2 === 0
-        }
-        return {
-          text: word,
-          separatorAfter: entry.separatorAfter,
-          revealed: false,
-          visible,
-          firstLetter,
-          requiredLetters,
-          typedLettersIndex: 0,
-          parts,
-          separators,
-          index,
-          incorrect: false
-        }
-      })
+      resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
       memorizationMode.value = mode
-      typedLetter.value = ''
       reviewMistakes.value = 0
       nextTick(() => {
         reviewPracticeRef.value?.focusInput?.()
@@ -4630,7 +4682,7 @@ export default {
         console.log('[startReview] Saving previous review before starting new one (fallback)')
         const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
         if (prevVerse) {
-          const totalWords = reviewWords.value.length
+          const totalWords = totalPracticeUnitCount.value
           const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
           const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
@@ -4715,27 +4767,7 @@ export default {
       }
       // Review always starts in master mode; build words with visible/index like startMemorization
       memorizationMode.value = 'master'
-      const wordEntries = getVerseWords(verse.content)
-      reviewWords.value = wordEntries.map((entry, index) => {
-        const word = entry.text
-        const requiredLetters = getRequiredLetters(word)
-        const firstLetter = requiredLetters[0]
-        const { parts, separators } = splitWordParts(word)
-        return {
-          text: word,
-          separatorAfter: entry.separatorAfter,
-          revealed: false,
-          visible: false,
-          firstLetter,
-          requiredLetters,
-          typedLettersIndex: 0,
-          parts,
-          separators,
-          index,
-          incorrect: false
-        }
-      })
-      typedLetter.value = ''
+      resetPracticeSequence(verse, 'master')
       // VersePracticeView is keyed by verse id (+ reviewInstanceKey on retry), so it remounts
       // and onMounted runs the 100ms focus — that's what shows the keyboard on Android PWA.
     }
@@ -4898,33 +4930,7 @@ export default {
         const verse = memorizingVerse.value
         const mode = memorizationMode.value
         if (mode === 'memorize') memorizeRetryCount.value += 1
-        const wordEntries = getVerseWords(verse.content)
-        reviewWords.value = wordEntries.map((entry, index) => {
-          const word = entry.text
-          const requiredLetters = getRequiredLetters(word)
-          const firstLetter = requiredLetters[0]
-          const { parts, separators } = splitWordParts(word)
-          let visible = false
-          if (mode === 'learn') {
-            visible = true
-          } else if (mode === 'memorize') {
-            visible = (index + memorizeRetryCount.value) % 2 === 0
-          }
-          return {
-            text: word,
-            separatorAfter: entry.separatorAfter,
-            revealed: false,
-            visible,
-            firstLetter,
-            requiredLetters,
-            typedLettersIndex: 0,
-            parts,
-            separators,
-            index,
-            incorrect: false
-          }
-        })
-        typedLetter.value = ''
+        resetPracticeSequence(verse, mode, memorizeRetryCount.value)
         reviewMistakes.value = 0
         nextTick(() => {
           memorizationPracticeRef.value?.focusInput?.()
@@ -4962,14 +4968,14 @@ export default {
           meetsAccuracyRequirement: meetsAccuracyRequirement.value,
           accuracy: accuracy.value,
           reviewMistakes: reviewMistakes.value,
-          totalWords: reviewWords.value.length,
+          totalWords: totalPracticeUnitCount.value,
           lastReviewedBefore: verse?.lastReviewed
         })
         
         if (verse && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
           console.log('[nextVerse] Entering save block (fallback)')
 
-          const totalWords = reviewWords.value.length
+          const totalWords = totalPracticeUnitCount.value
           const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
           const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
@@ -5123,7 +5129,7 @@ export default {
         })
 
         if (verse) {
-          const totalWords = reviewWords.value.length
+          const totalWords = totalPracticeUnitCount.value
           const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
           const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
@@ -5488,7 +5494,10 @@ export default {
             focusInput()
           })
         }
+        return
       }
+
+      typedLetter.value = ''
     }
 
     // Sync functions
@@ -5663,6 +5672,9 @@ export default {
             collections.value = result.collections
             localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
           }
+          if (result.appSettings) {
+            appSettings.value = { ...result.appSettings }
+          }
           
           if (showFeedback) {
             // Show success feedback
@@ -5696,6 +5708,23 @@ export default {
     // Manual sync (with user feedback)
     const manualSync = () => {
       triggerSync(true)
+    }
+
+    const closePracticeSettings = () => {
+      showPracticeSettings.value = false
+    }
+
+    const openPracticeSettings = () => {
+      closeSettingsMenu()
+      closeDrawer()
+      showPracticeSettings.value = true
+    }
+
+    const updateRequireReferenceTyping = (enabled) => {
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        requireReferenceTyping: enabled
+      })
     }
 
     // Close settings modal
@@ -5770,12 +5799,14 @@ export default {
           verses: verses.value,
           collections: collections.value,
           settings: {
+            appSettings: appSettings.value,
+            appSettingsLastModified: getAppSettingsRecord().appSettingsLastModified,
             activeProvider: getActiveProviderId(),
             webdav: webdavProvider ? webdavProvider.getSettings() : null,
             gdrive: gdriveProvider ? gdriveProvider.getSettings() : null
           },
           backedUpAt: new Date().toISOString(),
-          version: '2.0'
+          version: '2.1'
         }
 
         const jsonStr = JSON.stringify(backupData, null, 2)
@@ -5835,9 +5866,9 @@ export default {
 
         // Restore settings if present
         if (backupData.settings) {
-          if (backupData.version === '2.0' || backupData.settings.activeProvider !== undefined) {
+          if (backupData.version === '2.0' || backupData.version === '2.1' || backupData.settings.activeProvider !== undefined) {
             // v2.0 format: nested provider settings
-            const { activeProvider, webdav, gdrive } = backupData.settings
+            const { activeProvider, webdav, gdrive, appSettings: importedAppSettings, appSettingsLastModified } = backupData.settings
             const webdavProvider = getProvider('webdav')
             const gdriveProvider = getProvider('gdrive')
             if (webdav && webdavProvider) webdavProvider.saveSettings(webdav)
@@ -5845,12 +5876,28 @@ export default {
             if (activeProvider) {
               setActiveProviderId(activeProvider)
             }
+            const savedSettings = saveAppSettingsRecord({
+              appSettings: importedAppSettings || {},
+              appSettingsLastModified
+            })
+            appSettings.value = { ...savedSettings.appSettings }
           } else {
             // v1.0 format: flat WebDAV settings object
             const webdavProvider = getProvider('webdav')
             if (webdavProvider) webdavProvider.saveSettings(backupData.settings)
             setActiveProviderId('webdav')
+            const savedSettings = saveAppSettingsRecord({
+              appSettings: {},
+              appSettingsLastModified: null
+            })
+            appSettings.value = { ...savedSettings.appSettings }
           }
+        } else {
+          const savedSettings = saveAppSettingsRecord({
+            appSettings: {},
+            appSettingsLastModified: null
+          })
+          appSettings.value = { ...savedSettings.appSettings }
         }
 
         // Save to localStorage
@@ -5969,6 +6016,7 @@ export default {
     onMounted(async () => {
       loadCollections()
       loadVerses()
+      appSettings.value = getAppSettings()
       migrateProviderSetting()
       
       // Load last backup timestamp
@@ -6118,16 +6166,20 @@ export default {
       closeEditVerseForm,
       handleDeleteVerseFromModal,
       deleteVerse,
+      showPracticeSettings,
       showSettings,
+      appSettings,
       showSettingsMenu,
       drawerOpen,
       toggleDrawer,
       closeDrawer,
       showBackupImport,
       isDev,
+      closePracticeSettings,
       closeSettings,
       toggleSettingsMenu,
       closeSettingsMenu,
+      openPracticeSettings,
       openSyncSettings,
       onSyncSettingsSaved,
       openBackupImport,
@@ -6143,6 +6195,7 @@ export default {
       shouldShowBackupReminder,
       backupFileInput,
       manualSync,
+      updateRequireReferenceTyping,
       syncing,
       syncSuccess,
       syncError,
@@ -6170,7 +6223,8 @@ export default {
       memorizationPracticeRef,
       memorizationInstanceKey,
       reviewPracticeRef,
-      reviewTextContainer
+      reviewTextContainer,
+      totalPracticeUnitCount
     }
   }
 }
