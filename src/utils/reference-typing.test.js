@@ -47,4 +47,17 @@ describe('buildReferencePracticeUnits', () => {
       }),
     ])
   })
+
+  it('keeps verse ranges as one visible token but requires each digit in order', () => {
+    expect(buildReferencePracticeUnits('Philippians 4:6-7')).toEqual([
+      expect.objectContaining({
+        text: 'Philippians',
+        requiredLetters: ['p'],
+      }),
+      expect.objectContaining({
+        text: '4:6-7',
+        requiredLetters: ['4', '6', '7'],
+      }),
+    ])
+  })
 })

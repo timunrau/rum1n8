@@ -43,7 +43,7 @@
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-text-primary font-semibold">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <span :class="word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold'">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else>
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>

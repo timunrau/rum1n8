@@ -3073,6 +3073,14 @@ export default {
         separators = split.separators
       }
 
+      // Reference tokens should reveal strictly by typed alphanumeric characters,
+      // not by hyphen-separated parts like verse words do.
+      if (word.isReferenceUnit) {
+        const indices = getLetterIndices(word.text)
+        const endIdx = indices[typedLettersIndex - 1] + 1
+        return word.text.substring(0, endIdx)
+      }
+
       // Single part (no hyphen): show first typedLettersIndex letters by character position
       if (parts.length === 1) {
         const indices = getLetterIndices(word.text)
@@ -3109,6 +3117,14 @@ export default {
         const split = splitWordParts(word.text)
         parts = split.parts
         separators = split.separators
+      }
+
+      // Reference tokens should keep punctuation in place while only revealing
+      // characters that have actually been typed.
+      if (word.isReferenceUnit) {
+        const indices = getLetterIndices(word.text)
+        const startIdx = indices[typedLettersIndex - 1] + 1
+        return word.text.substring(startIdx)
       }
 
       // Single part (no hyphen): remaining from position after typedLettersIndex-th letter
