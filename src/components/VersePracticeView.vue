@@ -18,7 +18,7 @@
                 <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
+                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else>
                 <span class="text-word-unrevealed">{{ word.text }}{{ word.separatorAfter || '' }}</span>
@@ -32,7 +32,7 @@
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span class="text-text-primary">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else>
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
@@ -43,7 +43,7 @@
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
               <template v-else-if="isPartiallyTyped(word)">
-                <span :class="word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold'">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <span :class="word.incorrect ? 'text-word-incorrect' : (word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold')">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </template>
               <span v-else>
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>

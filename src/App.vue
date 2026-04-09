@@ -5492,18 +5492,31 @@ export default {
             })
           }
         } else {
-          // Wrong letter (not correct and not adjacent) - reveal the word but mark it as incorrect
-          nextWord.revealed = true
-          nextWord.incorrect = true
-          if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
-            nextWord.visible = true // Make it visible in learn/memorize modes
+          // Reference units advance one character at a time even on mistakes,
+          // so a wrong digit does not consume an entire multi-digit token.
+          if (nextWord.isReferenceUnit) {
+            nextWord.typedLettersIndex = currentLetterIndex + 1
+            nextWord.incorrect = true
+            if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
+              nextWord.visible = true
+            }
+            if (nextWord.typedLettersIndex >= requiredLetters.length) {
+              nextWord.revealed = true
+            }
+          } else {
+            // Wrong letter (not correct and not adjacent) - reveal the word but mark it as incorrect
+            nextWord.revealed = true
+            nextWord.incorrect = true
+            if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
+              nextWord.visible = true // Make it visible in learn/memorize modes
+            }
           }
           reviewMistakes.value++
           typedLetter.value = ''
-          
+
           // Vibrate on wrong keypress
           vibrate(50)
-          
+
           // Auto-scroll to next word and focus input
           nextTick(() => {
             scrollToCurrentWord()
