@@ -10,6 +10,7 @@ test.beforeEach(async ({ page }) => {
 test('app loads with default Collections view', async ({ page }) => {
   await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
   await expect(page.getByTestId('search-bar')).toBeVisible()
+  await expect(page.locator('[data-testid="nav-references"]')).toHaveCount(0)
 })
 
 test('bottom nav switches between Review, Collections, Stats', async ({ page }) => {
@@ -54,6 +55,13 @@ test('initial load with view=review-list shows Review tab', async ({ page }) => 
 test('initial load with view=stats shows Stats tab', async ({ page }) => {
   await page.goto('/?view=stats')
   await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+})
+
+test('initial load with removed view=references falls back to Collections tab', async ({ page }) => {
+  await page.goto('/?view=references')
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('search-bar')).toBeVisible()
+  await expect(page).not.toHaveURL(/\?view=references/)
 })
 
 test('FAB is hidden on Stats view', async ({ page }) => {

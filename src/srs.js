@@ -94,24 +94,3 @@ export function calculateNextReviewDate(verse, grade, isNewReview = false) {
   nextDate.setDate(nextDate.getDate() + interval)
   return { nextReviewDate: nextDate.toISOString(), easeFactor: newEF, interval }
 }
-
-// Calculate next review date for reference quiz SRS
-// Maps ref* fields to the standard fields expected by calculateNextReviewDate
-export function calculateRefNextReviewDate(verse, grade) {
-  const refVerse = {
-    easeFactor: verse.refEaseFactor || 2.5,
-    interval: verse.refInterval || 0,
-    lastReviewed: verse.refLastReviewed,
-    reviewCount: verse.refReviewCount || 0,
-    nextReviewDate: verse.refNextReviewDate
-  }
-  return calculateNextReviewDate(refVerse, grade, true)
-}
-
-// Check if verse reference was reviewed today
-export function wasRefReviewedToday(verse) {
-  if (!verse.refLastReviewed) return false
-  const lastReviewed = new Date(verse.refLastReviewed)
-  const now = new Date()
-  return lastReviewed.toDateString() === now.toDateString()
-}

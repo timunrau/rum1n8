@@ -66,6 +66,44 @@ test('click verse -> enters review screen', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
+test('legacy ref quiz fields do not block review flow', async ({ page }) => {
+  const masteredVerse = {
+    id: 'review-legacy-ref-fields',
+    reference: 'Romans 12:2',
+    content: 'Do not conform to the pattern of this world',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 2,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 2,
+    reviewHistory: [],
+    collectionIds: [],
+    refEaseFactor: 2.5,
+    refInterval: 0,
+    refNextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    refLastReviewed: null,
+    refReviewCount: 0,
+    refReviewHistory: [],
+  }
+
+  await seedStorage(page, [masteredVerse], [])
+  await page.reload()
+
+  const stored = (await getStoredVerses(page)) as Array<Record<string, unknown>>
+  expect(stored[0]).toHaveProperty('refNextReviewDate')
+
+  await page.goto('/?view=review-list')
+  await page.getByText('Romans 12:2').click()
+
+  await expect(page.locator('h1')).toContainText('Romans 12:2')
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
+})
+
 test('empty state: no verses due shows appropriate message', async ({ page }) => {
   await page.goto('/?view=review-list')
   await expect(page.getByText(/No verses|all caught up|Review/i).first()).toBeVisible({ timeout: 5000 })

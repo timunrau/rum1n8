@@ -512,125 +512,6 @@
         </div>
       </div>
 
-      <!-- Reference Quiz View (full screen overlay) -->
-      <div
-        v-if="refQuizActive"
-        class="fixed inset-0 bg-base z-50 flex flex-col"
-        style="height: 100dvh;"
-      >
-        <!-- Quiz header -->
-        <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
-          <div class="h-16 flex items-center px-4 gap-3">
-            <button
-              data-testid="ref-quiz-back"
-              @click="exitRefQuiz"
-              class="p-2 -ml-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 class="text-lg font-semibold text-text-primary">Reference Quiz</h2>
-            <span class="ml-auto text-sm text-text-muted">{{ refQuizIndex + 1 }} / {{ refQuizQueue.length }}</span>
-          </div>
-        </header>
-
-        <!-- Quiz content -->
-        <div v-if="refQuizCurrentVerse" class="flex-1 flex flex-col overflow-hidden">
-          <!-- Verse content (scrollable) -->
-          <div class="flex-1 overflow-y-auto px-6 pt-6">
-            <div class="flex flex-col justify-center min-h-full pb-4">
-              <p data-testid="ref-quiz-snippet" class="text-xl leading-relaxed text-text-primary text-center italic">
-                "{{ refQuizCurrentVerse.content }}"
-              </p>
-            </div>
-          </div>
-
-          <!-- Choices (always visible, never scrolls) -->
-          <div class="flex-shrink-0 space-y-3 px-6 pb-6 pt-3">
-            <button
-              v-for="choice in refQuizChoices"
-              :key="choice"
-              @click="!refQuizAnswered && !refQuizDisabledChoices.includes(choice) && handleRefQuizChoice(choice)"
-              :disabled="refQuizAnswered || refQuizDisabledChoices.includes(choice)"
-              :class="[
-                'w-full py-4 px-5 rounded-xl text-left text-base font-medium transition-all duration-200 border-2',
-                refQuizAnswered && choice === refQuizCurrentVerse.reference
-                  ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300'
-                  : refQuizDisabledChoices.includes(choice)
-                    ? 'bg-red-100 border-red-300 text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:text-red-500 opacity-60'
-                    : refQuizAnswered
-                      ? 'bg-surface border-border-default text-text-muted'
-                      : 'bg-surface border-border-default text-text-primary active:scale-98 active:border-accent-primary'
-              ]"
-            >
-              {{ choice }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Completion screen -->
-        <div v-else class="flex-1 flex flex-col items-center justify-center p-6">
-          <svg class="w-16 h-16 mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-xl font-semibold text-text-primary mb-2">All caught up!</h3>
-          <p class="text-text-muted text-center">{{ refQuizSessionCount }} reference{{ refQuizSessionCount === 1 ? '' : 's' }} reviewed</p>
-          <button
-            v-if="refQuizEligibleVerses.length >= 4"
-            @click="startRefQuizPractice"
-            class="mt-8 px-8 py-3 bg-accent-primary text-white rounded-xl font-medium active:scale-98 transition-transform"
-          >
-            Keep Practicing
-          </button>
-          <button
-            @click="exitRefQuiz"
-            class="mt-4 px-8 py-3 text-text-muted font-medium active:scale-98 transition-transform"
-          >
-            Done
-          </button>
-        </div>
-      </div>
-
-      <!-- References View -->
-      <div v-if="currentView === 'references' && !currentCollectionId && !refQuizActive" class="">
-        <div class="flex flex-col items-center justify-center py-12 px-6" style="min-height: calc(100vh - 4rem);">
-          <!-- Has eligible verses -->
-          <template v-if="refQuizEligibleVerses.length >= 4">
-            <div class="text-center mb-8">
-              <p class="text-5xl font-bold text-text-primary mb-2">{{ dueRefQuizCount }}</p>
-              <p class="text-lg text-text-muted">reference{{ dueRefQuizCount === 1 ? '' : 's' }} due</p>
-            </div>
-            <p class="text-sm text-text-muted mb-8">
-              {{ learnedRefCount }} of {{ refQuizEligibleVerses.length }} references practiced
-            </p>
-            <button
-              v-if="dueRefQuizCount > 0"
-              @click="startRefQuiz"
-              class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-lg active:scale-98 transition-transform shadow-md"
-            >
-              Start Quiz
-            </button>
-            <button
-              v-else
-              @click="startRefQuizPractice"
-              class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-lg active:scale-98 transition-transform shadow-md"
-            >
-              Practice
-            </button>
-          </template>
-
-          <!-- Not enough verses -->
-          <template v-else>
-            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-text-muted text-lg text-center">Not enough verses yet</p>
-            <p class="text-text-muted text-sm mt-2 text-center">Master at least 4 verses and complete a content review for each to start learning references</p>
-          </template>
-        </div>
-      </div>
-
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
 
@@ -960,7 +841,7 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !refQuizActive && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Verses Tab (far left) -->
         <button
@@ -1003,29 +884,6 @@
           <span class="text-xs font-medium">Review</span>
         </button>
 
-        <!-- Ref. Quiz Tab -->
-        <button
-          data-testid="nav-references"
-          @click="navigateToReferences"
-          :class="[
-            'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'references'
-              ? 'text-nav-active'
-              : 'text-text-muted'
-          ]"
-        >
-          <div class="relative">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-            </svg>
-            <span
-              v-if="dueRefQuizCount > 0"
-              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
-            >{{ dueRefQuizCount > 99 ? '99+' : dueRefQuizCount }}</span>
-          </div>
-          <span class="text-xs font-medium">Ref. Quiz</span>
-        </button>
-
         <!-- Stats Tab (far right) -->
         <button
           data-testid="nav-stats"
@@ -1047,7 +905,7 @@
 
     <!-- Floating Action Button with Menu -->
     <div 
-      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats' && currentView !== 'references' && !refQuizActive"
+      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
       :class="[
         'fixed right-6 z-30',
         !currentCollectionId
@@ -1130,7 +988,7 @@
 
     <!-- Backdrop to close menu when clicking outside -->
     <div
-      v-if="fabMenuOpen && !memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats' && currentView !== 'references' && !refQuizActive"
+      v-if="fabMenuOpen && !memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
       @click="fabMenuOpen = false"
       class="fixed inset-0 z-20"
     ></div>
@@ -1758,7 +1616,7 @@ import { useColorScheme } from './composables/useColorScheme.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
 import { countVersesInReference } from './utils/verse-count.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
-import { calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate, calculateRefNextReviewDate, wasRefReviewedToday } from './srs.js'
+import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -1849,19 +1707,6 @@ export default {
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
     const appSettings = ref(getAppSettings())
-
-    // Reference quiz state
-    const refQuizActive = ref(false)
-    const refQuizQueue = ref([]) // verses sorted by refNextReviewDate
-    const refQuizIndex = ref(0) // current position in queue
-    const refQuizChoices = ref([]) // 4 reference strings for current question
-    const refQuizAnswered = ref(false) // has user answered current question
-    const refQuizCorrect = ref(false) // was first attempt correct
-    const refQuizDisabledChoices = ref([]) // wrong choices that have been tapped
-    const refQuizShowFullVerse = ref(false) // user expanded snippet
-    const refQuizSessionCount = ref(0) // how many answered this session
-    const refQuizAutoAdvanceTimer = ref(null)
-    const refQuizPracticeMode = ref(false) // practice mode: no SRS updates
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -1998,13 +1843,8 @@ export default {
       
       // Restore main view (review-list, collections, or search) before starting review/memorization
       // so that startReview can determine the correct source list
-      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search' || state.view === 'stats' || state.view === 'references') {
+      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search' || state.view === 'stats') {
         currentView.value = state.view
-        if (state.view === 'references') refQuizActive.value = false
-      } else if (state.view === 'reference-quiz') {
-        currentView.value = 'references'
-        // Don't restore into quiz, just go to references tab
-        refQuizActive.value = false
       } else if (state.view === 'collection') {
         // Collection view is handled above
       } else if (state.view === 'review' || state.view === 'memorization') {
@@ -2050,9 +1890,6 @@ export default {
               verse.nextReviewDate = reviewData.nextReviewDate
               verse.easeFactor = reviewData.easeFactor
               verse.interval = reviewData.interval
-              if (verse.reviewCount === 1 && !verse.refNextReviewDate) {
-                verse.refNextReviewDate = new Date().toISOString()
-              }
             }
 
             // Always update tracking fields regardless of whether it was reviewed today
@@ -2083,7 +1920,6 @@ export default {
         typedLetter.value = ''
         reviewMistakes.value = 0
         currentReviewSaved.value = false
-        refQuizActive.value = false
       }
       
       // Use nextTick to ensure DOM updates before resetting flag
@@ -2107,6 +1943,7 @@ export default {
       // Read URL params to restore view state
       const urlParams = new URLSearchParams(window.location.search)
       const viewParam = urlParams.get('view')
+      let shouldNormalizeUrl = false
       
       if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'search' || viewParam === 'stats') {
         currentView.value = viewParam
@@ -2120,10 +1957,15 @@ export default {
       } else {
         // Default to collections if no view param
         currentView.value = 'collections'
+        shouldNormalizeUrl = !!viewParam
       }
       
       const initialState = getNavigationState()
-      window.history.replaceState(initialState, '', window.location.href)
+      if (shouldNormalizeUrl) {
+        replaceNavigationState(initialState)
+      } else {
+        window.history.replaceState(initialState, '', window.location.href)
+      }
       window.addEventListener('popstate', handlePopState)
     }
 
@@ -2184,10 +2026,6 @@ export default {
         verse.nextReviewDate = reviewData.nextReviewDate
         verse.easeFactor = reviewData.easeFactor
         verse.interval = reviewData.interval
-        // Initialize reference quiz when verse gets its first content review
-        if (verse.reviewCount === 1 && !verse.refNextReviewDate) {
-          verse.refNextReviewDate = new Date().toISOString()
-        }
       }
 
       const firstAttemptAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
@@ -2220,31 +2058,6 @@ export default {
     // Count verses due for review
     const dueVersesCount = computed(() => {
       return verses.value.filter(v => isDueForReview(v)).length
-    })
-
-    // Reference quiz: eligible verses (have refNextReviewDate set)
-    const refQuizEligibleVerses = computed(() => {
-      return verses.value.filter(v => v.refNextReviewDate)
-    })
-
-    // Reference quiz: due count
-    const dueRefQuizCount = computed(() => {
-      const now = new Date()
-      return refQuizEligibleVerses.value.filter(v => {
-        const next = new Date(v.refNextReviewDate)
-        return now >= next
-      }).length
-    })
-
-    // Reference quiz: learned count (quizzed at least once)
-    const learnedRefCount = computed(() => {
-      return refQuizEligibleVerses.value.filter(v => v.refReviewCount > 0).length
-    })
-
-    // Reference quiz: current verse
-    const refQuizCurrentVerse = computed(() => {
-      if (!refQuizActive.value || refQuizIndex.value >= refQuizQueue.value.length) return null
-      return refQuizQueue.value[refQuizIndex.value]
     })
 
     // Total verse count accounting for ranges (e.g., "Psalm 1:1-3" = 3 verses)
@@ -2834,20 +2647,6 @@ export default {
               verse.masteredAt = null
             }
           }
-          // Add reference quiz SRS fields if missing
-          if (!verse.hasOwnProperty('refEaseFactor')) verse.refEaseFactor = 2.5
-          if (!verse.hasOwnProperty('refInterval')) verse.refInterval = 0
-          if (!verse.hasOwnProperty('refLastReviewed')) verse.refLastReviewed = null
-          if (!verse.hasOwnProperty('refReviewCount')) verse.refReviewCount = 0
-          if (!verse.hasOwnProperty('refReviewHistory')) verse.refReviewHistory = []
-          // Migrate existing mastered+reviewed verses into reference quiz pool
-          if (!verse.hasOwnProperty('refNextReviewDate')) {
-            if (verse.memorizationStatus === 'mastered' && verse.reviewCount >= 1) {
-              verse.refNextReviewDate = new Date().toISOString()
-            } else {
-              verse.refNextReviewDate = null
-            }
-          }
           return verse
         })
         saveVerses() // Save migrated data
@@ -3172,7 +2971,7 @@ export default {
       }
     }
 
-    // SRS functions (calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate)
+    // SRS functions (calculateGrade, wasReviewedToday, calculateNextReviewDate)
     // are imported from ./srs.js
 
     // Check if a verse is due for review (only for mastered verses)
@@ -3284,13 +3083,7 @@ export default {
           interval: 0,
           reviewHistory: [],
           masteredAt: null,
-          collectionIds: collectionIds,
-          refEaseFactor: 2.5,
-          refInterval: 0,
-          refNextReviewDate: null,
-          refLastReviewed: null,
-          refReviewCount: 0,
-          refReviewHistory: []
+          collectionIds: collectionIds
         }
         verses.value.unshift(verse)
         saveVerses()
@@ -4243,241 +4036,6 @@ export default {
       pushNavigationState({ view: 'stats' })
     }
 
-    // Navigate to references view
-    const navigateToReferences = () => {
-      currentCollectionId.value = null
-      currentView.value = 'references'
-      searchQuery.value = ''
-      searchActive.value = false
-      pushNavigationState({ view: 'references' })
-    }
-
-    // Get verse snippet (first ~12 words)
-    const getVerseSnippet = (content) => {
-      const words = content.split(/\s+/)
-      if (words.length <= 12) return content
-      return words.slice(0, 12).join(' ') + '...'
-    }
-
-    // Generate 4 multiple-choice options for a reference quiz question
-    const generateRefQuizChoices = (correctVerse) => {
-      const pool = refQuizEligibleVerses.value.filter(v => v.id !== correctVerse.id)
-      // Shuffle pool
-      const shuffled = [...pool].sort(() => Math.random() - 0.5)
-      const wrongRefs = shuffled.slice(0, 3).map(v => v.reference)
-
-      // Fill with random Bible references if not enough
-      while (wrongRefs.length < 3) {
-        const generated = generateRandomBibleReference(correctVerse.reference, [...wrongRefs, correctVerse.reference])
-        if (generated) wrongRefs.push(generated)
-      }
-
-      const choices = [correctVerse.reference, ...wrongRefs]
-      // Shuffle choices
-      return choices.sort(() => Math.random() - 0.5)
-    }
-
-    // Generate a random Bible reference that doesn't collide with existing ones
-    const generateRandomBibleReference = (correctRef, existingRefs) => {
-      const books = [
-        { name: 'Genesis', chapters: 50 }, { name: 'Exodus', chapters: 40 },
-        { name: 'Leviticus', chapters: 27 }, { name: 'Numbers', chapters: 36 },
-        { name: 'Deuteronomy', chapters: 34 }, { name: 'Joshua', chapters: 24 },
-        { name: 'Judges', chapters: 21 }, { name: 'Ruth', chapters: 4 },
-        { name: '1 Samuel', chapters: 31 }, { name: '2 Samuel', chapters: 24 },
-        { name: '1 Kings', chapters: 22 }, { name: '2 Kings', chapters: 25 },
-        { name: 'Psalms', chapters: 150 }, { name: 'Proverbs', chapters: 31 },
-        { name: 'Ecclesiastes', chapters: 12 }, { name: 'Isaiah', chapters: 66 },
-        { name: 'Jeremiah', chapters: 52 }, { name: 'Ezekiel', chapters: 48 },
-        { name: 'Daniel', chapters: 12 }, { name: 'Hosea', chapters: 14 },
-        { name: 'Matthew', chapters: 28 }, { name: 'Mark', chapters: 16 },
-        { name: 'Luke', chapters: 24 }, { name: 'John', chapters: 21 },
-        { name: 'Acts', chapters: 28 }, { name: 'Romans', chapters: 16 },
-        { name: '1 Corinthians', chapters: 16 }, { name: '2 Corinthians', chapters: 13 },
-        { name: 'Galatians', chapters: 6 }, { name: 'Ephesians', chapters: 6 },
-        { name: 'Philippians', chapters: 4 }, { name: 'Colossians', chapters: 4 },
-        { name: '1 Thessalonians', chapters: 5 }, { name: '2 Thessalonians', chapters: 3 },
-        { name: '1 Timothy', chapters: 6 }, { name: '2 Timothy', chapters: 4 },
-        { name: 'Hebrews', chapters: 13 }, { name: 'James', chapters: 5 },
-        { name: '1 Peter', chapters: 5 }, { name: '2 Peter', chapters: 3 },
-        { name: '1 John', chapters: 5 }, { name: 'Revelation', chapters: 22 }
-      ]
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const book = books[Math.floor(Math.random() * books.length)]
-        const chapter = Math.floor(Math.random() * book.chapters) + 1
-        const verse = Math.floor(Math.random() * 25) + 1
-        const ref = `${book.name} ${chapter}:${verse}`
-        if (!existingRefs.includes(ref)) return ref
-      }
-      return 'Psalm 119:105' // fallback
-    }
-
-    const REF_QUIZ_SESSION_KEY = 'rum1n8-refquiz-session'
-
-    const saveRefQuizSession = () => {
-      const today = new Date().toISOString().slice(0, 10)
-      const session = {
-        date: today,
-        queueIds: refQuizQueue.value.map(v => v.id),
-        index: refQuizIndex.value
-      }
-      localStorage.setItem(REF_QUIZ_SESSION_KEY, JSON.stringify(session))
-    }
-
-    const clearRefQuizSession = () => {
-      localStorage.removeItem(REF_QUIZ_SESSION_KEY)
-    }
-
-    // Start reference quiz session
-    const startRefQuiz = () => {
-      const today = new Date().toISOString().slice(0, 10)
-      const saved = (() => {
-        try { return JSON.parse(localStorage.getItem(REF_QUIZ_SESSION_KEY)) } catch { return null }
-      })()
-
-      // Restore saved session if it's from today and not yet completed
-      if (saved && saved.date === today && Array.isArray(saved.queueIds) && saved.index < saved.queueIds.length) {
-        const verseMap = Object.fromEntries(verses.value.map(v => [v.id, v]))
-        const restoredQueue = saved.queueIds.map(id => verseMap[id]).filter(Boolean)
-        const restoredIndex = Math.min(saved.index, restoredQueue.length)
-        if (restoredQueue.length > 0 && restoredIndex < restoredQueue.length) {
-          refQuizQueue.value = restoredQueue
-          refQuizIndex.value = restoredIndex
-          refQuizSessionCount.value = 0
-          refQuizPracticeMode.value = false
-          refQuizActive.value = true
-          setupRefQuizQuestion()
-          pushNavigationState({ view: 'reference-quiz' })
-          return
-        }
-      }
-
-      const now = new Date()
-      // Sort eligible verses: due first (by refNextReviewDate ascending)
-      const sorted = [...refQuizEligibleVerses.value].sort((a, b) => {
-        const dateA = new Date(a.refNextReviewDate)
-        const dateB = new Date(b.refNextReviewDate)
-        return dateA - dateB
-      })
-      // Only include due verses
-      const dueVerses = sorted.filter(v => now >= new Date(v.refNextReviewDate))
-      if (dueVerses.length === 0) return
-
-      refQuizQueue.value = dueVerses
-      refQuizIndex.value = 0
-      refQuizSessionCount.value = 0
-      refQuizPracticeMode.value = false
-      refQuizActive.value = true
-      setupRefQuizQuestion()
-      pushNavigationState({ view: 'reference-quiz' })
-    }
-
-    // Start practice mode: all eligible verses, shuffled, no SRS updates
-    const startRefQuizPractice = () => {
-      const shuffled = [...refQuizEligibleVerses.value].sort(() => Math.random() - 0.5)
-      refQuizQueue.value = shuffled
-      refQuizIndex.value = 0
-      refQuizSessionCount.value = 0
-      refQuizPracticeMode.value = true
-      refQuizActive.value = true
-      setupRefQuizQuestion()
-      pushNavigationState({ view: 'reference-quiz' })
-    }
-
-    // Set up the current quiz question
-    const setupRefQuizQuestion = () => {
-      const verse = refQuizCurrentVerse.value
-      if (!verse) return
-      refQuizChoices.value = generateRefQuizChoices(verse)
-      refQuizAnswered.value = false
-      refQuizCorrect.value = false
-      refQuizDisabledChoices.value = []
-      refQuizShowFullVerse.value = false
-      if (refQuizAutoAdvanceTimer.value) {
-        clearTimeout(refQuizAutoAdvanceTimer.value)
-        refQuizAutoAdvanceTimer.value = null
-      }
-    }
-
-    // Handle tapping a reference quiz choice
-    const handleRefQuizChoice = (chosenRef) => {
-      const queueVerse = refQuizCurrentVerse.value
-      if (!queueVerse) return
-
-      if (chosenRef === queueVerse.reference) {
-        // Correct answer
-        refQuizAnswered.value = true
-        const isFirstAttempt = refQuizDisabledChoices.value.length === 0
-        refQuizCorrect.value = isFirstAttempt
-        const grade = isFirstAttempt ? 5 : 1
-
-        // Skip all SRS updates in practice mode
-        if (!refQuizPracticeMode.value) {
-          // Look up the canonical verse in verses.value by ID, because sync may have
-          // replaced the array (making queue references stale).
-          const verse = verses.value.find(v => v.id === queueVerse.id) || queueVerse
-
-          // Update reference SRS
-          if (!wasRefReviewedToday(verse)) {
-            const reviewData = calculateRefNextReviewDate(verse, grade)
-            verse.refReviewCount = (verse.refReviewCount || 0) + 1
-            verse.refNextReviewDate = reviewData.nextReviewDate
-            verse.refEaseFactor = reviewData.easeFactor
-            verse.refInterval = reviewData.interval
-          }
-          verse.refLastReviewed = new Date().toISOString()
-          if (!verse.refReviewHistory) verse.refReviewHistory = []
-          verse.refReviewHistory.push({
-            date: new Date().toISOString(),
-            correct: isFirstAttempt
-          })
-          verse.lastModified = new Date().toISOString()
-          saveVerses()
-        }
-
-        refQuizSessionCount.value++
-
-        // Auto-advance after brief pause
-        refQuizAutoAdvanceTimer.value = setTimeout(() => {
-          advanceRefQuiz()
-        }, 800)
-      } else {
-        // Wrong answer - disable this choice, user must find correct one
-        refQuizDisabledChoices.value = [...refQuizDisabledChoices.value, chosenRef]
-      }
-    }
-
-    // Advance to next quiz question or finish
-    const advanceRefQuiz = () => {
-      if (refQuizAutoAdvanceTimer.value) {
-        clearTimeout(refQuizAutoAdvanceTimer.value)
-        refQuizAutoAdvanceTimer.value = null
-      }
-      const nextIndex = refQuizIndex.value + 1
-      refQuizIndex.value = nextIndex
-      if (nextIndex >= refQuizQueue.value.length) {
-        // All done — index is past end, refQuizCurrentVerse returns null → shows completion screen
-        clearRefQuizSession()
-        return
-      }
-      saveRefQuizSession()
-      setupRefQuizQuestion()
-    }
-
-    // Exit reference quiz
-    const exitRefQuiz = () => {
-      if (refQuizAutoAdvanceTimer.value) {
-        clearTimeout(refQuizAutoAdvanceTimer.value)
-        refQuizAutoAdvanceTimer.value = null
-      }
-      // Save progress so we can resume later today if mid-session
-      if (refQuizIndex.value < refQuizQueue.value.length) {
-        saveRefQuizSession()
-      }
-      refQuizActive.value = false
-      refQuizPracticeMode.value = false
-    }
-
     const clearSearch = () => {
       searchQuery.value = ''
       searchActive.value = false
@@ -5016,9 +4574,6 @@ export default {
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
-            if (verse.reviewCount === 1 && !verse.refNextReviewDate) {
-              verse.refNextReviewDate = new Date().toISOString()
-            }
           }
 
           // Always update tracking fields regardless of whether it was reviewed today
@@ -5169,9 +4724,6 @@ export default {
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
-            if (verse.reviewCount === 1 && !verse.refNextReviewDate) {
-              verse.refNextReviewDate = new Date().toISOString()
-            }
           }
 
           // Always update tracking fields regardless of whether it was reviewed today
@@ -6148,25 +5700,6 @@ export default {
       navigateToReviewList,
       navigateToCollections,
       navigateToStats,
-      navigateToReferences,
-      refQuizActive,
-      refQuizQueue,
-      refQuizIndex,
-      refQuizChoices,
-      refQuizAnswered,
-      refQuizCorrect,
-      refQuizDisabledChoices,
-      refQuizShowFullVerse,
-      refQuizSessionCount,
-      refQuizCurrentVerse,
-      refQuizEligibleVerses,
-      dueRefQuizCount,
-      learnedRefCount,
-      getVerseSnippet,
-      startRefQuiz,
-      startRefQuizPractice,
-      handleRefQuizChoice,
-      exitRefQuiz,
       clearSearch,
       openSearch,
       searchActive,

@@ -92,7 +92,7 @@ test('Stats tab shows Daily Activity card with chart', async ({ page }) => {
   await page.getByTestId('nav-stats').click()
   await expect(page.getByText('Daily Activity')).toBeVisible()
   // Chart legend should be visible
-  await expect(page.getByText('Reviews')).toBeVisible()
+  await expect(page.getByText('Reviews', { exact: true })).toBeVisible()
   await expect(page.getByText('Mastered', { exact: true })).toBeVisible()
   // A canvas element should be rendered (Chart.js)
   await expect(page.locator('canvas').first()).toBeVisible()
