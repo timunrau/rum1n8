@@ -2815,7 +2815,8 @@ export default {
           parts,
           separators,
           index,
-          incorrect: false
+          incorrect: false,
+          incorrectLetterIndices: []
         }
       })
     }
@@ -4990,12 +4991,15 @@ export default {
         }
         
         const currentLetterIndex = nextWord.typedLettersIndex || 0
-        
+        if (!Array.isArray(nextWord.incorrectLetterIndices)) {
+          nextWord.incorrectLetterIndices = []
+        }
+
         // Safety check: ensure we have a valid required letter
         if (currentLetterIndex >= requiredLetters.length) {
           // Already completed all letters, mark as revealed and move on
           nextWord.revealed = true
-          nextWord.incorrect = false
+          nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
           if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
             nextWord.visible = true
           }
@@ -5013,7 +5017,7 @@ export default {
         if (!currentRequiredLetter) {
           // Fallback: mark word as revealed if we can't determine required letter
           nextWord.revealed = true
-          nextWord.incorrect = false
+          nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
           typedLetter.value = ''
           return
         }
@@ -5022,12 +5026,13 @@ export default {
         if (isLetterMatch(letter, currentRequiredLetter)) {
           // Correct letter - advance to next letter in sequence
           nextWord.typedLettersIndex = currentLetterIndex + 1
+          nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
           
           // Check if all required letters have been typed
           if (nextWord.typedLettersIndex >= requiredLetters.length) {
             // All letters typed - reveal the word normally
             nextWord.revealed = true
-            nextWord.incorrect = false
+            nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true // Make it visible in learn/memorize modes
             }
@@ -5053,6 +5058,7 @@ export default {
           // so a wrong digit does not consume an entire multi-digit token.
           if (nextWord.isReferenceUnit) {
             nextWord.typedLettersIndex = currentLetterIndex + 1
+            nextWord.incorrectLetterIndices.push(currentLetterIndex)
             nextWord.incorrect = true
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true

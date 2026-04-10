@@ -34,6 +34,7 @@ export function buildReferencePracticeUnits(reference = '') {
         revealed: false,
         visible: false,
         incorrect: false,
+        incorrectLetterIndices: [],
         isReferenceUnit: true,
       })
       continue
@@ -51,6 +52,7 @@ export function buildReferencePracticeUnits(reference = '') {
           revealed: false,
           visible: false,
           incorrect: false,
+          incorrectLetterIndices: [],
           isReferenceUnit: true,
         })
       }
@@ -66,6 +68,7 @@ export function buildReferencePracticeUnits(reference = '') {
       revealed: false,
       visible: false,
       incorrect: false,
+      incorrectLetterIndices: [],
       isReferenceUnit: true,
     })
   }

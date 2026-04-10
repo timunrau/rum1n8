@@ -15,10 +15,26 @@
           >
             <span v-if="memorizationMode === 'learn'">
               <template v-if="word.revealed">
-                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-learn-revealed-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, true)"
+                  >{{ segment.text }}</span><span class="text-text-primary">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <span v-else :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-learn-partial-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, false)"
+                  >{{ segment.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <template v-else>
+                  <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="text-word-unrevealed">{{ getRemainingPartText(word) }}{{ word.separatorAfter || '' }}</span>
+                </template>
               </template>
               <template v-else>
                 <span class="text-word-unrevealed">{{ word.text }}{{ word.separatorAfter || '' }}</span>
@@ -28,22 +44,58 @@
               <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-word-unrevealed">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
-              <span v-else-if="word.revealed" :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
+              <template v-else-if="word.revealed">
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-memorize-revealed-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, true)"
+                  >{{ segment.text }}</span><span class="text-text-primary">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <span v-else :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
+                  {{ word.text }}{{ word.separatorAfter || '' }}
+                </span>
+              </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-memorize-partial-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, false)"
+                  >{{ segment.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <template v-else>
+                  <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                </template>
               </template>
               <span v-else>
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
             <span v-else-if="memorizationMode === 'master'">
-              <span v-if="word.revealed" :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
-                {{ word.text }}{{ word.separatorAfter || '' }}
-              </span>
+              <template v-if="word.revealed">
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-master-revealed-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, true)"
+                  >{{ segment.text }}</span><span class="text-text-primary">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <span v-else :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">
+                  {{ word.text }}{{ word.separatorAfter || '' }}
+                </span>
+              </template>
               <template v-else-if="isPartiallyTyped(word)">
-                <span :class="word.incorrect ? 'text-word-incorrect' : (word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold')">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <template v-if="shouldRenderReferenceSegments(word)">
+                  <span
+                    v-for="(segment, segmentIndex) in getReferenceSegments(word)"
+                    :key="`${index}-master-partial-${segmentIndex}`"
+                    :class="getReferenceSegmentClass(segment, false)"
+                  >{{ segment.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                </template>
+                <template v-else>
+                  <span :class="word.incorrect ? 'text-word-incorrect' : (word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold')">{{ getPartialWordText(word) }}</span><span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                </template>
               </template>
               <span v-else>
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
@@ -179,6 +231,69 @@ export default {
       }
     }
 
+    function shouldRenderReferenceSegments(word) {
+      return !!(
+        word?.isReferenceUnit &&
+        word.requiredLetters?.length > 1 &&
+        Array.isArray(word.incorrectLetterIndices) &&
+        word.incorrectLetterIndices.length > 0 &&
+        ((word.typedLettersIndex || 0) > 0 || word.revealed)
+      )
+    }
+
+    function getReferenceSegments(word) {
+      if (!word?.text) return []
+
+      const typedLettersIndex = Math.max(0, word.typedLettersIndex || 0)
+      const incorrectIndices = new Set(word.incorrectLetterIndices || [])
+      const segments = []
+      let currentState = null
+      let currentText = ''
+
+      for (let index = 0; index < word.text.length; index++) {
+        let state = 'untyped'
+        if (index < typedLettersIndex) {
+          state = incorrectIndices.has(index) ? 'incorrect' : 'typed'
+        }
+
+        if (state !== currentState) {
+          if (currentText) {
+            segments.push({ text: currentText, state: currentState })
+          }
+          currentState = state
+          currentText = word.text[index]
+        } else {
+          currentText += word.text[index]
+        }
+      }
+
+      if (currentText) {
+        segments.push({ text: currentText, state: currentState })
+      }
+
+      return segments
+    }
+
+    function getReferenceSegmentClass(segment, isRevealed) {
+      if (segment.state === 'incorrect') {
+        return 'text-word-incorrect'
+      }
+
+      if (segment.state === 'typed') {
+        return 'text-text-primary'
+      }
+
+      if (isRevealed) {
+        return 'text-text-primary'
+      }
+
+      if (props.memorizationMode === 'learn') {
+        return 'text-word-unrevealed'
+      }
+
+      return 'border-b-2 border-word-unrevealed text-transparent select-none'
+    }
+
     onMounted(() => {
       nextTick(() => {
         setTimeout(() => focusInput(), 100)
@@ -210,7 +325,10 @@ export default {
       onSwitchMode,
       onInput,
       onKeydown,
-      focusInput
+      focusInput,
+      shouldRenderReferenceSegments,
+      getReferenceSegments,
+      getReferenceSegmentClass
     }
   }
 }

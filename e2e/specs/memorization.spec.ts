@@ -264,6 +264,33 @@ test('reference typing shows full reference and requires shorthand to complete',
   await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
 })
 
+test('reference typing keeps an incorrect earlier digit red after a later digit is correct', async ({ page }) => {
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'reference-digit-color',
+      reference: 'Hebrews 12:2',
+      content: 'One two',
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await seedAppSettings(page, { requireReferenceTyping: true })
+  await page.reload()
+  await page.goto('/?view=collections')
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Hebrews 12:2').first().click()
+
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('oth', { delay: 50 })
+  await page.keyboard.type('92', { delay: 50 })
+
+  await expect(page.locator('#practice-word-3 .text-word-incorrect').first()).toHaveText('1')
+  await expect(page.locator('#practice-word-3 .text-text-primary').first()).toHaveText('2')
+})
+
 test('memorize mode: pressing Memorize button again flips hidden words', async ({ page }) => {
   const verse = [
     {
