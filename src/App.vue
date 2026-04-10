@@ -1582,6 +1582,10 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
             Source Code
           </a>
 
+          <p class="text-sm text-text-muted mt-4">
+            Version {{ appDisplayVersion }}
+          </p>
+
           <div class="flex justify-end pt-6">
             <button
               @click="closeAbout"
@@ -1646,6 +1650,7 @@ export default {
   name: 'App',
   components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, SyncSettingsModal, Line, Bar },
   setup() {
+    const appDisplayVersion = __APP_VERSION__
     const verses = ref([])
     const collections = ref([])
     const showForm = ref(false)
@@ -5761,6 +5766,7 @@ export default {
       syncing,
       syncSuccess,
       syncError,
+      appDisplayVersion,
       shareSuccess,
       showImportCSV,
       csvFileInput,

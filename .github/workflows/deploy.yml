@@ -11,14 +11,91 @@ jobs:
   e2e-tests:
     uses: ./.github/workflows/e2e.yml
 
-  build-and-push:
+  release:
     needs: [unit-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      released: ${{ steps.release-result.outputs.released }}
+      version: ${{ steps.release-result.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Capture release state before semantic-release
+        id: state-before
+        run: |
+          VERSION=$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release
+
+      - name: Capture release state after semantic-release
+        id: state-after
+        run: |
+          git fetch origin main --tags
+          VERSION=$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+
+      - name: Determine whether a release was published
+        id: release-result
+        run: |
+          if [ "${{ steps.state-before.outputs.tag }}" != "${{ steps.state-after.outputs.tag }}" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${{ steps.state-after.outputs.version }}" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: [unit-tests, e2e-tests, release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Build image tags
+        id: image-tags
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
+          rum_tags="ghcr.io/timunrau/rum1n8:latest"$'\n'"ghcr.io/timunrau/rum1n8:${CURRENT_SHA}"
+          proxy_tags="ghcr.io/timunrau/rum1n8-proxy:latest"$'\n'"ghcr.io/timunrau/rum1n8-proxy:${CURRENT_SHA}"
+
+          if [ "${{ needs.release.outputs.released }}" = "true" ]; then
+            rum_tags="$rum_tags"$'\n'"ghcr.io/timunrau/rum1n8:${{ needs.release.outputs.version }}"
+            proxy_tags="$proxy_tags"$'\n'"ghcr.io/timunrau/rum1n8-proxy:${{ needs.release.outputs.version }}"
+          fi
+
+          {
+            echo "rum_tags<<EOF"
+            echo "$rum_tags"
+            echo "EOF"
+            echo "proxy_tags<<EOF"
+            echo "$proxy_tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -36,9 +113,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ghcr.io/timunrau/rum1n8:latest
-            ghcr.io/timunrau/rum1n8:${{ github.sha }}
+          tags: ${{ steps.image-tags.outputs.rum_tags }}
           build-args: |
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
@@ -51,8 +126,6 @@ jobs:
           context: .
           file: ./Dockerfile.proxy
           push: true
-          tags: |
-            ghcr.io/timunrau/rum1n8-proxy:latest
-            ghcr.io/timunrau/rum1n8-proxy:${{ github.sha }}
+          tags: ${{ steps.image-tags.outputs.proxy_tags }}
           cache-from: type=gha,scope=proxy
           cache-to: type=gha,mode=max,scope=proxy

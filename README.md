@@ -81,6 +81,8 @@ HOST=0.0.0.0 npm run dev
 npm run build
 ```
 
+The About modal displays the semantic version from `package.json`.
+
 ### Preview Production Build
 
 ```bash
@@ -139,6 +141,16 @@ docker compose down                     # Stop everything
 - If WebDAV sync isn't working, check the proxy logs: `docker compose logs webdav-proxy`
 - To completely reset: `docker compose down -v && docker compose up -d`
 - To temporarily disable auto-updates: `docker compose stop watchtower`
+
+## Releases
+
+Releases are managed automatically with semantic-release on pushes to `main`.
+
+- `feat:` commits create a minor release (`1.0.0` -> `1.1.0`)
+- `fix:` and `perf:` commits create a patch release (`1.0.0` -> `1.0.1`)
+- `!` or `BREAKING CHANGE:` create a major release (`1.0.0` -> `2.0.0`)
+
+The repo should use squash merges so the PR title becomes the commit message semantic-release analyzes. Use Conventional Commit PR titles such as `feat: add offline sync retry` or `fix: preserve verse deletions across devices`.
 
 ## Technologies
 
