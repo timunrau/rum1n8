@@ -22,4 +22,4 @@
 - The About modal version comes from `package.json` and is released automatically by semantic-release in CI.
 - Do not manually increment `package.json` for normal work; version bumps are determined from Conventional Commits.
 - Use Conventional Commit titles/messages for release-impacting changes: `feat:` for minor, `fix:`/`perf:` for patch, and `!` or `BREAKING CHANGE:` for major.
-- Prefer squash merges into `main` so the PR title becomes the release-driving commit message.
+- When Codex creates commits for this repo, always use Conventional Commit messages so semantic-release can determine the next version from commits on `main`.

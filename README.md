@@ -150,7 +150,7 @@ Releases are managed automatically with semantic-release on pushes to `main`.
 - `fix:` and `perf:` commits create a patch release (`1.0.0` -> `1.0.1`)
 - `!` or `BREAKING CHANGE:` create a major release (`1.0.0` -> `2.0.0`)
 
-The repo should use squash merges so the PR title becomes the commit message semantic-release analyzes. Use Conventional Commit PR titles such as `feat: add offline sync retry` or `fix: preserve verse deletions across devices`.
+semantic-release analyzes the commits that land on `main`. If you commit directly to `main`, those commit messages must use Conventional Commits such as `feat: add offline sync retry` or `fix: preserve verse deletions across devices`. If you use pull requests later, squash merges keep that same rule simple.
 
 ## Technologies
 
