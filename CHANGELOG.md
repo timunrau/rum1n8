@@ -1,0 +1,10 @@
+# 1.0.0 (2026-04-10)
+
+
+### Bug Fixes
+
+* correct system bar and splash screen colors for dark mode PWA ([a79560c](https://github.com/timunrau/rum1n8/commit/a79560ce9f1285592a6fd867ee223fc98974bce0)), closes [#1a1a1a](https://github.com/timunrau/rum1n8/issues/1a1a1a)
+* remove duplicate workflow triggers to prevent double test runs ([e64a6e5](https://github.com/timunrau/rum1n8/commit/e64a6e5b5467f13a8ebd2ca3c52bb5a89ee2d4b9))
+* restore theme_color in manifest to fix android status bar in dark mode ([34a6bda](https://github.com/timunrau/rum1n8/commit/34a6bda3522a13be7e1893d5f69695d1689d18a2))
+* solid black backgrounds on verse and completion screens in dark mode ([f6182ff](https://github.com/timunrau/rum1n8/commit/f6182fff95b1fb4a0d6d7310bd9b09f5035d408d)), closes [#1a1a1a](https://github.com/timunrau/rum1n8/issues/1a1a1a) [#17](https://github.com/timunrau/rum1n8/issues/17)
+* use inline script for early theme-color detection instead of media meta tags ([44409a0](https://github.com/timunrau/rum1n8/commit/44409a0750df09a64c52e48835119979885d8578))
