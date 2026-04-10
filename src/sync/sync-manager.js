@@ -62,24 +62,34 @@ function saveSyncState(state) {
 
 // --- Deletion tracking ---
 
-function migrateDeletionList(stored) {
-  if (!stored) return []
-  const parsed = JSON.parse(stored)
+function normalizeDeletionEntries(value) {
+  if (!value) return []
+  const parsed = typeof value === 'string' ? JSON.parse(value) : value
   if (!Array.isArray(parsed)) return []
   if (parsed.length === 0) return []
-  if (typeof parsed[0] === 'string') {
-    const now = new Date().toISOString()
-    return parsed.map(id => ({ id, deletedAt: now }))
-  }
-  return parsed
+
+  return parsed.flatMap(entry => {
+    if (typeof entry === 'string') {
+      return [{ id: entry, deletedAt: new Date().toISOString() }]
+    }
+
+    if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string') {
+      return []
+    }
+
+    return [{
+      id: entry.id,
+      deletedAt: entry.deletedAt || new Date().toISOString()
+    }]
+  })
 }
 
 export function getDeletedVerseEntries() {
-  return migrateDeletionList(localStorage.getItem(DELETED_VERSES_KEY))
+  return normalizeDeletionEntries(localStorage.getItem(DELETED_VERSES_KEY))
 }
 
 export function getDeletedCollectionEntries() {
-  return migrateDeletionList(localStorage.getItem(DELETED_COLLECTIONS_KEY))
+  return normalizeDeletionEntries(localStorage.getItem(DELETED_COLLECTIONS_KEY))
 }
 
 export function getDeletedVerses() {
@@ -203,8 +213,10 @@ export function mergeData(localVerses, localCollections, remoteData) {
   const remoteVerses = remoteData.verses || []
   const remoteCollections = remoteData.collections || []
 
-  const remoteDeletedVerseIds = new Set(remoteData.deletedVerses || [])
-  const remoteDeletedCollectionIds = new Set(remoteData.deletedCollections || [])
+  const remoteDeletedVerseEntries = normalizeDeletionEntries(remoteData.deletedVerses)
+  const remoteDeletedCollectionEntries = normalizeDeletionEntries(remoteData.deletedCollections)
+  const remoteDeletedVerseIds = new Set(remoteDeletedVerseEntries.map(entry => entry.id))
+  const remoteDeletedCollectionIds = new Set(remoteDeletedCollectionEntries.map(entry => entry.id))
   const localDeletedVerseIds = new Set(getDeletedVerses())
   const localDeletedCollectionIds = new Set(getDeletedCollections())
 
@@ -213,36 +225,28 @@ export function mergeData(localVerses, localCollections, remoteData) {
 
   const localVerseEntries = getDeletedVerseEntries()
   const localCollectionEntries = getDeletedCollectionEntries()
-  const now = new Date().toISOString()
-
-  const localActiveVerseIds = new Set((localVerses || []).map(v => v.id))
-  const remoteActiveVerseIds = new Set(remoteVerses.map(v => v.id))
-  const localActiveCollectionIds = new Set((localCollections || []).map(c => c.id))
-  const remoteActiveCollectionIds = new Set(remoteCollections.map(c => c.id))
-
   const verseEntryMap = new Map(localVerseEntries.map(e => [e.id, e]))
-  for (const id of remoteDeletedVerseIds) {
-    if (!verseEntryMap.has(id) && localActiveVerseIds.has(id)) {
-      verseEntryMap.set(id, { id, deletedAt: now })
+  for (const entry of remoteDeletedVerseEntries) {
+    const existing = verseEntryMap.get(entry.id)
+    if (!existing) {
+      verseEntryMap.set(entry.id, entry)
+      continue
+    }
+
+    if (new Date(entry.deletedAt).getTime() > new Date(existing.deletedAt).getTime()) {
+      verseEntryMap.set(entry.id, entry)
     }
   }
   const collectionEntryMap = new Map(localCollectionEntries.map(e => [e.id, e]))
-  for (const id of remoteDeletedCollectionIds) {
-    if (!collectionEntryMap.has(id) && localActiveCollectionIds.has(id)) {
-      collectionEntryMap.set(id, { id, deletedAt: now })
+  for (const entry of remoteDeletedCollectionEntries) {
+    const existing = collectionEntryMap.get(entry.id)
+    if (!existing) {
+      collectionEntryMap.set(entry.id, entry)
+      continue
     }
-  }
 
-  for (const [id] of verseEntryMap) {
-    const stillExists = localActiveVerseIds.has(id) || remoteActiveVerseIds.has(id)
-    if (!stillExists) {
-      verseEntryMap.delete(id)
-    }
-  }
-  for (const [id] of collectionEntryMap) {
-    const stillExists = localActiveCollectionIds.has(id) || remoteActiveCollectionIds.has(id)
-    if (!stillExists) {
-      collectionEntryMap.delete(id)
+    if (new Date(entry.deletedAt).getTime() > new Date(existing.deletedAt).getTime()) {
+      collectionEntryMap.set(entry.id, entry)
     }
   }
 

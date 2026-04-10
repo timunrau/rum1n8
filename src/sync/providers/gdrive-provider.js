@@ -1,4 +1,4 @@
-import { getDeletedVerses, getDeletedCollections } from '../sync-manager.js'
+import { getDeletedVerseEntries, getDeletedCollectionEntries } from '../sync-manager.js'
 import { getAppSettingsRecord } from '../../app-settings.js'
 
 const GDRIVE_SETTINGS_KEY = 'rum1n8-gdrive-settings'
@@ -384,14 +384,12 @@ export default {
 
     const activeVerseIds = new Set((verses || []).map(v => v.id))
     const activeCollectionIds = new Set((collections || []).map(c => c.id))
-    const remoteVerseIds = new Set((remoteData?.verses || []).map(v => v.id))
-    const remoteCollectionIds = new Set((remoteData?.collections || []).map(c => c.id))
 
-    const deletedVerses = getDeletedVerses().filter(id =>
-      !activeVerseIds.has(id) && remoteVerseIds.has(id)
+    const deletedVerses = getDeletedVerseEntries().filter(entry =>
+      !activeVerseIds.has(entry.id)
     )
-    const deletedCollections = getDeletedCollections().filter(id =>
-      !activeCollectionIds.has(id) && remoteCollectionIds.has(id)
+    const deletedCollections = getDeletedCollectionEntries().filter(entry =>
+      !activeCollectionIds.has(entry.id)
     )
 
     const data = {
