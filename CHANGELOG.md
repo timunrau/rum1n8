@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/timunrau/rum1n8/compare/v1.0.0...v1.0.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* [#36](https://github.com/timunrau/rum1n8/issues/36) ([352ecb0](https://github.com/timunrau/rum1n8/commit/352ecb0c4c83d5b4a7d4a6b36dcbe46d0c7e680f))
+
 # 1.0.0 (2026-04-10)
 
 
