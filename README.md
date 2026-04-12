@@ -1,4 +1,4 @@
-# rum1n8
+# rum1n8 - Bible Verse Memory App
 
 *Pronounced "Ruminate"* — to turn something over in the mind; to meditate or reflect on deeply. Inspired by Joshua 1:8:
 

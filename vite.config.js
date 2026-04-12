@@ -27,9 +27,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: 'icons/icon-192x192.png',
       manifest: {
-        name: 'rum1n8',
+        name: 'rum1n8 - Bible Verse Memory App',
         short_name: 'rum1n8',
-        description: 'A PWA for memorizing Bible verses',
+        description: 'rum1n8 is an open-source Bible verse memory app built for fast review, privacy, and data ownership.',
         theme_color: '#ffffff',
         background_color: '#1a1a1a',
         display: 'standalone',
