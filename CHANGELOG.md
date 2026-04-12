@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/timunrau/rum1n8/compare/v1.2.0...v1.2.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* runtime index.html template now includes hashed asset paths and PWA tags ([fab3d6a](https://github.com/timunrau/rum1n8/commit/fab3d6a7d89d9e2f736b5dc76f427130b56e6504))
+
 # [1.2.0](https://github.com/timunrau/rum1n8/compare/v1.1.0...v1.2.0) (2026-04-12)
 
 
