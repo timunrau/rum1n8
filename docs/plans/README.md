@@ -19,7 +19,7 @@ This folder breaks the marketing, SEO, onboarding, PWA, and analytics work into 
 - Keep the current synced settings model intact unless a later plan explicitly changes it.
 
 ## Shared Defaults
-- Product descriptor to standardize on: `Bible verse memory app`
+- Product descriptor to standardize on: `Bible memory app`
 - Local-only UI state storage key: `rum1n8-ui-state`
 - Optional build env vars:
   - `VITE_SITE_URL`
@@ -36,4 +36,3 @@ This folder breaks the marketing, SEO, onboarding, PWA, and analytics work into 
 - Start each chat with a single plan file instead of this whole folder.
 - Treat the plan file as the source of truth for that implementation thread.
 - If a plan references a shared default from this index, restate it in the chat so the thread is self-contained.
-

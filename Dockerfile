@@ -22,14 +22,16 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install tools for health checks and runtime metadata rendering
+RUN apk add --no-cache gettext wget
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/40-runtime-site-metadata.sh /docker-entrypoint.d/40-runtime-site-metadata.sh
+RUN chmod +x /docker-entrypoint.d/40-runtime-site-metadata.sh
 
 # Expose port 80
 EXPOSE 80

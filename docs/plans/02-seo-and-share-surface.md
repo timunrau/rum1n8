@@ -43,6 +43,8 @@ Add search and link-sharing metadata for the existing app-first root without int
   - one social preview PNG at `1200x630`
   - three portrait app screenshots at a consistent phone aspect ratio, ideally `1080x1920` or equivalent
   - screenshot set should cover: empty library, practice screen, and review list
+  - screenshots should have placeholder content based on Joshua 1:8. There should maybe be some other verses as well. Psalm 119:11, John 3:16.
+  - screenshots should be based on a mobile view, not desktop view.
 - Name the new marketing assets predictably so later plans can reuse them:
   - `public/marketing/og-card.png`
   - `public/marketing/screenshot-empty.png`

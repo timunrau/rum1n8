@@ -1,10 +1,12 @@
-# rum1n8 - Bible Verse Memory App
+# rum1n8 - Bible Memory App
+![rum1n8 overview](public/marketing/og-card.png)
 
 *Pronounced "Ruminate"* — to turn something over in the mind; to meditate or reflect on deeply. Inspired by Joshua 1:8:
 
 > "This Book of the Law must not depart from your mouth; meditate on it day and night, so that you may be careful to do everything written in it. For then you will prosper and succeed in all you do." — Joshua 1:8 (BSB)
 
 [Open rum1n8](https://rum1n8.unrau.xyz)
+
 
 ## Why rum1n8 exists
 

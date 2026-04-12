@@ -27,7 +27,7 @@ Introduce a lightweight first-run experience that explains the app, the memoriza
   - `onboardingDismissed` is false
 - Use the onboarding card instead of the current generic empty-state card while it is visible.
 - Card content should stay lightweight and action-oriented:
-  - one sentence that says rum1n8 is a Bible verse memory app
+  - one sentence that says rum1n8 is a Bible memory app
   - three checklist items:
     - add a verse
     - move through `Learn`, `Memorize`, and `Master`
@@ -74,4 +74,3 @@ Introduce a lightweight first-run experience that explains the app, the memoriza
 - The onboarding experience should not be a blocking wizard.
 - Sample content is out of scope for this plan; users should start with their own verses.
 - The local UI-state helper introduced here will be extended by `04-pwa-polish.md` rather than replaced.
-
