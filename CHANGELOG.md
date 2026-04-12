@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/timunrau/rum1n8/compare/v1.1.0...v1.2.0) (2026-04-12)
+
+
+### Features
+
+* added more marketing stuff ([fde3ff9](https://github.com/timunrau/rum1n8/commit/fde3ff93ecaa9a2c38a37ab8a7d49ab10b63a1ab))
+
 # [1.1.0](https://github.com/timunrau/rum1n8/compare/v1.0.1...v1.1.0) (2026-04-12)
 
 
