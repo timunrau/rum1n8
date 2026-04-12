@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/timunrau/rum1n8/compare/v1.0.1...v1.1.0) (2026-04-12)
+
+
+### Features
+
+* clarify branding ([136000c](https://github.com/timunrau/rum1n8/commit/136000c3e477c1925cb662b9c8386194eef34838))
+
 ## [1.0.1](https://github.com/timunrau/rum1n8/compare/v1.0.0...v1.0.1) (2026-04-10)
 
 
