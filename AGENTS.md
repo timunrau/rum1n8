@@ -23,3 +23,8 @@
 - Do not manually increment `package.json` for normal work; version bumps are determined from Conventional Commits.
 - Use Conventional Commit titles/messages for release-impacting changes: `feat:` for minor, `fix:`/`perf:` for patch, and `!` or `BREAKING CHANGE:` for major.
 - When Codex creates commits for this repo, always use Conventional Commit messages so semantic-release can determine the next version from commits on `main`.
+
+## Further Docs
+
+- [docs/developer.md](docs/developer.md) for the minimal repo workflow and command notes.
+- [docs/hosting.md](docs/hosting.md) for the current Docker Compose deployment path.

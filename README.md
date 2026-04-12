@@ -4,186 +4,44 @@
 
 > "This Book of the Law must not depart from your mouth; meditate on it day and night, so that you may be careful to do everything written in it. For then you will prosper and succeed in all you do." — Joshua 1:8 (BSB)
 
-A Progressive Web App for memorizing Bible verses using spaced repetition and progressive memorization techniques.
+[Open rum1n8](https://rum1n8.unrau.xyz)
 
-Hosted at https://rum1n8.unrau.xyz
+## Why rum1n8 exists
 
-## How It Works
+I built rum1n8 to solve the frustrations I had with existing Bible memory apps. They were slow and bloated with too many features, had artificial paywalls and limits, and made it difficult or impossible to export my data. Here's how rum1n8 differs:
 
-**Spaced Repetition System**
+- **No accounts.** Open the app and use it. No signup, no login, no account required.
+- **You own your data.** Other memory apps do not make it easy to export what you have put into them. rum1n8 keeps your data on your device by default, lets you back it up to a file you can read, and you can sync it with your own Google Drive or WebDAV server.
+- **Free.** No artificial usage limits. No subscriptions. No paywalls.
+- **No bloat.** The app is intentionally simple, focused, and fast. It is built around first-letter typing, active recall, and spaced repetition instead of piling on extra features and options.
+- **Fast review and fast verse entry.** It takes seconds to start reviewing. Adding verses does not take a hundred taps through a bunch of screens. Type a reference or verse range, import the verse text, and start.
+- **Not tied to an app store.** rum1n8 is an installable offline web app, so it is not at the mercy of Apple or Google deciding whether it stays on their platforms.
+- **You can truly own your own copy of the app.** Most apps only give you permission to use them, and if the owner stops supporting them, you can lose access. rum1n8 is self-hostable and released under the [MIT License](LICENSE), so you can copy the whole app, run it yourself, and not depend on me to keep it online forever.
 
-Uses a modified SM-2 algorithm to schedule reviews at optimal intervals. Reviews start at 1 day and extend up to 90 days based on your performance. Each verse is graded 0-5 based on accuracy, and the algorithm automatically adjusts the next review date and ease factor.
+## Features
 
-**Progressive Learning (Learn → Memorize → Master)**
+- **Guided memorization:** Move through Learn, Memorize, and Master as the app gradually removes help.
+- **Spaced repetition:** Mastered verses come back for review before they fade from your memory.
+- **First-letter typing:** Practice quickly by typing the first letter of each word.
+- **Quick verse entry:** Add a verse by typing a reference or range like `Joshua 1:8-9`, then import the verse text.
+- **A clean verse library:** Organize verses into collections, search quickly, and track progress with stats.
+- **Portable data:** Backup and restore your library, import by CSV, or sync across devices with Google Drive or your own WebDAV server.
 
-The app guides you through three memorization stages, each requiring 90% accuracy to advance:
+## Why memorization matters to me
 
-- **Learn**: All words visible but muted. Type first letters to reveal and begin learning.
-- **Memorize**: Every other word hidden. Type first letters of all words in sequence; the visible words act as anchors while the hidden ones test recall.
-- **Master**: All words hidden. Type first letters to reveal the complete verse from memory.
+I started building rum1n8 when I got serious about Scripture memorization myself. Memorization has been one of the most impactful spiritual disciplines in my walk with Jesus. Even when it is only five minutes a day, I have found that it gives me more peace, less anxiety, fewer negative thoughts, clearer thinking, more focus on God, more Scripture in prayer, and more readiness to share a verse with someone in the moment.
 
-Once a verse is mastered, it enters the spaced repetition review cycle.
+As the number of verses I had memorized grew, my memorization data — which verses I had memorized and when to review them next — became very personal and valuable to me. I did not want something that meaningful trapped inside someone else's app with no clear way to get it back out. rum1n8 was built to give me, and anyone else who wants it, control over their memorization data.
 
-**First-Letter Typing**
+## Dedication
 
-Instead of typing complete words, you type just the first letter of each word to reveal it. This approach engages active recall while keeping the memorization process fast and efficient. The system supports hyphenated words (requiring first letter of each part) and includes fuzzy typing for adjacent QWERTY keys.
+Church Renewal International first taught me the importance of daily time in the Bible and prayer, and introduced me to the practice of memorization. This app is dedicated to them. If you want to support their work, you can [donate to Church Renewal International](https://churchrenewal.com/donate).
 
-## Privacy & Data Storage
+## Recommended devotional resource
 
-**Your data stays on your device.** All verses, progress, and review history are stored locally in your browser's storage.
+I also recommend [TheWay.app](https://theway.app), a devotional and discipleship resource from Church Renewal International.
 
-You can:
-- **Backup manually** to a JSON file that you control
-- **Sync with Google Drive** for multi-device access (uses your own Google account; no third-party servers involved)
-- **Sync with your own WebDAV server** (like Nextcloud) for self-hosted multi-device access
-- **Import from CSV** to migrate from other memorization apps
+## More docs
 
-## How to import from biblememory.com
-
-1. Use brave browser and open the collection you want to import via the web page.
-2. Open Leo AI and use this prompt to convert the collection to CSV.
-```
-For the list of verses on this page, export to CSV. Map it to columns as follows
-
-- Verse reference -> "Reference"
-- Verse content -> "Content" (put quotations around the verse content)
-- Bible version -> "Version" (OTHER is BSB)
-- Due in x days -> "DaysUntilNextReview" (only add the number e.g., 54)
-- Review every x months -> "Interval" (only add the number, and convert to number of days)
-
-```
-
-## Getting Started
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-The local dev server runs at `http://127.0.0.1:5173` by default.
-
-If you want to expose the dev server to your local network, start it with:
-
-```bash
-HOST=0.0.0.0 npm run dev
-```
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-The About modal displays the semantic version from `package.json`.
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
-### E2E Tests
-
-```bash
-npx playwright install chromium   # First-time: install browsers
-npm run test:e2e
-```
-
-## Hosting with Docker Compose
-
-The app runs as three Docker containers: the main app (Nginx serving static files), a WebDAV proxy for sync, and Watchtower for automatic updates. Pre-built images are pulled from GitHub Container Registry.
-
-### Prerequisites
-
-- Docker and Docker Compose installed on your server
-- A reverse proxy (e.g., Nginx, Caddy) for TLS termination, forwarding to port 1234
-
-### Setup
-
-```bash
-git clone https://github.com/timunrau/rum1n8.git
-cd rum1n8
-cp .env.example .env
-```
-
-If you want Google Drive sync, fill in your OAuth credentials in `.env` (see `.env.example` for instructions). Without them the app still works, but Google Drive sync will be unavailable.
-
-```bash
-docker compose up -d
-```
-
-The Docker deployment is available at `http://localhost:1234`.
-
-### Automatic Updates
-
-Watchtower runs as a service in the compose stack and polls GitHub Container Registry every 60 seconds. When new images are available (pushed by GitHub Actions after tests pass), Watchtower automatically pulls them and recreates the containers. No manual intervention needed.
-
-### Useful Commands
-
-```bash
-docker compose logs -f rum1n8            # App logs
-docker compose logs -f webdav-proxy     # WebDAV proxy logs
-docker compose logs -f watchtower       # Auto-update logs
-docker compose ps                       # Running containers
-docker compose down                     # Stop everything
-```
-
-### Troubleshooting
-
-- If the app doesn't load, check the logs: `docker compose logs rum1n8`
-- If WebDAV sync isn't working, check the proxy logs: `docker compose logs webdav-proxy`
-- To completely reset: `docker compose down -v && docker compose up -d`
-- To temporarily disable auto-updates: `docker compose stop watchtower`
-
-## Releases
-
-Releases are managed automatically with semantic-release on pushes to `main`.
-
-- `feat:` commits create a minor release (`1.0.0` -> `1.1.0`)
-- `fix:` and `perf:` commits create a patch release (`1.0.0` -> `1.0.1`)
-- `!` or `BREAKING CHANGE:` create a major release (`1.0.0` -> `2.0.0`)
-
-semantic-release analyzes the commits that land on `main`. If you commit directly to `main`, those commit messages must use Conventional Commits such as `feat: add offline sync retry` or `fix: preserve verse deletions across devices`. If you use pull requests later, squash merges keep that same rule simple.
-
-## Technologies
-
-- Vue.js 3
-- Tailwind CSS
-- Vite
-- PWA Plugin
-
-## Sync Setup
-
-The app supports two-way sync via Google Drive or a self-hosted WebDAV server.
-
-### Google Drive
-
-Google Drive sync uses OAuth and the Google Drive REST API directly from the browser — no proxy or server-side component needed.
-
-1. Open **Settings → Sync** and select **Google Drive**.
-2. Click **Connect** and sign in with your Google account.
-3. The app creates a `rum1n8` folder in your Google Drive containing `rum1n8-data.json`.
-
-### WebDAV (Nextcloud, etc.)
-
-**Development:** Due to CORS restrictions, use the included proxy:
-
-1. Start the proxy with your WebDAV URL:
-   ```bash
-   NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:proxy
-   ```
-   Or run both the app and proxy together:
-   ```bash
-   NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:all
-   ```
-
-2. In the app settings, enter your WebDAV URL, username, and password; check **Use CORS Proxy** and set the proxy URL to `http://localhost:3001`.
-
-**Production:** Either configure your WebDAV server to allow CORS, use a server-side proxy, or deploy the app from the same origin as your WebDAV server.
+- [Developer notes](docs/developer.md)
+- [Hosting notes](docs/hosting.md)
