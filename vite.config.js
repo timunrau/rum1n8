@@ -1,14 +1,11 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 const packageJson = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf-8')
-)
-const indexHtmlSource = readFileSync(
-  new URL('./index.html', import.meta.url),
-  'utf-8'
 )
 
 function normalizeSiteUrl(value) {
@@ -160,22 +157,35 @@ function buildIndexHtmlReplacements(siteMetadata) {
   }
 }
 
-function buildRuntimeIndexHtmlTemplate(siteMetadata) {
-  const runtimeTemplateSiteMetadata = {
+function buildRuntimeIndexHtmlTemplateFromFinal(finalHtml, siteMetadata) {
+  let template = finalHtml
+
+  // Replace the social image URL (absolute or relative) with envsubst var
+  const socialImageUrl = escapeHtml(buildSocialImageUrl(siteMetadata))
+  template = template.replaceAll(socialImageUrl, '${RUM1N8_SOCIAL_IMAGE_URL}')
+
+  // Replace canonical + og:url tags with envsubst var (or insert placeholder if absent)
+  const optionalTags = buildOptionalSiteUrlTags(siteMetadata)
+  if (optionalTags) {
+    template = template.replace(optionalTags, '${RUM1N8_OPTIONAL_SITE_URL_TAGS}')
+  } else {
+    // No URL tags were generated at build time; insert the placeholder
+    // before the closing </head> so the runtime script can inject them
+    template = template.replace('</head>', '${RUM1N8_OPTIONAL_SITE_URL_TAGS}\n</head>')
+  }
+
+  // Replace JSON-LD: swap the closing } with ${RUM1N8_JSON_LD_URL_FIELDS}}
+  // so the runtime script can append URL fields
+  const buildJsonLdStr = serializeJsonForHtmlScript(buildJsonLd(siteMetadata))
+  const noUrlJsonLdStr = serializeJsonForHtmlScript(buildJsonLd({
     ...siteMetadata,
     siteUrl: null,
     rootUrl: null,
-  }
+  }))
+  const runtimeJsonLdStr = noUrlJsonLdStr.replace(/}$/, '${RUM1N8_JSON_LD_URL_FIELDS}}')
+  template = template.replace(buildJsonLdStr, runtimeJsonLdStr)
 
-  const runtimeJsonLd = serializeJsonForHtmlScript(buildJsonLd(runtimeTemplateSiteMetadata))
-    .replace(/}$/, '${RUM1N8_JSON_LD_URL_FIELDS}}')
-
-  return renderHtmlTemplate(indexHtmlSource, {
-    ...buildIndexHtmlReplacements(runtimeTemplateSiteMetadata),
-    '%SOCIAL_IMAGE_URL%': '${RUM1N8_SOCIAL_IMAGE_URL}',
-    '%OPTIONAL_SITE_URL_TAGS%': '${RUM1N8_OPTIONAL_SITE_URL_TAGS}',
-    '%SITE_JSON_LD%': runtimeJsonLd,
-  })
+  return template
 }
 
 function buildRuntimeRobotsTxtTemplate() {
@@ -241,12 +251,6 @@ function createSiteMetadataPlugin(siteMetadata) {
 
       this.emitFile({
         type: 'asset',
-        fileName: 'index.html.template',
-        source: buildRuntimeIndexHtmlTemplate(siteMetadata),
-      })
-
-      this.emitFile({
-        type: 'asset',
         fileName: 'robots.txt.template',
         source: buildRuntimeRobotsTxtTemplate(),
       })
@@ -265,6 +269,18 @@ function createSiteMetadataPlugin(siteMetadata) {
           source: sitemapXml,
         })
       }
+    },
+    closeBundle() {
+      // Read the final index.html (after Vite and VitePWA have written it)
+      // and derive the runtime template with envsubst placeholders for
+      // URL-specific values. This ensures the template has hashed asset
+      // paths and PWA tags that the raw source HTML lacks.
+      const outDir = resolve(process.cwd(), 'dist')
+      const finalHtml = readFileSync(resolve(outDir, 'index.html'), 'utf-8')
+      writeFileSync(
+        resolve(outDir, 'index.html.template'),
+        buildRuntimeIndexHtmlTemplateFromFinal(finalHtml, siteMetadata),
+      )
     },
   }
 }
@@ -289,7 +305,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       vue(),
-      createSiteMetadataPlugin(siteMetadata),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: 'icons/icon-192x192.png',
@@ -404,7 +419,8 @@ export default defineConfig(({ mode }) => {
           enabled: true,
           type: 'module'
         }
-      })
+      }),
+      createSiteMetadataPlugin(siteMetadata),
     ]
   }
 })
