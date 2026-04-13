@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const packageJson = JSON.parse(
@@ -306,6 +306,14 @@ function createSiteMetadataPlugin(siteMetadata) {
     },
     closeBundle() {
       const outDir = resolve(process.cwd(), 'dist')
+
+      // Vite outputs marketing page to dist/home/index.html (matching the
+      // source path). Copy it to dist/index.html so nginx serves it at /.
+      const homeBuild = resolve(outDir, 'home/index.html')
+      if (existsSync(homeBuild) && !existsSync(resolve(outDir, 'index.html'))) {
+        copyFileSync(homeBuild, resolve(outDir, 'index.html'))
+      }
+
       const htmlTemplates = [
         { fileName: 'index.html', includeJsonLd: true },
         { fileName: 'about/index.html', includeJsonLd: false },
@@ -344,13 +352,25 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         input: {
-          marketing: resolve(process.cwd(), 'index.html'),
+          marketing: resolve(process.cwd(), 'home/index.html'),
           about: resolve(process.cwd(), 'about/index.html'),
           app: resolve(process.cwd(), 'app/index.html'),
         },
       },
     },
     plugins: [
+      {
+        name: 'dev-home-rewrite',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            const [pathname, query] = (req.url || '').split('?')
+            if (pathname === '/' || pathname === '/index.html') {
+              req.url = `/home/index.html${query ? `?${query}` : ''}`
+            }
+            next()
+          })
+        },
+      },
       vue(),
       VitePWA({
         registerType: 'autoUpdate',
