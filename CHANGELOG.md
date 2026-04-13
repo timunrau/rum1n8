@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/timunrau/rum1n8/compare/v1.2.2...v1.2.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* move marketing page to home/ to work around Vite multi-page bug ([108f674](https://github.com/timunrau/rum1n8/commit/108f6743ec0d47c0176f1db112701539997d1a61))
+
 ## [1.2.2](https://github.com/timunrau/rum1n8/compare/v1.2.1...v1.2.2) (2026-04-13)
 
 
