@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { clearAppStorage } from '../helpers/storage'
 import { mockWebDAV } from '../helpers/mocks'
+import { gotoApp } from '../helpers/navigation'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })

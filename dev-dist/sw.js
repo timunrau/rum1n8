@@ -81,13 +81,13 @@ define(['./workbox-ca84f546'], (function (workbox) { 'use strict';
     "url": "registerSW.js",
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
-    "url": "index.html",
-    "revision": "0.2pltmc095gg"
+    "url": "/app/index.html",
+    "revision": "0.tqft5cv4v3"
   }], {});
   workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/app/index.html"), {
     allowlist: [/^\/$/],
-    denylist: [/^\/gdrive-callback\.html/, /^\/privacy/]
+    denylist: [/^\/$/, /^\/about(?:\/.*)?$/, /^\/gdrive-callback\.html/, /^\/privacy/]
   }));
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-cache",

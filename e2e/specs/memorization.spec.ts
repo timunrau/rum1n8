@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage, seedAppSettings, seedStorage } from '../helpers/storage'
+import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleVerses = JSON.parse(
@@ -10,7 +11,7 @@ const sampleVerses = JSON.parse(
 )
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })
@@ -19,7 +20,7 @@ test('start from verse list -> click verse -> enters memorization screen', async
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, sampleVerses, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -43,7 +44,7 @@ test('memorization: input focused after Continue to Memorize', async ({ page }) 
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, shortVerse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -74,7 +75,7 @@ test('memorization: input focused after Try Again', async ({ page }) => {
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, twoWordVerse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -98,7 +99,7 @@ test('exit memorization: back button -> returns without completing', async ({ pa
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, sampleVerses, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -125,7 +126,7 @@ test('progress indicators: Learn / Memorize / Master tabs reflect current stage'
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, shortVerse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -147,7 +148,7 @@ test('learn mode: verse with dash (no spaces) treats parts as separate words', a
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verseWithDash, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -181,7 +182,7 @@ test('memorize mode: verse with dash treats parts as separate words', async ({ p
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verseWithDash, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -217,7 +218,7 @@ test('memorize mode: alternates hidden words on initial entry', async ({ page })
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -246,7 +247,7 @@ test('reference typing shows full reference and requires shorthand to complete',
   await seedStorage(page, verse, collections)
   await seedAppSettings(page, { requireReferenceTyping: true })
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
   await page.getByText('John 3:16').first().click()
@@ -278,7 +279,7 @@ test('reference typing keeps an incorrect earlier digit red after a later digit 
   await seedStorage(page, verse, collections)
   await seedAppSettings(page, { requireReferenceTyping: true })
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
   await page.getByText('Hebrews 12:2').first().click()
@@ -304,7 +305,7 @@ test('memorize mode: pressing Memorize button again flips hidden words', async (
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -340,7 +341,7 @@ test('memorize mode: retry flips hidden words', async ({ page }) => {
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verse, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)
@@ -379,7 +380,7 @@ test('master mode: verse with dash treats parts as separate words', async ({ pag
   const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
   await seedStorage(page, verseWithDash, collections)
   await page.reload()
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
   await page.getByText('All Verses').click()
   await page.waitForTimeout(500)

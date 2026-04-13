@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { clearAppStorage, seedVerses, seedStorage } from '../helpers/storage'
+import { gotoApp } from '../helpers/navigation'
 
 // Use local date strings so streak calculation (which uses local dates) matches
 function localDateStr(date: Date) {
@@ -54,7 +55,7 @@ function makeVerse(
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })

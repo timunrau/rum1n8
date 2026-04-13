@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const packageJson = JSON.parse(
@@ -16,7 +16,6 @@ function normalizeSiteUrl(value) {
     normalized.hash = ''
     normalized.search = ''
     normalized.pathname = normalized.pathname.replace(/\/+$/, '') || '/'
-
     return normalized.toString().replace(/\/$/, '')
   } catch (error) {
     throw new Error(`Invalid VITE_SITE_URL value "${value}": ${error.message}`)
@@ -53,38 +52,34 @@ function serializeJsonForHtmlScript(value) {
   return JSON.stringify(value).replaceAll('<', '\\u003c')
 }
 
+function renderHtmlTemplate(template, replacements) {
+  return Object.entries(replacements).reduce(
+    (result, [pattern, value]) => result.replaceAll(pattern, value),
+    template
+  )
+}
+
 function buildSiteMetadata(env) {
   const productName = 'rum1n8'
-  const descriptor = 'Bible memory app'
   const title = `${productName} - Bible Memory App`
-  const defaultDescription = `A simple Bible memory app that gives you control of your data.`
+  const defaultDescription = 'A simple Bible memory app that gives you control of your data.'
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL)
-  const landingHeading = 'A simple Bible memory app for Scripture memorization and review'
-  const landingBody = 'Add verses quickly, practice with first-letter typing, move through Learn, Memorize, and Master, and keep your memorization data under your control.'
-  const landingHighlights = [
-    'No account required',
-    'Fast review with Learn, Memorize, and Master',
-    'Portable backups and sync options',
-    'Installable offline web app',
-  ]
 
   return {
     productName,
-    descriptor,
     title,
     defaultDescription,
-    landingHeading,
-    landingBody,
-    landingHighlights,
+    siteUrl,
+    rootUrl: siteUrl ? `${siteUrl}/` : null,
+    appPath: '/app/',
+    aboutPath: '/about/',
     socialPreviewImagePath: '/marketing/og-card.png',
+    socialPreviewImageAlt: 'rum1n8 app preview',
     screenshotPaths: [
       '/marketing/screenshot-empty.png',
       '/marketing/screenshot-practice.png',
       '/marketing/screenshot-review.png',
     ],
-    siteUrl,
-    rootUrl: siteUrl ? `${siteUrl}/` : null,
-    noscriptDescription: `${defaultDescription} Enable JavaScript to use the full app.`,
   }
 }
 
@@ -98,12 +93,18 @@ function buildJsonLd(siteMetadata) {
     applicationCategory: 'EducationalApplication',
     operatingSystem: 'Web Browser',
     isAccessibleForFree: true,
-    featureList: siteMetadata.landingHighlights,
     offers: {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'USD',
     },
+    featureList: [
+      'No account required',
+      'First-letter typing for verse memorization',
+      'Spaced repetition review',
+      'Portable backups and optional sync',
+      'Installable offline web app',
+    ],
   }
 
   if (siteMetadata.rootUrl) {
@@ -123,7 +124,7 @@ function buildSocialImageUrl(siteMetadata) {
     : siteMetadata.socialPreviewImagePath
 }
 
-function buildOptionalSiteUrlTags(siteMetadata) {
+function buildCanonicalRootTags(siteMetadata) {
   if (!siteMetadata.rootUrl) return ''
 
   return [
@@ -132,58 +133,83 @@ function buildOptionalSiteUrlTags(siteMetadata) {
   ].join('\n    ')
 }
 
-function renderHtmlTemplate(template, replacements) {
-  return Object.entries(replacements).reduce(
-    (result, [pattern, value]) => result.replaceAll(pattern, value),
-    template
-  )
+function buildSocialTags(siteMetadata) {
+  const socialImageUrl = buildSocialImageUrl(siteMetadata)
+
+  return [
+    `<meta property="og:title" content="${escapeHtml(siteMetadata.title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(siteMetadata.defaultDescription)}" />`,
+    '<meta property="og:type" content="website" />',
+    `<meta property="og:site_name" content="${escapeHtml(siteMetadata.productName)}" />`,
+    `<meta property="og:image" content="${escapeHtml(socialImageUrl)}" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(siteMetadata.socialPreviewImageAlt)}" />`,
+    '<meta name="twitter:card" content="summary_large_image" />',
+    `<meta name="twitter:title" content="${escapeHtml(siteMetadata.title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(siteMetadata.defaultDescription)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(socialImageUrl)}" />`,
+    `<meta name="twitter:image:alt" content="${escapeHtml(siteMetadata.socialPreviewImageAlt)}" />`,
+  ].join('\n    ')
 }
 
-function buildIndexHtmlReplacements(siteMetadata) {
+function detectHtmlPage(ctx) {
+  const identifier = `${ctx?.path || ''} ${ctx?.filename || ''}`
+
+  if (identifier.includes('/app/') || identifier.includes('app/index.html')) {
+    return 'app'
+  }
+
+  if (identifier.includes('/about/') || identifier.includes('about/index.html')) {
+    return 'about'
+  }
+
+  return 'marketing'
+}
+
+function buildHtmlReplacements(siteMetadata, page) {
+  const pageTitle = page === 'app' ? `${siteMetadata.productName} App` : siteMetadata.title
+  const pageDescription = siteMetadata.defaultDescription
+  const robots = page === 'marketing'
+    ? 'index,follow'
+    : (page === 'about' ? 'noindex,follow' : 'noindex,nofollow')
+  const canonicalTags = page === 'app' ? '' : buildCanonicalRootTags(siteMetadata)
+  const socialTags = page === 'app' ? '' : buildSocialTags(siteMetadata)
+  const jsonLdTag = page === 'marketing'
+    ? `<script type="application/ld+json">${serializeJsonForHtmlScript(buildJsonLd(siteMetadata))}</script>`
+    : ''
+
   return {
-    '%SITE_TITLE%': escapeHtml(siteMetadata.title),
-    '%PRODUCT_NAME%': escapeHtml(siteMetadata.productName),
-    '%SITE_DESCRIPTION%': escapeHtml(siteMetadata.defaultDescription),
-    '%SOCIAL_IMAGE_URL%': escapeHtml(buildSocialImageUrl(siteMetadata)),
-    '%SOCIAL_IMAGE_ALT%': escapeHtml(`${siteMetadata.title} preview`),
-    '%OPTIONAL_SITE_URL_TAGS%': buildOptionalSiteUrlTags(siteMetadata),
-    '%SITE_JSON_LD%': serializeJsonForHtmlScript(buildJsonLd(siteMetadata)),
-    '%LANDING_HEADING%': escapeHtml(siteMetadata.landingHeading),
-    '%LANDING_BODY%': escapeHtml(siteMetadata.landingBody),
-    '%LANDING_HIGHLIGHTS%': siteMetadata.landingHighlights
-      .map((highlight) => `<li>${escapeHtml(highlight)}</li>`)
-      .join(''),
-    '%NOSCRIPT_DESCRIPTION%': escapeHtml(siteMetadata.noscriptDescription),
+    '%PAGE_TITLE%': escapeHtml(pageTitle),
+    '%PAGE_DESCRIPTION%': escapeHtml(pageDescription),
+    '%META_ROBOTS%': escapeHtml(robots),
+    '%HEAD_CANONICAL_TAGS%': canonicalTags,
+    '%HEAD_SOCIAL_TAGS%': socialTags,
+    '%HEAD_JSON_LD%': jsonLdTag,
   }
 }
 
-function buildRuntimeIndexHtmlTemplateFromFinal(finalHtml, siteMetadata) {
+function buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, options = {}) {
   let template = finalHtml
 
-  // Replace the social image URL (absolute or relative) with envsubst var
   const socialImageUrl = escapeHtml(buildSocialImageUrl(siteMetadata))
   template = template.replaceAll(socialImageUrl, '${RUM1N8_SOCIAL_IMAGE_URL}')
 
-  // Replace canonical + og:url tags with envsubst var (or insert placeholder if absent)
-  const optionalTags = buildOptionalSiteUrlTags(siteMetadata)
-  if (optionalTags) {
-    template = template.replace(optionalTags, '${RUM1N8_OPTIONAL_SITE_URL_TAGS}')
+  const canonicalTags = buildCanonicalRootTags(siteMetadata)
+  if (canonicalTags) {
+    template = template.replace(canonicalTags, '${RUM1N8_CANONICAL_ROOT_TAGS}')
   } else {
-    // No URL tags were generated at build time; insert the placeholder
-    // before the closing </head> so the runtime script can inject them
-    template = template.replace('</head>', '${RUM1N8_OPTIONAL_SITE_URL_TAGS}\n</head>')
+    template = template.replace('</head>', '${RUM1N8_CANONICAL_ROOT_TAGS}\n</head>')
   }
 
-  // Replace JSON-LD: swap the closing } with ${RUM1N8_JSON_LD_URL_FIELDS}}
-  // so the runtime script can append URL fields
-  const buildJsonLdStr = serializeJsonForHtmlScript(buildJsonLd(siteMetadata))
-  const noUrlJsonLdStr = serializeJsonForHtmlScript(buildJsonLd({
-    ...siteMetadata,
-    siteUrl: null,
-    rootUrl: null,
-  }))
-  const runtimeJsonLdStr = noUrlJsonLdStr.replace(/}$/, '${RUM1N8_JSON_LD_URL_FIELDS}}')
-  template = template.replace(buildJsonLdStr, runtimeJsonLdStr)
+  if (options.includeJsonLd) {
+    const buildJsonLdStr = serializeJsonForHtmlScript(buildJsonLd(siteMetadata))
+    const noUrlJsonLdStr = serializeJsonForHtmlScript(buildJsonLd({
+      ...siteMetadata,
+      siteUrl: null,
+      rootUrl: null,
+    }))
+    const runtimeJsonLdStr = noUrlJsonLdStr.replace(/}$/, '${RUM1N8_JSON_LD_URL_FIELDS}}')
+    template = template.replace(buildJsonLdStr, runtimeJsonLdStr)
+  }
 
   return template
 }
@@ -239,8 +265,11 @@ function buildSitemapXml(siteMetadata) {
 function createSiteMetadataPlugin(siteMetadata) {
   return {
     name: 'rum1n8-site-metadata',
-    transformIndexHtml(html) {
-      return renderHtmlTemplate(html, buildIndexHtmlReplacements(siteMetadata))
+    transformIndexHtml(html, ctx) {
+      return renderHtmlTemplate(
+        html,
+        buildHtmlReplacements(siteMetadata, detectHtmlPage(ctx))
+      )
     },
     generateBundle() {
       this.emitFile({
@@ -271,16 +300,22 @@ function createSiteMetadataPlugin(siteMetadata) {
       }
     },
     closeBundle() {
-      // Read the final index.html (after Vite and VitePWA have written it)
-      // and derive the runtime template with envsubst placeholders for
-      // URL-specific values. This ensures the template has hashed asset
-      // paths and PWA tags that the raw source HTML lacks.
       const outDir = resolve(process.cwd(), 'dist')
-      const finalHtml = readFileSync(resolve(outDir, 'index.html'), 'utf-8')
-      writeFileSync(
-        resolve(outDir, 'index.html.template'),
-        buildRuntimeIndexHtmlTemplateFromFinal(finalHtml, siteMetadata),
-      )
+      const htmlTemplates = [
+        { fileName: 'index.html', includeJsonLd: true },
+        { fileName: 'about/index.html', includeJsonLd: false },
+      ]
+
+      htmlTemplates.forEach(({ fileName, includeJsonLd }) => {
+        const filePath = resolve(outDir, fileName)
+        if (!existsSync(filePath)) return
+
+        const finalHtml = readFileSync(filePath, 'utf-8')
+        writeFileSync(
+          resolve(outDir, `${fileName}.template`),
+          buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, { includeJsonLd }),
+        )
+      })
     },
   }
 }
@@ -291,17 +326,24 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      __APP_VERSION__: JSON.stringify(packageJson.version)
+      __APP_VERSION__: JSON.stringify(packageJson.version),
     },
     server: {
       port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
       strictPort: !!process.env.PORT,
-      // Default to localhost for safer, more portable local development.
-      // Set HOST=true or HOST=0.0.0.0 when you explicitly want LAN access.
       host: process.env.HOST === 'true' ? true : (process.env.HOST || '127.0.0.1'),
     },
     test: {
       exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', '.claude/**'],
+    },
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(process.cwd(), 'index.html'),
+          about: resolve(process.cwd(), 'about/index.html'),
+          app: resolve(process.cwd(), 'app/index.html'),
+        },
+      },
     },
     plugins: [
       vue(),
@@ -309,81 +351,111 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: 'icons/icon-192x192.png',
         manifest: {
+          id: '/',
           name: siteMetadata.title,
           short_name: siteMetadata.productName,
           description: siteMetadata.defaultDescription,
           theme_color: '#ffffff',
-          background_color: '#1a1a1a',
+          background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: '/',
+          start_url: siteMetadata.appPath,
           scope: '/',
+          screenshots: [
+            {
+              src: 'marketing/screenshot-empty.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Verse library view',
+            },
+            {
+              src: 'marketing/screenshot-practice.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Practice mode view',
+            },
+            {
+              src: 'marketing/screenshot-review.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Review list view',
+            },
+          ],
           icons: [
             {
-              "src": "icons/icon-48x48.png",
-              "sizes": "48x48",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-48x48.png',
+              sizes: '48x48',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-72x72.png",
-              "sizes": "72x72",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-72x72.png',
+              sizes: '72x72',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-96x96.png",
-              "sizes": "96x96",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-96x96.png',
+              sizes: '96x96',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-128x128.png",
-              "sizes": "128x128",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-128x128.png',
+              sizes: '128x128',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-144x144.png",
-              "sizes": "144x144",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-144x144.png',
+              sizes: '144x144',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-152x152.png",
-              "sizes": "152x152",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-152x152.png',
+              sizes: '152x152',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-192x192.png",
-              "sizes": "192x192",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-256x256.png",
-              "sizes": "256x256",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-256x256.png',
+              sizes: '256x256',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-384x384.png",
-              "sizes": "384x384",
-              "type": "image/png",
-              "purpose": "any maskable"
+              src: 'icons/icon-384x384.png',
+              sizes: '384x384',
+              type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              "src": "icons/icon-512x512.png",
-              "sizes": "512x512",
-              "type": "image/png",
-              "purpose": "any maskable"
-            }
-          ]
+              src: 'icons/icon-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable',
+            },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-          navigateFallbackDenylist: [/^\/gdrive-callback\.html/, /^\/privacy/],
+          navigateFallback: '/app/index.html',
+          navigateFallbackDenylist: [
+            /^\/$/,
+            /^\/about(?:\/.*)?$/,
+            /^\/gdrive-callback\.html/,
+            /^\/privacy/,
+          ],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -392,12 +464,12 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'google-fonts-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
+                  statuses: [0, 200],
+                },
+              },
             },
             {
               urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
@@ -406,21 +478,21 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'gstatic-fonts-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            }
-          ]
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
         },
         devOptions: {
           enabled: true,
-          type: 'module'
-        }
+          type: 'module',
+        },
       }),
       createSiteMetadataPlugin(siteMetadata),
-    ]
+    ],
   }
 })

@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage, seedStorage } from '../helpers/storage'
 import { mockBibleApi } from '../helpers/mocks'
+import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleVerses = JSON.parse(
@@ -11,7 +12,7 @@ const sampleVerses = JSON.parse(
 )
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })
@@ -51,7 +52,7 @@ test.skip('add verse with Bible import: mock API -> enter reference + version ->
 
 test('edit verse: search on Verses tab -> edit -> change content -> save', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByTestId('search-bar').click()
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
@@ -68,7 +69,7 @@ test('edit verse: search on Verses tab -> edit -> change content -> save', async
 test('copy verse: copy button triggers copy', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-write', 'clipboard-read'])
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByTestId('search-bar').click()
   await page.getByPlaceholder(/Search verses/i).fill('John')
   await page.waitForTimeout(500)
@@ -78,7 +79,7 @@ test('copy verse: copy button triggers copy', async ({ page }) => {
 
 test('search: type in search bar on Verses tab -> results filtered', async ({ page }) => {
   await seedStorage(page, sampleVerses, [])
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByTestId('search-bar').click()
   await page.getByPlaceholder(/Search verses/i).fill('Psalm')
   await page.waitForTimeout(500)
@@ -92,7 +93,7 @@ test('search: clearing search restores collection cards', async ({ page }) => {
     { id: 'col-1', name: 'My Collection', createdAt: '2024-01-01T00:00:00.000Z', lastModified: '2024-01-01T00:00:00.000Z' },
   ]
   await seedStorage(page, sampleVerses, collections)
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
   await page.getByTestId('search-bar').click()
   const searchInput = page.getByPlaceholder(/Search verses/i)
 

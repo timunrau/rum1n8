@@ -6,9 +6,10 @@ import {
   seedWebDAVSettings,
 } from '../helpers/storage'
 import { mockWebDAVWithStaleRemoteWithFutureTimestamp } from '../helpers/mocks'
+import { gotoApp } from '../helpers/navigation'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })
@@ -34,7 +35,7 @@ test('navigate to Review tab; verses due appear when seeded with mastered verses
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
 
   await expect(page.getByText('Psalm 23:1')).toBeVisible({ timeout: 10000 })
 })
@@ -58,7 +59,7 @@ test('click verse -> enters review screen', async ({ page }) => {
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('h1')).toContainText('Psalm 1:1')
@@ -96,7 +97,7 @@ test('legacy ref quiz fields do not block review flow', async ({ page }) => {
   const stored = (await getStoredVerses(page)) as Array<Record<string, unknown>>
   expect(stored[0]).toHaveProperty('refNextReviewDate')
 
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Romans 12:2').click()
 
   await expect(page.locator('h1')).toContainText('Romans 12:2')
@@ -105,7 +106,7 @@ test('legacy ref quiz fields do not block review flow', async ({ page }) => {
 })
 
 test('empty state: no verses due shows appropriate message', async ({ page }) => {
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await expect(page.getByText(/No verses|all caught up|Review/i).first()).toBeVisible({ timeout: 5000 })
 })
 
@@ -144,7 +145,7 @@ test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does no
   })
   await seedStorage(page, [lukeVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
 
   await page.getByText('Luke 11:9-13').click()
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -190,7 +191,7 @@ test('established interval preserved on review (no regression to 3 days)', async
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
 
   await page.getByText('Psalm 1:1').click()
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -249,7 +250,7 @@ test('review: input focused after Next Verse', async ({ page }) => {
   ]
   await seedStorage(page, twoVerses, [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -286,7 +287,7 @@ test('same-day review does not advance spaced repetition schedule', async ({ pag
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
 
   await page.getByText('Luke 11:9').click()
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -330,7 +331,7 @@ test('review: input focused after Try Again', async ({ page }) => {
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -366,7 +367,7 @@ test('review mode: verse with dash (no spaces) treats parts as separate words', 
   }
   await seedStorage(page, [masteredVerseWithDash], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Genesis 17:8').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -399,7 +400,7 @@ test('review screen shows Learn, Memorize, Master buttons with Master selected',
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -430,7 +431,7 @@ test('review: completing in Learn mode does not advance spaced repetition', asyn
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -474,7 +475,7 @@ test('review: completing in Master mode advances spaced repetition', async ({ pa
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -519,7 +520,7 @@ test('failed review (<90% accuracy) still updates SRS schedule', async ({ page }
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
@@ -573,7 +574,7 @@ test('retry after failed review does not overwrite SRS from first attempt', asyn
   }
   await seedStorage(page, [masteredVerse], [])
   await page.reload()
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()

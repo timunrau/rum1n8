@@ -3,6 +3,7 @@ set -eu
 
 HTML_ROOT="/usr/share/nginx/html"
 INDEX_TEMPLATE="${HTML_ROOT}/index.html.template"
+ABOUT_TEMPLATE="${HTML_ROOT}/about/index.html.template"
 ROBOTS_TEMPLATE="${HTML_ROOT}/robots.txt.template"
 SITEMAP_TEMPLATE="${HTML_ROOT}/sitemap.xml.template"
 
@@ -30,7 +31,7 @@ case "$SITE_URL" in
 esac
 
 RUM1N8_SOCIAL_IMAGE_URL="/marketing/og-card.png"
-RUM1N8_OPTIONAL_SITE_URL_TAGS=""
+RUM1N8_CANONICAL_ROOT_TAGS=""
 RUM1N8_JSON_LD_URL_FIELDS=""
 RUM1N8_SITEMAP_LINE=""
 RUM1N8_ROOT_URL=""
@@ -38,7 +39,7 @@ RUM1N8_ROOT_URL=""
 if [ -n "$SITE_URL" ]; then
   RUM1N8_ROOT_URL="${SITE_URL}/"
   RUM1N8_SOCIAL_IMAGE_URL="${SITE_URL}/marketing/og-card.png"
-  RUM1N8_OPTIONAL_SITE_URL_TAGS="$(cat <<EOF
+  RUM1N8_CANONICAL_ROOT_TAGS="$(cat <<EOF
 <link rel="canonical" href="${RUM1N8_ROOT_URL}" />
     <meta property="og:url" content="${RUM1N8_ROOT_URL}" />
 EOF
@@ -51,15 +52,21 @@ EOF
 fi
 
 export RUM1N8_SOCIAL_IMAGE_URL
-export RUM1N8_OPTIONAL_SITE_URL_TAGS
+export RUM1N8_CANONICAL_ROOT_TAGS
 export RUM1N8_JSON_LD_URL_FIELDS
 export RUM1N8_SITEMAP_LINE
 export RUM1N8_ROOT_URL
 
 if [ -f "$INDEX_TEMPLATE" ]; then
-  envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_OPTIONAL_SITE_URL_TAGS} ${RUM1N8_JSON_LD_URL_FIELDS}' \
+  envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_ROOT_TAGS} ${RUM1N8_JSON_LD_URL_FIELDS}' \
     < "$INDEX_TEMPLATE" \
     > "${HTML_ROOT}/index.html"
+fi
+
+if [ -f "$ABOUT_TEMPLATE" ]; then
+  envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_ROOT_TAGS}' \
+    < "$ABOUT_TEMPLATE" \
+    > "${HTML_ROOT}/about/index.html"
 fi
 
 if [ -f "$ROBOTS_TEMPLATE" ]; then

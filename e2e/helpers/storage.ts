@@ -6,6 +6,7 @@
 import type { Page } from '@playwright/test'
 
 const STORAGE_KEYS = [
+  'rum1n8-ui-state',
   'rum1n8-verses',
   'rum1n8-collections',
   'rum1n8-webdav-settings',

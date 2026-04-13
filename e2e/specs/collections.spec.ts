@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage, seedStorage } from '../helpers/storage'
+import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleVerses = JSON.parse(
@@ -10,7 +11,7 @@ const sampleVerses = JSON.parse(
 )
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })
@@ -63,7 +64,7 @@ test('view master-list, no-collection, to-learn with seeded verses', async ({ pa
     { id: 'custom-1', name: 'Custom', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() },
   ]
   await seedStorage(page, verses, collections)
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
 
   await expect(page.getByText('All Verses')).toBeVisible()
   await expect(page.getByText('Uncategorized')).toBeVisible()
@@ -72,7 +73,7 @@ test('view master-list, no-collection, to-learn with seeded verses', async ({ pa
 
 test('empty state: no collections shows verse list or create CTA', async ({ page }) => {
   await clearAppStorage(page)
-  await page.goto('/?view=collections')
+  await gotoApp(page, '?view=collections')
 
   const noVersesMsg = page.getByText(/No verses yet|Create your first collection|Add a verse/i)
   await expect(noVersesMsg.first()).toBeVisible({ timeout: 5000 })

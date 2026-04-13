@@ -2,11 +2,12 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage } from '../helpers/storage'
+import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })

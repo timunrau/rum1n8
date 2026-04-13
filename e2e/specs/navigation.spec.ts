@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { clearAppStorage } from '../helpers/storage'
+import { gotoApp } from '../helpers/navigation'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
 })
@@ -48,17 +49,17 @@ test('FAB opens add verse / add collection / import CSV options on Collections v
 })
 
 test('initial load with view=review-list shows Review tab', async ({ page }) => {
-  await page.goto('/?view=review-list')
+  await gotoApp(page, '?view=review-list')
   await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
 })
 
 test('initial load with view=stats shows Stats tab', async ({ page }) => {
-  await page.goto('/?view=stats')
+  await gotoApp(page, '?view=stats')
   await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
 })
 
 test('initial load with removed view=references falls back to Collections tab', async ({ page }) => {
-  await page.goto('/?view=references')
+  await gotoApp(page, '?view=references')
   await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
   await expect(page.getByTestId('search-bar')).toBeVisible()
   await expect(page).not.toHaveURL(/\?view=references/)
