@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/timunrau/rum1n8/compare/v1.2.1...v1.2.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* rename rollup entry key to avoid collision with src/main.js ([c3e42ce](https://github.com/timunrau/rum1n8/commit/c3e42cee6eea1e8116202e46d91f8061e61b2afc))
+
 ## [1.2.1](https://github.com/timunrau/rum1n8/compare/v1.2.0...v1.2.1) (2026-04-12)
 
 
