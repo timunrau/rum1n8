@@ -187,6 +187,11 @@ function buildHtmlReplacements(siteMetadata, page) {
   }
 }
 
+export {
+  buildHtmlReplacements,
+  buildSiteMetadata,
+}
+
 function buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, options = {}) {
   let template = finalHtml
 
@@ -339,7 +344,7 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         input: {
-          main: resolve(process.cwd(), 'index.html'),
+          marketing: resolve(process.cwd(), 'index.html'),
           about: resolve(process.cwd(), 'about/index.html'),
           app: resolve(process.cwd(), 'app/index.html'),
         },
