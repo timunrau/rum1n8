@@ -50,6 +50,13 @@ test('about stays public even for returning users', async ({ page }) => {
   )
 })
 
+test('legacy root app query redirects into the app path', async ({ page }) => {
+  await page.goto('/?view=review-list')
+
+  await expect(page).toHaveURL(/\/app\/\?view=review-list$/)
+  await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
+})
+
 test('app About opens the public page with a back link to the current app view', async ({
   page,
 }) => {

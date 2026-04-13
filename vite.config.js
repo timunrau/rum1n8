@@ -152,13 +152,13 @@ function buildSocialTags(siteMetadata) {
 }
 
 function detectHtmlPage(ctx) {
-  const identifier = `${ctx?.path || ''} ${ctx?.filename || ''}`
+  const path = ctx?.path || ''
 
-  if (identifier.includes('/app/') || identifier.includes('app/index.html')) {
+  if (path.includes('/app/') || path.endsWith('/app/index.html')) {
     return 'app'
   }
 
-  if (identifier.includes('/about/') || identifier.includes('about/index.html')) {
+  if (path.includes('/about/') || path.endsWith('/about/index.html')) {
     return 'about'
   }
 

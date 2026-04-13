@@ -110,6 +110,20 @@ const practiceVerses = [
   }),
 ]
 
+const addVerseCollections = [
+  { id: 'col-renewed-mind', name: 'Renewed Mind', description: '', createdAt: now, lastModified: now },
+  { id: 'col-the-gospel', name: 'The Gospel', description: '', createdAt: now, lastModified: now },
+  { id: 'col-holy-spirit', name: 'Holy Spirit', description: '', createdAt: now, lastModified: now },
+]
+
+const memorizeVerses = [
+  buildVerse(baseVerses.joshua, {
+    memorizationStatus: 'learned',
+    reviewCount: 1,
+    lastReviewed: yesterday,
+  }),
+]
+
 const reviewVerses = [
   buildVerse(baseVerses.joshua, {
     memorizationStatus: 'mastered',
@@ -332,6 +346,55 @@ async function captureReviewState(browser, baseUrl) {
     await page.waitForTimeout(150)
     await page.screenshot({
       path: path.join(marketingDir, 'screenshot-review.png'),
+    })
+  } finally {
+    await context.close()
+  }
+}
+
+async function captureAddVerseState(browser, baseUrl) {
+  const { context, page } = await createMobilePage(browser, buildStorageState({
+    collections: addVerseCollections,
+  }))
+
+  try {
+    await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
+    await page.getByTestId('fab-trigger').waitFor()
+    await page.getByTestId('fab-trigger').click()
+    await page.getByTestId('fab-new-verse').click()
+    await page.getByTestId('modal-add-verse').waitFor()
+    await page.waitForTimeout(400)
+    await page.fill('#reference', baseVerses.joshua.reference)
+    await page.fill('#bible-version', 'BSB')
+    await page.fill('#content', baseVerses.joshua.content)
+    await page.getByRole('button', { name: 'Renewed Mind' }).click()
+    await page.waitForTimeout(150)
+    await page.screenshot({
+      path: path.join(marketingDir, 'screenshot-add-verse.png'),
+    })
+  } finally {
+    await context.close()
+  }
+}
+
+async function captureMemorizeState(browser, baseUrl) {
+  const { context, page } = await createMobilePage(browser, buildStorageState({
+    verses: memorizeVerses,
+  }))
+
+  try {
+    await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
+    await page.getByText('Joshua 1:8').first().click()
+    await page.locator('#letter-input-memorize').waitFor({ state: 'attached' })
+    await page.locator('#letter-input-memorize').focus()
+    // In memorize mode, all words (visible and hidden) are typed in order.
+    // "This Book of the Law must not depart from your mouth; meditate on it day and night"
+    // → t b o t l m n d f y m  m  o  i  d  a  n
+    await page.keyboard.type('tbotlmndfymmoidan', { delay: 40 })
+    await showKeyboardOverlay(page)
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: path.join(marketingDir, 'screenshot-memorize.png'),
     })
   } finally {
     await context.close()
@@ -594,6 +657,8 @@ try {
     await captureVersesState(browser, baseUrl)
     await capturePracticeState(browser, baseUrl)
     await captureReviewState(browser, baseUrl)
+    await captureAddVerseState(browser, baseUrl)
+    await captureMemorizeState(browser, baseUrl)
     await captureOgCard(browser, baseUrl)
   } finally {
     await browser.close()
