@@ -354,6 +354,13 @@ img {
   color: var(--accent-strong);
 }
 
+.text-link--inline {
+  display: inline;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  color: var(--accent);
+}
+
 .section--steps {
   padding: 3.5rem 1.5rem;
   margin-top: 2rem;
