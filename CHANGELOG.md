@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/timunrau/rum1n8/compare/v1.3.1...v1.4.0) (2026-04-14)
+
+
+### Features
+
+* overhaul marketing page copy and structure ([faa9d1d](https://github.com/timunrau/rum1n8/commit/faa9d1d0686f14414b54798020ba6143dbf8f8ee))
+
 ## [1.3.1](https://github.com/timunrau/rum1n8/compare/v1.3.0...v1.3.1) (2026-04-14)
 
 
