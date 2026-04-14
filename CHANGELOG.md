@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/timunrau/rum1n8/compare/v1.2.3...v1.3.0) (2026-04-14)
+
+
+### Features
+
+* add 'How it works' step-flow section to marketing pages ([671150e](https://github.com/timunrau/rum1n8/commit/671150e46dcd4209859a0d4a74321d1587d722cc))
+
 ## [1.2.3](https://github.com/timunrau/rum1n8/compare/v1.2.2...v1.2.3) (2026-04-13)
 
 
