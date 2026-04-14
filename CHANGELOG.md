@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/timunrau/rum1n8/compare/v1.3.0...v1.3.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* mention first-letter typing in 'Learn it' step description ([043beff](https://github.com/timunrau/rum1n8/commit/043beff5b913fde78794e478c7b2d52a39da0646))
+
 # [1.3.0](https://github.com/timunrau/rum1n8/compare/v1.2.3...v1.3.0) (2026-04-14)
 
 
