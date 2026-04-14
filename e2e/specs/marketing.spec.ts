@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { clearAppStorage } from '../helpers/storage'
 import { gotoApp } from '../helpers/navigation'
 
-const HERO_HEADING = 'A simple Bible memory app that gives you control of your data.'
+const HERO_HEADING = 'Ruminate: to turn something over in the mind.'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/about/')
