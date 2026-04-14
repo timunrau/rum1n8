@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/timunrau/rum1n8/compare/v1.4.0...v1.4.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* refine marketing hero dictionary styling ([f022739](https://github.com/timunrau/rum1n8/commit/f022739d1b1fb537c6126e35418443765b079da3))
+
 # [1.4.0](https://github.com/timunrau/rum1n8/compare/v1.3.1...v1.4.0) (2026-04-14)
 
 
