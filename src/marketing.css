@@ -354,6 +354,87 @@ img {
   color: var(--accent-strong);
 }
 
+.section--steps {
+  padding: 3.5rem 1.5rem;
+  margin-top: 2rem;
+  border-radius: 1.5rem;
+  background: var(--page-bg-soft);
+  border: 1px solid var(--border);
+}
+
+.section--steps h2 {
+  text-align: center;
+}
+
+.steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-top: 2.5rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 0 1 260px;
+  padding: 0 1rem;
+}
+
+.step__number {
+  margin: 0 0 1rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #3768c6 0%, var(--accent-strong) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.phone-frame--sm {
+  width: min(100%, 220px);
+  padding: 0.6rem;
+  border-radius: 1.5rem;
+}
+
+.phone-frame--sm img {
+  border-radius: 1.05rem;
+}
+
+.step h3 {
+  margin: 1.2rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 1.28rem;
+  letter-spacing: -0.03em;
+}
+
+.step p:last-child {
+  margin: 0.6rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.65;
+  font-size: 0.95rem;
+  max-width: 22rem;
+}
+
+.step__connector {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: calc(54px + 187px - 12px);
+  color: var(--text-soft);
+}
+
+.step__connector svg {
+  width: 3rem;
+  height: 1.5rem;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
@@ -381,6 +462,22 @@ img {
 }
 
 @media (max-width: 960px) {
+  .steps {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .step {
+    flex: none;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .step__connector {
+    display: none;
+  }
+
   .hero,
   .feature-list,
   .story-grid {
@@ -452,6 +549,10 @@ img {
       radial-gradient(circle at top left, rgba(187, 132, 42, 0.18), transparent 30%),
       radial-gradient(circle at top right, rgba(57, 98, 170, 0.18), transparent 28%),
       linear-gradient(180deg, #08101b 0%, #0d1421 52%, #131d2e 100%);
+  }
+
+  .section--steps {
+    background: rgba(14, 23, 37, 0.6);
   }
 
   .app-return__link,
