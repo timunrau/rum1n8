@@ -7,6 +7,7 @@
   --text-soft: #70819a;
   --accent: #2f5fb7;
   --accent-strong: #214889;
+  --accent-warm: #c79a2b;
   --shadow: 0 24px 60px rgba(20, 35, 58, 0.12);
   --max-width: 1080px;
 }
@@ -169,16 +170,35 @@ img {
 }
 
 .hero__definition {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
   margin: 0 0 1rem;
   max-width: 31rem;
-  font-size: 0.96rem;
-  line-height: 1.75;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-soft);
 }
 
-.hero__definition em {
-  color: var(--text);
-  font-style: italic;
+.hero__part-of-speech {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.26rem 0.56rem;
+  border: 1px solid rgba(199, 154, 43, 0.26);
+  border-radius: 999px;
+  background: rgba(199, 154, 43, 0.12);
+  color: var(--accent-warm);
+  font-weight: 700;
+}
+
+.hero__pronunciation {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
 .hero h1,
@@ -193,6 +213,36 @@ img {
 .hero h1 {
   font-size: clamp(2.7rem, 5.2vw, 4.4rem);
   line-height: 0.94;
+}
+
+.hero__headword,
+.hero__definition-line {
+  display: block;
+}
+
+.hero__headword {
+  position: relative;
+  width: fit-content;
+  color: var(--text);
+  letter-spacing: -0.05em;
+  padding-bottom: 0.1em;
+}
+
+.hero__headword::after {
+  content: "";
+  position: absolute;
+  left: 0.04em;
+  right: 0.08em;
+  bottom: 0.06em;
+  height: 0.08em;
+  background: linear-gradient(90deg, var(--accent-warm), rgba(199, 154, 43, 0));
+  border-radius: 999px;
+  z-index: -1;
+}
+
+.hero__definition-line {
+  margin-top: 0.18rem;
+  color: var(--text);
 }
 
 .hero__lede,
@@ -529,6 +579,10 @@ img {
 
   .hero {
     padding: 1.5rem 0 4rem;
+  }
+
+  .hero__visual {
+    display: none;
   }
 
   .hero__actions {
