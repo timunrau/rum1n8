@@ -270,7 +270,7 @@
   <!-- Main Content -->
   <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen">
     <!-- Top App Bar (verses/collections screen only) -->
-    <header v-if="currentView === 'collections'" class="bg-chrome/85 backdrop-blur border-b border-border-default fixed top-0 left-0 right-0 z-40">
+    <header v-if="currentView === 'collections'" class="glass-chrome border-b border-border-default fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-2">
         <!-- Hamburger menu button (top-level only) -->
         <button
@@ -330,65 +330,28 @@
           >
             Install app
           </button>
-          <!-- Sync Button -->
-          <button
-            v-if="hasSyncConfigured"
-            @click="manualSync"
-            :disabled="syncing"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative"
-            :class="{ 'opacity-50 cursor-not-allowed': syncing }"
-            :title="syncing ? 'Syncing...' : 'Sync'"
-          >
-            <svg
-              v-if="syncing"
-              class="w-6 h-6 animate-spin-reverse"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              style="transform-origin: center;"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <svg
-              v-else-if="syncSuccess"
-              class="w-6 h-6 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <svg
-              v-else
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
         </div>
       </div>
     </header>
 
     <!-- Navigation Drawer -->
-    <div
-      v-show="drawerOpen"
-      class="fixed inset-0 z-[60] pointer-events-none"
-    >
-      <!-- Backdrop -->
       <div
-        class="absolute inset-0 bg-black/40 transition-opacity duration-300 pointer-events-auto"
-        :class="drawerOpen ? 'opacity-100' : 'opacity-0'"
-        @click="closeDrawer"
-      />
-      <!-- Drawer panel -->
-      <div
-        class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-chrome shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto"
-        :class="drawerOpen ? 'translate-x-0' : '-translate-x-full'"
-        style="border-radius: 0 16px 16px 0;"
+        v-if="drawerVisible"
+        class="fixed inset-0 z-[60]"
+        :class="drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'"
       >
+        <!-- Backdrop -->
+        <div
+          class="absolute inset-0 bg-black/40 pointer-events-auto transition-opacity duration-300"
+          :class="drawerOpen ? 'opacity-100' : 'opacity-0'"
+          @click="closeDrawer"
+        />
+        <!-- Drawer panel -->
+        <div
+          class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-chrome shadow-2xl flex flex-col pointer-events-auto transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform"
+          :class="drawerOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-95'"
+          style="border-radius: 0 16px 16px 0;"
+        >
         <!-- App header -->
         <div class="px-6 pt-10 pb-5" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
           <div class="flex items-center gap-3">
@@ -400,6 +363,33 @@
         <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->
         <nav class="flex-1 px-3 py-2 overflow-y-auto">
+          <button
+            data-testid="settings-sync-now"
+            @click="manualSyncFromDrawer"
+            :disabled="syncing"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <svg
+              v-if="syncing"
+              class="w-5 h-5 shrink-0 animate-spin-reverse"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              style="transform-origin: center;"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <svg
+              v-else
+              class="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {{ syncing ? 'Syncing…' : 'Sync now' }}
+          </button>
           <button
             data-testid="settings-practice"
             @click="openPracticeSettings"
@@ -419,7 +409,7 @@
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
             </svg>
-            Sync
+            Configure Sync
           </button>
           <button
             data-testid="settings-backup"
@@ -429,7 +419,7 @@
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Backup & Restore
+            Restore & Export
             <span
               v-if="shouldShowBackupReminder"
               class="ml-auto w-2 h-2 bg-accent-warm rounded-full flex-shrink-0"
@@ -446,8 +436,8 @@
             About
           </button>
         </nav>
+        </div>
       </div>
-    </div>
 
     <!-- Sync Error Toast -->
     <div
@@ -557,7 +547,6 @@
             :current-streak="currentStreak"
             :due-verses-count="dueVersesCount"
             :mastered-count="masteredCount"
-            :today-formatted="todayFormatted"
             :show-start-review="reviewSortedVerses.length > 0"
             section-title="Your Collections"
             @start-review="handleVerseClick(reviewSortedVerses[0])"
@@ -734,7 +723,6 @@
           :current-streak="currentStreak"
           :due-verses-count="dueVersesCount"
           :mastered-count="masteredCount"
-          :today-formatted="todayFormatted"
           :show-start-review="reviewSortedVerses.length > 0"
           section-title="Your Verses"
           @start-review="handleVerseClick(reviewSortedVerses[0])"
@@ -794,6 +782,7 @@
             :class="[
               {
                 'verse-card--due': verse.memorizationStatus === 'mastered' && isDueForReview(verse),
+                'verse-card--expanded': isVerseExpanded(verse),
                 'verse-card--learning': verse.memorizationStatus !== 'mastered',
                 'verse-card--onboarding': shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId,
               },
@@ -838,12 +827,22 @@
                   </button>
                 </div>
               </div>
-              <div
-                v-if="isVerseExpanded(verse)"
-                class="verse-card__body"
+              <Transition
+                name="verse-expand"
+                @before-enter="beforeVerseExpand"
+                @enter="enterVerseExpand"
+                @after-enter="afterVerseExpand"
+                @before-leave="beforeVerseCollapse"
+                @leave="leaveVerseCollapse"
+                @after-leave="afterVerseCollapse"
               >
-                {{ verse.content }}
-              </div>
+                <div
+                  v-if="isVerseExpanded(verse)"
+                  class="verse-card__body"
+                >
+                  {{ verse.content }}
+                </div>
+              </Transition>
             </div>
           </div>
           </div>
@@ -890,7 +889,7 @@
     />
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome/90 backdrop-blur border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="glass-chrome glass-chrome--nav fixed bottom-0 left-0 right-0 border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Verses Tab (far left) -->
         <button
@@ -983,18 +982,18 @@
     >
       <!-- FAB Menu (shown on collections screen and inside collections) -->
       <transition-group
-        v-if="fabMenuOpen"
         name="fab-menu"
         tag="div"
         class="absolute bottom-20 right-0 mb-2 flex flex-col gap-2"
       >
         <!-- New Verse Option -->
         <button
+          v-if="fabMenuOpen"
           key="verse"
           data-testid="fab-new-verse"
           @click="openNewVerse"
-          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          style="--fab-index: 0; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -1006,12 +1005,12 @@
 
         <!-- New Collection Option (only on collections screen) -->
         <button
-          v-if="!currentCollectionId && currentView === 'collections'"
+          v-if="fabMenuOpen && !currentCollectionId && currentView === 'collections'"
           key="collection"
           data-testid="fab-new-collection"
           @click="openNewCollection"
-          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          style="--fab-index: 1; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-accent-warm rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -1023,12 +1022,12 @@
 
         <!-- Import CSV Option (collections screen or inside collection) -->
         <button
-          v-if="currentCollectionId || (!currentCollectionId && currentView === 'collections')"
+          v-if="fabMenuOpen && (currentCollectionId || (!currentCollectionId && currentView === 'collections'))"
           key="import"
           data-testid="fab-import-csv"
           @click="openImportCSV"
-          class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
+          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1, boxShadow: '0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2)' }"
         >
           <div class="w-10 h-10 bg-accent-strong rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -1067,21 +1066,21 @@
     @close="closeIOSModal"
   />
 
-  <!-- Copy Toast Notification - rendered at root level to appear above all screens -->
+  <!-- Toast Notification - rendered at root level to appear above all screens -->
   <transition name="toast">
     <div
-      v-if="copyToast.show"
+      v-if="toastState.show"
       class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] px-4 py-3 rounded-xl shadow-lg max-w-sm"
-      :class="copyToast.isError ? 'bg-status-error-bg text-status-error-text border border-status-error-border' : 'bg-status-success-bg text-status-success-text border border-status-success-border'"
+      :class="toastState.isError ? 'bg-status-error-bg text-status-error-text border border-status-error-border' : 'bg-status-success-bg text-status-success-text border border-status-success-border'"
     >
       <div class="flex items-center gap-2">
-        <svg v-if="!copyToast.isError" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-if="!toastState.isError" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
         <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
-        <span class="text-sm font-medium">{{ copyToast.message }}</span>
+        <span class="text-sm font-medium">{{ toastState.message }}</span>
       </div>
     </div>
   </transition>
@@ -1697,6 +1696,7 @@ export default {
     const showPracticeSettings = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
+    const drawerVisible = ref(false)
     const drawerOpen = ref(false)
     const showBackupImport = ref(false)
     const showImportCSV = ref(false)
@@ -1729,7 +1729,6 @@ export default {
     const firstAttemptMistakes = ref(null) // Mistakes from first completed attempt
     const isSpeaking = ref(false)
     const syncing = ref(false)
-    const syncSuccess = ref(false)
     const syncError = ref(null)
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
@@ -1744,7 +1743,9 @@ export default {
     const csvImportStatus = ref(null)
     const importingCSV = ref(false)
     const expandedVerseIds = ref({})
-    const copyToast = ref({ show: false, message: '' })
+    const toastState = ref({ show: false, message: '', isError: false })
+    let toastTimeoutId = null
+    let drawerHideTimeoutId = null
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
     const appSettings = ref(getAppSettings())
@@ -2336,15 +2337,6 @@ export default {
         verses.value.filter(v => v.memorizationStatus === 'mastered')
       )
     )
-
-    const todayFormatted = computed(() => {
-      const d = new Date()
-      return d.toLocaleDateString(undefined, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      })
-    })
 
     const currentStreak = computed(() => {
       const reviewDatesSet = new Set()
@@ -3288,6 +3280,68 @@ export default {
       const next = { ...expandedVerseIds.value }
       next[verse.id] = !next[verse.id]
       expandedVerseIds.value = next
+    }
+
+    const beforeVerseExpand = (el) => {
+      el.style.height = '0'
+      el.style.opacity = '0'
+      el.style.transform = 'translateY(-6px)'
+    }
+
+    const enterVerseExpand = (el, done) => {
+      el.style.overflow = 'hidden'
+      void el.offsetHeight
+
+      requestAnimationFrame(() => {
+        el.style.height = `${el.scrollHeight}px`
+        el.style.opacity = '1'
+        el.style.transform = 'translateY(0)'
+      })
+
+      const onTransitionEnd = (event) => {
+        if (event.target !== el || event.propertyName !== 'height') return
+        el.removeEventListener('transitionend', onTransitionEnd)
+        done()
+      }
+
+      el.addEventListener('transitionend', onTransitionEnd)
+    }
+
+    const afterVerseExpand = (el) => {
+      el.style.height = 'auto'
+      el.style.overflow = ''
+    }
+
+    const beforeVerseCollapse = (el) => {
+      el.style.height = `${el.scrollHeight}px`
+      el.style.opacity = '1'
+      el.style.transform = 'translateY(0)'
+      el.style.overflow = 'hidden'
+    }
+
+    const leaveVerseCollapse = (el, done) => {
+      void el.offsetHeight
+
+      requestAnimationFrame(() => {
+        el.style.height = '0'
+        el.style.opacity = '0'
+        el.style.transform = 'translateY(-6px)'
+      })
+
+      const onTransitionEnd = (event) => {
+        if (event.target !== el || event.propertyName !== 'height') return
+        el.removeEventListener('transitionend', onTransitionEnd)
+        done()
+      }
+
+      el.addEventListener('transitionend', onTransitionEnd)
+    }
+
+    const afterVerseCollapse = (el) => {
+      el.style.height = ''
+      el.style.opacity = ''
+      el.style.transform = ''
+      el.style.overflow = ''
     }
 
     // Get time until review (or overdue) in a human-readable format
@@ -4382,7 +4436,7 @@ export default {
       
       if (!verseObj || !verseObj.content || !verseObj.reference) {
         console.error('No verse provided to copyVerse', verse, verseObj)
-        showCopyToast('Error: No verse to copy', true)
+        showToast('Error: No verse to copy', true)
         return
       }
       
@@ -4390,7 +4444,7 @@ export default {
       
       try {
         await navigator.clipboard.writeText(textToCopy)
-        showCopyToast('Verse copied to clipboard')
+        showToast('Verse copied to clipboard')
       } catch (err) {
         console.error('Failed to copy verse:', err)
         // Fallback for older browsers
@@ -4402,20 +4456,25 @@ export default {
         textArea.select()
         try {
           document.execCommand('copy')
-          showCopyToast('Verse copied to clipboard')
+          showToast('Verse copied to clipboard')
         } catch (fallbackErr) {
           console.error('Fallback copy failed:', fallbackErr)
-          showCopyToast('Failed to copy verse', true)
+          showToast('Failed to copy verse', true)
         }
         document.body.removeChild(textArea)
       }
     }
 
-    // Show copy toast notification
-    const showCopyToast = (message, isError = false) => {
-      copyToast.value = { show: true, message, isError }
-      setTimeout(() => {
-        copyToast.value.show = false
+    // Show transient toast feedback for copy/sync actions.
+    const showToast = (message, isError = false) => {
+      if (toastTimeoutId) {
+        clearTimeout(toastTimeoutId)
+      }
+
+      toastState.value = { show: true, message, isError }
+      toastTimeoutId = setTimeout(() => {
+        toastState.value.show = false
+        toastTimeoutId = null
       }, 2000)
     }
 
@@ -5421,7 +5480,6 @@ export default {
       }
       
       syncing.value = true
-      syncSuccess.value = false
       syncError.value = null
       
       try {
@@ -5567,11 +5625,7 @@ export default {
           }
           
           if (showFeedback) {
-            // Show success feedback
-            syncSuccess.value = true
-            setTimeout(() => {
-              syncSuccess.value = false
-            }, 2000)
+            showToast('Sync complete')
           }
         } else {
           // Sync failed
@@ -5598,6 +5652,11 @@ export default {
     // Manual sync (with user feedback)
     const manualSync = () => {
       triggerSync(true)
+    }
+
+    const manualSyncFromDrawer = () => {
+      closeDrawer()
+      manualSync()
     }
 
     const closePracticeSettings = () => {
@@ -5643,12 +5702,40 @@ export default {
     }
 
     // Navigation drawer
+    const openDrawer = async () => {
+      if (drawerHideTimeoutId) {
+        clearTimeout(drawerHideTimeoutId)
+        drawerHideTimeoutId = null
+      }
+
+      drawerVisible.value = true
+      drawerOpen.value = false
+      await nextTick()
+      requestAnimationFrame(() => {
+        drawerOpen.value = true
+      })
+    }
+
     const toggleDrawer = () => {
-      drawerOpen.value = !drawerOpen.value
+      if (drawerVisible.value && drawerOpen.value) {
+        closeDrawer()
+        return
+      }
+
+      openDrawer()
     }
 
     const closeDrawer = () => {
       drawerOpen.value = false
+
+      if (drawerHideTimeoutId) {
+        clearTimeout(drawerHideTimeoutId)
+      }
+
+      drawerHideTimeoutId = setTimeout(() => {
+        drawerVisible.value = false
+        drawerHideTimeoutId = null
+      }, 300)
     }
 
     // Open sync settings from menu
@@ -5962,6 +6049,12 @@ export default {
       handleVerseClick,
       isVerseExpanded,
       toggleVerseExpanded,
+      beforeVerseExpand,
+      enterVerseExpand,
+      afterVerseExpand,
+      beforeVerseCollapse,
+      leaveVerseCollapse,
+      afterVerseCollapse,
       startMemorization,
       canSwitchToMode,
       switchToMemorizationMode,
@@ -6026,7 +6119,6 @@ export default {
       isDark,
       currentStreak,
       masteredCount,
-      todayFormatted,
       masteredOverTimeData,
       dailyActivityData,
       masteredChartData,
@@ -6041,7 +6133,7 @@ export default {
       speakVerse,
       stopSpeaking,
       isSpeaking,
-      copyToast,
+      toastState,
       startEditVerse,
       saveEditedVerse,
       closeEditVerseForm,
@@ -6051,6 +6143,7 @@ export default {
       showSettings,
       appSettings,
       showSettingsMenu,
+      drawerVisible,
       drawerOpen,
       toggleDrawer,
       closeDrawer,
@@ -6077,9 +6170,9 @@ export default {
       shouldShowBackupReminder,
       backupFileInput,
       manualSync,
+      manualSyncFromDrawer,
       updateRequireReferenceTyping,
       syncing,
-      syncSuccess,
       syncError,
       shareSuccess,
       showImportCSV,
