@@ -1,3 +1,11 @@
+## [1.5.1](https://github.com/timunrau/rum1n8/compare/v1.5.0...v1.5.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* polish verses onboarding and reading room ui ([63de01a](https://github.com/timunrau/rum1n8/commit/63de01a653cbfafef1bb1a830b459e51a9655e7c))
+* sync local dev and e2e updates ([7fe07d8](https://github.com/timunrau/rum1n8/commit/7fe07d85cd0b79be141bed8fe0f7386902992e99))
+
 # [1.5.0](https://github.com/timunrau/rum1n8/compare/v1.4.1...v1.5.0) (2026-04-18)
 
 
