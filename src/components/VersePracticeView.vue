@@ -106,6 +106,32 @@
       </div>
     </div>
 
+    <div v-if="showPracticeModesHint && !showTray && practiceModeHint" class="px-4 pb-1">
+      <div class="rounded-2xl border border-status-info-border bg-status-info-bg p-4">
+        <div class="flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-status-info-text">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-text-primary">{{ practiceModeHint.title }}</p>
+            <p v-if="practiceModeHint.body" class="mt-1 text-sm leading-relaxed text-text-secondary">{{ practiceModeHint.body }}</p>
+          </div>
+          <button
+            type="button"
+            class="rounded-xl p-1.5 text-text-muted transition-colors duration-200 hover:bg-white/70 hover:text-text-secondary"
+            aria-label="Dismiss practice modes help"
+            @click="$emit('dismiss-practice-modes-hint')"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Mode buttons: Learn | Memorize | Master -->
     <div v-if="!showTray" class="my-2 flex-shrink-0">
       <div class="flex items-center justify-center gap-2">
@@ -164,7 +190,7 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 
 export default {
   name: 'VersePracticeView',
@@ -180,12 +206,37 @@ export default {
     getPartialWordText: { type: Function, required: true },
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
-    showTray: { type: Boolean, default: false }
+    showTray: { type: Boolean, default: false },
+    showPracticeModesHint: { type: Boolean, default: false }
   },
-  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode'],
+  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint'],
   setup(props, { emit, expose }) {
     const inputRef = ref(null)
     const scrollContainer = ref(null)
+    const practiceModeHint = computed(() => {
+      if (props.memorizationMode === 'learn') {
+        return {
+          title: 'Type the first letter of each word.',
+          body: null
+        }
+      }
+
+      if (props.memorizationMode === 'memorize') {
+        return {
+          title: 'See if you can still do it with some of the words hidden.',
+          body: null
+        }
+      }
+
+      if (props.memorizationMode === 'master') {
+        return {
+          title: 'Now try it without any words visible.',
+          body: null
+        }
+      }
+
+      return null
+    })
 
     const stages = [
       { name: 'Learn', status: 'unmemorized', mode: 'learn' },
@@ -318,6 +369,7 @@ export default {
 
     return {
       stages,
+      practiceModeHint,
       inputRef,
       scrollContainer,
       isStageComplete,

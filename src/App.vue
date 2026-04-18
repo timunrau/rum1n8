@@ -146,9 +146,11 @@
         :get-remaining-part-text="getRemainingPartText"
         input-id="letter-input-memorize"
         :show-tray="allWordsRevealed && !!memorizationMode"
+        :show-practice-modes-hint="shouldShowPracticeModesHint"
         @input="checkLetter"
         @keydown="handleKeyPress"
         @switch-mode="switchToMemorizationMode"
+        @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
@@ -237,9 +239,11 @@
         :get-remaining-part-text="getRemainingPartText"
         input-id="letter-input-review"
         :show-tray="allWordsRevealed && !!reviewingVerse"
+        :show-practice-modes-hint="shouldShowPracticeModesHint"
         @input="checkLetter"
         @keydown="handleKeyPress"
         @switch-mode="switchReviewMode"
+        @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
@@ -474,6 +478,31 @@
       <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
         <div class="space-y-2 py-4 overflow-y-auto" style="max-height: calc(100vh - 4rem);">
           <div
+            v-if="shouldShowReviewOnboardingTip"
+            data-testid="review-onboarding-tip"
+            class="rounded-2xl border border-status-info-border bg-status-info-bg p-4 shadow-sm"
+          >
+            <div class="flex items-start gap-3">
+              <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/75 text-status-info-text">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-text-primary">Review your verses here daily.</p>
+                <p class="mt-1 text-sm leading-relaxed text-text-secondary">Due verses stay at the top.</p>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl px-3 py-1.5 text-sm font-medium text-status-info-text transition-colors duration-200 hover:bg-white/70"
+                @click="dismissReviewOnboardingTip"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+
+          <div
             v-for="verse in reviewSortedVerses"
             :key="verse.id"
             @click="handleVerseClick(verse)"
@@ -666,15 +695,6 @@
             </div>
           </div>
 
-          <!-- Empty state when no verses exist -->
-          <div v-if="verses.length === 0 && collections.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <p class="text-text-muted text-sm font-medium uppercase tracking-[0.2em]">Bible memory app</p>
-            <p class="text-text-muted text-lg">No verses yet</p>
-            <p class="text-text-muted text-sm mt-2">Tap + to add your first verse</p>
-          </div>
         </div>
       </div>
 
@@ -747,16 +767,56 @@
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
-          @click="handleVerseClick(verse)"
           :class="[
-            'bg-surface rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
-            verse.memorizationStatus === 'mastered' && isDueForReview(verse)
-              ? 'border-status-due-border bg-status-due-bg'
-              : verse.memorizationStatus === 'mastered'
-              ? 'border-status-info-border'
-              : 'border-status-warn-border bg-status-warn-bg'
+            'relative',
+            shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId
+              ? 'pb-24 sm:pb-20'
+              : ''
           ]"
         >
+          <div
+            v-if="shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId"
+            class="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex px-4"
+          >
+            <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
+              <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-700 dark:text-blue-300">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-text-primary">
+                    {{ guidedOnboardingStep === 'practice' ? 'Tap your verse to keep memorizing it.' : 'Tap your verse to start memorizing it.' }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-xl px-2 py-1 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
+                  @click.stop="skipGuidedOnboarding"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            :ref="(el) => setVerseCardRef(verse.id, el)"
+            @click="handleVerseClick(verse)"
+            :class="[
+              'relative bg-surface rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
+              verse.memorizationStatus === 'mastered' && isDueForReview(verse)
+                ? 'border-status-due-border bg-status-due-bg'
+                : verse.memorizationStatus === 'mastered'
+                ? 'border-status-info-border'
+                : 'border-status-warn-border bg-status-warn-bg',
+              shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId
+                ? 'z-40 ring-2 ring-blue-500 shadow-xl shadow-blue-500/10'
+                : ''
+            ]"
+          >
           <div class="flex gap-2 items-start">
             <button
               type="button"
@@ -827,9 +887,40 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
-          <div v-if="sortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
+          <div
+            v-if="shouldShowHeroOnboarding"
+            data-testid="getting-started-card"
+            class="relative mt-8 overflow-hidden rounded-[2rem] border border-border-default bg-gradient-to-br from-status-info-bg via-surface to-status-amber-bg/50 p-8 shadow-sm sm:p-10"
+          >
+            <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/60 blur-2xl" />
+            <div class="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-status-amber-bg/80 blur-2xl" />
+            <div class="relative">
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-status-info-text">rum1n8</p>
+              <h2 class="mt-3 max-w-sm text-4xl font-semibold tracking-tight text-text-primary sm:text-5xl">Start with one verse</h2>
+            </div>
+            <div class="relative mt-8 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                class="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-blue-700"
+                @click="openHeroVerseModal"
+              >
+                Add your first verse
+                <span class="sr-only">Add a verse</span>
+              </button>
+              <button
+                type="button"
+                class="text-sm font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary"
+                @click="skipGuidedOnboarding"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+
+          <div v-else-if="sortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
             <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -840,6 +931,11 @@
       </div>
       </div>
     </div>
+
+    <div
+      v-if="shouldShowGuidedOnboardingScrim"
+      class="pointer-events-none fixed inset-0 z-30 bg-black/20"
+    />
 
     <!-- Bottom Navigation -->
     <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
@@ -862,28 +958,53 @@
         </button>
 
         <!-- Review Tab -->
-        <button
-          data-testid="nav-review"
-          @click="navigateToReviewList"
-          :class="[
-            'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'review-list'
-              ? 'text-nav-active'
-              : 'text-text-muted'
-          ]"
-        >
-          <div class="relative">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="2" y="6" width="20" height="12" rx="2" stroke-width="2" />
-              <path stroke-linecap="round" stroke-width="2" d="M6 15h12M6 10h1M9 10h1M12 10h1M15 10h1M18 10h1" />
-            </svg>
-            <span
-              v-if="dueVersesCount > 0"
-              class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
-            >{{ dueVersesCount > 99 ? '99+' : dueVersesCount }}</span>
+        <div class="relative flex flex-1 items-center justify-center h-full">
+          <button
+            data-testid="nav-review"
+            @click="navigateToReviewList"
+            :class="[
+              'relative flex h-full w-full flex-col items-center justify-center rounded-2xl transition-colors',
+              currentView === 'review-list'
+                ? 'text-nav-active'
+                : 'text-text-muted',
+              shouldShowReviewTabCallout
+                ? 'z-40 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10'
+                : ''
+            ]"
+          >
+            <div class="relative">
+              <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="6" width="20" height="12" rx="2" stroke-width="2" />
+                <path stroke-linecap="round" stroke-width="2" d="M6 15h12M6 10h1M9 10h1M12 10h1M15 10h1M18 10h1" />
+              </svg>
+              <span
+                v-if="dueVersesCount > 0"
+                class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
+              >{{ dueVersesCount > 99 ? '99+' : dueVersesCount }}</span>
+            </div>
+            <span class="text-xs font-medium">Review</span>
+          </button>
+
+          <div
+            v-if="shouldShowReviewTabCallout"
+            class="pointer-events-auto absolute bottom-full left-1/2 z-50 mb-3 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2"
+          >
+            <div class="relative rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
+              <div class="absolute left-1/2 top-full h-4 w-4 -translate-x-1/2 -translate-y-2 rotate-45 border-b border-r border-border-default bg-elevated" />
+              <p class="text-sm font-semibold text-text-primary">Nice. You've finished your first verse.</p>
+              <p class="mt-1 text-sm leading-relaxed text-text-secondary">Tap Review next.</p>
+              <div class="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  class="rounded-xl px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
+                  @click="skipGuidedOnboarding"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
           </div>
-          <span class="text-xs font-medium">Review</span>
-        </button>
+        </div>
 
         <!-- Stats Tab (far right) -->
         <button
@@ -1572,7 +1693,17 @@ import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
-import { buildAboutUrl, getCurrentAppUrl, markAppOpened, rememberAppUrl } from './ui-state.js'
+import {
+  buildAboutUrl,
+  dismissOnboarding as dismissOnboardingUiState,
+  getCurrentAppUrl,
+  hasLegacyAppPresence,
+  getOnboardingUiState,
+  markAppOpened,
+  markPracticeModeHintSeen as persistPracticeModeHintSeen,
+  updateOnboardingUiState,
+  rememberAppUrl
+} from './ui-state.js'
 import { countVersesInReference } from './utils/verse-count.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
@@ -1665,6 +1796,12 @@ export default {
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
     const appSettings = ref(getAppSettings())
+    const initialOnboardingUiState = getOnboardingUiState()
+    const onboardingDismissed = ref(initialOnboardingUiState.onboardingDismissed)
+    const practiceModeHintsSeen = ref(initialOnboardingUiState.practiceModeHintsSeen)
+    const guidedOnboardingStep = ref(initialOnboardingUiState.guidedOnboardingStep)
+    const guidedOnboardingVerseId = ref(initialOnboardingUiState.guidedOnboardingVerseId)
+    const verseCardRefs = new Map()
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -1706,6 +1843,117 @@ export default {
         triggerSync()
       }
       return savedRecord
+    }
+
+    const getLatestVerse = () => {
+      if (verses.value.length === 0) return null
+
+      return [...verses.value].sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.lastModified || 0).getTime()
+        const timeB = new Date(b.createdAt || b.lastModified || 0).getTime()
+        return timeB - timeA
+      })[0]
+    }
+
+    const applyOnboardingUiState = (state) => {
+      onboardingDismissed.value = state.onboardingDismissed
+      practiceModeHintsSeen.value = state.practiceModeHintsSeen
+      guidedOnboardingStep.value = state.guidedOnboardingStep
+      guidedOnboardingVerseId.value = state.guidedOnboardingVerseId
+    }
+
+    const persistOnboardingUiState = (patch = {}) => {
+      const savedState = updateOnboardingUiState(patch)
+      applyOnboardingUiState(getOnboardingUiState())
+      return savedState
+    }
+
+    const syncLocalUiState = () => {
+      const localUiState = getOnboardingUiState()
+      const latestVerse = getLatestVerse()
+      let nextStep = localUiState.guidedOnboardingStep
+      let nextVerseId = localUiState.guidedOnboardingVerseId
+
+      if (localUiState.onboardingDismissed) {
+        nextStep = 'done'
+        nextVerseId = null
+      } else if (!nextStep) {
+        nextStep = (!hasLegacyAppPresence() && verses.value.length === 0 && collections.value.length === 0)
+          ? 'hero'
+          : 'done'
+      }
+
+      if ((nextStep === 'tap-verse' || nextStep === 'practice') && !nextVerseId) {
+        nextVerseId = latestVerse?.id || null
+      }
+
+      applyOnboardingUiState({
+        ...localUiState,
+        guidedOnboardingStep: nextStep,
+        guidedOnboardingVerseId: nextVerseId,
+      })
+
+      if (
+        nextStep !== localUiState.guidedOnboardingStep ||
+        nextVerseId !== localUiState.guidedOnboardingVerseId
+      ) {
+        updateOnboardingUiState({
+          guidedOnboardingStep: nextStep,
+          guidedOnboardingVerseId: nextVerseId,
+        })
+      }
+    }
+
+    const setGuidedOnboardingStep = (step, verseId = guidedOnboardingVerseId.value) => {
+      persistOnboardingUiState({
+        guidedOnboardingStep: step,
+        guidedOnboardingVerseId: verseId,
+      })
+    }
+
+    const skipGuidedOnboarding = () => {
+      dismissOnboardingUiState()
+      applyOnboardingUiState(getOnboardingUiState())
+    }
+
+    const dismissReviewOnboardingTip = () => {
+      setGuidedOnboardingStep('done', null)
+    }
+
+    const markCurrentPracticeModeHintSeen = (mode = memorizationMode.value) => {
+      if (!mode || practiceModeHintsSeen.value?.[mode]) return
+      persistPracticeModeHintSeen(mode)
+      applyOnboardingUiState(getOnboardingUiState())
+    }
+
+    const dismissPracticeModesHint = () => {
+      markCurrentPracticeModeHintSeen()
+    }
+
+    const setVerseCardRef = (verseId, el) => {
+      if (el) {
+        verseCardRefs.set(verseId, el)
+        return
+      }
+
+      verseCardRefs.delete(verseId)
+    }
+
+    const scrollToOnboardingVerse = (behavior = 'smooth') => {
+      nextTick(() => {
+        const target = guidedOnboardingVerseId.value
+          ? verseCardRefs.get(guidedOnboardingVerseId.value)
+          : null
+
+        target?.scrollIntoView({
+          block: 'center',
+          behavior,
+        })
+      })
+    }
+
+    const openHeroVerseModal = () => {
+      showForm.value = true
     }
 
     // Navigation state tracking for back button handling
@@ -1939,6 +2187,40 @@ export default {
       return reviewWords.value.length
     })
 
+    const isLibraryEmpty = computed(() => {
+      return verses.value.length === 0 && collections.value.length === 0
+    })
+
+    const shouldShowHeroOnboarding = computed(() => {
+      return (
+        guidedOnboardingStep.value === 'hero' &&
+        currentView.value === 'collections' &&
+        !currentCollectionId.value &&
+        isLibraryEmpty.value &&
+        !onboardingDismissed.value
+      )
+    })
+
+    const onboardingTargetVerse = computed(() => {
+      if (!guidedOnboardingVerseId.value) return null
+      return verses.value.find((verse) => verse.id === guidedOnboardingVerseId.value) || null
+    })
+
+    const shouldShowVerseOnboardingCallout = computed(() => {
+      return (
+        (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
+        currentView.value === 'collections' &&
+        !currentCollectionId.value &&
+        !memorizingVerse.value &&
+        !reviewingVerse.value &&
+        !!onboardingTargetVerse.value
+      )
+    })
+
+    const shouldShowGuidedOnboardingScrim = computed(() => {
+      return shouldShowVerseOnboardingCallout.value || shouldShowReviewTabCallout.value
+    })
+
     const allWordsRevealed = computed(() => {
       if (reviewWords.value.length === 0) return false
       return reviewWords.value.every(w => w.revealed)
@@ -1960,6 +2242,27 @@ export default {
       const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
       if (!verse) return null
       return getTimeUntilReview(verse)
+    })
+
+    const shouldShowPracticeModesHint = computed(() => {
+      return (
+        !!memorizationMode.value &&
+        (!!memorizingVerse.value || !!reviewingVerse.value) &&
+        !practiceModeHintsSeen.value?.[memorizationMode.value]
+      )
+    })
+
+    const shouldShowReviewTabCallout = computed(() => {
+      return (
+        guidedOnboardingStep.value === 'review-tab' &&
+        !memorizingVerse.value &&
+        !reviewingVerse.value &&
+        !currentCollectionId.value
+      )
+    })
+
+    const shouldShowReviewOnboardingTip = computed(() => {
+      return guidedOnboardingStep.value === 'review-tip' && currentView.value === 'review-list'
     })
 
     // When a review attempt completes (all words revealed) for the first time,
@@ -2010,10 +2313,35 @@ export default {
     // When completion tray appears, scroll verse content so end of verse is visible
     watch(allWordsRevealed, (revealed) => {
       if (!revealed) return
+      dismissPracticeModesHint()
       nextTick(() => {
         const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
         practiceRef?.scrollToEnd?.()
       })
+    })
+
+    watch([shouldShowVerseOnboardingCallout, guidedOnboardingVerseId], ([shouldShow]) => {
+      if (!shouldShow) return
+      scrollToOnboardingVerse()
+    })
+
+    watch([onboardingTargetVerse, guidedOnboardingStep, isLibraryEmpty], ([targetVerse, step, libraryEmpty]) => {
+      if (step !== 'tap-verse' && step !== 'practice') return
+      if (targetVerse) return
+
+      const latestVerse = getLatestVerse()
+
+      if (latestVerse) {
+        setGuidedOnboardingStep(step, latestVerse.id)
+        return
+      }
+
+      if (!onboardingDismissed.value && libraryEmpty) {
+        setGuidedOnboardingStep('hero', null)
+        return
+      }
+
+      setGuidedOnboardingStep('done', null)
     })
 
     // Count verses due for review
@@ -2276,6 +2604,10 @@ export default {
 
     // Auto-scroll daily activity chart to the right when stats view is shown
     watch(currentView, (view) => {
+      if (view === 'review-list' && guidedOnboardingStep.value === 'review-tab') {
+        setGuidedOnboardingStep('review-tip', guidedOnboardingVerseId.value)
+      }
+
       if (view === 'stats') {
         nextTick(() => {
           if (dailyActivityScrollRef.value) {
@@ -3049,7 +3381,11 @@ export default {
         }
         verses.value.unshift(verse)
         saveVerses()
+        if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-tip' && guidedOnboardingStep.value !== 'review-tab') {
+          setGuidedOnboardingStep('tap-verse', verse.id)
+        }
         closeForm()
+        scrollToOnboardingVerse()
       }
     }
 
@@ -3979,6 +4315,9 @@ export default {
       currentView.value = 'review-list'
       searchQuery.value = ''
       searchActive.value = false
+      if (guidedOnboardingStep.value === 'review-tab') {
+        setGuidedOnboardingStep('review-tip', guidedOnboardingVerseId.value)
+      }
       pushNavigationState({ view: 'review-list' })
     }
 
@@ -4129,12 +4468,22 @@ export default {
     const switchToMemorizationMode = (mode) => {
       if (!memorizingVerse.value) return
       if (!canSwitchToMode(mode)) return
-      
+
+      if (mode !== memorizationMode.value) {
+        dismissPracticeModesHint()
+      }
       startMemorization(memorizingVerse.value, mode)
     }
 
     // Start memorizing a verse
     const startMemorization = (verse, mode) => {
+      if (
+        (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
+        verse.id === guidedOnboardingVerseId.value
+      ) {
+        setGuidedOnboardingStep('practice', verse.id)
+      }
+
       memorizingVerse.value = verse
       memorizationMode.value = mode
       reviewMistakes.value = 0
@@ -4191,6 +4540,9 @@ export default {
     // Switch mode while on review screen (rebuild words, reset state)
     const switchReviewMode = (mode) => {
       if (!reviewingVerse.value) return
+      if (mode !== memorizationMode.value) {
+        dismissPracticeModesHint()
+      }
       if (mode === 'memorize') reviewMemorizeRetryCount.value += 1
       const verse = reviewingVerse.value
       resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
@@ -4203,6 +4555,13 @@ export default {
 
     // Start reviewing a verse (only for mastered verses)
     const startReview = (verse) => {
+      if (
+        (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
+        verse.id === guidedOnboardingVerseId.value
+      ) {
+        setGuidedOnboardingStep('practice', verse.id)
+      }
+
       if (verse.memorizationStatus !== 'mastered') {
         // If not mastered, start memorization instead
         const nextMode = getNextMemorizationMode(verse.memorizationStatus)
@@ -4314,6 +4673,8 @@ export default {
       
       // Require 90% accuracy to advance
       if (!meetsAccuracyRequirement.value) return
+
+      markCurrentPracticeModeHintSeen()
       
       const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
       if (verse) {
@@ -4406,6 +4767,14 @@ export default {
             }
             verse.lastModified = new Date().toISOString() // Track when verse was last modified
             saveVerses()
+          }
+
+          if (
+            memorizationMode.value === 'master' &&
+            verse.id === guidedOnboardingVerseId.value &&
+            (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice')
+          ) {
+            setGuidedOnboardingStep('review-tab', verse.id)
           }
         }
       }
@@ -5571,6 +5940,7 @@ export default {
       
       // Initialize history state tracking for back button
       initializeHistory()
+      syncLocalUiState()
       markAppOpened(getCurrentAppUrl())
       
       // Perform initial sync on app load
@@ -5594,6 +5964,14 @@ export default {
       reviewInput,
       revealedCount,
       allWordsRevealed,
+      guidedOnboardingStep,
+      guidedOnboardingVerseId,
+      shouldShowHeroOnboarding,
+      shouldShowVerseOnboardingCallout,
+      shouldShowReviewTabCallout,
+      shouldShowReviewOnboardingTip,
+      shouldShowGuidedOnboardingScrim,
+      shouldShowPracticeModesHint,
       sortedVerses,
       dueVersesCount,
       totalVerseCount,
@@ -5644,6 +6022,7 @@ export default {
       closeCollectionForm,
       handleFabClick,
       openNewVerse,
+      openHeroVerseModal,
       openNewCollection,
       openImportCSV,
       fabMenuOpen,
@@ -5682,6 +6061,7 @@ export default {
       chartColors,
       yAxisLabels,
       dailyActivityScrollRef,
+      setVerseCardRef,
       copyVerse,
       speakVerse,
       stopSpeaking,
@@ -5705,6 +6085,9 @@ export default {
       closeSettings,
       toggleSettingsMenu,
       closeSettingsMenu,
+      skipGuidedOnboarding,
+      dismissReviewOnboardingTip,
+      dismissPracticeModesHint,
       openPracticeSettings,
       openSyncSettings,
       onSyncSettingsSaved,

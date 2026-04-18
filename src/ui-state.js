@@ -7,6 +7,31 @@ const DEFAULT_UI_STATE = Object.freeze({
   lastAppUrl: null,
 })
 
+const PRACTICE_MODE_HINT_MODES = ['learn', 'memorize', 'master']
+
+const DEFAULT_PRACTICE_MODE_HINTS_SEEN = Object.freeze({
+  learn: false,
+  memorize: false,
+  master: false,
+})
+
+const DEFAULT_ONBOARDING_UI_STATE = Object.freeze({
+  onboardingDismissed: false,
+  practiceModeHintsSeen: DEFAULT_PRACTICE_MODE_HINTS_SEEN,
+  practiceModesHintSeen: false,
+  guidedOnboardingStep: null,
+  guidedOnboardingVerseId: null,
+})
+
+const GUIDED_ONBOARDING_STEPS = new Set([
+  'hero',
+  'tap-verse',
+  'practice',
+  'review-tab',
+  'review-tip',
+  'done',
+])
+
 const LEGACY_APP_PRESENCE_KEYS = [
   'rum1n8-verses',
   'rum1n8-collections',
@@ -112,6 +137,110 @@ export function rememberAppUrl(url = getCurrentAppUrl()) {
 
 export function markAppOpened(url = getCurrentAppUrl()) {
   return rememberAppUrl(url)
+}
+
+function normalizeGuidedOnboardingStep(value) {
+  return GUIDED_ONBOARDING_STEPS.has(value) ? value : null
+}
+
+function normalizePracticeModeHintsSeen(value, legacySeen = false) {
+  const fallback = legacySeen
+    ? Object.fromEntries(PRACTICE_MODE_HINT_MODES.map((mode) => [mode, true]))
+    : { ...DEFAULT_PRACTICE_MODE_HINTS_SEEN }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return fallback
+  }
+
+  return PRACTICE_MODE_HINT_MODES.reduce((acc, mode) => {
+    acc[mode] = mode in value ? !!value[mode] : fallback[mode]
+    return acc
+  }, {})
+}
+
+function areAllPracticeModeHintsSeen(value) {
+  return PRACTICE_MODE_HINT_MODES.every((mode) => !!value?.[mode])
+}
+
+export function getOnboardingUiState() {
+  const state = getUiState()
+  const practiceModeHintsSeen = normalizePracticeModeHintsSeen(
+    state?.practiceModeHintsSeen,
+    !!state?.practiceModesHintSeen
+  )
+
+  return {
+    ...DEFAULT_ONBOARDING_UI_STATE,
+    onboardingDismissed: !!state?.onboardingDismissed,
+    practiceModeHintsSeen,
+    practiceModesHintSeen: areAllPracticeModeHintsSeen(practiceModeHintsSeen),
+    guidedOnboardingStep: normalizeGuidedOnboardingStep(state?.guidedOnboardingStep),
+    guidedOnboardingVerseId:
+      typeof state?.guidedOnboardingVerseId === 'string' && state.guidedOnboardingVerseId
+        ? state.guidedOnboardingVerseId
+        : null,
+  }
+}
+
+export function updateOnboardingUiState(patch = {}) {
+  const normalizedPatch = {
+    ...patch,
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalizedPatch, 'practiceModeHintsSeen')) {
+    normalizedPatch.practiceModeHintsSeen = normalizePracticeModeHintsSeen(
+      normalizedPatch.practiceModeHintsSeen
+    )
+    normalizedPatch.practiceModesHintSeen = areAllPracticeModeHintsSeen(normalizedPatch.practiceModeHintsSeen)
+  } else if (Object.prototype.hasOwnProperty.call(normalizedPatch, 'practiceModesHintSeen')) {
+    normalizedPatch.practiceModesHintSeen = !!normalizedPatch.practiceModesHintSeen
+    normalizedPatch.practiceModeHintsSeen = normalizePracticeModeHintsSeen(
+      null,
+      normalizedPatch.practiceModesHintSeen
+    )
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalizedPatch, 'guidedOnboardingStep')) {
+    normalizedPatch.guidedOnboardingStep = normalizeGuidedOnboardingStep(normalizedPatch.guidedOnboardingStep)
+  }
+
+  if (Object.prototype.hasOwnProperty.call(normalizedPatch, 'guidedOnboardingVerseId')) {
+    normalizedPatch.guidedOnboardingVerseId =
+      typeof normalizedPatch.guidedOnboardingVerseId === 'string' && normalizedPatch.guidedOnboardingVerseId
+        ? normalizedPatch.guidedOnboardingVerseId
+        : null
+  }
+
+  return updateUiState(normalizedPatch)
+}
+
+export function dismissOnboarding() {
+  return updateOnboardingUiState({
+    onboardingDismissed: true,
+    guidedOnboardingStep: 'done',
+    guidedOnboardingVerseId: null,
+  })
+}
+
+export function markPracticeModesHintSeen() {
+  return updateOnboardingUiState({
+    practiceModesHintSeen: true,
+  })
+}
+
+export function markPracticeModeHintSeen(mode) {
+  if (!PRACTICE_MODE_HINT_MODES.includes(mode)) {
+    return getOnboardingUiState()
+  }
+
+  const current = getOnboardingUiState()
+
+  return updateOnboardingUiState({
+    practiceModeHintsSeen: {
+      ...current.practiceModeHintsSeen,
+      [mode]: true,
+    },
+  })
 }
 
 export function getPreferredAppUrl(explicitUrl = null) {
