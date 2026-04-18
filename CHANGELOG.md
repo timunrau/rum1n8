@@ -1,3 +1,18 @@
+# [1.6.0](https://github.com/timunrau/rum1n8/compare/v1.5.2...v1.6.0) (2026-04-18)
+
+
+### Bug Fixes
+
+* center r in marketing site wordmark ([a64c67d](https://github.com/timunrau/rum1n8/commit/a64c67de1d88231e862e0be1c9e79509c2f4d8db))
+* hide site-header on mobile when return banner is visible ([d8fe2b8](https://github.com/timunrau/rum1n8/commit/d8fe2b896fd8305c5a41e0936f0ad400d5f44528))
+* ui polish — search bar, wordmark, icons, charts, FAB animation ([d6f8b0c](https://github.com/timunrau/rum1n8/commit/d6f8b0cc5bf8d3531cbc1c130eeaf4c36e84018e))
+
+
+### Features
+
+* apple-style liquid glass app bars ([aba51c1](https://github.com/timunrau/rum1n8/commit/aba51c17b565455cfa7f78241ea4904946336f9c))
+* show app version in navigation drawer ([c2872df](https://github.com/timunrau/rum1n8/commit/c2872df8c9be92e81443a312b35f73802a77a393))
+
 ## [1.5.2](https://github.com/timunrau/rum1n8/compare/v1.5.1...v1.5.2) (2026-04-18)
 
 
