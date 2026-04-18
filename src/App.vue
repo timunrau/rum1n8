@@ -270,7 +270,7 @@
   <!-- Main Content -->
   <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen">
     <!-- Top App Bar (verses/collections screen only) -->
-    <header v-if="currentView === 'collections'" class="glass-chrome border-b border-border-default fixed top-0 left-0 right-0 z-40">
+    <header v-if="currentView === 'collections'" :class="['glass-chrome fixed top-0 left-0 right-0 z-40', isScrolled ? '' : 'glass-chrome--transparent']">
       <div class="h-16 flex items-center px-2">
         <!-- Hamburger menu button (top-level only) -->
         <button
@@ -541,7 +541,7 @@
       <!-- Collections View -->
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0">
 
-        <div class="overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
+        <div class="overflow-y-auto -mt-16 -mb-24 -mx-4 px-4 pt-20 pb-28" style="max-height: 100dvh;">
           <CollectionsAlmanac
             v-if="totalVerseCount > 0"
             :current-streak="currentStreak"
@@ -889,7 +889,7 @@
     />
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="glass-chrome glass-chrome--nav fixed bottom-0 left-0 right-0 border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="glass-chrome glass-chrome--nav fixed bottom-0 left-0 right-0 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Verses Tab (far left) -->
         <button
@@ -1732,6 +1732,7 @@ export default {
     const syncError = ref(null)
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
+    const isScrolled = ref(false)
     const isDev = import.meta.env.DEV
     const csvFileInput = ref(null)
     const csvTextarea = ref(null)
@@ -5985,24 +5986,35 @@ export default {
       return result
     }
     
+    const handleWindowScroll = (event) => {
+      const target = event?.target
+      const scrollTop = target === document || target === window || !target
+        ? (window.scrollY || document.documentElement.scrollTop || 0)
+        : (target.scrollTop || 0)
+      isScrolled.value = scrollTop > 4
+    }
+
     // Load verses on mount
     onMounted(async () => {
       loadCollections()
       loadVerses()
       appSettings.value = getAppSettings()
       migrateProviderSetting()
-      
+
       // Load last backup timestamp
       const stored = localStorage.getItem('rum1n8-last-backup')
       if (stored) {
         lastBackupTimestamp.value = stored
       }
-      
+
       // Initialize history state tracking for back button
       initializeHistory()
       syncLocalUiState()
       markAppOpened(getCurrentAppUrl())
-      
+
+      document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
+      handleWindowScroll()
+
       // Perform initial sync on app load
       await triggerSync()
     })
@@ -6010,6 +6022,7 @@ export default {
     // Cleanup event listener on unmount
     onBeforeUnmount(() => {
       window.removeEventListener('popstate', handlePopState)
+      document.removeEventListener('scroll', handleWindowScroll, { capture: true })
     })
 
     return {
@@ -6092,6 +6105,7 @@ export default {
       openNewCollection,
       openImportCSV,
       fabMenuOpen,
+      isScrolled,
       deleteCollection,
       startEditCollection,
       saveEditedCollection,
