@@ -433,7 +433,7 @@
             class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a3 3 0 010-2.684m6.632 4.026a3 3 0 010-2.684M15 6a3 3 0 110 6 3 3 0 010-6zm-6 6a3 3 0 110 6 3 3 0 010-6zm6 6a3 3 0 110 6 3 3 0 010-6z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
             Share app
           </button>

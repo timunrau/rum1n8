@@ -64,4 +64,26 @@ defineProps({
 .dark .app-shell__decor--blue {
   background: rgba(75, 130, 216, 0.12);
 }
+
+@media (max-width: 639px) {
+  .dark .app-shell__decor {
+    filter: blur(52px);
+  }
+
+  .dark .app-shell__decor--gold {
+    top: -5.5rem;
+    left: -5.5rem;
+    width: 15.5rem;
+    height: 15.5rem;
+    background: rgba(217, 175, 77, 0.1);
+  }
+
+  .dark .app-shell__decor--blue {
+    top: -4.5rem;
+    right: -5.5rem;
+    width: 16.5rem;
+    height: 16.5rem;
+    background: rgba(75, 130, 216, 0.09);
+  }
+}
 </style>

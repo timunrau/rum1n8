@@ -151,6 +151,15 @@
     --text-soft: #8a7f6a;
     --shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
   }
+
+  @media (max-width: 639px) {
+    .dark {
+      --gradient-page:
+        radial-gradient(circle at top left, rgba(187, 132, 42, 0.13), transparent 34%),
+        radial-gradient(circle at top right, rgba(57, 98, 170, 0.12), transparent 32%),
+        linear-gradient(180deg, #14100b 0%, #19140f 52%, #1e1811 100%);
+    }
+  }
 }
 
 @layer components {
