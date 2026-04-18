@@ -49,7 +49,7 @@
 
       <button
         @click="$emit('close')"
-        class="w-full px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+        class="btn-primary w-full"
       >
         Got it
       </button>

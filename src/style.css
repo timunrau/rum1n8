@@ -217,13 +217,14 @@
     font-weight: 600;
     letter-spacing: 0.01em;
     background-color: var(--color-accent-strong);
-    box-shadow: var(--shadow-lift);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-clip: border-box;
+    box-shadow: 0 4px 14px rgba(47, 95, 183, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    border: none;
     transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
     cursor: pointer;
   }
   .dark .btn-primary {
-    border-color: rgba(217, 175, 77, 0.18);
+    box-shadow: 0 4px 12px rgba(4, 10, 20, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   }
   .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);

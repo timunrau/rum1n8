@@ -304,7 +304,7 @@ async function captureVersesState(browser, baseUrl) {
     await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').waitFor()
     await orderReferenceCards(page, ['Joshua 1:8', 'Psalm 119:11', 'Romans 12:2', 'John 3:16'])
-    await page.waitForTimeout(150)
+    await page.waitForTimeout(600)
     await page.screenshot({
       path: path.join(marketingDir, 'screenshot-empty.png'),
     })
@@ -343,7 +343,7 @@ async function captureReviewState(browser, baseUrl) {
     await page.goto(`${baseUrl}/?view=review-list`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').waitFor()
     await orderReferenceCards(page, ['Joshua 1:8', 'Psalm 119:11', 'Romans 12:2', 'John 3:16'])
-    await page.waitForTimeout(150)
+    await page.waitForTimeout(600)
     await page.screenshot({
       path: path.join(marketingDir, 'screenshot-review.png'),
     })

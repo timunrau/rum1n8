@@ -25,7 +25,8 @@ defineProps({
   font-weight: 700;
   font-size: 1.25rem;
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  padding: 0 0 0.25em 0.1em;
   flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(20, 35, 58, 0.15);
 }

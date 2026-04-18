@@ -7,7 +7,7 @@
     style="height: 100dvh;"
   >
     <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
-      <div class="h-16 flex items-center px-4 gap-2">
+      <div class="h-16 flex items-center px-4 gap-2 max-w-4xl mx-auto w-full">
         <button
           @click="clearSearch"
           class="p-2 -ml-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
@@ -43,6 +43,7 @@
       </div>
     </header>
     <div class="flex-1 overflow-y-auto px-4 pt-3 pb-8">
+      <div class="max-w-4xl mx-auto">
       <div v-if="searchQuery.trim()" class="space-y-3">
         <div
           v-for="result in searchResults"
@@ -87,6 +88,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <p class="text-sm">Search across all your verses</p>
+      </div>
       </div>
     </div>
   </div>
@@ -271,7 +273,7 @@
   <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen">
     <!-- Top App Bar (verses/collections screen only) -->
     <header v-if="currentView === 'collections'" :class="['glass-chrome fixed top-0 left-0 right-0 z-40', isScrolled ? '' : 'glass-chrome--transparent']">
-      <div class="h-16 flex items-center px-2">
+      <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
         <!-- Hamburger menu button (top-level only) -->
         <button
           v-if="!currentCollectionId"
@@ -993,7 +995,7 @@
           data-testid="fab-new-verse"
           @click="openNewVerse"
           class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="--fab-index: 0; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1, boxShadow: '0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2)' }"
         >
           <div class="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -1027,7 +1029,7 @@
           data-testid="fab-import-csv"
           @click="openImportCSV"
           class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1, boxShadow: '0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2)' }"
+          style="--fab-index: 0; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
           <div class="w-10 h-10 bg-accent-strong rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -2466,7 +2468,7 @@ export default {
         text: getCssVar('--color-text-secondary'),
         muted: getCssVar('--color-text-muted'),
         grid: getCssVar('--color-border-default'),
-        accent: getCssVar('--color-nav-active'),
+        accent: getCssVar('--color-accent'),
         success: getCssVar('--color-accent-warm'),
       }
     })

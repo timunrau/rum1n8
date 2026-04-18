@@ -11,7 +11,7 @@
       </div>
       <div class="almanac__stat">
         <div class="almanac__numeral">{{ masteredCount }}</div>
-        <div class="almanac__label">memorized</div>
+        <div class="almanac__label">mastered</div>
       </div>
     </div>
     <div v-if="showStartReview" class="mt-4 flex justify-center fade-in">
