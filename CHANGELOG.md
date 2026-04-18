@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/timunrau/rum1n8/compare/v1.4.1...v1.5.0) (2026-04-18)
+
+
+### Features
+
+* refine guided onboarding flow ([7fb53d3](https://github.com/timunrau/rum1n8/commit/7fb53d3944de1b5b048617ecefcf31d6db625d48))
+
 ## [1.4.1](https://github.com/timunrau/rum1n8/compare/v1.4.0...v1.4.1) (2026-04-14)
 
 
