@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/timunrau/rum1n8/compare/v1.6.2...v1.6.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* refine mobile dark gradient and share icon ([8a8b610](https://github.com/timunrau/rum1n8/commit/8a8b6100ea459b10dc6cb91872209a8eb3aafaf2))
+
 ## [1.6.2](https://github.com/timunrau/rum1n8/compare/v1.6.1...v1.6.2) (2026-04-18)
 
 
