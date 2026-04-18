@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/timunrau/rum1n8/compare/v1.6.0...v1.6.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* add feedback for manual update checks ([f5a4773](https://github.com/timunrau/rum1n8/commit/f5a47733f394512a2b53ed8f6a0045cba86f4448))
+
 # [1.6.0](https://github.com/timunrau/rum1n8/compare/v1.5.2...v1.6.0) (2026-04-18)
 
 
