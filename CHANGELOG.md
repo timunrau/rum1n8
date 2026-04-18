@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/timunrau/rum1n8/compare/v1.5.1...v1.5.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* ui fixes ([6bd27df](https://github.com/timunrau/rum1n8/commit/6bd27df322644ad045f345c6273ab55bd734f54e))
+
 ## [1.5.1](https://github.com/timunrau/rum1n8/compare/v1.5.0...v1.5.1) (2026-04-18)
 
 

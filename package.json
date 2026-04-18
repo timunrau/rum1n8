@@ -1,7 +1,7 @@
 {
   "name": "rum1n8",
   "private": true,
-  "version": "1.5.1",
+  "version": "1.5.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
