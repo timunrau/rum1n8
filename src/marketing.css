@@ -588,6 +588,11 @@ img {
     padding-top: 5.75rem;
   }
 
+  /* When the return banner is visible it covers the header — hide it */
+  .site-shell:has([data-return-banner]:not([hidden])) .site-header {
+    display: none;
+  }
+
   .hero {
     padding: 1.5rem 0 4rem;
   }
