@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/timunrau/rum1n8/compare/v1.6.1...v1.6.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* add app sharing and queue setting syncs ([420e0d6](https://github.com/timunrau/rum1n8/commit/420e0d61b1b28914704901b4d546d5fc70b9c15f))
+
 ## [1.6.1](https://github.com/timunrau/rum1n8/compare/v1.6.0...v1.6.1) (2026-04-18)
 
 
