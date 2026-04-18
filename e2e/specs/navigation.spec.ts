@@ -9,20 +9,20 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('app loads with default Collections view', async ({ page }) => {
-  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/tab-btn--active/)
   await expect(page.getByTestId('search-bar')).toBeVisible()
   await expect(page.locator('[data-testid="nav-references"]')).toHaveCount(0)
 })
 
 test('bottom nav switches between Review, Collections, Stats', async ({ page }) => {
   await page.getByTestId('nav-review').click()
-  await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-review')).toHaveClass(/tab-btn--active/)
 
   await page.getByTestId('nav-collections').click()
-  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/tab-btn--active/)
 
   await page.getByTestId('nav-stats').click()
-  await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
 })
 
 test('URL updates when switching views', async ({ page }) => {
@@ -50,17 +50,17 @@ test('FAB opens add verse / add collection / import CSV options on Collections v
 
 test('initial load with view=review-list shows Review tab', async ({ page }) => {
   await gotoApp(page, '?view=review-list')
-  await expect(page.getByTestId('nav-review')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-review')).toHaveClass(/tab-btn--active/)
 })
 
 test('initial load with view=stats shows Stats tab', async ({ page }) => {
   await gotoApp(page, '?view=stats')
-  await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
 })
 
 test('initial load with removed view=references falls back to Collections tab', async ({ page }) => {
   await gotoApp(page, '?view=references')
-  await expect(page.getByTestId('nav-collections')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-collections')).toHaveClass(/tab-btn--active/)
   await expect(page.getByTestId('search-bar')).toBeVisible()
   await expect(page).not.toHaveURL(/\?view=references/)
 })

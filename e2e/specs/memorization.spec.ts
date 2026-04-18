@@ -132,7 +132,7 @@ test('progress indicators: Learn / Memorize / Master tabs reflect current stage'
   await page.waitForTimeout(500)
   await page.getByText('Test 1:1').first().click()
 
-  await expect(page.getByText('Learn')).toHaveClass(/bg-blue-600|text-white/)
+  await expect(page.getByText('Learn')).toHaveClass(/mode-chip--active/)
 })
 
 test('learn mode: verse with dash (no spaces) treats parts as separate words', async ({ page }) => {
@@ -155,7 +155,7 @@ test('learn mode: verse with dash (no spaces) treats parts as separate words', a
   await page.getByText('Genesis 17:8').first().click()
 
   await expect(page.locator('#letter-input-memorize')).toBeAttached()
-  await expect(page.getByText('Learn')).toHaveClass(/bg-blue-600|text-white/)
+  await expect(page.getByText('Learn')).toHaveClass(/mode-chip--active/)
 
   // "One—two" must require 2 letters: "o" for "One", "t" for "two"
   await page.locator('#letter-input-memorize').focus()

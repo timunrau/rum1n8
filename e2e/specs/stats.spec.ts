@@ -62,7 +62,7 @@ test.beforeEach(async ({ page }) => {
 
 test('Stats tab shows empty state when no verses exist', async ({ page }) => {
   await page.getByTestId('nav-stats').click()
-  await expect(page.getByTestId('nav-stats')).toHaveClass(/text-nav-active/)
+  await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
   await expect(page.getByText('Current Streak')).toBeVisible()
   await expect(page.getByText(/0\s*day/)).toBeVisible()
 })

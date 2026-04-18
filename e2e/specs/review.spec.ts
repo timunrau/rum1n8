@@ -110,6 +110,93 @@ test('empty state: no verses due shows appropriate message', async ({ page }) =>
   await expect(page.getByText(/No verses|all caught up|Review/i).first()).toBeVisible({ timeout: 5000 })
 })
 
+test('start review CTA: hidden when review list is empty', async ({ page }) => {
+  await gotoApp(page, '?view=review-list')
+  await expect(page.getByTestId('start-review-cta')).toBeHidden()
+})
+
+test('start review CTA: shows due count when verses are due', async ({ page }) => {
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  const dueVerses = [
+    { ...base, id: 'due-1', reference: 'Psalm 1:1', content: 'Blessed is', nextReviewDate: new Date(Date.now() - 86400000).toISOString() },
+    { ...base, id: 'due-2', reference: 'Psalm 2:1', content: 'Why do the nations rage', nextReviewDate: new Date(Date.now() - 172800000).toISOString() },
+    { ...base, id: 'not-due', reference: 'Psalm 3:1', content: 'O Lord how many', nextReviewDate: new Date(Date.now() + 86400000).toISOString() },
+  ]
+  await seedStorage(page, dueVerses, [])
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  const cta = page.getByTestId('start-review-cta')
+  await expect(cta).toBeVisible()
+  await expect(cta).toContainText('Start review')
+  await expect(cta).toContainText('2 due')
+})
+
+test('start review CTA: omits due count when no verses are due', async ({ page }) => {
+  const notDueVerse = {
+    id: 'not-due-1',
+    reference: 'Psalm 5:1',
+    content: 'Give ear to my words',
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered',
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: new Date(Date.now() + 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [notDueVerse], [])
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  const cta = page.getByTestId('start-review-cta')
+  await expect(cta).toBeVisible()
+  await expect(cta).toContainText('Start review')
+  await expect(cta).not.toContainText('due')
+})
+
+test('start review CTA: click starts review of first (most-due) verse', async ({ page }) => {
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  const verses = [
+    { ...base, id: 'older-due', reference: 'Psalm 10:1', content: 'Why O Lord', nextReviewDate: new Date(Date.now() - 172800000).toISOString() },
+    { ...base, id: 'newer-due', reference: 'Psalm 20:1', content: 'May the Lord answer', nextReviewDate: new Date(Date.now() - 86400000).toISOString() },
+  ]
+  await seedStorage(page, verses, [])
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  await page.getByTestId('start-review-cta').click()
+
+  await expect(page.locator('h1')).toContainText('Psalm 10:1')
+  await expect(page.locator('#letter-input-review')).toBeFocused()
+})
+
 test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does not overwrite local', async ({
   page,
 }) => {
@@ -407,7 +494,7 @@ test('review screen shows Learn, Memorize, Master buttons with Master selected',
   await expect(page.getByText('Learn')).toBeVisible()
   await expect(page.getByText('Memorize')).toBeVisible()
   await expect(page.getByText('Master')).toBeVisible()
-  await expect(page.getByText('Master').first()).toHaveClass(/bg-blue-600|text-white/)
+  await expect(page.getByText('Master').first()).toHaveClass(/mode-chip--active/)
 })
 
 test('review: completing in Learn mode does not advance spaced repetition', async ({ page }) => {
@@ -479,7 +566,7 @@ test('review: completing in Master mode advances spaced repetition', async ({ pa
   await page.getByText('Psalm 1:1').click()
 
   await expect(page.locator('#letter-input-review')).toBeAttached()
-  await expect(page.getByText('Master').first()).toHaveClass(/bg-blue-600|text-white/)
+  await expect(page.getByText('Master').first()).toHaveClass(/mode-chip--active/)
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('bi', { delay: 50 })
 
