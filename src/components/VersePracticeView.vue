@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
     <!-- Scrollable verse text -->
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-      <div class="bg-surface dark:bg-black p-4 my-2 sm:my-4">
+      <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
         <div
           class="text-xl leading-relaxed text-text-primary font-serif"
           @click="focusInput"
@@ -107,20 +107,20 @@
     </div>
 
     <div v-if="showPracticeModesHint && !showTray && practiceModeHint" class="px-4 pb-1">
-      <div class="rounded-2xl border border-status-info-border bg-status-info-bg p-4">
+      <div class="practice-hint">
         <div class="flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-status-info-text">
+          <div class="practice-hint__icon">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
             </svg>
           </div>
           <div class="flex-1">
-            <p class="text-sm font-semibold text-text-primary">{{ practiceModeHint.title }}</p>
-            <p v-if="practiceModeHint.body" class="mt-1 text-sm leading-relaxed text-text-secondary">{{ practiceModeHint.body }}</p>
+            <p class="practice-hint__title">{{ practiceModeHint.title }}</p>
+            <p v-if="practiceModeHint.body" class="practice-hint__body">{{ practiceModeHint.body }}</p>
           </div>
           <button
             type="button"
-            class="rounded-xl p-1.5 text-text-muted transition-colors duration-200 hover:bg-white/70 hover:text-text-secondary"
+            class="practice-hint__close"
             aria-label="Dismiss practice modes help"
             @click="$emit('dismiss-practice-modes-hint')"
           >
@@ -134,7 +134,7 @@
 
     <!-- Mode buttons: Learn | Memorize | Master -->
     <div v-if="!showTray" class="my-2 flex-shrink-0">
-      <div class="flex items-center justify-center gap-2">
+      <div class="flex items-center justify-center gap-1">
         <div
           v-for="(stage, index) in stages"
           :key="index"
@@ -143,21 +143,21 @@
           <div
             @click="onSwitchMode(stage.mode)"
             :class="[
-              'px-4 py-1 rounded-lg font-semibold transition-colors duration-200',
+              'mode-chip',
               memorizationMode === stage.mode
-                ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
+                ? 'mode-chip--active'
                 : isStageComplete(stage)
-                ? 'bg-status-success-bg text-status-success-text cursor-pointer hover:bg-surface-hover'
+                ? 'mode-chip--complete'
                 : canSwitch(stage.mode)
-                ? 'bg-sunken text-text-secondary cursor-pointer hover:bg-surface-hover'
-                : 'bg-sunken text-text-muted'
+                ? 'mode-chip--available'
+                : 'mode-chip--disabled'
             ]"
           >
             {{ stage.name }}
           </div>
           <svg
             v-if="index < 2"
-            class="w-6 h-6 mx-2 text-text-muted"
+            class="w-5 h-5 mx-1 text-accent-warm"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

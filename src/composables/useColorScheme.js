@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const LIGHT_THEME_COLOR = '#ffffff'
-const DARK_THEME_COLOR = '#000000' // Pure OLED black
+const LIGHT_THEME_COLOR = '#f3ede2'
+const DARK_THEME_COLOR = '#1a1510'
 
 export function useColorScheme() {
   let mediaQuery = null

@@ -22,7 +22,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search verses..."
-            class="w-full py-2 pl-10 border border-border-default rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
+            class="w-full py-2 pl-10 border border-border-default rounded-full focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
             :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
             @keydown.escape="clearSearch"
           />
@@ -94,7 +94,7 @@
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
-    class="fixed inset-0 bg-surface dark:bg-black z-50 flex flex-col"
+    class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
@@ -177,7 +177,7 @@
   <!-- Review Screen -->
   <div
     v-if="reviewingVerse"
-    class="fixed inset-0 bg-surface dark:bg-black z-50 flex flex-col"
+    class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
@@ -268,9 +268,9 @@
   </div>
 
   <!-- Main Content -->
-  <div v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen bg-base">
+  <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen">
     <!-- Top App Bar (verses/collections screen only) -->
-    <header v-if="currentView === 'collections'" class="bg-chrome shadow-sm fixed top-0 left-0 right-0 z-40">
+    <header v-if="currentView === 'collections'" class="bg-chrome/85 backdrop-blur border-b border-border-default fixed top-0 left-0 right-0 z-40">
       <div class="h-16 flex items-center px-2">
         <!-- Hamburger menu button (top-level only) -->
         <button
@@ -285,7 +285,7 @@
           </svg>
           <span
             v-if="shouldShowBackupReminder"
-            class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"
+            class="absolute top-1 right-1 w-2 h-2 bg-accent-warm rounded-full"
           ></span>
         </button>
         <!-- Back button (inside collection) -->
@@ -315,7 +315,7 @@
         </div>
 
         <!-- Collection title -->
-        <h1 v-if="currentCollectionId" class="text-xl font-semibold text-text-primary flex-1 ml-2 truncate">
+        <h1 v-if="currentCollectionId" class="text-xl font-serif font-normal tracking-tight text-text-primary flex-1 ml-2 truncate">
           {{ getCollectionName(currentCollectionId) }}
         </h1>
 
@@ -326,7 +326,7 @@
             v-if="!isPWAInstalled() && !currentCollectionId"
             data-testid="install-app-header"
             @click="triggerInstall"
-            class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg"
+            class="btn-primary btn--sm"
           >
             Install app
           </button>
@@ -385,14 +385,17 @@
       />
       <!-- Drawer panel -->
       <div
-        class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto"
+        class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-chrome shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto"
         :class="drawerOpen ? 'translate-x-0' : '-translate-x-full'"
         style="border-radius: 0 16px 16px 0;"
       >
         <!-- App header -->
         <div class="px-6 pt-10 pb-5" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
-          <h2 class="text-xl font-bold text-text-primary tracking-tight">rum1n8</h2>
-          <p class="text-sm text-text-muted mt-0.5">Bible verse memorization</p>
+          <div class="flex items-center gap-3">
+            <BrandMark size="sm" />
+            <span class="font-serif text-2xl tracking-tight text-text-primary">rum1n8</span>
+          </div>
+          <p class="mt-2 font-serif italic text-sm text-text-muted">Bible verse memorization</p>
         </div>
         <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->
@@ -429,7 +432,7 @@
             Backup & Restore
             <span
               v-if="shouldShowBackupReminder"
-              class="ml-auto w-2 h-2 bg-red-500 rounded-full flex-shrink-0"
+              class="ml-auto w-2 h-2 bg-accent-warm rounded-full flex-shrink-0"
             ></span>
           </button>
           <button
@@ -476,25 +479,25 @@
 
       <!-- Review List View -->
       <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
-        <div class="space-y-2 py-4 overflow-y-auto" style="max-height: calc(100vh - 4rem);">
+        <div class="space-y-2 py-4 overflow-y-auto stagger-fade" style="max-height: calc(100vh - 4rem);">
           <div
             v-if="shouldShowReviewOnboardingTip"
             data-testid="review-onboarding-tip"
-            class="rounded-2xl border border-status-info-border bg-status-info-bg p-4 shadow-sm"
+            class="practice-hint"
           >
             <div class="flex items-start gap-3">
-              <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/75 text-status-info-text">
+              <div class="practice-hint__icon">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8" />
                 </svg>
               </div>
               <div class="flex-1">
-                <p class="text-sm font-semibold text-text-primary">Review your verses here daily.</p>
-                <p class="mt-1 text-sm leading-relaxed text-text-secondary">Due verses stay at the top.</p>
+                <p class="practice-hint__title">Review your verses here daily.</p>
+                <p class="practice-hint__body">Due verses stay at the top.</p>
               </div>
               <button
                 type="button"
-                class="rounded-xl px-3 py-1.5 text-sm font-medium text-status-info-text transition-colors duration-200 hover:bg-white/70"
+                class="btn-ghost text-sm"
                 @click="dismissReviewOnboardingTip"
               >
                 Got it
@@ -502,81 +505,83 @@
             </div>
           </div>
 
+          <PrimaryButton
+            v-if="reviewSortedVerses.length > 0"
+            data-testid="start-review-cta"
+            class="w-full"
+            @click="handleVerseClick(reviewSortedVerses[0])"
+          >
+            Start review<span v-if="dueVersesCount > 0"> · {{ dueVersesCount }} due</span>
+          </PrimaryButton>
+
           <div
             v-for="verse in reviewSortedVerses"
             :key="verse.id"
             @click="handleVerseClick(verse)"
-            :class="[
-              'bg-surface rounded-xl shadow-sm p-3 border transition-all duration-200 cursor-pointer active:scale-98',
-              isDueForReview(verse)
-                ? 'border-status-due-border bg-status-due-bg'
-                : 'border-border-default'
-            ]"
+            class="verse-card"
+            :class="{ 'verse-card--due': isDueForReview(verse) }"
           >
-            <div class="flex items-center justify-between">
-              <h3 class="text-base font-semibold text-text-primary flex-1">
-                {{ verse.reference }}
-              </h3>
-              <span
-                :class="[
-                  'px-2 py-1 text-xs font-medium rounded-full ml-2',
-                  isDueForReview(verse)
-                    ? 'text-status-due-text bg-status-due-bg'
-                    : 'text-status-info-text bg-status-info-bg'
-                ]"
-              >
-                {{ getTimeUntilReview(verse) }}
-              </span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                <HeadwordReference :reference="verse.reference" size="sm" />
+                <span v-if="verse.bibleVersion" class="verse-card__version">/{{ verse.bibleVersion.toLowerCase() }}/</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <POSBadge
+                  v-if="isDueForReview(verse)"
+                  status="mastered"
+                  :due="true"
+                />
+                <span v-else class="verse-card__meta">{{ getTimeUntilReview(verse) }}</span>
+              </div>
             </div>
           </div>
 
           <!-- Empty state when no verses to review -->
-          <div v-if="reviewSortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div v-if="reviewSortedVerses.length === 0" class="bg-chrome rounded-2xl border border-border-default p-12 text-center mt-8">
+            <svg class="w-16 h-16 mx-auto mb-4 text-accent-warm opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="text-text-muted text-lg">No verses to review</p>
+            <p class="font-serif text-lg text-text-primary">No verses to review</p>
             <p class="text-text-muted text-sm mt-2">Master some verses to see them here</p>
           </div>
         </div>
       </div>
 
       <!-- Collections View -->
-      <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0" >
+      <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0">
 
-        <!-- Collection Cards -->
-        <div class="space-y-3 overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
+        <div class="overflow-y-auto pt-4 pb-24" style="max-height: calc(100vh - 8rem);">
+          <CollectionsAlmanac
+            v-if="totalVerseCount > 0"
+            :current-streak="currentStreak"
+            :due-verses-count="dueVersesCount"
+            :mastered-count="masteredCount"
+            :today-formatted="todayFormatted"
+            :show-start-review="reviewSortedVerses.length > 0"
+            section-title="Your Collections"
+            @start-review="handleVerseClick(reviewSortedVerses[0])"
+          />
+
+          <!-- Collection Cards -->
+          <div v-if="collections.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-fade">
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
-            class="bg-status-info-bg rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-status-info-border"
+            class="collection-tile cursor-pointer"
+            :class="{ 'collection-tile--due': dueVersesCount > 0 }"
           >
-            <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-status-info-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-accent-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-                <h3 class="text-lg font-semibold text-status-info-text">{{ getCollectionName('master-list') }}</h3>
+                <h3 class="collection-tile__name">{{ getCollectionName('master-list') }}</h3>
               </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="dueVersesCount > 0"
-                  class="px-3 py-1 text-xs font-medium text-status-due-text bg-status-due-bg rounded-full"
-                >
-                  {{ dueVersesCount }}
-                </span>
-                <span
-                  v-else-if="verses.length > 0"
-                  class="px-3 py-1 text-xs font-medium text-status-success-text bg-status-success-bg rounded-full"
-                >
-                  ✓
-                </span>
-              </div>
+              <POSBadge v-if="dueVersesCount > 0" status="mastered" :due="true" />
             </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-text-muted">
-                {{ totalVerseCount }} verse{{ totalVerseCount !== 1 ? 's' : '' }}
-              </div>
+            <div class="collection-tile__meta">
+              {{ totalVerseCount }} verse{{ totalVerseCount !== 1 ? 's' : '' }}
             </div>
           </div>
 
@@ -584,34 +589,20 @@
           <div
             v-if="hasNoCollectionVerses"
             @click="viewCollection('no-collection')"
-            class="bg-sunken rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-border-default"
+            class="collection-tile cursor-pointer"
+            :class="{ 'collection-tile--due': getCollectionDueCount('no-collection') > 0 }"
           >
-            <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 flex-1 min-w-0">
                 <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
-                <h3 class="text-lg font-semibold text-text-primary">{{ getCollectionName('no-collection') }}</h3>
+                <h3 class="collection-tile__name">{{ getCollectionName('no-collection') }}</h3>
               </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
-                >
-                  {{ getCollectionDueCount('no-collection') }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount('no-collection') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
+              <POSBadge v-if="getCollectionDueCount('no-collection') > 0" status="mastered" :due="true" />
             </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-text-muted">
-                {{ getCollectionVerseCount('no-collection') }} verse{{ getCollectionVerseCount('no-collection') !== 1 ? 's' : '' }}
-              </div>
+            <div class="collection-tile__meta">
+              {{ getCollectionVerseCount('no-collection') }} verse{{ getCollectionVerseCount('no-collection') !== 1 ? 's' : '' }}
             </div>
           </div>
 
@@ -619,34 +610,20 @@
           <div
             v-if="hasToLearnVerses"
             @click="viewCollection('to-learn')"
-            class="bg-status-warn-bg rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-status-warn-border"
+            class="collection-tile cursor-pointer"
+            :class="{ 'collection-tile--due': getCollectionDueCount('to-learn') > 0 }"
           >
-            <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-status-warn-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-accent-warm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 </svg>
-                <h3 class="text-lg font-semibold text-status-warn-text">{{ getCollectionName('to-learn') }}</h3>
+                <h3 class="collection-tile__name">{{ getCollectionName('to-learn') }}</h3>
               </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
-                >
-                  {{ getCollectionDueCount('to-learn') }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount('to-learn') > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
+              <POSBadge v-if="getCollectionDueCount('to-learn') > 0" status="mastered" :due="true" />
             </div>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-status-warn-text">
-                {{ getCollectionVerseCount('to-learn') }} verse{{ getCollectionVerseCount('to-learn') !== 1 ? 's' : '' }}
-              </div>
+            <div class="collection-tile__meta">
+              {{ getCollectionVerseCount('to-learn') }} verse{{ getCollectionVerseCount('to-learn') !== 1 ? 's' : '' }}
             </div>
           </div>
 
@@ -655,29 +632,16 @@
             v-for="collection in collections"
             :key="collection.id"
             @click="viewCollection(collection.id)"
-            class="bg-surface rounded-2xl shadow-sm p-4 cursor-pointer active:scale-98 transition-all duration-200 border border-border-default"
+            class="collection-tile cursor-pointer"
+            :class="{ 'collection-tile--due': getCollectionDueCount(collection.id) > 0 }"
           >
-            <div class="flex justify-between">
-              <h3 class="text-lg font-semibold text-text-primary flex-1">{{ collection.name }}</h3>
-
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="getCollectionDueCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-md"
-                >
-                  {{ getCollectionDueCount(collection.id) }}
-                </span>
-                <span
-                  v-else-if="getCollectionVerseCount(collection.id) > 0"
-                  class="px-2 py-0.5 text-xs font-medium text-status-success-text bg-status-success-bg rounded-md"
-                >
-                  ✓
-                </span>
-              </div>
-                            <div class="flex items-center gap-1">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="collection-tile__name flex-1">{{ collection.name }}</h3>
+              <div class="flex items-center gap-1 shrink-0">
+                <POSBadge v-if="getCollectionDueCount(collection.id) > 0" status="mastered" :due="true" />
                 <button
                   @click.stop="startEditCollection(collection)"
-                  class="text-text-secondary hover:bg-surface-hover p-1.5 rounded-full"
+                  class="text-text-muted hover:text-accent-warm hover:bg-surface-hover p-1.5 rounded-full transition-colors"
                   title="Edit collection"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -686,34 +650,32 @@
                 </button>
               </div>
             </div>
-            <p v-if="collection.description" class="text-text-muted text-sm mb-3 line-clamp-2">{{ collection.description }}</p>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-text-muted">
-                {{ getCollectionVerseCount(collection.id) }} verse{{ getCollectionVerseCount(collection.id) !== 1 ? 's' : '' }}
-              </div>
-
+            <p v-if="collection.description" class="collection-tile__description line-clamp-2">{{ collection.description }}</p>
+            <div class="collection-tile__meta">
+              {{ getCollectionVerseCount(collection.id) }} verse{{ getCollectionVerseCount(collection.id) !== 1 ? 's' : '' }}
             </div>
           </div>
 
+          </div>
         </div>
       </div>
 
       <!-- Stats View -->
       <div v-if="currentView === 'stats' && !currentCollectionId" class="">
-        <div class="space-y-4 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 4rem);">
+        <div class="space-y-6 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 4rem);">
 
           <!-- Streak Card -->
-          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
-            <h3 class="text-base font-semibold text-text-primary mb-3">Current Streak</h3>
-            <div class="flex items-baseline gap-1">
-              <span class="text-4xl font-bold text-text-primary">{{ currentStreak }}</span>
-              <span class="text-lg text-text-muted">day{{ currentStreak !== 1 ? 's' : '' }}</span>
+          <div class="stats-card">
+            <h3 class="stats-card__label">Current Streak</h3>
+            <div class="flex items-baseline gap-2">
+              <span class="stats-card__numeral">{{ currentStreak }}</span>
+              <span class="text-lg text-text-muted font-serif italic">day{{ currentStreak !== 1 ? 's' : '' }}</span>
             </div>
           </div>
 
           <!-- Daily Activity Card -->
-          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
-            <h3 class="text-base font-semibold text-text-primary mb-3">Daily Activity</h3>
+          <div class="stats-card">
+            <h3 class="stats-card__label">Daily Activity</h3>
             <div v-if="dailyActivityData.labels.length > 0">
               <!-- Legend -->
               <div class="flex items-center gap-4 mb-2">
@@ -727,14 +689,14 @@
                 </div>
               </div>
               <!-- Chart with fixed y-axis -->
-              <div class="flex">
+              <div class="flex w-full">
                 <!-- Fixed y-axis labels -->
                 <div class="shrink-0 flex flex-col justify-between pr-1 text-right" style="height: 170px; width: 24px; padding-bottom: 0px;">
                   <span v-for="label in yAxisLabels" :key="label" class="text-text-muted leading-none" style="font-size: 10px;">{{ label }}</span>
                 </div>
                 <!-- Scrollable chart -->
-                <div ref="dailyActivityScrollRef" class="overflow-x-auto flex-1" style="height: 200px;">
-                  <div :style="{ width: Math.max(dailyActivityData.labels.length * 40, 300) + 'px', height: '200px' }">
+                <div ref="dailyActivityScrollRef" class="overflow-x-auto flex-1 min-w-0" style="height: 200px;">
+                  <div class="min-w-full" :style="{ width: Math.max(dailyActivityData.labels.length * 40, 0) + 'px', height: '200px' }">
                     <Bar :key="'bar-' + isDark" :data="dailyBarChartData" :options="barChartOptions" />
                   </div>
                 </div>
@@ -746,8 +708,8 @@
           </div>
 
           <!-- Mastered Over Time Card -->
-          <div class="bg-surface rounded-2xl shadow-sm p-5 border border-border-default">
-            <h3 class="text-base font-semibold text-text-primary mb-3">Verses Mastered</h3>
+          <div class="stats-card">
+            <h3 class="stats-card__label">Verses Mastered</h3>
             <div v-if="masteredOverTimeData.labels.length > 0" class="h-48">
               <Line :key="'line-' + isDark" :data="masteredChartData" :options="lineChartOptions" />
             </div>
@@ -760,10 +722,33 @@
       </div>
 
       <!-- Collection View -->
-      <div v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)">
+      <div
+        v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)"
+        :class="currentView === 'collections' && !currentCollectionId && collections.length === 0
+          ? `flex min-h-0 flex-col overflow-hidden${totalVerseCount > 0 ? ' pt-4' : ''}`
+          : ''"
+        :style="currentView === 'collections' && !currentCollectionId && collections.length === 0 ? { maxHeight: 'calc(100vh - 8rem)' } : null"
+      >
+        <CollectionsAlmanac
+          v-if="currentView === 'collections' && !currentCollectionId && collections.length === 0 && totalVerseCount > 0"
+          :current-streak="currentStreak"
+          :due-verses-count="dueVersesCount"
+          :mastered-count="masteredCount"
+          :today-formatted="todayFormatted"
+          :show-start-review="reviewSortedVerses.length > 0"
+          section-title="Your Verses"
+          @start-review="handleVerseClick(reviewSortedVerses[0])"
+        />
 
         <!-- Verse List -->
-        <div class="space-y-3 py-4 overflow-y-auto max-h-[calc(100vh-4rem)] pb-36">
+        <div
+          :class="[
+            'space-y-3 py-4 stagger-fade',
+            currentView === 'collections' && !currentCollectionId && collections.length === 0
+              ? `min-h-0 flex-1 overflow-y-auto pb-36${totalVerseCount > 0 ? ' pt-0' : ''}`
+              : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
+          ]"
+        >
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
@@ -781,7 +766,7 @@
             <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
               <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
               <div class="flex items-start gap-3">
-                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-700 dark:text-blue-300">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-warm/15 text-accent-warm">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -805,15 +790,15 @@
           <div
             :ref="(el) => setVerseCardRef(verse.id, el)"
             @click="handleVerseClick(verse)"
+            class="verse-card"
             :class="[
-              'relative bg-surface rounded-2xl shadow-sm py-2 px-4 border transition-all duration-200 cursor-pointer active:scale-98',
-              verse.memorizationStatus === 'mastered' && isDueForReview(verse)
-                ? 'border-status-due-border bg-status-due-bg'
-                : verse.memorizationStatus === 'mastered'
-                ? 'border-status-info-border'
-                : 'border-status-warn-border bg-status-warn-bg',
+              {
+                'verse-card--due': verse.memorizationStatus === 'mastered' && isDueForReview(verse),
+                'verse-card--learning': verse.memorizationStatus !== 'mastered',
+                'verse-card--onboarding': shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId,
+              },
               shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId
-                ? 'z-40 ring-2 ring-blue-500 shadow-xl shadow-blue-500/10'
+                ? 'z-40'
                 : ''
             ]"
           >
@@ -821,7 +806,7 @@
             <button
               type="button"
               @click="toggleVerseExpanded(verse, $event)"
-              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-text-primary transition-transform duration-200"
+              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-accent-warm transition-all duration-200"
               :class="{ 'rotate-90': isVerseExpanded(verse) }"
               :aria-label="isVerseExpanded(verse) ? 'Collapse verse' : 'Expand verse'"
             >
@@ -831,57 +816,31 @@
             </button>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 justify-between">
-                <div class="flex flex-wrap items-center gap-2 min-w-0">
-                  <h3 class="text-lg font-semibold text-text-primary flex items-baseline min-w-0">
-                    <span class="truncate min-w-0">{{ splitReference(verse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(verse.reference).verseRef">&nbsp;{{ splitReference(verse.reference).verseRef }}</span>
-                  </h3>
-                  <span
-                    v-if="verse.bibleVersion"
-                    class="px-2 py-0.5 text-xs font-medium text-text-secondary bg-sunken rounded-md uppercase tracking-wider"
-                  >
-                    {{ verse.bibleVersion }}
-                  </span>
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                  <HeadwordReference :reference="verse.reference" size="sm" />
+                  <span v-if="verse.bibleVersion" class="verse-card__version">/{{ verse.bibleVersion.toLowerCase() }}/</span>
                 </div>
-                  <div class="flex items-center shrink-0">
-                    <span
-                      v-if="verse.memorizationStatus !== 'mastered'"
-                      :class="[
-                        'px-2 py-0.5 text-xs font-medium rounded-lg',
-                        verse.memorizationStatus === 'unmemorized'
-                          ? 'bg-status-warn-bg text-status-warn-text'
-                          : verse.memorizationStatus === 'learned'
-                          ? 'bg-status-orange-bg text-status-orange-text'
-                          : 'bg-status-purple-bg text-status-purple-text'
-                      ]"
-                    >
-                      {{ verse.memorizationStatus === 'unmemorized' ? 'Learn' : verse.memorizationStatus === 'learned' ? 'Memorize' : 'Master' }}
-                    </span>
-                    <span
-                      v-else-if="isDueForReview(verse)"
-                      class="px-2 py-0.5 text-xs font-medium text-status-due-text bg-status-due-bg rounded-lg"
-                    >
-                      Due
-                    </span>
-                    <span
-                      v-else
-                      class="px-2 py-0.5 text-xs font-medium text-status-info-text bg-status-info-bg rounded-lg"
-                    >
-                      {{ getTimeUntilReview(verse) }}
-                    </span>
-                                    <button
+                <div class="flex items-center gap-1 shrink-0">
+                  <POSBadge
+                    v-if="verse.memorizationStatus !== 'mastered' || isDueForReview(verse)"
+                    :status="verse.memorizationStatus"
+                    :due="verse.memorizationStatus === 'mastered' && isDueForReview(verse)"
+                  />
+                  <span v-else class="verse-card__meta">{{ getTimeUntilReview(verse) }}</span>
+                  <button
                     @click.stop="startEditVerse(verse)"
-                    class="text-text-secondary hover:bg-surface-hover p-1.5 rounded-full shrink-0"
+                    class="text-text-muted hover:text-accent-warm hover:bg-surface-hover p-1.5 rounded-full shrink-0 transition-colors"
                     title="Edit verse"
-                                    >
+                  >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                                    </button>
-                  </div>
+                  </button>
+                </div>
               </div>
               <div
                 v-if="isVerseExpanded(verse)"
-                class="mt-2 text-text-secondary text-sm leading-relaxed"
+                class="verse-card__body"
               >
                 {{ verse.content }}
               </div>
@@ -893,26 +852,19 @@
           <div
             v-if="shouldShowHeroOnboarding"
             data-testid="getting-started-card"
-            class="relative mt-8 overflow-hidden rounded-[2rem] border border-border-default bg-gradient-to-br from-status-info-bg via-surface to-status-amber-bg/50 p-8 shadow-sm sm:p-10"
+            class="hero-onboarding"
           >
-            <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/60 blur-2xl" />
-            <div class="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-status-amber-bg/80 blur-2xl" />
-            <div class="relative">
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-status-info-text">rum1n8</p>
-              <h2 class="mt-3 max-w-sm text-4xl font-semibold tracking-tight text-text-primary sm:text-5xl">Start with one verse</h2>
-            </div>
-            <div class="relative mt-8 flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                class="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-blue-700"
-                @click="openHeroVerseModal"
-              >
+            <p class="hero-onboarding__eyebrow">rum1n8</p>
+            <h2 class="hero-onboarding__title">Start with one verse.</h2>
+            <p class="hero-onboarding__subtitle">Turn it over in your mind — day by day, word by word.</p>
+            <div class="mt-7 flex flex-wrap items-center gap-4">
+              <PrimaryButton @click="openHeroVerseModal">
                 Add your first verse
                 <span class="sr-only">Add a verse</span>
-              </button>
+              </PrimaryButton>
               <button
                 type="button"
-                class="text-sm font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary"
+                class="btn-ghost text-sm"
                 @click="skipGuidedOnboarding"
               >
                 Skip
@@ -920,12 +872,12 @@
             </div>
           </div>
 
-          <div v-else-if="sortedVerses.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          <div v-else-if="sortedVerses.length === 0" class="empty-state mt-8">
+            <svg class="w-14 h-14 mx-auto mb-4 text-accent-warm opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <p class="text-text-muted text-lg">No verses yet</p>
-            <p class="text-text-muted text-sm mt-2">Tap + to add a verse</p>
+            <p class="empty-state__title">No verses yet.</p>
+            <p class="empty-state__body">Tap + to add a verse</p>
           </div>
         </div>
       </div>
@@ -938,23 +890,21 @@
     />
 
     <!-- Bottom Navigation -->
-    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+    <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="fixed bottom-0 left-0 right-0 bg-chrome/90 backdrop-blur border-t border-border-default z-40" style="padding-bottom: env(safe-area-inset-bottom);">
       <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
         <!-- Verses Tab (far left) -->
         <button
           data-testid="nav-collections"
           @click="navigateToCollections"
           :class="[
-            'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'collections'
-              ? 'text-nav-active'
-              : 'text-text-muted'
+            'tab-btn',
+            currentView === 'collections' ? 'tab-btn--active' : 'tab-btn--inactive'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
-          <span class="text-xs font-medium">Verses</span>
+          <span class="tab-btn__label">Verses</span>
         </button>
 
         <!-- Review Tab -->
@@ -963,12 +913,10 @@
             data-testid="nav-review"
             @click="navigateToReviewList"
             :class="[
-              'relative flex h-full w-full flex-col items-center justify-center rounded-2xl transition-colors',
-              currentView === 'review-list'
-                ? 'text-nav-active'
-                : 'text-text-muted',
+              'tab-btn',
+              currentView === 'review-list' ? 'tab-btn--active' : 'tab-btn--inactive',
               shouldShowReviewTabCallout
-                ? 'z-40 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10'
+                ? 'z-40 ring-2 ring-accent-warm shadow-lg'
                 : ''
             ]"
           >
@@ -979,10 +927,10 @@
               </svg>
               <span
                 v-if="dueVersesCount > 0"
-                class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-red-500 rounded-full px-0.5"
+                class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-accent-warm rounded-full px-0.5"
               >{{ dueVersesCount > 99 ? '99+' : dueVersesCount }}</span>
             </div>
-            <span class="text-xs font-medium">Review</span>
+            <span class="tab-btn__label">Review</span>
           </button>
 
           <div
@@ -1011,16 +959,14 @@
           data-testid="nav-stats"
           @click="navigateToStats"
           :class="[
-            'flex flex-col items-center justify-center flex-1 h-full transition-colors',
-            currentView === 'stats'
-              ? 'text-nav-active'
-              : 'text-text-muted'
+            'tab-btn',
+            currentView === 'stats' ? 'tab-btn--active' : 'tab-btn--inactive'
           ]"
         >
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span class="text-xs font-medium">Stats</span>
+          <span class="tab-btn__label">Stats</span>
         </button>
       </div>
     </nav>
@@ -1050,7 +996,7 @@
           class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
-          <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -1067,7 +1013,7 @@
           class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
-          <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 bg-accent-warm rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
@@ -1084,7 +1030,7 @@
           class="bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
           style="box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
         >
-          <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 bg-accent-strong rounded-full flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
@@ -1097,10 +1043,9 @@
       <button
         data-testid="fab-trigger"
         @click="handleFabClick"
-        class="w-14 h-14 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        class="w-14 h-14 bg-gradient-primary active:scale-95 text-white rounded-full shadow-lift transition-all duration-200 flex items-center justify-center"
         :class="{ 'rotate-45': fabMenuOpen }"
         :title="currentCollectionId ? 'Add new verse' : 'Add new item'"
-        style="box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.2);"
       >
         <svg class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1114,7 +1059,7 @@
       @click="fabMenuOpen = false"
       class="fixed inset-0 z-20"
     ></div>
-  </div>
+  </AppShell>
 
   <!-- iOS Install Modal -->
   <IOSInstallModal
@@ -1127,7 +1072,7 @@
     <div
       v-if="copyToast.show"
       class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] px-4 py-3 rounded-xl shadow-lg max-w-sm"
-      :class="copyToast.isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'"
+      :class="copyToast.isError ? 'bg-status-error-bg text-status-error-text border border-status-error-border' : 'bg-status-success-bg text-status-success-text border border-status-success-border'"
     >
       <div class="flex items-center gap-2">
         <svg v-if="!copyToast.isError" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1154,7 +1099,7 @@
               type="text"
               placeholder="e.g., Joshua 1:8-9"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1168,7 +1113,7 @@
               type="text"
               placeholder="e.g., BSB, NIV, ESV"
               maxlength="10"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
               style="text-transform: uppercase;"
             />
           </div>
@@ -1178,7 +1123,7 @@
               type="button"
               @click="importVerseContent"
               :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
-              class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200 flex items-center space-x-2"
+              class="btn-secondary btn--sm"
             >
               <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1210,7 +1155,7 @@
               rows="6"
               placeholder="Enter the verse text here..."
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
 
@@ -1226,14 +1171,14 @@
             <button
               type="button"
               @click="closeForm"
-              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+              class="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               form="add-verse-form"
-              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-primary"
             >
               Save Verse
             </button>
@@ -1254,7 +1199,7 @@
               type="text"
               placeholder="e.g., Joshua 1:8-9"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1268,7 +1213,7 @@
               type="text"
               placeholder="e.g., BSB, NIV, ESV"
               maxlength="10"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
               style="text-transform: uppercase;"
             />
           </div>
@@ -1283,7 +1228,7 @@
               rows="6"
               placeholder="Enter the verse text here..."
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
 
@@ -1298,7 +1243,7 @@
             <button
               type="button"
               @click="handleDeleteVerseFromModal"
-              class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-danger"
             >
               Delete
             </button>
@@ -1306,14 +1251,14 @@
               <button
                 type="button"
                 @click="closeEditVerseForm"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+                class="btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="edit-verse-form"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+                class="btn-primary"
               >
                 Save
               </button>
@@ -1335,7 +1280,7 @@
               type="text"
               placeholder="e.g., Favorite Verses, Daily Devotion"
               required
-              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1348,7 +1293,7 @@
               v-model="newCollection.description"
               rows="3"
               placeholder="Describe this collection..."
-              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
         </form>
@@ -1358,14 +1303,14 @@
             <button
               type="button"
               @click="closeCollectionForm"
-              class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+              class="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               form="add-collection-form"
-              class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-primary"
             >
               Create Collection
             </button>
@@ -1386,7 +1331,7 @@
               type="text"
               placeholder="e.g., Favorite Verses, Daily Devotion"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1399,7 +1344,7 @@
               v-model="editingCollection.description"
               rows="3"
               placeholder="Describe this collection..."
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
         </form>
@@ -1409,7 +1354,7 @@
             <button
               type="button"
               @click="handleDeleteCollectionFromModal"
-              class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-danger"
             >
               Delete
             </button>
@@ -1417,14 +1362,14 @@
               <button
                 type="button"
                 @click="closeEditCollectionForm"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+                class="btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="edit-collection-form"
-                class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+                class="btn-primary"
               >
                 Save
               </button>
@@ -1466,7 +1411,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 type="file"
                 accept=".csv"
                 @change="handleCSVFileSelect"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
               />
             </div>
 
@@ -1489,7 +1434,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 @input="handleCSVPaste"
                 placeholder="Paste your CSV content here..."
                 rows="6"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
+                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
               ></textarea>
             </div>
           </div>
@@ -1544,7 +1489,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               v-if="csvImportStatus && csvImportStatus.type === 'success'"
               type="button"
               @click="closeImportCSV"
-              class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-primary"
             >
               Done
             </button>
@@ -1554,7 +1499,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               <button
                 type="button"
                 @click="closeImportCSV"
-                class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+                class="btn-secondary"
               >
                 Cancel
               </button>
@@ -1562,7 +1507,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 type="button"
                 @click="importCSVVerses"
                 :disabled="csvPreview.length === 0 || importingCSV"
-                class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="btn-primary"
               >
                 {{ importingCSV ? 'Importing...' : `Import ${csvPreview.length} Verse${csvPreview.length !== 1 ? 's' : ''}` }}
               </button>
@@ -1584,7 +1529,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 :aria-checked="appSettings.requireReferenceTyping"
                 :class="[
                   'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-                  appSettings.requireReferenceTyping ? 'bg-blue-600' : 'bg-border-default'
+                  appSettings.requireReferenceTyping ? 'bg-accent-strong' : 'bg-border-default'
                 ]"
                 @click="updateRequireReferenceTyping(!appSettings.requireReferenceTyping)"
               >
@@ -1603,7 +1548,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
           <div class="flex justify-end">
             <button
               @click="closePracticeSettings"
-              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-primary"
             >
               Done
             </button>
@@ -1631,7 +1576,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
             </p>
             <button
               @click="backupAllData"
-              class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200"
+              class="btn-primary w-full"
             >
               Download Backup
             </button>
@@ -1704,7 +1649,7 @@ import {
   updateOnboardingUiState,
   rememberAppUrl
 } from './ui-state.js'
-import { countVersesInReference } from './utils/verse-count.js'
+import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
@@ -1725,7 +1670,14 @@ import VersePracticeView from './components/VersePracticeView.vue'
 import CompletionTray from './components/CompletionTray.vue'
 import ModalSheet from './components/ModalSheet.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
+import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
+import AppShell from './components/brand/AppShell.vue'
+import BrandMark from './components/brand/BrandMark.vue'
+import PrimaryButton from './components/brand/PrimaryButton.vue'
+import SecondaryButton from './components/brand/SecondaryButton.vue'
+import HeadwordReference from './components/brand/HeadwordReference.vue'
+import POSBadge from './components/brand/POSBadge.vue'
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement,
@@ -1734,7 +1686,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, SyncSettingsModal, Line, Bar },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -2218,7 +2170,7 @@ export default {
     })
 
     const shouldShowGuidedOnboardingScrim = computed(() => {
-      return shouldShowVerseOnboardingCallout.value || shouldShowReviewTabCallout.value
+      return shouldShowReviewTabCallout.value
     })
 
     const allWordsRevealed = computed(() => {
@@ -2244,8 +2196,13 @@ export default {
       return getTimeUntilReview(verse)
     })
 
+    const isGuidedPracticeOnboardingActive = computed(() => {
+      return ['practice', 'review-tab', 'review-tip'].includes(guidedOnboardingStep.value)
+    })
+
     const shouldShowPracticeModesHint = computed(() => {
       return (
+        isGuidedPracticeOnboardingActive.value &&
         !!memorizationMode.value &&
         (!!memorizingVerse.value || !!reviewingVerse.value) &&
         !practiceModeHintsSeen.value?.[memorizationMode.value]
@@ -2325,6 +2282,11 @@ export default {
       scrollToOnboardingVerse()
     })
 
+    watch([guidedOnboardingStep, isLibraryEmpty], ([step, libraryEmpty]) => {
+      if (step !== 'hero' || libraryEmpty) return
+      setGuidedOnboardingStep('done', null)
+    })
+
     watch([onboardingTargetVerse, guidedOnboardingStep, isLibraryEmpty], ([targetVerse, step, libraryEmpty]) => {
       if (step !== 'tap-verse' && step !== 'practice') return
       if (targetVerse) return
@@ -2351,9 +2313,7 @@ export default {
 
     // Total verse count accounting for ranges (e.g., "Psalm 1:1-3" = 3 verses)
     const totalVerseCount = computed(() => {
-      return verses.value.reduce((total, verse) => {
-        return total + countVersesInReference(verse.reference)
-      }, 0)
+      return sumVerseReferenceCounts(verses.value)
     })
 
     // Check if "No Collection" has any verses
@@ -2370,6 +2330,21 @@ export default {
     })
 
     // --- Stats computeds ---
+
+    const masteredCount = computed(() =>
+      sumVerseReferenceCounts(
+        verses.value.filter(v => v.memorizationStatus === 'mastered')
+      )
+    )
+
+    const todayFormatted = computed(() => {
+      const d = new Date()
+      return d.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      })
+    })
 
     const currentStreak = computed(() => {
       const reviewDatesSet = new Set()
@@ -2499,7 +2474,7 @@ export default {
         muted: getCssVar('--color-text-muted'),
         grid: getCssVar('--color-border-default'),
         accent: getCssVar('--color-nav-active'),
-        success: getCssVar('--color-status-success-text'),
+        success: getCssVar('--color-accent-warm'),
       }
     })
 
@@ -4229,9 +4204,7 @@ export default {
       } else {
         collectionVerses = verses.value.filter(v => v.collectionIds && v.collectionIds.includes(collectionId))
       }
-      return collectionVerses.reduce((total, verse) => {
-        return total + countVersesInReference(verse.reference)
-      }, 0)
+      return sumVerseReferenceCounts(collectionVerses)
     }
 
     // Get count of verses due for review in a collection
@@ -6052,6 +6025,8 @@ export default {
       highlightText,
       isDark,
       currentStreak,
+      masteredCount,
+      todayFormatted,
       masteredOverTimeData,
       dailyActivityData,
       masteredChartData,

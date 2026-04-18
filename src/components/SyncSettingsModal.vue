@@ -70,7 +70,7 @@
                   :id="`sync-field-${field.key}`"
                   v-model="formSettings[field.key]"
                   type="checkbox"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="rounded border-gray-300 text-blue-600 focus:ring-accent-warm"
                 />
                 <label :for="`sync-field-${field.key}`" class="text-sm font-medium text-text-secondary">
                   {{ field.label }}
@@ -87,7 +87,7 @@
                   v-model="formSettings[field.key]"
                   :type="field.type"
                   :placeholder="field.placeholder || ''"
-                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-overlay text-text-primary"
+                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
                 />
                 <p v-if="field.hint" class="text-xs text-text-muted mt-1">{{ field.hint }}</p>
               </div>

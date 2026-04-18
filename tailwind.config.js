@@ -7,6 +7,11 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: 'var(--font-serif)',
+        sans: 'var(--font-sans)',
+        mono: 'var(--font-mono)',
+      },
       colors: {
         base: 'var(--color-bg-base)',
         chrome: 'var(--color-bg-chrome)',
@@ -50,6 +55,21 @@ export default {
         'word-unrevealed': 'var(--color-word-unrevealed)',
         'word-incorrect': 'var(--color-word-incorrect)',
         'highlight': 'var(--color-highlight)',
+        'accent': 'var(--color-accent)',
+        'accent-strong': 'var(--color-accent-strong)',
+        'accent-warm': 'var(--color-accent-warm)',
+      },
+      boxShadow: {
+        soft: 'var(--shadow-soft)',
+        lift: 'var(--shadow-lift)',
+      },
+      borderRadius: {
+        pill: '999px',
+        brand: '1rem',
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-page': 'var(--gradient-page)',
       },
     },
   },

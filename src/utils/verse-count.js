@@ -26,3 +26,9 @@ export function countVersesInReference(reference) {
 
   return totalCount > 0 ? totalCount : 1
 }
+
+export function sumVerseReferenceCounts(verses = []) {
+  return verses.reduce((total, verse) => {
+    return total + countVersesInReference(verse?.reference)
+  }, 0)
+}
