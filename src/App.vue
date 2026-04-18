@@ -439,7 +439,25 @@
           </button>
         </nav>
         <div class="px-6 pb-5 pt-2">
-          <p class="text-xs text-text-muted">v{{ appVersion }}</p>
+          <button
+            @click="checkForUpdate"
+            class="text-xs text-text-muted flex items-center gap-1.5 active:opacity-60 transition-opacity"
+            :disabled="updateCheckState !== 'idle'"
+          >
+            <svg
+              v-if="updateCheckState === 'checking'"
+              class="w-3 h-3 shrink-0 animate-spin"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span v-if="updateCheckState === 'idle'">v{{ appVersion }}</span>
+            <span v-else-if="updateCheckState === 'checking'">Checking…</span>
+            <span v-else-if="updateCheckState === 'reloading'">Reloading…</span>
+            <span v-else-if="updateCheckState === 'uptodate'">Up to date</span>
+          </button>
         </div>
         </div>
       </div>
@@ -1702,6 +1720,226 @@ export default {
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
     const appVersion = __APP_VERSION__
+    const updateCheckState = ref('idle') // 'idle' | 'checking' | 'reloading' | 'uptodate'
+    const UPDATE_CHECK_TIMEOUT_MS = 15000
+    const UPDATE_RELOAD_TIMEOUT_MS = 8000
+    const UPDATE_STATE_RESET_DELAY_MS = 2000
+    const UPDATE_APPLIED_TOAST_KEY = 'rum1n8-update-applied'
+    let updateStateTimeoutId = null
+
+    const setUpdateCheckState = (state, resetAfterMs = 0) => {
+      if (updateStateTimeoutId) {
+        clearTimeout(updateStateTimeoutId)
+        updateStateTimeoutId = null
+      }
+
+      updateCheckState.value = state
+
+      if (resetAfterMs > 0) {
+        updateStateTimeoutId = setTimeout(() => {
+          updateCheckState.value = 'idle'
+          updateStateTimeoutId = null
+        }, resetAfterMs)
+      }
+    }
+
+    const withTimeout = (promise, timeoutMs, timeoutMessage) => (
+      new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error(timeoutMessage))
+        }, timeoutMs)
+
+        promise
+          .then((value) => {
+            clearTimeout(timeoutId)
+            resolve(value)
+          })
+          .catch((error) => {
+            clearTimeout(timeoutId)
+            reject(error)
+          })
+      })
+    )
+
+    const waitForControllerChange = (timeoutMs) => (
+      new Promise((resolve) => {
+        const handleControllerChange = () => {
+          cleanup()
+          resolve(true)
+        }
+
+        const cleanup = () => {
+          clearTimeout(timeoutId)
+          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange)
+        }
+
+        const timeoutId = setTimeout(() => {
+          cleanup()
+          resolve(false)
+        }, timeoutMs)
+
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
+      })
+    )
+
+    const watchForServiceWorkerUpdate = (registration) => {
+      let resolved = false
+      let updateDetected = Boolean(registration.waiting || registration.installing)
+      let resolvePromise = () => {}
+      const trackedWorkers = new Set()
+      const cleanupFns = []
+      const promise = new Promise((resolve) => {
+        resolvePromise = resolve
+      })
+
+      const cleanup = () => {
+        cleanupFns.splice(0).forEach((cleanupFn) => cleanupFn())
+      }
+
+      const finish = (status) => {
+        if (resolved) return
+
+        resolved = true
+        cleanup()
+        resolvePromise(status)
+      }
+
+      const trackWorker = (worker) => {
+        if (!worker || trackedWorkers.has(worker)) return
+
+        trackedWorkers.add(worker)
+        updateDetected = true
+
+        const handleStateChange = () => {
+          if (worker.state === 'installed' || worker.state === 'activating' || worker.state === 'activated') {
+            finish('ready')
+          } else if (worker.state === 'redundant') {
+            finish('failed')
+          }
+        }
+
+        worker.addEventListener('statechange', handleStateChange)
+        cleanupFns.push(() => worker.removeEventListener('statechange', handleStateChange))
+        handleStateChange()
+      }
+
+      const handleUpdateFound = () => {
+        updateDetected = true
+        trackWorker(registration.installing)
+      }
+
+      registration.addEventListener('updatefound', handleUpdateFound)
+      cleanupFns.push(() => registration.removeEventListener('updatefound', handleUpdateFound))
+
+      if (registration.waiting) {
+        finish('ready')
+      } else {
+        trackWorker(registration.installing)
+      }
+
+      return {
+        promise,
+        cleanup,
+        finishNoUpdate() {
+          finish('none')
+        },
+        hasDetectedUpdate() {
+          return updateDetected
+        }
+      }
+    }
+
+    const queueUpdateAppliedToast = () => {
+      try {
+        sessionStorage.setItem(UPDATE_APPLIED_TOAST_KEY, '1')
+      } catch {
+        // Ignore storage access failures.
+      }
+    }
+
+    const consumeUpdateAppliedToast = () => {
+      try {
+        const shouldShowToast = sessionStorage.getItem(UPDATE_APPLIED_TOAST_KEY) === '1'
+        if (!shouldShowToast) return
+
+        sessionStorage.removeItem(UPDATE_APPLIED_TOAST_KEY)
+        showToast(`Updated to v${appVersion}`)
+      } catch {
+        // Ignore storage access failures.
+      }
+    }
+
+    const checkForUpdate = async () => {
+      if (updateCheckState.value !== 'idle') return
+      if (!('serviceWorker' in navigator)) {
+        showToast('Update checks are not available in this browser.', true)
+        return
+      }
+
+      setUpdateCheckState('checking')
+      let updateWatcher = null
+
+      try {
+        const registration = await navigator.serviceWorker.getRegistration()
+
+        if (!registration) {
+          setUpdateCheckState('idle')
+          showToast('Update checks are not available right now.', true)
+          return
+        }
+
+        const hadActiveWorker = Boolean(registration.active || navigator.serviceWorker.controller)
+        const controllerChangePromise = hadActiveWorker
+          ? waitForControllerChange(UPDATE_RELOAD_TIMEOUT_MS)
+          : Promise.resolve(false)
+
+        updateWatcher = watchForServiceWorkerUpdate(registration)
+
+        await withTimeout(
+          registration.update(),
+          UPDATE_CHECK_TIMEOUT_MS,
+          'Timed out while checking for updates.'
+        )
+
+        if (!updateWatcher.hasDetectedUpdate() && !registration.waiting && !registration.installing) {
+          updateWatcher.finishNoUpdate()
+        }
+
+        const updateResult = (updateWatcher.hasDetectedUpdate() || registration.waiting || registration.installing)
+          ? await withTimeout(
+              updateWatcher.promise,
+              UPDATE_RELOAD_TIMEOUT_MS,
+              'Timed out while downloading the update.'
+            ).catch(() => 'timeout')
+          : 'none'
+
+        if (!hadActiveWorker || updateResult === 'none') {
+          setUpdateCheckState('uptodate', UPDATE_STATE_RESET_DELAY_MS)
+          showToast(`No update found. You're on v${appVersion}.`)
+          return
+        }
+
+        if (updateResult === 'failed' || updateResult === 'timeout') {
+          setUpdateCheckState('idle')
+          showToast('The update did not finish downloading. Try again.', true)
+          return
+        }
+
+        queueUpdateAppliedToast()
+        setUpdateCheckState('reloading')
+        showToast('Update downloaded. Reloading…')
+
+        await controllerChangePromise
+        window.location.reload()
+      } catch (error) {
+        console.error('Update check failed:', error)
+        setUpdateCheckState('idle')
+        showToast("Couldn't check for updates.", true)
+      } finally {
+        updateWatcher?.cleanup()
+      }
+    }
+
     const drawerVisible = ref(false)
     const drawerOpen = ref(false)
     const showBackupImport = ref(false)
@@ -6006,6 +6244,7 @@ export default {
       loadVerses()
       appSettings.value = getAppSettings()
       migrateProviderSetting()
+      consumeUpdateAppliedToast()
 
       // Load last backup timestamp
       const stored = localStorage.getItem('rum1n8-last-backup')
@@ -6029,6 +6268,15 @@ export default {
     onBeforeUnmount(() => {
       window.removeEventListener('popstate', handlePopState)
       document.removeEventListener('scroll', handleWindowScroll, { capture: true })
+      if (toastTimeoutId) {
+        clearTimeout(toastTimeoutId)
+      }
+      if (drawerHideTimeoutId) {
+        clearTimeout(drawerHideTimeoutId)
+      }
+      if (updateStateTimeoutId) {
+        clearTimeout(updateStateTimeoutId)
+      }
     })
 
     return {
@@ -6220,6 +6468,8 @@ export default {
       reviewPracticeRef,
       reviewTextContainer,
       totalPracticeUnitCount,
+      updateCheckState,
+      checkForUpdate,
       appVersion
     }
   }
