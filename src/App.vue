@@ -428,6 +428,16 @@
             ></span>
           </button>
           <button
+            data-testid="settings-share"
+            @click="shareApp"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a3 3 0 010-2.684m6.632 4.026a3 3 0 010-2.684M15 6a3 3 0 110 6 3 3 0 010-6zm-6 6a3 3 0 110 6 3 3 0 010-6zm6 6a3 3 0 110 6 3 3 0 010-6z" />
+            </svg>
+            Share app
+          </button>
+          <button
             data-testid="settings-about"
             @click="openAbout"
             class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
@@ -1991,6 +2001,8 @@ export default {
     const toastState = ref({ show: false, message: '', isError: false })
     let toastTimeoutId = null
     let drawerHideTimeoutId = null
+    let syncRequestedWhileSyncing = false
+    let syncFeedbackRequested = false
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
     const appSettings = ref(getAppSettings())
@@ -2064,6 +2076,11 @@ export default {
       const savedState = updateOnboardingUiState(patch)
       applyOnboardingUiState(getOnboardingUiState())
       return savedState
+    }
+
+    const getMarketingPageUrl = () => {
+      if (typeof window === 'undefined') return 'https://rum1n8.local/'
+      return new URL('/', window.location.origin).toString()
     }
 
     const syncLocalUiState = () => {
@@ -5696,202 +5713,222 @@ export default {
 
     // Sync functions
     const triggerSync = async (showFeedback = false) => {
-      // Don't sync if already syncing or if no provider configured
+      syncFeedbackRequested = syncFeedbackRequested || showFeedback
+
       if (syncing.value) {
-        console.log('[triggerSync] Already syncing, skipping')
+        syncRequestedWhileSyncing = true
+        console.log('[triggerSync] Already syncing, queueing another sync')
         return
       }
 
-      if (!isSyncConfigured()) {
-        if (showFeedback) {
-          syncError.value = 'Sync not configured. Please configure it in settings.'
-          setTimeout(() => { syncError.value = null }, 5000)
+      do {
+        const shouldShowFeedback = syncFeedbackRequested
+        syncRequestedWhileSyncing = false
+        syncFeedbackRequested = false
+
+        if (!isSyncConfigured()) {
+          if (shouldShowFeedback) {
+            syncError.value = 'Sync not configured. Please configure it in settings.'
+            setTimeout(() => { syncError.value = null }, 5000)
+          }
+          console.log('[triggerSync] No sync provider configured, skipping')
+          return
         }
-        console.log('[triggerSync] No sync provider configured, skipping')
-        return
-      }
-      
-      // Track which verse we're reviewing before sync (if any)
-      const reviewingId = reviewingVerse.value?.id
-      let reviewingVerseBeforeSync = null
-      if (reviewingId) {
-        reviewingVerseBeforeSync = verses.value.find(v => v.id === reviewingId)
-        console.log('[triggerSync] Before sync - reviewing verse state', {
-          id: reviewingVerseBeforeSync?.id,
-          reference: reviewingVerseBeforeSync?.reference,
-          lastReviewed: reviewingVerseBeforeSync?.lastReviewed,
-          reviewCount: reviewingVerseBeforeSync?.reviewCount
-        })
-      }
-      
-      syncing.value = true
-      syncError.value = null
-      
-      try {
-        const result = await syncData(verses.value, collections.value)
-        if (result.success) {
-          // Update local data with merged data from sync
-          if (result.verses) {
-            console.log('[triggerSync] Sync complete - updating verses:', result.verses.length, 'local verses before:', verses.value.length)
-            
-            // Check if our reviewing verse was affected by merge
-            if (reviewingId) {
-              const mergedVerse = result.verses.find(v => v.id === reviewingId)
-              console.log('[triggerSync] After merge - reviewing verse state', {
-                id: mergedVerse?.id,
-                reference: mergedVerse?.reference,
-                lastReviewed: mergedVerse?.lastReviewed,
-                reviewCount: mergedVerse?.reviewCount,
-                lastReviewedChanged: mergedVerse?.lastReviewed !== reviewingVerseBeforeSync?.lastReviewed,
-                lastReviewedOlder: mergedVerse?.lastReviewed && reviewingVerseBeforeSync?.lastReviewed && 
-                  new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)
-              })
+        
+        // Track which verse we're reviewing before sync (if any)
+        const reviewingId = reviewingVerse.value?.id
+        let reviewingVerseBeforeSync = null
+        if (reviewingId) {
+          reviewingVerseBeforeSync = verses.value.find(v => v.id === reviewingId)
+          console.log('[triggerSync] Before sync - reviewing verse state', {
+            id: reviewingVerseBeforeSync?.id,
+            reference: reviewingVerseBeforeSync?.reference,
+            lastReviewed: reviewingVerseBeforeSync?.lastReviewed,
+            reviewCount: reviewingVerseBeforeSync?.reviewCount
+          })
+        }
+        
+        syncing.value = true
+        syncError.value = null
+        
+        try {
+          const result = await syncData(verses.value, collections.value)
+          if (result.success) {
+            // Update local data with merged data from sync
+            if (result.verses) {
+              console.log('[triggerSync] Sync complete - updating verses:', result.verses.length, 'local verses before:', verses.value.length)
               
-              // If merge overwrote our new lastReviewed with an older one, keep all local review fields
-              // (merge chose remote incorrectly; we must preserve nextReviewDate, interval, etc.)
-              if (mergedVerse && reviewingVerseBeforeSync && 
-                  mergedVerse.lastReviewed && reviewingVerseBeforeSync.lastReviewed &&
-                  new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)) {
-                console.warn('[triggerSync] WARNING: Merge overwrote newer review! Restoring all local review fields.', {
-                  merged: mergedVerse.lastReviewed,
-                  local: reviewingVerseBeforeSync.lastReviewed
-                })
-                mergedVerse.lastReviewed = reviewingVerseBeforeSync.lastReviewed
-                mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
-                mergedVerse.nextReviewDate = reviewingVerseBeforeSync.nextReviewDate
-                mergedVerse.interval = reviewingVerseBeforeSync.interval
-                mergedVerse.easeFactor = reviewingVerseBeforeSync.easeFactor
-                mergedVerse.reviewCount = reviewingVerseBeforeSync.reviewCount
-                if (reviewingVerseBeforeSync.lastGrade != null) mergedVerse.lastGrade = reviewingVerseBeforeSync.lastGrade
-                if (reviewingVerseBeforeSync.lastAccuracy != null) mergedVerse.lastAccuracy = reviewingVerseBeforeSync.lastAccuracy
-                if (reviewingVerseBeforeSync.reviewHistory?.length) mergedVerse.reviewHistory = reviewingVerseBeforeSync.reviewHistory
-              }
-            }
-            
-            // Log a sample of merged verses for debugging (especially those with review dates)
-            if (result.verses.length > 0) {
-              const versesWithReview = result.verses.filter(v => v.nextReviewDate)
-              console.log(`[triggerSync] Verses with nextReviewDate: ${versesWithReview.length}`)
-              if (versesWithReview.length > 0) {
-                const sample = versesWithReview.slice(0, 3)
-                sample.forEach(v => {
-                  console.log(`[triggerSync] Merged verse ${v.id} (${v.reference}): nextReviewDate=${v.nextReviewDate}, interval=${v.interval}, lastModified=${v.lastModified}, lastReviewed=${v.lastReviewed}`)
-                })
-              }
-            }
-            // Update verses array - create new array reference for Vue reactivity
-            verses.value = [...result.verses]
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
-            
-            // Verify the reviewing verse after update
-            if (reviewingId) {
-              const finalVerse = verses.value.find(v => v.id === reviewingId)
-              console.log('[triggerSync] Final state - reviewing verse', {
-                id: finalVerse?.id,
-                lastReviewed: finalVerse?.lastReviewed,
-                reviewCount: finalVerse?.reviewCount
-              })
-            }
-            
-            // Force Vue to update by using nextTick and verify the update
-            await nextTick()
-            
-            // Verify specific verses were updated correctly - check all verses with review dates
-            if (result.verses.length > 0) {
-              const versesWithReview = result.verses.filter(v => v.nextReviewDate)
-              console.log(`[App] Verifying ${versesWithReview.length} verses with nextReviewDate`)
-              
-              // Check the reviewing verse specifically if it exists
+              // Check if our reviewing verse was affected by merge
               if (reviewingId) {
-                const reviewingVerseAfterSync = verses.value.find(v => v.id === reviewingId)
                 const mergedVerse = result.verses.find(v => v.id === reviewingId)
-                console.log('[triggerSync] Reviewing verse after sync update', {
-                  id: reviewingVerseAfterSync?.id,
-                  reference: reviewingVerseAfterSync?.reference,
-                  lastReviewed: reviewingVerseAfterSync?.lastReviewed,
-                  mergedLastReviewed: mergedVerse?.lastReviewed,
-                  matches: reviewingVerseAfterSync?.lastReviewed === mergedVerse?.lastReviewed
+                console.log('[triggerSync] After merge - reviewing verse state', {
+                  id: mergedVerse?.id,
+                  reference: mergedVerse?.reference,
+                  lastReviewed: mergedVerse?.lastReviewed,
+                  reviewCount: mergedVerse?.reviewCount,
+                  lastReviewedChanged: mergedVerse?.lastReviewed !== reviewingVerseBeforeSync?.lastReviewed,
+                  lastReviewedOlder: mergedVerse?.lastReviewed && reviewingVerseBeforeSync?.lastReviewed && 
+                    new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)
+                })
+                
+                // If merge overwrote our new lastReviewed with an older one, keep all local review fields
+                // (merge chose remote incorrectly; we must preserve nextReviewDate, interval, etc.)
+                if (mergedVerse && reviewingVerseBeforeSync && 
+                    mergedVerse.lastReviewed && reviewingVerseBeforeSync.lastReviewed &&
+                    new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)) {
+                  console.warn('[triggerSync] WARNING: Merge overwrote newer review! Restoring all local review fields.', {
+                    merged: mergedVerse.lastReviewed,
+                    local: reviewingVerseBeforeSync.lastReviewed
+                  })
+                  mergedVerse.lastReviewed = reviewingVerseBeforeSync.lastReviewed
+                  mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
+                  mergedVerse.nextReviewDate = reviewingVerseBeforeSync.nextReviewDate
+                  mergedVerse.interval = reviewingVerseBeforeSync.interval
+                  mergedVerse.easeFactor = reviewingVerseBeforeSync.easeFactor
+                  mergedVerse.reviewCount = reviewingVerseBeforeSync.reviewCount
+                  if (reviewingVerseBeforeSync.lastGrade != null) mergedVerse.lastGrade = reviewingVerseBeforeSync.lastGrade
+                  if (reviewingVerseBeforeSync.lastAccuracy != null) mergedVerse.lastAccuracy = reviewingVerseBeforeSync.lastAccuracy
+                  if (reviewingVerseBeforeSync.reviewHistory?.length) mergedVerse.reviewHistory = reviewingVerseBeforeSync.reviewHistory
+                }
+              }
+              
+              // Log a sample of merged verses for debugging (especially those with review dates)
+              if (result.verses.length > 0) {
+                const versesWithReview = result.verses.filter(v => v.nextReviewDate)
+                console.log(`[triggerSync] Verses with nextReviewDate: ${versesWithReview.length}`)
+                if (versesWithReview.length > 0) {
+                  const sample = versesWithReview.slice(0, 3)
+                  sample.forEach(v => {
+                    console.log(`[triggerSync] Merged verse ${v.id} (${v.reference}): nextReviewDate=${v.nextReviewDate}, interval=${v.interval}, lastModified=${v.lastModified}, lastReviewed=${v.lastReviewed}`)
+                  })
+                }
+              }
+              // Update verses array - create new array reference for Vue reactivity
+              verses.value = [...result.verses]
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
+              
+              // Verify the reviewing verse after update
+              if (reviewingId) {
+                const finalVerse = verses.value.find(v => v.id === reviewingId)
+                console.log('[triggerSync] Final state - reviewing verse', {
+                  id: finalVerse?.id,
+                  lastReviewed: finalVerse?.lastReviewed,
+                  reviewCount: finalVerse?.reviewCount
                 })
               }
               
-              let allMatch = true
-              versesWithReview.slice(0, 5).forEach(testVerse => {
-                const localVerse = verses.value.find(v => v.id === testVerse.id)
-                if (localVerse) {
-                  const matches = localVerse.nextReviewDate === testVerse.nextReviewDate
-                  if (!matches) {
-                    allMatch = false
-                    console.log(`[App] MISMATCH - Verse ${testVerse.id} (${testVerse.reference}):`)
-                    console.log(`[App]   Expected: ${testVerse.nextReviewDate}`)
-                    console.log(`[App]   Actual: ${localVerse.nextReviewDate}`)
-                  }
-                }
-              })
+              // Force Vue to update by using nextTick and verify the update
+              await nextTick()
               
-              // Double-check by reading from localStorage - specifically check reviewing verse
-              const stored = localStorage.getItem(STORAGE_KEY)
-              if (stored) {
-                const storedVerses = JSON.parse(stored)
+              // Verify specific verses were updated correctly - check all verses with review dates
+              if (result.verses.length > 0) {
+                const versesWithReview = result.verses.filter(v => v.nextReviewDate)
+                console.log(`[App] Verifying ${versesWithReview.length} verses with nextReviewDate`)
                 
-                // Check reviewing verse specifically
+                // Check the reviewing verse specifically if it exists
                 if (reviewingId) {
-                  const storedReviewingVerse = storedVerses.find(v => v.id === reviewingId)
-                  const inMemoryVerse = verses.value.find(v => v.id === reviewingId)
-                  console.log('[triggerSync] localStorage verification for reviewing verse', {
-                    id: reviewingId,
-                    storedLastReviewed: storedReviewingVerse?.lastReviewed,
-                    inMemoryLastReviewed: inMemoryVerse?.lastReviewed,
-                    matches: storedReviewingVerse?.lastReviewed === inMemoryVerse?.lastReviewed
+                  const reviewingVerseAfterSync = verses.value.find(v => v.id === reviewingId)
+                  const mergedVerse = result.verses.find(v => v.id === reviewingId)
+                  console.log('[triggerSync] Reviewing verse after sync update', {
+                    id: reviewingVerseAfterSync?.id,
+                    reference: reviewingVerseAfterSync?.reference,
+                    lastReviewed: reviewingVerseAfterSync?.lastReviewed,
+                    mergedLastReviewed: mergedVerse?.lastReviewed,
+                    matches: reviewingVerseAfterSync?.lastReviewed === mergedVerse?.lastReviewed
                   })
                 }
                 
-                const storedVerse = storedVerses.find(v => v.id === versesWithReview[0]?.id)
-                if (storedVerse && versesWithReview[0]) {
-                  const localStorageMatch = storedVerse.nextReviewDate === versesWithReview[0].nextReviewDate
-                  console.log(`[App] localStorage matches: ${localStorageMatch}`)
-                  if (!localStorageMatch) {
-                    console.log(`[App] localStorage mismatch - Expected: ${versesWithReview[0].nextReviewDate}, Got: ${storedVerse.nextReviewDate}`)
+                let allMatch = true
+                versesWithReview.slice(0, 5).forEach(testVerse => {
+                  const localVerse = verses.value.find(v => v.id === testVerse.id)
+                  if (localVerse) {
+                    const matches = localVerse.nextReviewDate === testVerse.nextReviewDate
+                    if (!matches) {
+                      allMatch = false
+                      console.log(`[App] MISMATCH - Verse ${testVerse.id} (${testVerse.reference}):`)
+                      console.log(`[App]   Expected: ${testVerse.nextReviewDate}`)
+                      console.log(`[App]   Actual: ${localVerse.nextReviewDate}`)
+                    }
+                  }
+                })
+                
+                // Double-check by reading from localStorage - specifically check reviewing verse
+                const stored = localStorage.getItem(STORAGE_KEY)
+                if (stored) {
+                  const storedVerses = JSON.parse(stored)
+                  
+                  // Check reviewing verse specifically
+                  if (reviewingId) {
+                    const storedReviewingVerse = storedVerses.find(v => v.id === reviewingId)
+                    const inMemoryVerse = verses.value.find(v => v.id === reviewingId)
+                    console.log('[triggerSync] localStorage verification for reviewing verse', {
+                      id: reviewingId,
+                      storedLastReviewed: storedReviewingVerse?.lastReviewed,
+                      inMemoryLastReviewed: inMemoryVerse?.lastReviewed,
+                      matches: storedReviewingVerse?.lastReviewed === inMemoryVerse?.lastReviewed
+                    })
+                  }
+                  
+                  const storedVerse = storedVerses.find(v => v.id === versesWithReview[0]?.id)
+                  if (storedVerse && versesWithReview[0]) {
+                    const localStorageMatch = storedVerse.nextReviewDate === versesWithReview[0].nextReviewDate
+                    console.log(`[App] localStorage matches: ${localStorageMatch}`)
+                    if (!localStorageMatch) {
+                      console.log(`[App] localStorage mismatch - Expected: ${versesWithReview[0].nextReviewDate}, Got: ${storedVerse.nextReviewDate}`)
+                    }
                   }
                 }
+                
+                if (allMatch) {
+                  console.log('[App] ✓ All verified verses match correctly')
+                }
               }
-              
-              if (allMatch) {
-                console.log('[App] ✓ All verified verses match correctly')
+              console.log('[App] Verses updated and saved to localStorage')
+            }
+            if (result.collections) {
+              collections.value = result.collections
+              localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
+            }
+            if (result.appSettings) {
+              appSettings.value = { ...result.appSettings }
+            }
+            
+            if (shouldShowFeedback) {
+              if (syncRequestedWhileSyncing) {
+                syncFeedbackRequested = true
+              } else {
+                showToast('Sync complete')
               }
             }
-            console.log('[App] Verses updated and saved to localStorage')
+          } else {
+            // Sync failed
+            const errorMsg = result.error || 'Sync failed'
+            console.warn('Sync failed:', errorMsg)
+            if (shouldShowFeedback) {
+              if (syncRequestedWhileSyncing) {
+                syncFeedbackRequested = true
+              } else {
+                syncError.value = errorMsg
+                setTimeout(() => { syncError.value = null }, 5000)
+              }
+            }
           }
-          if (result.collections) {
-            collections.value = result.collections
-            localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
-          }
-          if (result.appSettings) {
-            appSettings.value = { ...result.appSettings }
-          }
-          
-          if (showFeedback) {
-            showToast('Sync complete')
-          }
-        } else {
+        } catch (error) {
           // Sync failed
-          const errorMsg = result.error || 'Sync failed'
-          console.warn('Sync failed:', errorMsg)
-          if (showFeedback) {
-            syncError.value = errorMsg
-            setTimeout(() => { syncError.value = null }, 5000)
+          const errorMsg = error.message || 'Sync error occurred'
+          console.error('Sync error:', error)
+          if (shouldShowFeedback) {
+            if (syncRequestedWhileSyncing) {
+              syncFeedbackRequested = true
+            } else {
+              syncError.value = errorMsg
+              setTimeout(() => { syncError.value = null }, 5000)
+            }
           }
+        } finally {
+          syncing.value = false
         }
-      } catch (error) {
-        // Sync failed
-        const errorMsg = error.message || 'Sync error occurred'
-        console.error('Sync error:', error)
-        if (showFeedback) {
-          syncError.value = errorMsg
-          setTimeout(() => { syncError.value = null }, 5000)
-        }
-      } finally {
-        syncing.value = false
-      }
+      } while (syncRequestedWhileSyncing)
     }
 
     // Manual sync (with user feedback)
@@ -6006,6 +6043,33 @@ export default {
       closeSettingsMenu()
       closeDrawer()
       window.location.assign(buildAboutUrl(getCurrentAppUrl()))
+    }
+
+    const shareApp = async () => {
+      closeSettingsMenu()
+      closeDrawer()
+
+      if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+        showToast('Sharing is not available in this browser.', true)
+        return
+      }
+
+      try {
+        await navigator.share({
+          title: 'rum1n8',
+          text: 'Memorize Bible verses with rum1n8.',
+          url: getMarketingPageUrl()
+        })
+        shareSuccess.value = true
+        showToast('App link shared')
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return
+        }
+
+        console.error('Failed to share app:', error)
+        showToast('Failed to share app', true)
+      }
     }
 
     // Backup all data
@@ -6430,6 +6494,7 @@ export default {
       openBackupImport,
       closeBackupImport,
       openAbout,
+      shareApp,
       backupAllData,
       importFromBackup,
       handleBackupFileSelect,
