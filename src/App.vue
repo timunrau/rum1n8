@@ -438,6 +438,9 @@
             About
           </button>
         </nav>
+        <div class="px-6 pb-5 pt-2">
+          <p class="text-xs text-text-muted">v{{ appVersion }}</p>
+        </div>
         </div>
       </div>
 
@@ -1698,6 +1701,7 @@ export default {
     const showPracticeSettings = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
+    const appVersion = __APP_VERSION__
     const drawerVisible = ref(false)
     const drawerOpen = ref(false)
     const showBackupImport = ref(false)
@@ -6215,7 +6219,8 @@ export default {
       memorizationInstanceKey,
       reviewPracticeRef,
       reviewTextContainer,
-      totalPracticeUnitCount
+      totalPracticeUnitCount,
+      appVersion
     }
   }
 }
