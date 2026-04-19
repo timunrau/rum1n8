@@ -270,7 +270,7 @@
   </div>
 
   <!-- Main Content -->
-  <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen">
+  <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen" @touchstart.passive="handleSwipeTouchStart" @touchend.passive="handleSwipeTouchEnd">
     <!-- Top App Bar (verses/collections screen only) -->
     <header v-if="currentView === 'collections'" :class="['glass-chrome fixed top-0 left-0 right-0 z-40', isScrolled ? '' : 'glass-chrome--transparent']">
       <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
@@ -4626,6 +4626,34 @@ export default {
       pushNavigationState({ view: 'stats' })
     }
 
+    const swipeViews = ['collections', 'review-list', 'stats']
+    const swipeTouchStart = ref(null)
+
+    const handleSwipeTouchStart = (e) => {
+      if (currentCollectionId.value) return
+      const t = e.touches[0]
+      swipeTouchStart.value = { x: t.clientX, y: t.clientY }
+    }
+
+    const handleSwipeTouchEnd = (e) => {
+      if (!swipeTouchStart.value || currentCollectionId.value) return
+      const t = e.changedTouches[0]
+      const dx = t.clientX - swipeTouchStart.value.x
+      const dy = t.clientY - swipeTouchStart.value.y
+      swipeTouchStart.value = null
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+      const idx = swipeViews.indexOf(currentView.value)
+      if (dx < 0 && idx < swipeViews.length - 1) {
+        const next = swipeViews[idx + 1]
+        if (next === 'review-list') navigateToReviewList()
+        else if (next === 'stats') navigateToStats()
+      } else if (dx > 0 && idx > 0) {
+        const prev = swipeViews[idx - 1]
+        if (prev === 'collections') navigateToCollections()
+        else if (prev === 'review-list') navigateToReviewList()
+      }
+    }
+
     const clearSearch = () => {
       searchQuery.value = ''
       searchActive.value = false
@@ -6443,6 +6471,8 @@ export default {
       navigateToReviewList,
       navigateToCollections,
       navigateToStats,
+      handleSwipeTouchStart,
+      handleSwipeTouchEnd,
       clearSearch,
       openSearch,
       searchActive,
