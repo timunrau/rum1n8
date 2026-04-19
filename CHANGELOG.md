@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/timunrau/rum1n8/compare/v1.9.0...v1.9.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* extend dim overlay to cover completion tray rounded corners ([ab8fbbf](https://github.com/timunrau/rum1n8/commit/ab8fbbf4f9dc9e39bce8194969121076acd2a73d))
+
 # [1.9.0](https://github.com/timunrau/rum1n8/compare/v1.8.0...v1.9.0) (2026-04-19)
 
 
