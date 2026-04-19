@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/timunrau/rum1n8/compare/v1.6.5...v1.7.0) (2026-04-19)
+
+
+### Features
+
+* add tail to arrow on Start Today's Review button ([7c92e16](https://github.com/timunrau/rum1n8/commit/7c92e16f95d4439ecf5d9d6e8a331d4ecb125131))
+* swipe left/right to navigate between Collections, Review, and Stats screens ([8afbbd8](https://github.com/timunrau/rum1n8/commit/8afbbd800f30de9dfda733c03b599ba93bde64d9))
+
 ## [1.6.5](https://github.com/timunrau/rum1n8/compare/v1.6.4...v1.6.5) (2026-04-19)
 
 
