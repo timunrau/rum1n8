@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/timunrau/rum1n8/compare/v1.7.0...v1.8.0) (2026-04-19)
+
+
+### Features
+
+* add backup/sync nudge card and simplify review onboarding ([df803b2](https://github.com/timunrau/rum1n8/commit/df803b2dcc9391bc077a3392ad4d4cce689c6a1b))
+
 # [1.7.0](https://github.com/timunrau/rum1n8/compare/v1.6.5...v1.7.0) (2026-04-19)
 
 
