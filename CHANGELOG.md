@@ -1,3 +1,10 @@
+## [1.6.4](https://github.com/timunrau/rum1n8/compare/v1.6.3...v1.6.4) (2026-04-19)
+
+
+### Bug Fixes
+
+* polish UI — label, arrow, dark red, pill shadow, review queue ([1a58937](https://github.com/timunrau/rum1n8/commit/1a5893768e3a783e6218bd1278183982314b9ab4)), closes [#f5b8b2](https://github.com/timunrau/rum1n8/issues/f5b8b2) [#f87171](https://github.com/timunrau/rum1n8/issues/f87171)
+
 ## [1.6.3](https://github.com/timunrau/rum1n8/compare/v1.6.2...v1.6.3) (2026-04-18)
 
 
