@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/timunrau/rum1n8/compare/v1.10.1...v1.11.0) (2026-04-19)
+
+
+### Features
+
+* refine first-run onboarding flow ([7c26aae](https://github.com/timunrau/rum1n8/commit/7c26aae540d52fa35e8fcf419380a4b6db143877))
+
 ## [1.10.1](https://github.com/timunrau/rum1n8/compare/v1.10.0...v1.10.1) (2026-04-19)
 
 
