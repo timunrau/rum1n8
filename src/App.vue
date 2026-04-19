@@ -155,7 +155,7 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
+        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 bottom-0 bg-black/20 pointer-events-none" />
       </Transition>
     </div>
 
@@ -248,7 +248,7 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
+        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 bottom-0 bg-black/20 pointer-events-none" />
       </Transition>
     </div>
 
@@ -327,6 +327,24 @@
             class="btn-primary btn--sm"
           >
             Install app
+          </button>
+          <!-- Expand/collapse all verses (collection view only) -->
+          <button
+            v-if="currentCollectionId && sortedVerses.length > 0"
+            @click="toggleAllCollectionVersesExpanded"
+            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+            :title="allCollectionVersesExpanded ? 'Collapse all' : 'Expand all'"
+          >
+            <!-- Collapse: chevrons pointing inward (toward center) -->
+            <svg v-if="allCollectionVersesExpanded" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 2l7 7 7-7" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 22l-7-7-7 7" />
+            </svg>
+            <!-- Expand: chevrons pointing outward (away from center) -->
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 9l7-7 7 7" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 15l-7 7-7-7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -866,7 +884,7 @@
             class="hero-onboarding"
           >
             <p class="hero-onboarding__eyebrow">rum1n8</p>
-            <h2 class="hero-onboarding__title">Start ruminating</h2>
+            <h2 class="hero-onboarding__title">Start ruminating.</h2>
             <p class="hero-onboarding__subtitle">Choose a verse to get started.</p>
             <div class="mt-7 flex flex-wrap items-center gap-4">
               <PrimaryButton @click="openHeroVerseModal">
@@ -983,14 +1001,12 @@
     </nav>
 
     <!-- Floating Action Button with Menu -->
-    <div 
+    <div
       v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
-      :class="[
-        'fixed right-6 z-30',
-        !currentCollectionId
-          ? 'bottom-20'
-          : 'bottom-6'
-      ]"
+      class="fixed right-6 z-30"
+      :style="!currentCollectionId
+        ? 'bottom: calc(5rem + env(safe-area-inset-bottom))'
+        : 'bottom: 1.5rem'"
     >
       <!-- FAB Menu (shown on collections screen and inside collections) -->
       <transition-group
@@ -3520,6 +3536,18 @@ export default {
       expandedVerseIds.value = next
     }
 
+    const allCollectionVersesExpanded = computed(() => {
+      const verses = sortedVerses.value
+      return verses.length > 0 && verses.every((v) => !!expandedVerseIds.value[v.id])
+    })
+
+    const toggleAllCollectionVersesExpanded = () => {
+      const expand = !allCollectionVersesExpanded.value
+      const next = { ...expandedVerseIds.value }
+      for (const v of sortedVerses.value) next[v.id] = expand
+      expandedVerseIds.value = next
+    }
+
     const beforeVerseExpand = (el) => {
       el.style.height = '0'
       el.style.opacity = '0'
@@ -4607,6 +4635,14 @@ export default {
 
     const handleSwipeTouchStart = (e) => {
       if (currentCollectionId.value) return
+      let el = e.target
+      while (el && el !== e.currentTarget) {
+        const style = window.getComputedStyle(el)
+        if ((style.overflowX === 'auto' || style.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
+          return
+        }
+        el = el.parentElement
+      }
       const t = e.touches[0]
       swipeTouchStart.value = { x: t.clientX, y: t.clientY }
     }
@@ -6385,6 +6421,8 @@ export default {
       handleVerseClick,
       isVerseExpanded,
       toggleVerseExpanded,
+      allCollectionVersesExpanded,
+      toggleAllCollectionVersesExpanded,
       beforeVerseExpand,
       enterVerseExpand,
       afterVerseExpand,

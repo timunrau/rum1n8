@@ -2,69 +2,230 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex,follow">
+  <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Source+Sans+3:wght@400;500;600;700&display=swap">
   <title>Privacy Policy — rum1n8</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --page-bg: #f3ede2;
+      --page-bg-soft: #fbf8f2;
+      --border: rgba(20, 35, 58, 0.12);
+      --text: #16253d;
+      --text-muted: #52647e;
+      --accent: #2f5fb7;
+      --accent-warm: #c79a2b;
+      --gradient-primary: linear-gradient(180deg, #3768c6 0%, #224787 100%);
+      --font-serif: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
+      --font-sans: "Source Sans 3", "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      color: #1a1a2e;
-      background: #f5f5f7;
-      padding: 2rem 1rem;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(215, 168, 88, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(86, 136, 214, 0.12), transparent 28%),
+        linear-gradient(180deg, var(--page-bg-soft) 0%, var(--page-bg) 55%, #ece4d8 100%);
+      min-height: 100vh;
     }
-    .container {
-      max-width: 640px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 1.5rem;
-      padding: 2rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .effective { font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem; }
-    h2 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
-    p { font-size: 0.875rem; color: #374151; margin-bottom: 0.75rem; }
-    ul { font-size: 0.875rem; color: #374151; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-    li { margin-bottom: 0.375rem; }
-    code {
-      background: #f3f4f6;
-      padding: 0.125rem 0.375rem;
-      border-radius: 0.25rem;
-      font-size: 0.8125rem;
-    }
-    a { color: #4f6ef7; text-decoration: none; }
+
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .back {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.5rem 1.25rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.75rem;
-      color: #374151;
-      font-size: 0.875rem;
-      font-weight: 500;
+
+    .site-header {
+      padding: 2rem 1.5rem 0;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
       text-decoration: none;
     }
-    .back:hover { background: #f9fafb; text-decoration: none; }
+    .brand:hover { text-decoration: none; }
+
+    .brand__mark {
+      width: 2.3rem;
+      height: 2.3rem;
+      display: grid;
+      place-items: center;
+      border-radius: 1rem;
+      background: var(--gradient-primary);
+      color: #fff;
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 0 0 0.25em 0.1em;
+    }
+
+    .brand__name {
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+    }
+
+    .page-body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .page-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 2.5rem;
+    }
+
+    .effective {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-top: -2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-top: 2.25rem;
+      margin-bottom: 0.65rem;
+    }
+
+    p {
+      font-size: 0.975rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    ul {
+      padding-left: 1.4rem;
+      margin-bottom: 0.85rem;
+    }
+
+    li {
+      font-size: 0.975rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.83em;
+      background: rgba(20, 35, 58, 0.06);
+      border: 1px solid var(--border);
+      padding: 0.1em 0.4em;
+      border-radius: 0.3rem;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      padding: 0.6rem 1.25rem 0.6rem 0.9rem;
+      border: 1px solid rgba(47, 95, 183, 0.22);
+      border-radius: 999px;
+      background: rgba(47, 95, 183, 0.04);
+      margin-top: 2rem;
+      transition: background 150ms, border-color 150ms;
+    }
+    .back-link:hover {
+      background: rgba(47, 95, 183, 0.09);
+      border-color: rgba(47, 95, 183, 0.4);
+      text-decoration: none;
+    }
+    .back-link svg {
+      width: 0.9rem;
+      height: 0.9rem;
+      flex-shrink: 0;
+    }
+
     @media (prefers-color-scheme: dark) {
-      body { background: #0f0f1a; color: #e5e5eb; }
-      .container { background: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-      .effective { color: #9ca3af; }
-      h2 { color: #e5e5eb; }
-      p, ul, li { color: #d1d5db; }
-      code { background: #2a2a3e; }
-      .back { border-color: #4b5563; color: #d1d5db; }
-      .back:hover { background: #2a2a3e; }
+      :root {
+        --page-bg: #0d1520;
+        --page-bg-soft: #0a1018;
+        --border: rgba(180, 200, 230, 0.1);
+        --text: #dde6f0;
+        --text-muted: #8fa3b8;
+        --accent: #6b9de8;
+        --accent-warm: #d4a94a;
+      }
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(215, 168, 88, 0.08), transparent 30%),
+          radial-gradient(circle at top right, rgba(86, 136, 214, 0.07), transparent 28%),
+          linear-gradient(180deg, #0a1018 0%, #0d1520 55%, #0b1219 100%);
+      }
+      code {
+        background: rgba(180, 200, 230, 0.08);
+      }
+      .back-link {
+        border-color: rgba(107, 157, 232, 0.22);
+        background: rgba(107, 157, 232, 0.05);
+      }
+      .back-link:hover {
+        background: rgba(107, 157, 232, 0.1);
+        border-color: rgba(107, 157, 232, 0.4);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand__mark">r</span>
+      <span class="brand__name">rum1n8</span>
+    </a>
+  </header>
+
+  <main class="page-body">
+    <p class="page-label">Legal</p>
     <h1>Privacy Policy</h1>
     <p class="effective">Effective date: March 3, 2026</p>
 
     <p>rum1n8 is an open-source Bible verse memorization app built with privacy and data ownership as core priorities. This policy explains how your data is handled.</p>
+
+    <hr class="divider">
 
     <h2>Data Storage</h2>
     <p>All your data — verses, collections, memorization progress, and settings — is stored locally on your device using your browser's localStorage. No data is sent to or stored on any rum1n8 server. The app is a static website with no backend database.</p>
@@ -95,7 +256,12 @@
     <h2>Contact</h2>
     <p>For questions about this privacy policy, please open an issue on the <a href="https://github.com/timunrau/rum1n8" target="_blank" rel="noopener noreferrer">GitHub repository</a>.</p>
 
-    <a href="/app/" class="back">Back to app</a>
-  </div>
+    <a href="/app/" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to app
+    </a>
+  </main>
 </body>
 </html>
