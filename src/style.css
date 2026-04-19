@@ -128,7 +128,7 @@
     --color-nav-active: #d9af4d;
     --color-nav-inactive: #8a7f6a;
     --color-word-unrevealed: rgba(242, 231, 212, 0.22);
-    --color-word-incorrect: #f5b8b2;
+    --color-word-incorrect: #f87171;
     --color-highlight: #d9af4d;
 
     --color-accent: #5278b0;
@@ -566,7 +566,6 @@
     background-image: var(--gradient-primary);
     color: #ffffff;
     cursor: pointer;
-    box-shadow: var(--shadow-lift);
   }
   .mode-chip--active:hover {
     transform: translateY(-1px);

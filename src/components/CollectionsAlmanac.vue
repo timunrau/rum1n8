@@ -21,7 +21,10 @@
         data-testid="almanac-start-review"
         @click="$emit('start-review')"
       >
-        Start today's review &rarr;
+        Start today's review
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
       </button>
     </div>
     <h2 class="almanac__section-heading fade-in">{{ sectionTitle }}</h2>

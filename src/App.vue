@@ -421,7 +421,7 @@
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Restore & Export
+            Backup & Restore
             <span
               v-if="shouldShowBackupReminder"
               class="ml-auto w-2 h-2 bg-accent-warm rounded-full flex-shrink-0"
@@ -4934,9 +4934,11 @@ export default {
             view: 'review-list'
           }
         } else {
-          // Fallback: no specific source
-          reviewSourceList.value = null
-          reviewSourceState.value = null
+          // Coming from collections view — use the full review sorted list so "Next Verse" walks all mastered verses
+          reviewSourceList.value = reviewSortedVerses.value
+          reviewSourceState.value = {
+            view: 'review-list'
+          }
         }
       }
       

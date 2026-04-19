@@ -20,7 +20,7 @@ test('download backup: Settings -> Backup/Import -> Download -> file download tr
 
   await expect(page.getByTestId('modal-backup-restore')).toBeVisible()
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: /Download|Backup/i }).click()
+  await page.getByRole('button', { name: /Download Backup/i }).click()
   const download = await downloadPromise
   expect(download.suggestedFilename()).toMatch(/rum1n8-backup.*\.json/)
 })
