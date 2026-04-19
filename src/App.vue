@@ -155,7 +155,7 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 bottom-0 bg-black/20 pointer-events-none" />
+        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>
     </div>
 
@@ -248,7 +248,7 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
       />
       <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 bottom-0 bg-black/20 pointer-events-none" />
+        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>
     </div>
 
