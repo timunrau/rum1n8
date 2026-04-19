@@ -1,3 +1,15 @@
+# [1.9.0](https://github.com/timunrau/rum1n8/compare/v1.8.0...v1.9.0) (2026-04-19)
+
+
+### Bug Fixes
+
+* completion tray shadows, FAB safe-area, swipe/chart conflict, privacy branding, collection expand-all ([54422a3](https://github.com/timunrau/rum1n8/commit/54422a3c2bbce0db5804d9097ae6a71ceeb7eb6a))
+
+
+### Features
+
+* improve copyright import error with rich UI and deep Bible app links ([d476b96](https://github.com/timunrau/rum1n8/commit/d476b960ff1c3d15123f8b638f4a0de1c09fa189))
+
 # [1.8.0](https://github.com/timunrau/rum1n8/compare/v1.7.0...v1.8.0) (2026-04-19)
 
 
