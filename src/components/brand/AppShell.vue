@@ -58,11 +58,11 @@ defineProps({
 }
 
 .dark .app-shell__decor--gold {
-  background: rgba(217, 175, 77, 0.14);
+  background: rgba(187, 132, 42, 0.16);
 }
 
 .dark .app-shell__decor--blue {
-  background: rgba(75, 130, 216, 0.12);
+  background: rgba(57, 98, 170, 0.14);
 }
 
 @media (max-width: 639px) {
@@ -75,7 +75,7 @@ defineProps({
     left: -5.5rem;
     width: 15.5rem;
     height: 15.5rem;
-    background: rgba(217, 175, 77, 0.1);
+    background: rgba(187, 132, 42, 0.12);
   }
 
   .dark .app-shell__decor--blue {
@@ -83,7 +83,7 @@ defineProps({
     right: -5.5rem;
     width: 16.5rem;
     height: 16.5rem;
-    background: rgba(75, 130, 216, 0.09);
+    background: rgba(57, 98, 170, 0.1);
   }
 }
 </style>

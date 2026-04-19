@@ -70,8 +70,8 @@ const variant = computed(() => {
 }
 
 .dark .pos-badge-el--due {
-  color: #f2d789;
-  background: rgba(217, 175, 77, 0.2);
+  color: #f0d38b;
+  background: rgba(199, 154, 43, 0.18);
 }
 
 .dark .pos-badge-el--mastered {

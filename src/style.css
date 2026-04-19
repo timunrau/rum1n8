@@ -84,81 +84,75 @@
   }
 
   .dark {
-    /* Lamplight — warm brown-black, cream text, richer gold */
-    --color-bg-base: #1a1510;
-    --color-bg-chrome: #211a13;
-    --color-bg-chrome-rgb: 33, 26, 19;
-    --color-bg-surface: #241c14;
-    --color-bg-elevated: #2b2218;
-    --color-bg-sunken: #15100b;
-    --color-bg-overlay: #2b2218;
-    --color-bg-hover: #2e2519;
-    --color-bg-active: #3a2f1f;
-    --color-border-default: rgba(217, 175, 77, 0.14);
-    --color-border-input: rgba(217, 175, 77, 0.28);
-    --color-divider: rgba(217, 175, 77, 0.1);
-    --color-text-primary: #f2e7d4;
-    --color-text-secondary: #c8b99e;
-    --color-text-muted: #8a7f6a;
-    --color-text-faint: rgba(242, 231, 212, 0.22);
+    /* Ink — marketing-page dark translated to app surfaces */
+    --color-bg-base: #0d1421;
+    --color-bg-chrome: #111a29;
+    --color-bg-chrome-rgb: 17, 26, 41;
+    --color-bg-surface: #152033;
+    --color-bg-elevated: #1b2940;
+    --color-bg-sunken: #08101b;
+    --color-bg-overlay: #1a2740;
+    --color-bg-hover: #1a2840;
+    --color-bg-active: #223352;
+    --color-border-default: rgba(183, 201, 232, 0.14);
+    --color-border-input: rgba(183, 201, 232, 0.26);
+    --color-divider: rgba(183, 201, 232, 0.1);
+    --color-text-primary: #eef4ff;
+    --color-text-secondary: #c2d0e7;
+    --color-text-muted: #95a8c9;
+    --color-text-faint: rgba(238, 244, 255, 0.24);
 
-    --color-status-due-bg: #2a0f0c;
-    --color-status-due-border: #5a1e18;
-    --color-status-due-text: #f5b8b2;
-    --color-status-success-bg: #0f1f14;
-    --color-status-success-border: #214833;
-    --color-status-success-text: #a8d8ad;
-    --color-status-warn-bg: #2a1f0a;
-    --color-status-warn-border: #4c3a14;
-    --color-status-warn-text: #e8c880;
-    --color-status-info-bg: #121a2b;
-    --color-status-info-border: #26355a;
-    --color-status-info-text: #b4c4e8;
-    --color-status-error-bg: #2a0f0c;
-    --color-status-error-border: #5a1e18;
-    --color-status-error-text: #f5b8b2;
-    --color-status-orange-bg: #2a170a;
-    --color-status-orange-text: #edbb8a;
-    --color-status-purple-bg: #1d1426;
-    --color-status-purple-text: #cbb4e8;
-    --color-status-amber-bg: #2a1f0a;
-    --color-status-amber-border: #4c3a14;
-    --color-status-amber-text: #e8c880;
+    --color-status-due-bg: #2b141b;
+    --color-status-due-border: #633340;
+    --color-status-due-text: #f2c0c8;
+    --color-status-success-bg: #0f2018;
+    --color-status-success-border: #244634;
+    --color-status-success-text: #a8d7b5;
+    --color-status-warn-bg: #21283a;
+    --color-status-warn-border: #76602d;
+    --color-status-warn-text: #edd18b;
+    --color-status-info-bg: #122031;
+    --color-status-info-border: #29456f;
+    --color-status-info-text: #b9cae6;
+    --color-status-error-bg: #2b141b;
+    --color-status-error-border: #633340;
+    --color-status-error-text: #f2c0c8;
+    --color-status-orange-bg: #252235;
+    --color-status-orange-text: #efc39a;
+    --color-status-purple-bg: #1d1730;
+    --color-status-purple-text: #d0c1ee;
+    --color-status-amber-bg: #212537;
+    --color-status-amber-border: #735d2b;
+    --color-status-amber-text: #edd18b;
 
-    --color-nav-active: #d9af4d;
-    --color-nav-inactive: #8a7f6a;
-    --color-word-unrevealed: rgba(242, 231, 212, 0.22);
-    --color-word-incorrect: #f87171;
-    --color-highlight: #d9af4d;
+    --color-nav-active: #eef4ff;
+    --color-nav-inactive: #95a8c9;
+    --color-word-unrevealed: rgba(238, 244, 255, 0.24);
+    --color-word-incorrect: #f3a8b6;
+    --color-highlight: #c79a2b;
 
     --color-accent: #5278b0;
     --color-accent-strong: #2b4f8c;
-    --color-accent-warm: #d9af4d;
+    --color-accent-warm: #c79a2b;
     --gradient-primary: linear-gradient(180deg, #5d7fb4 0%, #2b4f8c 100%);
     --gradient-page:
       radial-gradient(circle at top left, rgba(187, 132, 42, 0.18), transparent 30%),
       radial-gradient(circle at top right, rgba(57, 98, 170, 0.18), transparent 28%),
-      linear-gradient(180deg, #14100a 0%, #1a1510 52%, #201912 100%);
-    --shadow-soft: 0 24px 70px rgba(0, 0, 0, 0.5);
-    --shadow-lift: 0 12px 24px rgba(4, 10, 20, 0.34);
+      linear-gradient(180deg, #08101b 0%, #0d1421 52%, #131d2e 100%);
+    --shadow-soft: 0 24px 70px rgba(2, 6, 23, 0.42);
+    --shadow-lift: 0 18px 34px rgba(2, 6, 23, 0.34);
 
     /* Marketing aliases in dark */
-    --page-bg: #1a1510;
-    --page-bg-soft: #211a13;
-    --border: rgba(217, 175, 77, 0.14);
-    --text: #f2e7d4;
-    --text-muted: #c8b99e;
-    --text-soft: #8a7f6a;
-    --shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
-  }
-
-  @media (max-width: 639px) {
-    .dark {
-      --gradient-page:
-        radial-gradient(circle at top left, rgba(187, 132, 42, 0.13), transparent 34%),
-        radial-gradient(circle at top right, rgba(57, 98, 170, 0.12), transparent 32%),
-        linear-gradient(180deg, #14100b 0%, #19140f 52%, #1e1811 100%);
-    }
+    --page-bg: #0d1421;
+    --page-bg-soft: #111a29;
+    --border: rgba(183, 201, 232, 0.14);
+    --text: #eef4ff;
+    --text-muted: #c2d0e7;
+    --text-soft: #95a8c9;
+    --accent: #5278b0;
+    --accent-strong: #2b4f8c;
+    --accent-warm: #c79a2b;
+    --shadow: 0 24px 70px rgba(2, 6, 23, 0.42);
   }
 }
 
@@ -311,13 +305,17 @@
     cursor: not-allowed;
   }
   .dark .btn-accent-soft {
-    background-color: rgba(217, 175, 77, 0.1);
-    border-color: rgba(217, 175, 77, 0.28);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+    background-color: rgba(21, 32, 51, 0.92);
+    background-image: linear-gradient(180deg, rgba(199, 154, 43, 0.14), rgba(199, 154, 43, 0.05));
+    border-color: rgba(199, 154, 43, 0.34);
+    box-shadow:
+      0 12px 24px rgba(2, 6, 23, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
   .dark .btn-accent-soft:hover:not(:disabled) {
-    background-color: rgba(217, 175, 77, 0.16);
-    border-color: rgba(217, 175, 77, 0.4);
+    background-color: rgba(25, 39, 61, 0.96);
+    background-image: linear-gradient(180deg, rgba(199, 154, 43, 0.18), rgba(199, 154, 43, 0.08));
+    border-color: rgba(199, 154, 43, 0.46);
   }
 
   .btn-ghost {
@@ -394,7 +392,7 @@
     color: #9c2a22;
   }
   .dark .pos-badge--due {
-    color: #f5b8b2;
+    color: var(--color-status-due-text);
   }
 
   .almanac__stats {
