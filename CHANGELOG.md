@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/timunrau/rum1n8/compare/v1.10.0...v1.10.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* align dark mode with marketing palette ([9eba832](https://github.com/timunrau/rum1n8/commit/9eba832797830c1a45af171144ba8515648608a9))
+
 # [1.10.0](https://github.com/timunrau/rum1n8/compare/v1.9.1...v1.10.0) (2026-04-19)
 
 
