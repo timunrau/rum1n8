@@ -1159,16 +1159,23 @@
               <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
             </button>
 
-            <div v-if="importError" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg">
-              <p class="text-sm text-status-amber-text">{{ importError }}</p>
-              <a
-                v-if="importErrorShowLink"
-                href="https://fetch.bible/content/need/"
-                target="_blank"
-                class="text-sm text-status-purple-text hover:text-status-purple-text underline mt-1 inline-block"
-              >
-                Learn more about available translations
-              </a>
+            <div v-if="importError" ref="importErrorRef" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg space-y-2">
+              <template v-if="importErrorShowLink">
+                <p class="text-sm text-status-amber-text">This translation is copyrighted. Copy the text from one of the links below and paste it into <strong>Verse Content</strong>.</p>
+                <div class="flex flex-wrap gap-2">
+                  <a :href="bibleGatewayUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">Bible Gateway</a>
+                  <a v-if="youVersionUrl" :href="youVersionUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">YouVersion</a>
+                </div>
+                <a
+                  href="https://fetch.bible/content/need/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm text-status-purple-text hover:underline inline-block"
+                >
+                  Find out why popular Bibles can't be freely shared
+                </a>
+              </template>
+              <p v-else class="text-sm text-status-amber-text">{{ importError }}</p>
             </div>
           </div>
 
@@ -2026,8 +2033,40 @@ export default {
     const importingVerse = ref(false)
     const importError = ref(null)
     const importErrorShowLink = ref(false)
+    const importErrorRef = ref(null)
     const bibleClient = ref(null)
     const bibleCollection = ref(null)
+
+    // YouVersion numeric IDs for common translations
+    const youVersionIds = {
+      NIV: 111, ESV: 59, KJV: 1, NKJV: 114, NLT: 116, NASB: 100,
+      NASB1995: 2692, CSB: 1713, HCSB: 72, MSG: 97, NET: 107,
+      AMP: 1588, WEB: 206, GNT: 68, CEV: 392, ERV: 406, ICB: 1359,
+      NRSVUE: 3523, CEB: 37, TPT: 1849, VOICE: 1240
+    }
+    // Corrections where getBookId's 3-char fallback differs from USFM/YouVersion codes
+    const youVersionBookOverrides = { joh: 'JHN', mar: 'MRK', phi: 'PHP', jam: 'JAS' }
+
+    const bibleGatewayUrl = computed(() => {
+      const ref = newVerse.value.reference.trim()
+      const version = newVerse.value.bibleVersion.trim().toUpperCase()
+      if (!ref || !version) return 'https://www.biblegateway.com/'
+      return `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=${encodeURIComponent(version)}`
+    })
+
+    const youVersionUrl = computed(() => {
+      const ref = newVerse.value.reference.trim()
+      const version = newVerse.value.bibleVersion.trim().toUpperCase()
+      if (!ref || !version) return null
+      const versionId = youVersionIds[version]
+      if (!versionId) return null
+      const parsed = parseVerseReference(ref)
+      if (!parsed) return null
+      const bookCode = getBookId(parsed.bookName)
+      const usfmBook = youVersionBookOverrides[bookCode] || bookCode.toUpperCase()
+      const verseRef = parsed.verseEnd > parsed.verseStart ? `${parsed.verseStart}-${parsed.verseEnd}` : `${parsed.verseStart}`
+      return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.chapter}.${verseRef}.${version}`
+    })
 
     const newVerse = ref({
       reference: '',
@@ -3848,9 +3887,10 @@ export default {
         }
 
         if (!translationId) {
-          importError.value = `The ${version.toUpperCase()} version is not available. Most popular translations (ESV, NIV, NASB, etc.) are copyrighted and not freely distributable.`
+          importError.value = `${version.toUpperCase()} is not available for import.`
           importErrorShowLink.value = true
           importingVerse.value = false
+          nextTick(() => importErrorRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
           return
         }
 
@@ -6569,6 +6609,9 @@ export default {
       importingVerse,
       importError,
       importErrorShowLink,
+      importErrorRef,
+      bibleGatewayUrl,
+      youVersionUrl,
       importVerseContent,
       isPWAInstalled,
       showIOSModal,
