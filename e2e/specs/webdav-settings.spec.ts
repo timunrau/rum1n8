@@ -11,18 +11,18 @@ test.beforeEach(async ({ page }) => {
 
 test('open sync settings: Settings gear -> Sync', async ({ page }) => {
   await page.getByTestId('hamburger-button').click()
-  await page.getByTestId('settings-sync').click()
+  await page.getByTestId('drawer-sync-setup').click()
 
   await expect(page.getByTestId('modal-sync-settings')).toBeVisible()
-  await expect(page.getByText(/Sync Settings/i)).toBeVisible()
+  await expect(page.getByTestId('sync-gdrive-signin')).toBeVisible()
 })
 
 test('fill URL, username, password -> Save -> settings persist (reopen modal, values present)', async ({
   page,
 }) => {
   await page.getByTestId('hamburger-button').click()
-  await page.getByTestId('settings-sync').click()
-  await page.getByRole('button', { name: /^WebDAV$/i }).click()
+  await page.getByTestId('drawer-sync-setup').click()
+  await page.getByTestId('sync-advanced-toggle').click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')
@@ -42,8 +42,8 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 test('test connection: mock WebDAV -> Test -> success message', async ({ page }) => {
   await mockWebDAV(page)
   await page.getByTestId('hamburger-button').click()
-  await page.getByTestId('settings-sync').click()
-  await page.getByRole('button', { name: /^WebDAV$/i }).click()
+  await page.getByTestId('drawer-sync-setup').click()
+  await page.getByTestId('sync-advanced-toggle').click()
 
   await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
   await page.getByLabel(/Username/i).fill('testuser')

@@ -3,7 +3,7 @@ defineEmits(['sync', 'close'])
 </script>
 
 <template>
-  <div class="practice-hint" data-testid="backup-nudge-card" role="region" aria-label="Keep your verses safe">
+  <div class="practice-hint" data-testid="backup-nudge-card" role="region" aria-label="Sync your verses">
     <div class="flex items-start gap-3">
       <div class="practice-hint__icon">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -11,8 +11,8 @@ defineEmits(['sync', 'close'])
         </svg>
       </div>
       <div class="flex-1 min-w-0">
-        <p class="practice-hint__title">Keep your verses safe.</p>
-        <p class="practice-hint__body">Sync keeps your verses safely backed up and available across your devices.</p>
+        <p class="practice-hint__title">Sync your verses.</p>
+        <p class="practice-hint__body">Keep them safe and available on every device you use.</p>
         <div class="mt-3">
           <button
             type="button"

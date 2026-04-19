@@ -48,16 +48,57 @@ export function migrateProviderSetting() {
 
 // --- Sync state ---
 
-function getSyncState() {
+export function getSyncState() {
   const stored = localStorage.getItem(SYNC_STATE_KEY)
   if (stored) {
-    return JSON.parse(stored)
+    try {
+      return JSON.parse(stored)
+    } catch {
+      return { lastSync: null, lastStatus: null, lastError: null }
+    }
   }
-  return { lastSync: null }
+  return { lastSync: null, lastStatus: null, lastError: null }
 }
 
 function saveSyncState(state) {
   localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(state))
+}
+
+/**
+ * Translate provider/network errors into plain-English messages non-technical
+ * users can act on. Unknown errors fall back to a generic reassurance.
+ */
+export function mapSyncError(error, providerId) {
+  const raw = (error && (error.message || error)) || ''
+  const msg = String(raw)
+  const lower = msg.toLowerCase()
+
+  if (lower.includes('sign-in') || lower.includes('token refresh') || lower.includes('expired') || lower.includes('401') || lower.includes('unauthorized')) {
+    if (providerId === 'gdrive') {
+      return 'Your Google sign-in expired. Please sign in again to keep syncing.'
+    }
+    return 'Sign-in expired or credentials are incorrect. Please check your sync settings.'
+  }
+  if (lower.includes('not configured')) {
+    return 'Sync isn\u2019t set up yet. Tap Set up to connect Google Drive.'
+  }
+  if (lower.includes('cors')) {
+    return 'Couldn\u2019t reach the server from your browser. If this keeps happening, check your sync settings.'
+  }
+  if (lower.includes('timeout') || lower.includes('timed out')) {
+    return 'The server took too long to respond. Check your internet connection and try again.'
+  }
+  if (lower.includes('network') || lower.includes('failed to fetch') || lower.includes('offline')) {
+    return 'Couldn\u2019t reach the internet. Your changes are saved on this device and will sync when you\u2019re back online.'
+  }
+  if (lower.includes('authentication failed') || lower.includes('invalid credentials')) {
+    return 'Sign-in details are incorrect. Please check your sync settings.'
+  }
+  if (lower.includes('quota') || lower.includes('storage full')) {
+    return 'Your cloud storage is full. Free up some space and try again.'
+  }
+
+  return 'Sync couldn\u2019t finish right now. Your verses are safe on this device \u2014 we\u2019ll try again soon.'
 }
 
 // --- Deletion tracking ---
@@ -318,13 +359,14 @@ export function mergeData(localVerses, localCollections, remoteData) {
  */
 export async function syncData(localVerses, localCollections) {
   const provider = getActiveProvider()
+  const providerId = getActiveProviderId()
   if (!provider) {
-    return { success: false, error: 'No sync provider configured' }
+    return { success: false, error: 'No sync provider configured', friendlyError: mapSyncError('not configured', null) }
   }
 
   const settings = provider.getSettings()
   if (!settings) {
-    return { success: false, error: `${provider.name} not configured` }
+    return { success: false, error: `${provider.name} not configured`, friendlyError: mapSyncError('not configured', providerId) }
   }
 
   try {
@@ -341,7 +383,7 @@ export async function syncData(localVerses, localCollections) {
       console.log(`[Sync] No remote data found, uploading local data`)
       const localAppSettingsRecord = getAppSettingsRecord()
       await provider.upload(settings, localVerses, localCollections, null, localAppSettingsRecord)
-      saveSyncState({ lastSync: new Date().toISOString() })
+      saveSyncState({ lastSync: new Date().toISOString(), lastStatus: 'success', lastError: null, providerId })
       return {
         success: true,
         action: 'uploaded',
@@ -361,7 +403,7 @@ export async function syncData(localVerses, localCollections) {
       appSettings: merged.appSettings,
       appSettingsLastModified: merged.appSettingsLastModified
     })
-    saveSyncState({ lastSync: new Date().toISOString() })
+    saveSyncState({ lastSync: new Date().toISOString(), lastStatus: 'success', lastError: null, providerId })
 
     // Prune old deletion entries
     const remoteVerseIds = new Set((remoteData.verses || []).map(v => v.id))
@@ -381,6 +423,15 @@ export async function syncData(localVerses, localCollections) {
     }
   } catch (error) {
     console.error('Sync error:', error)
-    return { success: false, error: error.message || 'Sync failed' }
+    const raw = error.message || 'Sync failed'
+    const friendly = mapSyncError(error, providerId)
+    const prev = getSyncState()
+    saveSyncState({
+      lastSync: prev.lastSync || null,
+      lastStatus: 'error',
+      lastError: friendly,
+      providerId
+    })
+    return { success: false, error: raw, friendlyError: friendly }
   }
 }

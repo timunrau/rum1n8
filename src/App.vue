@@ -379,33 +379,84 @@
         <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->
         <nav class="flex-1 px-3 py-2 overflow-y-auto">
-          <button
-            data-testid="settings-sync-now"
-            @click="manualSyncFromDrawer"
-            :disabled="syncing"
-            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <svg
-              v-if="syncing"
-              class="w-5 h-5 shrink-0 animate-spin-reverse"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              style="transform-origin: center;"
+          <!-- Sync status card -->
+          <div class="px-2 pt-1 pb-2">
+            <div
+              class="rounded-xl border p-3"
+              :class="[
+                syncStatus.kind === 'error' ? 'border-status-error-border bg-status-error-bg' :
+                syncStatus.kind === 'unconfigured' ? 'border-status-info-border bg-status-info-bg' :
+                'border-border-default bg-surface-card'
+              ]"
+              data-testid="drawer-sync-status"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <svg
-              v-else
-              class="w-5 h-5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {{ syncing ? 'Syncing…' : 'Sync now' }}
-          </button>
+              <div class="flex items-start gap-3">
+                <!-- Status icon -->
+                <div class="shrink-0 mt-0.5">
+                  <svg
+                    v-if="syncStatus.kind === 'syncing'"
+                    class="w-5 h-5 animate-spin-reverse text-text-secondary"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <svg
+                    v-else-if="syncStatus.kind === 'error'"
+                    class="w-5 h-5 text-status-error-text"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                  <svg
+                    v-else-if="syncStatus.kind === 'ok'"
+                    class="w-5 h-5 text-status-success-text"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l2 2 4-4" />
+                  </svg>
+                  <svg
+                    v-else
+                    class="w-5 h-5 text-text-muted"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-text-primary">{{ syncStatus.title }}</p>
+                  <p v-if="syncStatus.detail" class="text-xs text-text-muted mt-0.5 break-words">{{ syncStatus.detail }}</p>
+                  <div class="mt-2 flex gap-2">
+                    <button
+                      v-if="syncStatus.kind === 'unconfigured'"
+                      data-testid="drawer-sync-setup"
+                      @click="openSyncSettings"
+                      class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+                    >
+                      Set up sync
+                    </button>
+                    <template v-else>
+                      <button
+                        data-testid="settings-sync-now"
+                        @click="manualSyncFromDrawer"
+                        :disabled="syncing"
+                        class="px-3 py-1.5 rounded-lg border border-border-input text-text-secondary hover:bg-surface-hover text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {{ syncStatus.kind === 'error' ? 'Retry' : 'Sync now' }}
+                      </button>
+                      <button
+                        data-testid="settings-sync"
+                        @click="openSyncSettings"
+                        class="px-3 py-1.5 rounded-lg text-text-muted hover:bg-surface-hover text-xs font-medium transition-colors"
+                      >
+                        Manage
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <button
             data-testid="settings-practice"
             @click="openPracticeSettings"
@@ -416,16 +467,6 @@
               <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
             </svg>
             Settings
-          </button>
-          <button
-            data-testid="settings-sync"
-            @click="openSyncSettings"
-            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
-          >
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            </svg>
-            Configure Sync
           </button>
           <button
             data-testid="settings-backup"
@@ -1666,7 +1707,9 @@ import {
   migrateProviderSetting,
   getActiveProviderId,
   setActiveProviderId,
-  getActiveProvider
+  getActiveProvider,
+  getSyncState,
+  mapSyncError
 } from './sync/sync-manager.js'
 import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
@@ -2004,6 +2047,7 @@ export default {
     const toastState = ref({ show: false, message: '', isError: false })
     let toastTimeoutId = null
     let drawerHideTimeoutId = null
+    let syncTickIntervalId = null
     let syncRequestedWhileSyncing = false
     let syncFeedbackRequested = false
     const dailyActivityScrollRef = ref(null)
@@ -3066,12 +3110,74 @@ export default {
 
     // Reactive trigger for sync config changes (localStorage isn't reactive)
     const syncConfigVersion = ref(0)
+    const syncStateVersion = ref(0)
+    const syncTick = ref(0) // bumps every minute so relative time stays fresh
 
     // Check if any sync provider is configured
     const hasSyncConfigured = computed(() => {
       syncConfigVersion.value // track dependency
       return isSyncConfigured()
     })
+
+    const activeProviderLabel = computed(() => {
+      syncConfigVersion.value
+      const id = getActiveProviderId()
+      if (id === 'gdrive') return 'Google Drive'
+      if (id === 'webdav') return 'WebDAV'
+      return 'cloud'
+    })
+
+    const syncStatus = computed(() => {
+      syncStateVersion.value
+      syncTick.value
+      syncing.value // keep reactive while syncing
+      const state = getSyncState()
+      const configured = hasSyncConfigured.value
+
+      if (syncing.value) {
+        return { kind: 'syncing', title: 'Syncing\u2026', detail: '' }
+      }
+      if (!configured) {
+        return {
+          kind: 'unconfigured',
+          title: 'Sync not set up',
+          detail: 'Back up to Google Drive and sync across devices'
+        }
+      }
+      if (state.lastStatus === 'error') {
+        return {
+          kind: 'error',
+          title: 'Sync failed',
+          detail: state.lastError || 'Tap to try again'
+        }
+      }
+      if (state.lastSync) {
+        return {
+          kind: 'ok',
+          title: `Synced with ${activeProviderLabel.value}`,
+          detail: formatRelativeTime(state.lastSync)
+        }
+      }
+      return {
+        kind: 'idle',
+        title: `Ready to sync with ${activeProviderLabel.value}`,
+        detail: 'Tap Sync now to back up your verses'
+      }
+    })
+
+    function formatRelativeTime(iso) {
+      if (!iso) return ''
+      const then = new Date(iso).getTime()
+      if (!then) return ''
+      const diff = Date.now() - then
+      if (diff < 60_000) return 'Just now'
+      const minutes = Math.floor(diff / 60_000)
+      if (minutes < 60) return `${minutes} min ago`
+      const hours = Math.floor(minutes / 60)
+      if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+      const days = Math.floor(hours / 24)
+      return `${days} day${days !== 1 ? 's' : ''} ago`
+    }
 
     // Get last backup timestamp (reactive)
     const getLastBackupTimestamp = () => {
@@ -5984,8 +6090,8 @@ export default {
             }
           } else {
             // Sync failed
-            const errorMsg = result.error || 'Sync failed'
-            console.warn('Sync failed:', errorMsg)
+            const errorMsg = result.friendlyError || result.error || 'Sync failed'
+            console.warn('Sync failed:', result.error || errorMsg)
             if (shouldShowFeedback) {
               if (syncRequestedWhileSyncing) {
                 syncFeedbackRequested = true
@@ -5997,7 +6103,7 @@ export default {
           }
         } catch (error) {
           // Sync failed
-          const errorMsg = error.message || 'Sync error occurred'
+          const errorMsg = mapSyncError(error, getActiveProviderId())
           console.error('Sync error:', error)
           if (shouldShowFeedback) {
             if (syncRequestedWhileSyncing) {
@@ -6009,6 +6115,7 @@ export default {
           }
         } finally {
           syncing.value = false
+          syncStateVersion.value++
         }
       } while (syncRequestedWhileSyncing)
     }
@@ -6406,6 +6513,8 @@ export default {
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
       handleWindowScroll()
 
+      syncTickIntervalId = setInterval(() => { syncTick.value++ }, 60_000)
+
       // Perform initial sync on app load
       await triggerSync()
     })
@@ -6422,6 +6531,9 @@ export default {
       }
       if (updateStateTimeoutId) {
         clearTimeout(updateStateTimeoutId)
+      }
+      if (syncTickIntervalId) {
+        clearInterval(syncTickIntervalId)
       }
     })
 
@@ -6593,6 +6705,7 @@ export default {
       updateRequireReferenceTyping,
       syncing,
       syncError,
+      syncStatus,
       shareSuccess,
       showImportCSV,
       csvFileInput,
