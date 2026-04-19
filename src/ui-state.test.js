@@ -3,6 +3,7 @@ import {
   APP_ROOT_PATH,
   UI_STATE_KEY,
   buildAboutUrl,
+  getOnboardingUiState,
   getPreferredAppUrl,
   normalizeAppUrl,
   rememberAppUrl,
@@ -104,5 +105,26 @@ describe('ui-state', () => {
     expect(buildAboutUrl('/app/?view=review-list')).toBe('/about/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
     expect(buildAboutUrl('/')).toBe('/about/')
     expect(buildAboutUrl()).toBe('/about/?returnTo=%2Fapp%2F%3Fview%3Dstats')
+  })
+
+  it('normalizes legacy onboarding state into the current review CTA flow', () => {
+    const store = setupBrowserEnv()
+    store[UI_STATE_KEY] = JSON.stringify({
+      guidedOnboardingStep: 'review-tab',
+      guidedOnboardingVerseId: 'verse-1',
+      practiceModesHintSeen: true,
+    })
+
+    expect(getOnboardingUiState()).toEqual({
+      onboardingDismissed: false,
+      practiceModeHintsSeen: {
+        learn: true,
+        memorize: true,
+        master: true,
+      },
+      practiceModesHintSeen: true,
+      guidedOnboardingStep: 'review-cta',
+      guidedOnboardingVerseId: 'verse-1',
+    })
   })
 })

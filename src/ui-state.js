@@ -27,7 +27,7 @@ const GUIDED_ONBOARDING_STEPS = new Set([
   'hero',
   'tap-verse',
   'practice',
-  'review-tab',
+  'review-cta',
   'done',
 ])
 
@@ -139,6 +139,9 @@ export function markAppOpened(url = getCurrentAppUrl()) {
 }
 
 function normalizeGuidedOnboardingStep(value) {
+  if (value === 'review-tab') {
+    return 'review-cta'
+  }
   return GUIDED_ONBOARDING_STEPS.has(value) ? value : null
 }
 

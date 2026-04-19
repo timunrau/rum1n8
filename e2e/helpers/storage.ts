@@ -79,6 +79,15 @@ export async function seedAppSettings(
   )
 }
 
+export async function seedUiState(
+  page: Page,
+  uiState: Record<string, unknown>
+) {
+  await page.evaluate((data: string) => {
+    localStorage.setItem('rum1n8-ui-state', data)
+  }, JSON.stringify(uiState))
+}
+
 export async function getStoredVerses(page: Page): Promise<unknown[]> {
   return page.evaluate(() => {
     const raw = localStorage.getItem('rum1n8-verses')

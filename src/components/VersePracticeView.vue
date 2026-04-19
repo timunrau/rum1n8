@@ -111,7 +111,9 @@
         <div class="flex items-start gap-3">
           <div class="practice-hint__icon">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18h6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 22h4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a6 6 0 00-3.6 10.8c.79.59 1.35 1.44 1.56 2.4h4.08c.21-.96.77-1.81 1.56-2.4A6 6 0 0012 3z" />
             </svg>
           </div>
           <div class="flex-1">

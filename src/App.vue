@@ -619,8 +619,12 @@
             :due-verses-count="dueVersesCount"
             :mastered-count="masteredCount"
             :show-start-review="reviewSortedVerses.length > 0"
+            :show-start-review-callout="shouldShowStartReviewCallout"
+            :start-review-callout-title="startReviewCalloutTitle"
+            :start-review-callout-body="startReviewCalloutBody"
             section-title="Your Collections"
-            @start-review="handleVerseClick(reviewSortedVerses[0])"
+            @start-review="handleStartReviewAction"
+            @dismiss-start-review-callout="dismissStartReviewCallout"
           />
 
           <!-- Collection Cards -->
@@ -795,8 +799,12 @@
           :due-verses-count="dueVersesCount"
           :mastered-count="masteredCount"
           :show-start-review="reviewSortedVerses.length > 0"
+          :show-start-review-callout="shouldShowStartReviewCallout"
+          :start-review-callout-title="startReviewCalloutTitle"
+          :start-review-callout-body="startReviewCalloutBody"
           section-title="Your Verses"
-          @start-review="handleVerseClick(reviewSortedVerses[0])"
+          @start-review="handleStartReviewAction"
+          @dismiss-start-review-callout="dismissStartReviewCallout"
         />
 
         <!-- Verse List -->
@@ -825,9 +833,11 @@
             <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
               <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
               <div class="flex items-start gap-3">
-                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-warm/15 text-accent-warm">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-warm text-white shadow-sm">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18h6" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 22h4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a6 6 0 00-3.6 10.8c.79.59 1.35 1.44 1.56 2.4h4.08c.21-.96.77-1.81 1.56-2.4A6 6 0 0012 3z" />
                   </svg>
                 </div>
                 <div class="flex-1">
@@ -837,10 +847,13 @@
                 </div>
                 <button
                   type="button"
-                  class="rounded-xl px-2 py-1 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
+                  class="rounded-full p-1 text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
+                  aria-label="Dismiss onboarding"
                   @click.stop="skipGuidedOnboarding"
                 >
-                  Skip
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -922,8 +935,18 @@
           <div
             v-if="shouldShowHeroOnboarding"
             data-testid="getting-started-card"
-            class="hero-onboarding"
+            class="hero-onboarding relative"
           >
+            <button
+              type="button"
+              class="absolute right-4 top-4 rounded-full p-1 text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
+              aria-label="Dismiss onboarding"
+              @click="skipGuidedOnboarding"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <p class="hero-onboarding__eyebrow">rum1n8</p>
             <h2 class="hero-onboarding__title">Start ruminating.</h2>
             <p class="hero-onboarding__subtitle">Choose a verse to get started.</p>
@@ -932,13 +955,6 @@
                 Add your first verse
                 <span class="sr-only">Add a verse</span>
               </PrimaryButton>
-              <button
-                type="button"
-                class="btn-ghost text-sm"
-                @click="skipGuidedOnboarding"
-              >
-                Skip
-              </button>
             </div>
           </div>
 
@@ -953,11 +969,6 @@
       </div>
       </div>
     </div>
-
-    <div
-      v-if="shouldShowGuidedOnboardingScrim"
-      class="pointer-events-none fixed inset-0 z-30 bg-black/20"
-    />
 
     <!-- Bottom Navigation -->
     <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="glass-chrome glass-chrome--nav fixed bottom-0 left-0 right-0 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
@@ -984,10 +995,7 @@
             @click="navigateToReviewList"
             :class="[
               'tab-btn',
-              currentView === 'review-list' ? 'tab-btn--active' : 'tab-btn--inactive',
-              shouldShowReviewTabCallout
-                ? 'z-40 ring-2 ring-accent-warm shadow-lg'
-                : ''
+              currentView === 'review-list' ? 'tab-btn--active' : 'tab-btn--inactive'
             ]"
           >
             <div class="relative">
@@ -1002,26 +1010,6 @@
             </div>
             <span class="tab-btn__label">Review</span>
           </button>
-
-          <div
-            v-if="shouldShowReviewTabCallout"
-            class="pointer-events-auto absolute bottom-full left-1/2 z-50 mb-3 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2"
-          >
-            <div class="relative rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
-              <div class="absolute left-1/2 top-full h-4 w-4 -translate-x-1/2 -translate-y-2 rotate-45 border-b border-r border-border-default bg-elevated" />
-              <p class="text-sm font-semibold text-text-primary">Nice. You've finished your first verse.</p>
-              <p class="mt-1 text-sm leading-relaxed text-text-secondary">Tap Review next.</p>
-              <div class="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  class="rounded-xl px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"
-                  @click="skipGuidedOnboarding"
-                >
-                  Skip
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Stats Tab (far right) -->
@@ -2060,6 +2048,8 @@ export default {
     const practiceModeHintsSeen = ref(initialOnboardingUiState.practiceModeHintsSeen)
     const guidedOnboardingStep = ref(initialOnboardingUiState.guidedOnboardingStep)
     const guidedOnboardingVerseId = ref(initialOnboardingUiState.guidedOnboardingVerseId)
+    const startReviewCalloutTitle = "You've mastered your first verse."
+    const startReviewCalloutBody = 'Review your verses each day to keep ruminating on the Word.'
     const verseCardRefs = new Map()
 
     // Color scheme (auto dark/light mode)
@@ -2183,6 +2173,10 @@ export default {
         nextVerseId = latestVerse?.id || null
       }
 
+      if (nextStep === 'review-cta') {
+        nextVerseId = null
+      }
+
       applyOnboardingUiState({
         ...localUiState,
         guidedOnboardingStep: nextStep,
@@ -2210,6 +2204,10 @@ export default {
     const skipGuidedOnboarding = () => {
       dismissOnboardingUiState()
       applyOnboardingUiState(getOnboardingUiState())
+    }
+
+    const dismissStartReviewCallout = () => {
+      setGuidedOnboardingStep('done', null)
     }
 
     const markCurrentPracticeModeHintSeen = (mode = memorizationMode.value) => {
@@ -2509,8 +2507,15 @@ export default {
       )
     })
 
-    const shouldShowGuidedOnboardingScrim = computed(() => {
-      return shouldShowReviewTabCallout.value
+    const shouldShowStartReviewCallout = computed(() => {
+      return (
+        guidedOnboardingStep.value === 'review-cta' &&
+        currentView.value === 'collections' &&
+        !currentCollectionId.value &&
+        !memorizingVerse.value &&
+        !reviewingVerse.value &&
+        reviewSortedVerses.value.length > 0
+      )
     })
 
     const allWordsRevealed = computed(() => {
@@ -2537,7 +2542,7 @@ export default {
     })
 
     const isGuidedPracticeOnboardingActive = computed(() => {
-      return ['practice', 'review-tab'].includes(guidedOnboardingStep.value)
+      return guidedOnboardingStep.value === 'practice'
     })
 
     const shouldShowPracticeModesHint = computed(() => {
@@ -2546,15 +2551,6 @@ export default {
         !!memorizationMode.value &&
         (!!memorizingVerse.value || !!reviewingVerse.value) &&
         !practiceModeHintsSeen.value?.[memorizationMode.value]
-      )
-    })
-
-    const shouldShowReviewTabCallout = computed(() => {
-      return (
-        guidedOnboardingStep.value === 'review-tab' &&
-        !memorizingVerse.value &&
-        !reviewingVerse.value &&
-        !currentCollectionId.value
       )
     })
 
@@ -2909,10 +2905,6 @@ export default {
 
     // Auto-scroll daily activity chart to the right when stats view is shown
     watch(currentView, (view) => {
-      if (view === 'review-list' && guidedOnboardingStep.value === 'review-tab') {
-        setGuidedOnboardingStep('done', null)
-      }
-
       if (view === 'stats') {
         nextTick(() => {
           if (dailyActivityScrollRef.value) {
@@ -3673,6 +3665,12 @@ export default {
       }
     }
 
+    const handleStartReviewAction = () => {
+      const verse = reviewSortedVerses.value[0]
+      if (!verse) return
+      handleVerseClick(verse)
+    }
+
     const isVerseExpanded = (verse) => !!expandedVerseIds.value[verse.id]
     const toggleVerseExpanded = (verse, e) => {
       e.stopPropagation()
@@ -3821,7 +3819,7 @@ export default {
         }
         verses.value.unshift(verse)
         saveVerses()
-        if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-tab') {
+        if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-cta') {
           setGuidedOnboardingStep('tap-verse', verse.id)
         }
         closeForm()
@@ -4754,7 +4752,7 @@ export default {
       currentView.value = 'review-list'
       searchQuery.value = ''
       searchActive.value = false
-      if (guidedOnboardingStep.value === 'review-tab') {
+      if (guidedOnboardingStep.value === 'review-cta') {
         setGuidedOnboardingStep('done', null)
       }
       pushNavigationState({ view: 'review-list' })
@@ -5050,6 +5048,10 @@ export default {
         }
         return
       }
+
+      if (guidedOnboardingStep.value === 'review-cta') {
+        setGuidedOnboardingStep('done', null)
+      }
       
       // IMPORTANT: Before starting a new review, ensure any previous review was saved (only counts when in master mode)
       // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
@@ -5219,11 +5221,22 @@ export default {
     // Exit memorization mode
     const exitMemorization = () => {
       stopSpeaking()
+      const completedCurrentMemorization =
+        !!memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value
+
+      if (
+        !completedCurrentMemorization &&
+        guidedOnboardingStep.value === 'practice' &&
+        memorizingVerse.value?.id === guidedOnboardingVerseId.value
+      ) {
+        setGuidedOnboardingStep('done', null)
+      }
       // Update memorization status if all words were revealed and accuracy requirement is met
-      if (memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value) {
+      if (completedCurrentMemorization) {
         const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
         if (verse) {
           const currentStatus = verse.memorizationStatus || 'unmemorized'
+          const isFirstMasteredVerse = verses.value.every(v => v.memorizationStatus !== 'mastered')
           
           // If completing master mode, mark as mastered and initialize spaced repetition
           if (memorizationMode.value === 'master' && currentStatus !== 'mastered') {
@@ -5253,10 +5266,12 @@ export default {
 
           if (
             memorizationMode.value === 'master' &&
-            verse.id === guidedOnboardingVerseId.value &&
-            (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice')
+            currentStatus !== 'mastered' &&
+            isFirstMasteredVerse &&
+            !onboardingDismissed.value &&
+            guidedOnboardingStep.value !== 'done'
           ) {
-            setGuidedOnboardingStep('review-tab', verse.id)
+            setGuidedOnboardingStep('review-cta', null)
           }
         }
       }
@@ -6553,9 +6568,10 @@ export default {
       guidedOnboardingVerseId,
       shouldShowHeroOnboarding,
       shouldShowVerseOnboardingCallout,
-      shouldShowReviewTabCallout,
-      shouldShowGuidedOnboardingScrim,
+      shouldShowStartReviewCallout,
       shouldShowPracticeModesHint,
+      startReviewCalloutTitle,
+      startReviewCalloutBody,
       sortedVerses,
       dueVersesCount,
       totalVerseCount,
@@ -6571,6 +6587,7 @@ export default {
       getMemorizationStatus,
       getNextMemorizationMode,
       handleVerseClick,
+      handleStartReviewAction,
       isVerseExpanded,
       toggleVerseExpanded,
       allCollectionVersesExpanded,
@@ -6683,6 +6700,7 @@ export default {
       toggleSettingsMenu,
       closeSettingsMenu,
       skipGuidedOnboarding,
+      dismissStartReviewCallout,
       dismissPracticeModesHint,
       openPracticeSettings,
       openSyncSettings,
