@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/timunrau/rum1n8/compare/v1.9.1...v1.10.0) (2026-04-19)
+
+
+### Features
+
+* **sync:** Google-first UX with persistent status and friendly errors ([234cb5b](https://github.com/timunrau/rum1n8/commit/234cb5b016bcb0fea3a5050f6b8f07de52f4faca))
+
 ## [1.9.1](https://github.com/timunrau/rum1n8/compare/v1.9.0...v1.9.1) (2026-04-19)
 
 
