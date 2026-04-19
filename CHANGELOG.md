@@ -1,3 +1,10 @@
+## [1.6.5](https://github.com/timunrau/rum1n8/compare/v1.6.4...v1.6.5) (2026-04-19)
+
+
+### Bug Fixes
+
+* update first-time onboarding modal text ([fda7cc8](https://github.com/timunrau/rum1n8/commit/fda7cc8d1f3806a41722d18ee792ad04fab5e953))
+
 ## [1.6.4](https://github.com/timunrau/rum1n8/compare/v1.6.3...v1.6.4) (2026-04-19)
 
 
