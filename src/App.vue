@@ -887,8 +887,8 @@
             class="hero-onboarding"
           >
             <p class="hero-onboarding__eyebrow">rum1n8</p>
-            <h2 class="hero-onboarding__title">Start with one verse.</h2>
-            <p class="hero-onboarding__subtitle">Turn it over in your mind — day by day, word by word.</p>
+            <h2 class="hero-onboarding__title">Start ruminating</h2>
+            <p class="hero-onboarding__subtitle">Choose a verse to get started.</p>
             <div class="mt-7 flex flex-wrap items-center gap-4">
               <PrimaryButton @click="openHeroVerseModal">
                 Add your first verse
