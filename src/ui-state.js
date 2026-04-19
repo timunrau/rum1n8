@@ -28,7 +28,6 @@ const GUIDED_ONBOARDING_STEPS = new Set([
   'tap-verse',
   'practice',
   'review-tab',
-  'review-tip',
   'done',
 ])
 

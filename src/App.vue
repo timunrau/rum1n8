@@ -285,10 +285,6 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          <span
-            v-if="shouldShowBackupReminder"
-            class="absolute top-1 right-1 w-2 h-2 bg-accent-warm rounded-full"
-          ></span>
         </button>
         <!-- Back button (inside collection) -->
         <button
@@ -422,10 +418,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Backup & Restore
-            <span
-              v-if="shouldShowBackupReminder"
-              class="ml-auto w-2 h-2 bg-accent-warm rounded-full flex-shrink-0"
-            ></span>
           </button>
           <button
             data-testid="settings-share"
@@ -503,31 +495,11 @@
       <!-- Review List View -->
       <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
         <div class="space-y-2 py-4 overflow-y-auto stagger-fade" style="max-height: calc(100vh - 4rem);">
-          <div
-            v-if="shouldShowReviewOnboardingTip"
-            data-testid="review-onboarding-tip"
-            class="practice-hint"
-          >
-            <div class="flex items-start gap-3">
-              <div class="practice-hint__icon">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8" />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="practice-hint__title">Review your verses here daily.</p>
-                <p class="practice-hint__body">Due verses stay at the top.</p>
-              </div>
-              <button
-                type="button"
-                class="btn-ghost text-sm"
-                @click="dismissReviewOnboardingTip"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-
+          <BackupNudgeCard
+            v-if="shouldShowBackupNudge"
+            @sync="handleNudgeSync"
+            @close="snoozeBackupNudge"
+          />
           <PrimaryButton
             v-if="reviewSortedVerses.length > 0"
             data-testid="start-review-cta"
@@ -575,6 +547,13 @@
       <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0">
 
         <div class="overflow-y-auto -mt-16 -mb-24 -mx-4 px-4 pt-20 pb-28" style="max-height: 100dvh;">
+          <BackupNudgeCard
+            v-if="shouldShowBackupNudge"
+            class="mb-3"
+            @sync="handleNudgeSync"
+            @backup="handleNudgeBackup"
+            @close="snoozeBackupNudge"
+          />
           <CollectionsAlmanac
             v-if="totalVerseCount > 0"
             :current-streak="currentStreak"
@@ -1704,6 +1683,7 @@ import ModalSheet from './components/ModalSheet.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
 import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
+import BackupNudgeCard from './components/BackupNudgeCard.vue'
 import AppShell from './components/brand/AppShell.vue'
 import BrandMark from './components/brand/BrandMark.vue'
 import PrimaryButton from './components/brand/PrimaryButton.vue'
@@ -1718,7 +1698,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -2005,6 +1985,8 @@ export default {
     let syncFeedbackRequested = false
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
+    const backupNudgeStage = ref(Number(localStorage.getItem('rum1n8-backup-nudge-stage') || 0))
+    const reviewCompletedCount = ref(Number(localStorage.getItem('rum1n8-review-completed-count') || 0))
     const appSettings = ref(getAppSettings())
     const initialOnboardingUiState = getOnboardingUiState()
     const onboardingDismissed = ref(initialOnboardingUiState.onboardingDismissed)
@@ -2129,10 +2111,6 @@ export default {
     const skipGuidedOnboarding = () => {
       dismissOnboardingUiState()
       applyOnboardingUiState(getOnboardingUiState())
-    }
-
-    const dismissReviewOnboardingTip = () => {
-      setGuidedOnboardingStep('done', null)
     }
 
     const markCurrentPracticeModeHintSeen = (mode = memorizationMode.value) => {
@@ -2460,7 +2438,7 @@ export default {
     })
 
     const isGuidedPracticeOnboardingActive = computed(() => {
-      return ['practice', 'review-tab', 'review-tip'].includes(guidedOnboardingStep.value)
+      return ['practice', 'review-tab'].includes(guidedOnboardingStep.value)
     })
 
     const shouldShowPracticeModesHint = computed(() => {
@@ -2479,10 +2457,6 @@ export default {
         !reviewingVerse.value &&
         !currentCollectionId.value
       )
-    })
-
-    const shouldShowReviewOnboardingTip = computed(() => {
-      return guidedOnboardingStep.value === 'review-tip' && currentView.value === 'review-list'
     })
 
     // When a review attempt completes (all words revealed) for the first time,
@@ -2528,6 +2502,9 @@ export default {
 
       currentReviewSaved.value = true
       saveVerses()
+
+      reviewCompletedCount.value = reviewCompletedCount.value + 1
+      localStorage.setItem('rum1n8-review-completed-count', String(reviewCompletedCount.value))
     })
 
     // When completion tray appears, scroll verse content so end of verse is visible
@@ -2834,7 +2811,7 @@ export default {
     // Auto-scroll daily activity chart to the right when stats view is shown
     watch(currentView, (view) => {
       if (view === 'review-list' && guidedOnboardingStep.value === 'review-tab') {
-        setGuidedOnboardingStep('review-tip', guidedOnboardingVerseId.value)
+        setGuidedOnboardingStep('done', null)
       }
 
       if (view === 'stats') {
@@ -3071,27 +3048,26 @@ export default {
       }
     }
 
-    // Check if backup reminder should be shown
-    const shouldShowBackupReminder = computed(() => {
-      // Only show if WebDAV is not configured
-      if (hasSyncConfigured.value) {
-        return false
-      }
-      
-      const timestamp = getLastBackupTimestamp()
-      if (!timestamp) {
-        // Never backed up
-        return true
-      }
-      
-      // Check if last backup is more than 7 days ago
-      const lastBackup = new Date(timestamp)
-      const now = new Date()
-      const diffMs = now - lastBackup
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      
-      return diffDays > 7
+    // Active nudge card prompting sync/backup setup at escalating milestones.
+    // Stage 0: after 1st completed review. Stage 1: at 5 verses. Stage 2: at 25 verses.
+    // Stage 3+: silent. Snooze advances +1, dismiss +2. Actual completion is handled
+    // naturally by the hasSyncConfigured / lastBackupTimestamp guards.
+    const shouldShowBackupNudge = computed(() => {
+      if (hasSyncConfigured.value) return false
+      if (lastBackupTimestamp.value) return false
+      const stage = backupNudgeStage.value
+      if (stage === 0) return reviewCompletedCount.value >= 1
+      if (stage === 1) return verses.value.length >= 5
+      if (stage === 2) return verses.value.length >= 25
+      return false
     })
+
+    const snoozeBackupNudge = () => {
+      const next = Math.min(3, backupNudgeStage.value + 1)
+      backupNudgeStage.value = next
+      localStorage.setItem('rum1n8-backup-nudge-stage', String(next))
+    }
+    const handleNudgeSync = () => openSyncSettings()
 
     // Load collections from local storage
     const loadCollections = () => {
@@ -3672,7 +3648,7 @@ export default {
         }
         verses.value.unshift(verse)
         saveVerses()
-        if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-tip' && guidedOnboardingStep.value !== 'review-tab') {
+        if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-tab') {
           setGuidedOnboardingStep('tap-verse', verse.id)
         }
         closeForm()
@@ -4605,7 +4581,7 @@ export default {
       searchQuery.value = ''
       searchActive.value = false
       if (guidedOnboardingStep.value === 'review-tab') {
-        setGuidedOnboardingStep('review-tip', guidedOnboardingVerseId.value)
+        setGuidedOnboardingStep('done', null)
       }
       pushNavigationState({ view: 'review-list' })
     }
@@ -6390,7 +6366,6 @@ export default {
       shouldShowHeroOnboarding,
       shouldShowVerseOnboardingCallout,
       shouldShowReviewTabCallout,
-      shouldShowReviewOnboardingTip,
       shouldShowGuidedOnboardingScrim,
       shouldShowPracticeModesHint,
       sortedVerses,
@@ -6518,7 +6493,6 @@ export default {
       toggleSettingsMenu,
       closeSettingsMenu,
       skipGuidedOnboarding,
-      dismissReviewOnboardingTip,
       dismissPracticeModesHint,
       openPracticeSettings,
       openSyncSettings,
@@ -6532,7 +6506,9 @@ export default {
       handleBackupFileSelect,
       getTimeSinceLastBackup,
       hasSyncConfigured,
-      shouldShowBackupReminder,
+      shouldShowBackupNudge,
+      snoozeBackupNudge,
+      handleNudgeSync,
       backupFileInput,
       manualSync,
       manualSyncFromDrawer,
