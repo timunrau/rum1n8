@@ -10,7 +10,10 @@
           <span v-else-if="memorizationMode === 'master'">You've mastered this verse. It's now in your spaced repetition system.</span>
         </template>
         <template v-else>
-          <template v-if="memorizationMode === 'master'">You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy.</template>
+          <template v-if="memorizationMode === 'master'">
+            You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy.
+            <span v-if="isLastInList"> That's the last verse — nicely done!</span>
+          </template>
           <template v-else>Practice complete (doesn't count as review).</template>
         </template>
       </p>
@@ -48,6 +51,14 @@
             Retry
           </button>
           <button
+            v-if="isLastInList"
+            @click="$emit('done')"
+            class="btn-primary"
+          >
+            Done
+          </button>
+          <button
+            v-else
             @click="$emit('next-verse')"
             class="btn-primary"
           >
@@ -88,8 +99,9 @@ export default {
     reviewMistakes: { type: Number, required: true },
     reviewWordsLength: { type: Number, required: true },
     memorizationMode: { type: String, default: null },
-    nextReviewLabel: { type: String, default: null }
+    nextReviewLabel: { type: String, default: null },
+    isLastInList: { type: Boolean, default: false }
   },
-  emits: ['advance', 'exit', 'retry', 'next-verse']
+  emits: ['advance', 'exit', 'retry', 'next-verse', 'done']
 }
 </script>

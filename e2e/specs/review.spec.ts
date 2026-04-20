@@ -239,7 +239,8 @@ test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does no
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('sit', { delay: 50 })
 
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Only one verse in the review list, so the completion tray shows "Done"
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await expect(nextButton).toBeVisible({ timeout: 5000 })
   await nextButton.click()
 
@@ -285,7 +286,8 @@ test('established interval preserved on review (no regression to 3 days)', async
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('bi', { delay: 50 })
 
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Only one verse in the review list, so the completion tray shows "Done"
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await expect(nextButton).toBeVisible({ timeout: 5000 })
   await nextButton.click()
 
@@ -352,6 +354,77 @@ test('review: input focused after Next Verse', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
+test('review: last verse in list shows Done button and exits to review list', async ({ page }) => {
+  // Two mastered verses, both due for review. Order in the review list is determined
+  // by nextReviewDate ascending — give Psalm 1:1 an earlier date so it's first.
+  const older = new Date(Date.now() - 2 * 86400000).toISOString()
+  const newer = new Date(Date.now() - 86400000).toISOString()
+  const twoVerses = [
+    {
+      id: 'done-v1',
+      reference: 'Psalm 1:1',
+      content: 'Blessed is',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: older,
+      nextReviewDate: older,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+    {
+      id: 'done-v2',
+      reference: 'Psalm 2:1',
+      content: 'Why the',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: newer,
+      nextReviewDate: newer,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+  ]
+  await seedStorage(page, twoVerses, [])
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  // First verse — tray should show "Next Verse" (more verses remain).
+  await page.getByText('Psalm 1:1').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  // Done should NOT be present yet.
+  await expect(page.getByRole('button', { name: 'Done' })).toHaveCount(0)
+  await nextButton.click()
+
+  // Second (and last) verse — tray should show "Done" instead of "Next Verse".
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('wt', { delay: 50 })
+
+  const doneButton = page.getByRole('button', { name: 'Done' })
+  await expect(doneButton).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('button', { name: 'Next Verse' })).toHaveCount(0)
+  await doneButton.click()
+
+  // Clicking Done should exit the review screen back to the review list.
+  await expect(page.locator('#letter-input-review')).not.toBeVisible()
+  await expect(page.getByText('Psalm 1:1')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Psalm 2:1')).toBeVisible()
+})
+
 test('same-day review does not advance spaced repetition schedule', async ({ page }) => {
   const verseId = 'same-day-regression'
   const today = new Date().toISOString()
@@ -381,7 +454,8 @@ test('same-day review does not advance spaced repetition schedule', async ({ pag
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('sisy', { delay: 50 })
 
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Only one verse in the review list, so the completion tray shows "Done"
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await expect(nextButton).toBeVisible({ timeout: 5000 })
   await nextButton.click()
 
@@ -528,7 +602,8 @@ test('review: completing in Learn mode does not advance spaced repetition', asyn
   await page.keyboard.type('bi', { delay: 50 })
 
   await expect(page.getByText(/Practice complete|doesn't count as review/i).first()).toBeVisible({ timeout: 5000 })
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Only one verse in the review list, so the completion tray shows "Done"
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await expect(nextButton).toBeVisible({ timeout: 3000 })
   await nextButton.click()
 
@@ -570,7 +645,8 @@ test('review: completing in Master mode advances spaced repetition', async ({ pa
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('bi', { delay: 50 })
 
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Only one verse in the review list, so the completion tray shows "Done"
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await expect(nextButton).toBeVisible({ timeout: 5000 })
   await nextButton.click()
 
@@ -697,8 +773,8 @@ test('retry after failed review does not overwrite SRS from first attempt', asyn
   // Should now show success
   await expect(page.getByText(/Great job/i)).toBeVisible({ timeout: 5000 })
 
-  // Click Next Verse to trigger any save path
-  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  // Click Done (only one verse in list) to trigger any save path
+  const nextButton = page.getByRole('button', { name: 'Done' })
   await nextButton.click()
   await page.waitForTimeout(300)
 

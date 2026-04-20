@@ -263,8 +263,10 @@
       :review-words-length="totalPracticeUnitCount"
       :memorization-mode="memorizationMode"
       :next-review-label="reviewingVerseNextReviewLabel"
+      :is-last-in-list="isLastInReviewList"
       @retry="retryReview"
       @next-verse="nextVerse"
+      @done="exitReview"
     />
   </Transition>
   </div>
@@ -2573,6 +2575,16 @@ export default {
       const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
       if (!verse) return null
       return getTimeUntilReview(verse)
+    })
+
+    // True when the current reviewing verse is the last one in the source list,
+    // so the completion tray can offer "Done" instead of looping back to the first verse.
+    const isLastInReviewList = computed(() => {
+      if (!reviewingVerse.value) return false
+      const list = reviewSourceList.value
+      if (!list || list.length === 0) return false
+      const idx = list.findIndex(v => v.id === reviewingVerse.value.id)
+      return idx === list.length - 1
     })
 
     const isGuidedPracticeOnboardingActive = computed(() => {
@@ -5525,9 +5537,15 @@ export default {
           const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
           
           if (currentIndex !== -1) {
-            // Find next verse in the list
-            const nextIndex = (currentIndex + 1) % sourceVerses.length
-            startReview(sourceVerses[nextIndex])
+            const nextIndex = currentIndex + 1
+            if (nextIndex < sourceVerses.length) {
+              startReview(sourceVerses[nextIndex])
+            } else {
+              // Reached the end of the source list — exit back to the origin screen
+              // instead of wrapping around to the first verse.
+              console.log('[nextVerse] End of source list, calling exitReview()')
+              exitReview()
+            }
           } else {
             // Current verse not in source list, go to first verse
             startReview(sourceVerses[0])
@@ -5774,7 +5792,8 @@ export default {
 
     // Handle key press events
     const handleKeyPress = (event) => {
-      // When review completion modal is open, Enter goes to next verse (keyboard-only flow)
+      // When review completion modal is open, Enter advances — to the next verse, or
+      // exits the review session if this was the last verse in the source list.
       if (
         event.key === 'Enter' &&
         reviewingVerse.value &&
@@ -5782,7 +5801,11 @@ export default {
         meetsAccuracyRequirement.value
       ) {
         event.preventDefault()
-        nextVerse()
+        if (isLastInReviewList.value) {
+          exitReview()
+        } else {
+          nextVerse()
+        }
         return
       }
 
@@ -6677,6 +6700,7 @@ export default {
       accuracy,
       meetsAccuracyRequirement,
       reviewingVerseNextReviewLabel,
+      isLastInReviewList,
       collections,
       currentCollectionId,
       showCollectionForm,
