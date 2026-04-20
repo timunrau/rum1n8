@@ -1,14 +1,16 @@
 const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 
 export const DEFAULT_APP_SETTINGS = Object.freeze({
-  requireReferenceTyping: false
+  requireReferenceTyping: false,
+  analyticsOptOut: false
 })
 
 export function normalizeAppSettings(settings = {}) {
   return {
     ...DEFAULT_APP_SETTINGS,
     ...settings,
-    requireReferenceTyping: !!settings.requireReferenceTyping
+    requireReferenceTyping: !!settings.requireReferenceTyping,
+    analyticsOptOut: !!settings.analyticsOptOut
   }
 }
 

@@ -7,6 +7,8 @@ services:
       args:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
         - VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}
+        - VITE_UMAMI_SCRIPT_URL=${VITE_UMAMI_SCRIPT_URL:-}
+        - VITE_UMAMI_WEBSITE_ID=${VITE_UMAMI_WEBSITE_ID:-}
     environment:
       - VITE_SITE_URL=${VITE_SITE_URL:-}
     container_name: rum1n8

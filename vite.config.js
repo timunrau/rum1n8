@@ -267,7 +267,32 @@ function buildSitemapXml(siteMetadata) {
   ].join('\n')
 }
 
-function createSiteMetadataPlugin(siteMetadata) {
+function buildPrivacyAnalyticsSection(analyticsEnabled) {
+  if (!analyticsEnabled) return null
+
+  return [
+    '<h2>Third-Party Services</h2>',
+    '    <p>This build of rum1n8 uses a self-hosted instance of <a href="https://umami.is" target="_blank" rel="noopener noreferrer">Umami</a>, a privacy-friendly analytics tool, to measure aggregate usage. No personal data is collected, no third-party tracking cookies are set, and no data is shared with advertisers. You can turn analytics off for your own device at any time from the app\'s Settings.</p>',
+    '    <p>The external requests the app makes are:</p>',
+    '    <ul>',
+    '      <li>Bible text imports via the <a href="https://fetch.bible" target="_blank" rel="noopener noreferrer">fetch.bible</a> API (when you import verse content)</li>',
+    '      <li>Your configured sync provider (only if you set one up)</li>',
+    '      <li>The self-hosted Umami analytics endpoint for this deployment (unless you opt out in Settings)</li>',
+    '    </ul>',
+  ].join('\n    ')
+}
+
+function rewritePrivacyHtml(html, analyticsEnabled) {
+  const section = buildPrivacyAnalyticsSection(analyticsEnabled)
+  if (!section) return html
+
+  return html.replace(
+    /<!--ANALYTICS_SECTION_START-->[\s\S]*?<!--ANALYTICS_SECTION_END-->/,
+    `<!--ANALYTICS_SECTION_START-->\n    ${section}\n    <!--ANALYTICS_SECTION_END-->`
+  )
+}
+
+function createSiteMetadataPlugin(siteMetadata, { analyticsEnabled = false } = {}) {
   return {
     name: 'rum1n8-site-metadata',
     transformIndexHtml(html, ctx) {
@@ -314,6 +339,14 @@ function createSiteMetadataPlugin(siteMetadata) {
         copyFileSync(homeBuild, resolve(outDir, 'index.html'))
       }
 
+      const privacyPath = resolve(outDir, 'privacy.html')
+      if (analyticsEnabled && existsSync(privacyPath)) {
+        writeFileSync(
+          privacyPath,
+          rewritePrivacyHtml(readFileSync(privacyPath, 'utf-8'), true)
+        )
+      }
+
       const htmlTemplates = [
         { fileName: 'index.html', includeJsonLd: true },
         { fileName: 'about/index.html', includeJsonLd: false },
@@ -336,6 +369,7 @@ function createSiteMetadataPlugin(siteMetadata) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const siteMetadata = buildSiteMetadata(env)
+  const analyticsEnabled = Boolean(env.VITE_UMAMI_SCRIPT_URL && env.VITE_UMAMI_WEBSITE_ID)
 
   return {
     define: {
@@ -517,7 +551,7 @@ export default defineConfig(({ mode }) => {
           type: 'module',
         },
       }),
-      createSiteMetadataPlugin(siteMetadata),
+      createSiteMetadataPlugin(siteMetadata, { analyticsEnabled }),
     ],
   }
 })

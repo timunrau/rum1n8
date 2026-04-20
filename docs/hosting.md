@@ -53,6 +53,43 @@ After deploying, verify that these URLs load successfully:
 
 If you want Google to index the site, verify the domain in Google Search Console and submit `https://yourdomain.com/sitemap.xml`.
 
+## Optional: self-hosted analytics
+
+rum1n8 ships with no analytics by default. If you want to see basic usage data, you can add a self-hosted [Umami](https://umami.is/) stack alongside the base deployment.
+
+Two build-time env vars turn analytics on in the app:
+
+```bash
+VITE_UMAMI_SCRIPT_URL=https://analytics.yourdomain.com/script.js
+VITE_UMAMI_WEBSITE_ID=00000000-0000-0000-0000-000000000000
+```
+
+When both are set at build time:
+
+- the app loads the Umami tracker and records pageviews
+- a handful of custom events are emitted (app opens, verse additions, reviews, install prompt clicks, onboarding dismissals)
+- the privacy page is rewritten to disclose privacy-friendly self-hosted analytics
+
+When either is missing, the base build contains no analytics script and the privacy page keeps the default no-analytics wording.
+
+Users can opt out from the app's Settings modal at any time. Opt-out state is persisted in browser storage and blocks both pageview and custom event emission.
+
+The overlay compose file `docker-compose.analytics.yml` defines a `umami` service and a `umami-db` PostgreSQL service. To run it alongside the base stack:
+
+```bash
+# in .env, set
+UMAMI_DB_PASSWORD=replace-with-a-long-random-password
+UMAMI_APP_SECRET=replace-with-a-long-random-string
+
+docker compose -f docker-compose.yml -f docker-compose.analytics.yml up -d
+```
+
+Umami listens on host port `3002`. Put your reverse proxy in front of it so it is reachable at `https://analytics.yourdomain.com`, then set `VITE_UMAMI_SCRIPT_URL` to `https://analytics.yourdomain.com/script.js` and recreate the `rum1n8` container with the new build args so the tracker is baked into the build.
+
+After the first startup, open `https://analytics.yourdomain.com`, sign in with the default admin account, create a website entry, and copy its ID into `VITE_UMAMI_WEBSITE_ID` before rebuilding the app container.
+
+The base `docker-compose.yml` stack continues to work untouched without the overlay, so skipping analytics never blocks a deployment.
+
 ## Google Drive sync
 
 If you want Google Drive sync, set `VITE_GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_SECRET` in `.env`.

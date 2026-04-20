@@ -16,6 +16,10 @@ COPY . .
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_GOOGLE_CLIENT_SECRET
 
+# Accept optional Umami analytics configuration as build args
+ARG VITE_UMAMI_SCRIPT_URL
+ARG VITE_UMAMI_WEBSITE_ID
+
 # Build the application
 RUN npm run build
 

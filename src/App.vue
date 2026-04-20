@@ -1605,6 +1605,32 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               </button>
             </label>
           </div>
+          <div v-if="analyticsAvailable" class="rounded-2xl bg-sunken p-4" data-testid="analytics-opt-out-row">
+            <label class="flex items-start gap-4 cursor-pointer">
+              <div class="flex-1">
+                <p class="text-base font-semibold text-text-primary">Share anonymous usage analytics</p>
+                <p class="mt-1 text-sm text-text-muted">Helps the maintainer see how many people use the app. No accounts, no personal data.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="!appSettings.analyticsOptOut"
+                data-testid="analytics-opt-out-toggle"
+                :class="[
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                  !appSettings.analyticsOptOut ? 'bg-accent-strong' : 'bg-border-default'
+                ]"
+                @click="updateAnalyticsOptOut(!appSettings.analyticsOptOut)"
+              >
+                <span
+                  :class="[
+                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                    !appSettings.analyticsOptOut ? 'translate-x-6' : 'translate-x-1'
+                  ]"
+                />
+              </button>
+            </label>
+          </div>
         </div>
 
         <template #footer>
@@ -1703,6 +1729,7 @@ import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
+import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } from './analytics.js'
 import {
   buildAboutUrl,
   dismissOnboarding as dismissOnboardingUiState,
@@ -2059,9 +2086,14 @@ export default {
     const {
       isPWAInstalled,
       showIOSModal,
-      triggerInstall,
+      triggerInstall: triggerInstallRaw,
       closeIOSModal
     } = usePWAInstall()
+
+    const triggerInstall = () => {
+      trackEvent('install_prompt_clicked')
+      triggerInstallRaw()
+    }
 
     // Bible verse import state
     const importingVerse = ref(false)
@@ -2202,6 +2234,7 @@ export default {
     }
 
     const skipGuidedOnboarding = () => {
+      trackEvent('onboarding_dismissed')
       dismissOnboardingUiState()
       applyOnboardingUiState(getOnboardingUiState())
     }
@@ -2243,6 +2276,7 @@ export default {
     }
 
     const openHeroVerseModal = () => {
+      trackEvent('onboarding_add_verse_clicked')
       showForm.value = true
     }
 
@@ -2600,6 +2634,8 @@ export default {
 
       reviewCompletedCount.value = reviewCompletedCount.value + 1
       localStorage.setItem('rum1n8-review-completed-count', String(reviewCompletedCount.value))
+
+      trackEvent('verse_reviewed', { grade })
     })
 
     // When completion tray appears, scroll verse content so end of verse is visible
@@ -3819,6 +3855,7 @@ export default {
         }
         verses.value.unshift(verse)
         saveVerses()
+        trackEvent('verse_added', { count: verses.value.length })
         if (!onboardingDismissed.value && guidedOnboardingStep.value !== 'done' && guidedOnboardingStep.value !== 'review-cta') {
           setGuidedOnboardingStep('tap-verse', verse.id)
         }
@@ -6162,6 +6199,19 @@ export default {
       })
     }
 
+    const updateAnalyticsOptOut = (optOut) => {
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        analyticsOptOut: optOut
+      })
+      setAnalyticsOptOut(optOut)
+      if (!optOut) {
+        initAnalytics({ optOut: false })
+      }
+    }
+
+    const analyticsAvailable = isAnalyticsConfigured()
+
     // Close settings modal
     const closeSettings = () => {
       showSettings.value = false
@@ -6525,6 +6575,12 @@ export default {
       syncLocalUiState()
       markAppOpened(getCurrentAppUrl())
 
+      setAnalyticsOptOut(appSettings.value.analyticsOptOut)
+      trackEvent('app_opened', {
+        installed: isPWAInstalled(),
+        verse_count: verses.value.length
+      })
+
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
       handleWindowScroll()
 
@@ -6721,6 +6777,8 @@ export default {
       manualSync,
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
+      updateAnalyticsOptOut,
+      analyticsAvailable,
       syncing,
       syncError,
       syncStatus,

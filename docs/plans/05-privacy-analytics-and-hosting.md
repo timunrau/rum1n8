@@ -5,6 +5,7 @@ Add optional self-hosted privacy-friendly analytics in a way that fits the curre
 
 ## Summary
 - Make analytics optional and self-hosted.
+- Add a toggle in the settings modal to opt out of analytics. If they opt out, don't track them.
 - Use Umami as the default tool.
 - Keep the base app deployment unchanged when analytics is not configured.
 
