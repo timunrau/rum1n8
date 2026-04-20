@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/timunrau/rum1n8/compare/v1.11.0...v1.12.0) (2026-04-20)
+
+
+### Features
+
+* **analytics:** add optional self-hosted Umami analytics ([5890337](https://github.com/timunrau/rum1n8/commit/5890337f1473d572ab01d787296d11e7f173a5cc))
+
 # [1.11.0](https://github.com/timunrau/rum1n8/compare/v1.10.1...v1.11.0) (2026-04-19)
 
 
