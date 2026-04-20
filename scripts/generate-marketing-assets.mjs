@@ -162,7 +162,7 @@ function buildStorageState({ verses: verseState = [], collections: collectionSta
   }
 }
 
-async function createMobilePage(browser, storageState) {
+async function createMobilePage(browser, storageState, colorScheme = 'light') {
   const context = await browser.newContext({
     viewport: mobileViewport,
     deviceScaleFactor: mobileDeviceScaleFactor,
@@ -171,7 +171,7 @@ async function createMobilePage(browser, storageState) {
   })
 
   const page = await context.newPage()
-  await page.emulateMedia({ colorScheme: 'light' })
+  await page.emulateMedia({ colorScheme })
   await page.addInitScript((entries) => {
     localStorage.clear()
     Object.entries(entries).forEach(([key, value]) => {
@@ -182,7 +182,8 @@ async function createMobilePage(browser, storageState) {
   return { context, page }
 }
 
-async function showKeyboardOverlay(page) {
+async function showKeyboardOverlay(page, colorScheme = 'light') {
+  const isDark = colorScheme === 'dark'
   await page.addStyleTag({
     content: `
       body.marketing-keyboard-open .my-2.flex-shrink-0 {
@@ -198,9 +199,9 @@ async function showKeyboardOverlay(page) {
         bottom: 0;
         z-index: 70;
         padding: 8px 6px 10px;
-        background: linear-gradient(180deg, #d8dbe2 0%, #c7ccd6 100%);
-        border-top: 1px solid rgba(15, 23, 42, 0.12);
-        box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.12);
+        background: ${isDark ? 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)' : 'linear-gradient(180deg, #d8dbe2 0%, #c7ccd6 100%)'};
+        border-top: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.12)'};
+        box-shadow: 0 -12px 24px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(15, 23, 42, 0.12)'};
       }
 
       body.marketing-keyboard-open .marketing-keyboard-row {
@@ -214,11 +215,11 @@ async function showKeyboardOverlay(page) {
         min-width: 29px;
         height: 42px;
         border-radius: 8px;
-        background: linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%);
+        background: ${isDark ? 'linear-gradient(180deg, #4a4a4e 0%, #3a3a3c 100%)' : 'linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%)'};
         box-shadow:
-          inset 0 -1px 0 rgba(15, 23, 42, 0.08),
-          0 1px 0 rgba(255, 255, 255, 0.8);
-        color: #111827;
+          inset 0 -1px 0 ${isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(15, 23, 42, 0.08)'},
+          0 1px 0 ${isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.8)'};
+        color: ${isDark ? '#ffffff' : '#111827'};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -234,7 +235,7 @@ async function showKeyboardOverlay(page) {
       }
 
       body.marketing-keyboard-open .marketing-key.utility {
-        background: linear-gradient(180deg, #b7bec9 0%, #a8b1bf 100%);
+        background: ${isDark ? 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)' : 'linear-gradient(180deg, #b7bec9 0%, #a8b1bf 100%)'};
       }
     `,
   })
@@ -295,68 +296,72 @@ async function orderReferenceCards(page, orderedReferences) {
   }, orderedReferences)
 }
 
-async function captureVersesState(browser, baseUrl) {
+async function captureVersesState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, buildStorageState({
     verses: versesScreenVerses,
-  }))
+  }), colorScheme)
 
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
     await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').waitFor()
     await orderReferenceCards(page, ['Joshua 1:8', 'Psalm 119:11', 'Romans 12:2', 'John 3:16'])
     await page.waitForTimeout(600)
     await page.screenshot({
-      path: path.join(marketingDir, 'screenshot-empty.png'),
+      path: path.join(marketingDir, `screenshot-empty${suffix}.png`),
     })
   } finally {
     await context.close()
   }
 }
 
-async function capturePracticeState(browser, baseUrl) {
+async function capturePracticeState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, buildStorageState({
     verses: practiceVerses,
-  }))
+  }), colorScheme)
 
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
     await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').first().click()
     await page.locator('#letter-input-memorize').waitFor({ state: 'attached' })
     await page.locator('#letter-input-memorize').focus()
     await page.keyboard.type('tbotlmndfymmoidan', { delay: 40 })
-    await showKeyboardOverlay(page)
+    await showKeyboardOverlay(page, colorScheme)
     await page.waitForTimeout(200)
     await page.screenshot({
-      path: path.join(marketingDir, 'screenshot-practice.png'),
+      path: path.join(marketingDir, `screenshot-practice${suffix}.png`),
     })
   } finally {
     await context.close()
   }
 }
 
-async function captureReviewState(browser, baseUrl) {
+async function captureReviewState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, buildStorageState({
     verses: reviewVerses,
-  }))
+  }), colorScheme)
 
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
     await page.goto(`${baseUrl}/?view=review-list`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').waitFor()
     await orderReferenceCards(page, ['Joshua 1:8', 'Psalm 119:11', 'Romans 12:2', 'John 3:16'])
     await page.waitForTimeout(600)
     await page.screenshot({
-      path: path.join(marketingDir, 'screenshot-review.png'),
+      path: path.join(marketingDir, `screenshot-review${suffix}.png`),
     })
   } finally {
     await context.close()
   }
 }
 
-async function captureAddVerseState(browser, baseUrl) {
+async function captureAddVerseState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, buildStorageState({
     collections: addVerseCollections,
-  }))
+  }), colorScheme)
 
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
     await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
     await page.getByTestId('fab-trigger').waitFor()
@@ -370,18 +375,19 @@ async function captureAddVerseState(browser, baseUrl) {
     await page.getByRole('button', { name: 'Renewed Mind' }).click()
     await page.waitForTimeout(150)
     await page.screenshot({
-      path: path.join(marketingDir, 'screenshot-add-verse.png'),
+      path: path.join(marketingDir, `screenshot-add-verse${suffix}.png`),
     })
   } finally {
     await context.close()
   }
 }
 
-async function captureMemorizeState(browser, baseUrl) {
+async function captureMemorizeState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, buildStorageState({
     verses: memorizeVerses,
-  }))
+  }), colorScheme)
 
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
     await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').first().click()
@@ -391,10 +397,10 @@ async function captureMemorizeState(browser, baseUrl) {
     // "This Book of the Law must not depart from your mouth; meditate on it day and night"
     // → t b o t l m n d f y m  m  o  i  d  a  n
     await page.keyboard.type('tbotlmndfymmoidan', { delay: 40 })
-    await showKeyboardOverlay(page)
+    await showKeyboardOverlay(page, colorScheme)
     await page.waitForTimeout(200)
     await page.screenshot({
-      path: path.join(marketingDir, 'screenshot-memorize.png'),
+      path: path.join(marketingDir, `screenshot-memorize${suffix}.png`),
     })
   } finally {
     await context.close()
@@ -654,11 +660,13 @@ try {
   const browser = await launchBrowser()
 
   try {
-    await captureVersesState(browser, baseUrl)
-    await capturePracticeState(browser, baseUrl)
-    await captureReviewState(browser, baseUrl)
-    await captureAddVerseState(browser, baseUrl)
-    await captureMemorizeState(browser, baseUrl)
+    for (const colorScheme of ['light', 'dark']) {
+      await captureVersesState(browser, baseUrl, colorScheme)
+      await capturePracticeState(browser, baseUrl, colorScheme)
+      await captureReviewState(browser, baseUrl, colorScheme)
+      await captureAddVerseState(browser, baseUrl, colorScheme)
+      await captureMemorizeState(browser, baseUrl, colorScheme)
+    }
     await captureOgCard(browser, baseUrl)
   } finally {
     await browser.close()
