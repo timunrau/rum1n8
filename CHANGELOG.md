@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/timunrau/rum1n8/compare/v1.12.0...v1.13.0) (2026-04-20)
+
+
+### Features
+
+* **marketing:** serve dark mode screenshots in dark mode ([17975c0](https://github.com/timunrau/rum1n8/commit/17975c0b54b9e7f484a988d793b42a4fa0a81f4d))
+
 # [1.12.0](https://github.com/timunrau/rum1n8/compare/v1.11.0...v1.12.0) (2026-04-20)
 
 
