@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/timunrau/rum1n8/compare/v1.13.0...v1.14.0) (2026-04-20)
+
+
+### Features
+
+* **review:** show Done button at end of review list ([c7ba8ce](https://github.com/timunrau/rum1n8/commit/c7ba8ce261be8635879debafbda392b7af15d665))
+
 # [1.13.0](https://github.com/timunrau/rum1n8/compare/v1.12.0...v1.13.0) (2026-04-20)
 
 
