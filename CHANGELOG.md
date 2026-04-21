@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/timunrau/rum1n8/compare/v1.14.0...v1.15.0) (2026-04-21)
+
+
+### Features
+
+* **verses:** override and reset verse progress from edit modal ([1f3c357](https://github.com/timunrau/rum1n8/commit/1f3c35764514d68d53d0a79304553d6b61ca5624))
+
 # [1.14.0](https://github.com/timunrau/rum1n8/compare/v1.13.0...v1.14.0) (2026-04-20)
 
 
