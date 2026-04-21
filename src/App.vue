@@ -1140,6 +1140,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
         <span class="text-sm font-medium">{{ toastState.message }}</span>
+        <button
+          v-if="toastState.action"
+          type="button"
+          @click="runToastAction"
+          data-testid="toast-action"
+          class="ml-2 text-sm font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          {{ toastState.action.label }}
+        </button>
       </div>
     </div>
   </transition>
@@ -1301,6 +1310,41 @@
             :collections="collections"
             v-model="editingVerse.collectionIds"
           />
+
+          <div
+            v-if="editingVerse.memorizationStatus === 'mastered' && editingVerse.nextReviewDate"
+            class="relative pt-1 text-xs text-text-muted"
+            data-testid="verse-schedule-row"
+          >
+            <span>Next review {{ formatReviewDate(editingVerse.nextReviewDate) }} &middot; {{ getTimeUntilReview(editingVerse) }}</span>
+            <span class="mx-1.5 opacity-60">&middot;</span>
+            <button
+              type="button"
+              @click="scheduleActionsOpen = !scheduleActionsOpen"
+              data-testid="verse-schedule-change"
+              class="text-accent-warm hover:underline focus:outline-none"
+            >Change</button>
+            <span class="mx-1.5 opacity-60">&middot;</span>
+            <button
+              type="button"
+              @click="resetVerseProgress"
+              data-testid="verse-schedule-reset"
+              class="text-accent-warm hover:underline focus:outline-none"
+            >Reset</button>
+
+            <div
+              v-if="scheduleActionsOpen"
+              v-click-outside="() => (scheduleActionsOpen = false)"
+              class="absolute bottom-full left-0 mb-2 flex flex-wrap gap-1.5 rounded-xl border border-border-default bg-chrome p-2 shadow-soft z-10"
+              data-testid="verse-schedule-popover"
+            >
+              <button type="button" @click="overrideNextReview(0)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">Now</button>
+              <button type="button" @click="overrideNextReview(1)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1d</button>
+              <button type="button" @click="overrideNextReview(3)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+3d</button>
+              <button type="button" @click="overrideNextReview(7)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1w</button>
+              <button type="button" @click="overrideNextReview(30)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1mo</button>
+            </div>
+          </div>
         </form>
 
         <template #footer>
@@ -2018,6 +2062,7 @@ export default {
     const showBackupImport = ref(false)
     const showImportCSV = ref(false)
     const editingVerse = ref(null)
+    const scheduleActionsOpen = ref(false)
     const editingCollection = ref(null)
     const currentCollectionId = ref(null) // null = all verses, string = specific collection
     const currentView = ref('collections') // 'review-list', 'collections', or 'stats'
@@ -2061,7 +2106,7 @@ export default {
     const csvImportStatus = ref(null)
     const importingCSV = ref(false)
     const expandedVerseIds = ref({})
-    const toastState = ref({ show: false, message: '', isError: false })
+    const toastState = ref({ show: false, message: '', isError: false, action: null })
     let toastTimeoutId = null
     let drawerHideTimeoutId = null
     let syncTickIntervalId = null
@@ -4767,6 +4812,7 @@ export default {
     const closeEditVerseForm = () => {
       showEditVerseForm.value = false
       editingVerse.value = null
+      scheduleActionsOpen.value = false
     }
 
     // Handle delete verse from edit modal
@@ -4787,6 +4833,91 @@ export default {
         return true
       }
       return false
+    }
+
+    const formatReviewDate = (iso) => {
+      if (!iso) return ''
+      try {
+        return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      } catch {
+        return ''
+      }
+    }
+
+    const overrideNextReview = (daysFromNow) => {
+      if (!editingVerse.value) return
+      const verse = verses.value.find(v => v.id === editingVerse.value.id)
+      if (!verse) return
+      const snapshot = {
+        nextReviewDate: verse.nextReviewDate,
+        interval: verse.interval,
+      }
+      const target = new Date()
+      if (daysFromNow > 0) {
+        target.setDate(target.getDate() + daysFromNow)
+      }
+      verse.nextReviewDate = target.toISOString()
+      verse.lastModified = new Date().toISOString()
+      saveVerses()
+      editingVerse.value.nextReviewDate = verse.nextReviewDate
+      scheduleActionsOpen.value = false
+      const label = daysFromNow === 0 ? 'Review now' : `Review in ${daysFromNow}d`
+      showToast(label, false, {
+        label: 'Undo',
+        handler: () => {
+          const v = verses.value.find(vv => vv.id === verse.id)
+          if (!v) return
+          v.nextReviewDate = snapshot.nextReviewDate
+          v.interval = snapshot.interval
+          v.lastModified = new Date().toISOString()
+          saveVerses()
+          if (editingVerse.value && editingVerse.value.id === v.id) {
+            editingVerse.value.nextReviewDate = v.nextReviewDate
+            editingVerse.value.interval = v.interval
+          }
+        },
+      })
+    }
+
+    const resetVerseProgress = () => {
+      if (!editingVerse.value) return
+      const verse = verses.value.find(v => v.id === editingVerse.value.id)
+      if (!verse) return
+      const snapshot = {
+        memorizationStatus: verse.memorizationStatus,
+        nextReviewDate: verse.nextReviewDate,
+        interval: verse.interval,
+        masteredAt: verse.masteredAt,
+        reviewCount: verse.reviewCount,
+        easeFactor: verse.easeFactor,
+        reviewHistory: verse.reviewHistory ? [...verse.reviewHistory] : [],
+      }
+      verse.memorizationStatus = 'unmemorized'
+      verse.nextReviewDate = null
+      verse.interval = 0
+      verse.masteredAt = null
+      verse.reviewCount = 0
+      verse.easeFactor = 2.5
+      verse.reviewHistory = []
+      verse.lastModified = new Date().toISOString()
+      saveVerses()
+      closeEditVerseForm()
+      showToast('Progress cleared', false, {
+        label: 'Undo',
+        handler: () => {
+          const v = verses.value.find(vv => vv.id === verse.id)
+          if (!v) return
+          v.memorizationStatus = snapshot.memorizationStatus
+          v.nextReviewDate = snapshot.nextReviewDate
+          v.interval = snapshot.interval
+          v.masteredAt = snapshot.masteredAt
+          v.reviewCount = snapshot.reviewCount
+          v.easeFactor = snapshot.easeFactor
+          v.reviewHistory = snapshot.reviewHistory
+          v.lastModified = new Date().toISOString()
+          saveVerses()
+        },
+      })
     }
 
     // View collection
@@ -4961,16 +5092,31 @@ export default {
     }
 
     // Show transient toast feedback for copy/sync actions.
-    const showToast = (message, isError = false) => {
+    const showToast = (message, isError = false, action = null) => {
       if (toastTimeoutId) {
         clearTimeout(toastTimeoutId)
       }
 
-      toastState.value = { show: true, message, isError }
+      toastState.value = { show: true, message, isError, action }
+      const duration = action ? 6000 : 2000
       toastTimeoutId = setTimeout(() => {
         toastState.value.show = false
+        toastState.value.action = null
         toastTimeoutId = null
-      }, 2000)
+      }, duration)
+    }
+
+    const runToastAction = () => {
+      const action = toastState.value.action
+      if (action && typeof action.handler === 'function') {
+        action.handler()
+      }
+      if (toastTimeoutId) {
+        clearTimeout(toastTimeoutId)
+        toastTimeoutId = null
+      }
+      toastState.value.show = false
+      toastState.value.action = null
     }
 
     // View all verses (back from collection view)
@@ -6760,10 +6906,15 @@ export default {
       stopSpeaking,
       isSpeaking,
       toastState,
+      runToastAction,
       startEditVerse,
       saveEditedVerse,
       closeEditVerseForm,
       handleDeleteVerseFromModal,
+      scheduleActionsOpen,
+      formatReviewDate,
+      overrideNextReview,
+      resetVerseProgress,
       deleteVerse,
       showPracticeSettings,
       showSettings,
