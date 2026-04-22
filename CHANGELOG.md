@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/timunrau/rum1n8/compare/v1.15.4...v1.16.0) (2026-04-22)
+
+
+### Features
+
+* warn on duplicate verse references ([befcbbf](https://github.com/timunrau/rum1n8/commit/befcbbfd0f578ca2b8360141e0eb6e68ab155c95))
+
 ## [1.15.4](https://github.com/timunrau/rum1n8/compare/v1.15.3...v1.15.4) (2026-04-22)
 
 
