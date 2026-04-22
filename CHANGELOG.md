@@ -1,3 +1,10 @@
+## [1.15.3](https://github.com/timunrau/rum1n8/compare/v1.15.2...v1.15.3) (2026-04-22)
+
+
+### Bug Fixes
+
+* update verse import flow and app assets ([6f59959](https://github.com/timunrau/rum1n8/commit/6f599599c1fb21bb5ec457d61a6e8c62b19cc275))
+
 ## [1.15.2](https://github.com/timunrau/rum1n8/compare/v1.15.1...v1.15.2) (2026-04-22)
 
 
