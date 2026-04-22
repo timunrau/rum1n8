@@ -2325,6 +2325,7 @@ export default {
     const openHeroVerseModal = () => {
       trackEvent('onboarding_add_verse_clicked')
       showForm.value = true
+      pushModalState('addVerse')
     }
 
     // Navigation state tracking for back button handling
@@ -2357,22 +2358,33 @@ export default {
       }
     }
 
-    // Push history state when navigating
-    const pushNavigationState = (state) => {
-      if (isHandlingBackButton) return
-      
+    // Build a URL that reflects the given navigation state, clearing any params not
+    // part of it so we don't leak stale collection/verse/mode params across views.
+    const buildNavigationUrl = (state) => {
       const url = new URL(window.location.href)
       url.searchParams.set('view', state.view)
       if (state.collectionId) {
         url.searchParams.set('collection', state.collectionId)
+      } else {
+        url.searchParams.delete('collection')
       }
       if (state.verseId) {
         url.searchParams.set('verse', state.verseId)
+      } else {
+        url.searchParams.delete('verse')
       }
       if (state.mode) {
         url.searchParams.set('mode', state.mode)
+      } else {
+        url.searchParams.delete('mode')
       }
-      
+      return url
+    }
+
+    // Push history state when navigating
+    const pushNavigationState = (state) => {
+      if (isHandlingBackButton) return
+      const url = buildNavigationUrl(state)
       window.history.pushState(state, '', url)
       rememberAppUrl(`${url.pathname}${url.search}${url.hash}`)
     }
@@ -2380,50 +2392,109 @@ export default {
     // Replace history state (used when navigating sequentially without creating new history entries)
     const replaceNavigationState = (state) => {
       if (isHandlingBackButton) return
-      
-      const url = new URL(window.location.href)
-      url.searchParams.set('view', state.view)
-      if (state.collectionId) {
-        url.searchParams.set('collection', state.collectionId)
-      }
-      if (state.verseId) {
-        url.searchParams.set('verse', state.verseId)
-      }
-      if (state.mode) {
-        url.searchParams.set('mode', state.mode)
-      }
-      
+      const url = buildNavigationUrl(state)
       window.history.replaceState(state, '', url)
       rememberAppUrl(`${url.pathname}${url.search}${url.hash}`)
+    }
+
+    // Push a history entry that represents a modal open on top of the current view.
+    // URL stays the same; the pushed state carries a `modal` marker so popstate can
+    // detect it and close the modal. Used to wire modals into the browser back button.
+    const pushModalState = (modalName) => {
+      if (isHandlingBackButton) return
+      const baseState = getNavigationState()
+      const state = { ...baseState, modal: modalName }
+      window.history.pushState(state, '', window.location.href)
+    }
+
+    // Consume a modal history entry if the current top-of-stack state is our marker.
+    // Called from in-app close buttons (X) so the back button doesn't need to be
+    // pressed a second time after closing the modal via the UI.
+    const consumeModalState = (modalName) => {
+      if (isHandlingBackButton) return
+      const state = window.history.state
+      if (state && state.modal === modalName) {
+        window.history.back()
+      }
+    }
+
+    // Close all modal UI state without touching browser history. Called from
+    // restoreNavigationState when we're popping back to a non-modal entry.
+    const closeAllModalUi = () => {
+      showForm.value = false
+      newVerse.value = { reference: '', content: '', bibleVersion: '', collectionIds: [] }
+      importError.value = null
+      importErrorShowLink.value = false
+      importingVerse.value = false
+
+      showCollectionForm.value = false
+      newCollection.value = { name: '', description: '' }
+
+      showEditCollectionForm.value = false
+      editingCollection.value = null
+
+      showEditVerseForm.value = false
+      editingVerse.value = null
+      scheduleActionsOpen.value = false
+
+      showImportCSV.value = false
+      csvPreview.value = []
+      csvImportStatus.value = null
+      csvPastedText.value = ''
+      csvImportTargetCollectionIds.value = []
+      if (csvFileInput.value) csvFileInput.value.value = ''
+
+      showSettings.value = false
+      showBackupImport.value = false
+      showPracticeSettings.value = false
+      fabMenuOpen.value = false
     }
 
     // Restore app state from navigation state
     const restoreNavigationState = (state) => {
       isHandlingBackButton = true
-      
+
+      // If we're popping a modal marker and landing back on the same practice session
+      // we were already in, just close modals — don't restart the practice flow.
+      const stayingInMemorization = state.view === 'memorization' && state.verseId &&
+        memorizingVerse.value?.id === state.verseId &&
+        memorizationMode.value === state.mode
+      const stayingInReview = state.view === 'review' && state.verseId &&
+        reviewingVerse.value?.id === state.verseId
+
+      if (stayingInMemorization || stayingInReview) {
+        closeAllModalUi()
+        nextTick(() => {
+          rememberAppUrl(getCurrentAppUrl())
+          isHandlingBackButton = false
+        })
+        return
+      }
+
       // Close any modals/forms first
-      showForm.value = false
-      showCollectionForm.value = false
-      showEditVerseForm.value = false
-      showSettings.value = false
-      showImportCSV.value = false
-      fabMenuOpen.value = false
-      if (state.view !== 'search') {
+      closeAllModalUi()
+      if (state.view === 'search') {
+        // Search is an overlay on top of Collections — turn the overlay on but
+        // keep the underlying view as Collections so closing search lands there.
+        searchActive.value = true
+      } else {
         searchActive.value = false
         searchQuery.value = ''
       }
-      
+
       // Restore collection view
       if (state.collectionId) {
         currentCollectionId.value = state.collectionId
       } else {
         currentCollectionId.value = null
       }
-      
-      // Restore main view (review-list, collections, or search) before starting review/memorization
-      // so that startReview can determine the correct source list
-      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'search' || state.view === 'stats') {
+
+      // Restore main view (review-list, collections, stats)
+      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'stats') {
         currentView.value = state.view
+      } else if (state.view === 'search') {
+        // Keep underlying view as Collections when the search overlay is active
+        currentView.value = 'collections'
       } else if (state.view === 'collection') {
         // Collection view is handled above
       } else if (state.view === 'review' || state.view === 'memorization') {
@@ -2524,22 +2595,65 @@ export default {
       const urlParams = new URLSearchParams(window.location.search)
       const viewParam = urlParams.get('view')
       let shouldNormalizeUrl = false
-      
-      if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'search' || viewParam === 'stats') {
+
+      if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'stats') {
         currentView.value = viewParam
+      } else if (viewParam === 'search') {
+        // Deep-link to search: seed Collections underneath so back returns to Collections.
+        currentView.value = 'collections'
+        const parentUrl = buildNavigationUrl({ view: 'collections' })
+        window.history.replaceState({ view: 'collections' }, '', parentUrl)
+        searchActive.value = true
+        pushNavigationState({ view: 'search' })
+        window.addEventListener('popstate', handlePopState)
+        return
       } else if (viewParam === 'collection') {
         const collectionId = urlParams.get('collection')
         if (collectionId) {
           currentCollectionId.value = collectionId
         }
       } else if (viewParam === 'memorization' || viewParam === 'review') {
-        // These are handled by restoreNavigationState
+        // Deep-link to a practice screen. Seed a parent history entry underneath
+        // so pressing back (in-app or browser) goes up one level to the parent
+        // rather than exiting the app or landing on some earlier page.
+        const deepLinkVerseId = urlParams.get('verse')
+        const deepLinkCollectionId = urlParams.get('collection')
+        const deepLinkMode = urlParams.get('mode')
+        const parentState = deepLinkCollectionId
+          ? { view: 'collection', collectionId: deepLinkCollectionId }
+          : { view: 'collections' }
+
+        // Replace the current (practice) entry with the parent, then defer starting
+        // practice so that startReview/startMemorization pushes the practice entry on top.
+        if (deepLinkCollectionId) {
+          currentCollectionId.value = deepLinkCollectionId
+        } else {
+          currentView.value = 'collections'
+        }
+        const parentUrl = buildNavigationUrl(parentState)
+        window.history.replaceState(parentState, '', parentUrl)
+
+        const deepLinkVerse = deepLinkVerseId ? verses.value.find(v => v.id === deepLinkVerseId) : null
+        if (deepLinkVerse) {
+          nextTick(() => {
+            if (viewParam === 'review') {
+              startReview(deepLinkVerse)
+            } else {
+              startMemorization(deepLinkVerse, deepLinkMode || 'learn')
+            }
+          })
+        } else if (deepLinkVerseId) {
+          // Verse referenced in URL doesn't exist — normalize the URL to the parent.
+          shouldNormalizeUrl = true
+        }
+        window.addEventListener('popstate', handlePopState)
+        return
       } else {
         // Default to collections if no view param
         currentView.value = 'collections'
         shouldNormalizeUrl = !!viewParam
       }
-      
+
       const initialState = getNavigationState()
       if (shouldNormalizeUrl) {
         replaceNavigationState(initialState)
@@ -3934,6 +4048,7 @@ export default {
       importError.value = null
       importErrorShowLink.value = false
       importingVerse.value = false
+      consumeModalState('addVerse')
     }
 
     // Initialize Bible client lazily
@@ -4168,6 +4283,7 @@ export default {
         description: ''
       }
       fabMenuOpen.value = false
+      consumeModalState('addCollection')
     }
 
     // Handle FAB click
@@ -4180,12 +4296,14 @@ export default {
     const openNewVerse = () => {
       fabMenuOpen.value = false
       showForm.value = true
+      pushModalState('addVerse')
     }
 
     // Open new collection from FAB menu
     const openNewCollection = () => {
       fabMenuOpen.value = false
       showCollectionForm.value = true
+      pushModalState('addCollection')
     }
 
     // Open CSV import modal
@@ -4197,6 +4315,7 @@ export default {
       csvPreview.value = []
       csvImportStatus.value = null
       csvPastedText.value = ''
+      pushModalState('importCSV')
     }
 
     // Close CSV import modal
@@ -4209,6 +4328,7 @@ export default {
       if (csvFileInput.value) {
         csvFileInput.value.value = ''
       }
+      consumeModalState('importCSV')
     }
 
     // Parse CSV file
@@ -4643,6 +4763,7 @@ export default {
         ...collection
       }
       showEditCollectionForm.value = true
+      pushModalState('editCollection')
     }
 
     // Save edited collection
@@ -4663,6 +4784,7 @@ export default {
     const closeEditCollectionForm = () => {
       showEditCollectionForm.value = false
       editingCollection.value = null
+      consumeModalState('editCollection')
     }
 
     // Handle delete collection from edit modal
@@ -4790,6 +4912,7 @@ export default {
         collectionIds: verse.collectionIds ? [...verse.collectionIds] : []
       }
       showEditVerseForm.value = true
+      pushModalState('editVerse')
     }
 
     // Save edited verse
@@ -4813,6 +4936,7 @@ export default {
       showEditVerseForm.value = false
       editingVerse.value = null
       scheduleActionsOpen.value = false
+      consumeModalState('editVerse')
     }
 
     // Handle delete verse from edit modal
@@ -4926,7 +5050,8 @@ export default {
       pushNavigationState({ view: 'collection', collectionId })
     }
 
-    // Navigate to review list view
+    // Navigate to review list view — top-level tabs use replace so that browser back
+    // from any top-level tab exits the app rather than cycling through previously visited tabs.
     const navigateToReviewList = () => {
       currentCollectionId.value = null
       currentView.value = 'review-list'
@@ -4935,23 +5060,21 @@ export default {
       if (guidedOnboardingStep.value === 'review-cta') {
         setGuidedOnboardingStep('done', null)
       }
-      pushNavigationState({ view: 'review-list' })
+      replaceNavigationState({ view: 'review-list' })
     }
 
-    // Navigate to collections view
     const navigateToCollections = () => {
       currentCollectionId.value = null
       currentView.value = 'collections'
-      pushNavigationState({ view: 'collections' })
+      replaceNavigationState({ view: 'collections' })
     }
 
-    // Navigate to stats view
     const navigateToStats = () => {
       currentCollectionId.value = null
       currentView.value = 'stats'
       searchQuery.value = ''
       searchActive.value = false
-      pushNavigationState({ view: 'stats' })
+      replaceNavigationState({ view: 'stats' })
     }
 
     const swipeViews = ['collections', 'review-list', 'stats']
@@ -4993,9 +5116,19 @@ export default {
     const clearSearch = () => {
       searchQuery.value = ''
       searchActive.value = false
+      // Consume the search history entry so browser state matches visible state.
+      // Back from the consumed entry lands on the Collections parent we replaced in openSearch.
+      if (!isHandlingBackButton && window.history.state?.view === 'search') {
+        window.history.back()
+      }
     }
 
     const openSearch = () => {
+      // Force the parent of search to always be Collections, regardless of which
+      // top-level view the user came from — browser back from search goes to Collections.
+      currentCollectionId.value = null
+      currentView.value = 'collections'
+      replaceNavigationState({ view: 'collections' })
       searchActive.value = true
       pushNavigationState({ view: 'search' })
       nextTick(() => {
@@ -5124,8 +5257,9 @@ export default {
       currentCollectionId.value = null
       searchQuery.value = ''
       searchActive.value = false
-      // Keep current view (review-list or collections)
-      pushNavigationState({ view: currentView.value })
+      // Keep current view (review-list or collections) — replace so browser back
+      // from here goes up another level (or exits) rather than back into the collection.
+      replaceNavigationState({ view: currentView.value })
     }
 
     // Check if we can switch to a given memorization mode
@@ -5509,14 +5643,9 @@ export default {
           replaceNavigationState({ view: 'review-list' })
         }
       } else {
-        // Fallback: use browser back if available, otherwise go to collections
-        if (!isHandlingBackButton && window.history.length > 1) {
-          window.history.back()
-        } else {
-          currentCollectionId.value = null
-          currentView.value = 'collections'
-          pushNavigationState({ view: 'collections' })
-        }
+        currentCollectionId.value = null
+        currentView.value = 'collections'
+        replaceNavigationState({ view: 'collections' })
       }
     }
 
@@ -5819,34 +5948,29 @@ export default {
       reviewMistakes.value = 0
       currentReviewSaved.value = false
       
-      // Navigate to source state
+      // Navigate to source state — replace the review history entry so back button
+      // returns to the screen before review, not back into the review flow
       if (sourceState) {
         if (sourceState.collectionId) {
           currentCollectionId.value = sourceState.collectionId
-          pushNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
+          replaceNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
         } else if (sourceState.view === 'review-list') {
           currentCollectionId.value = null
           currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          replaceNavigationState({ view: 'review-list' })
         } else if (sourceState.view === 'stats') {
           currentCollectionId.value = null
           currentView.value = 'stats'
-          pushNavigationState({ view: 'stats' })
+          replaceNavigationState({ view: 'stats' })
         } else {
-          // Fallback
           currentCollectionId.value = null
           currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
+          replaceNavigationState({ view: 'review-list' })
         }
       } else {
-        // Fallback: use browser back if available, otherwise go to review list
-        if (!isHandlingBackButton && window.history.length > 1) {
-          window.history.back()
-        } else {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          pushNavigationState({ view: 'review-list' })
-        }
+        currentCollectionId.value = null
+        currentView.value = 'review-list'
+        replaceNavigationState({ view: 'review-list' })
       }
     }
 
@@ -6353,12 +6477,14 @@ export default {
 
     const closePracticeSettings = () => {
       showPracticeSettings.value = false
+      consumeModalState('practiceSettings')
     }
 
     const openPracticeSettings = () => {
       closeSettingsMenu()
       closeDrawer()
       showPracticeSettings.value = true
+      pushModalState('practiceSettings')
     }
 
     const updateRequireReferenceTyping = (enabled) => {
@@ -6384,6 +6510,7 @@ export default {
     // Close settings modal
     const closeSettings = () => {
       showSettings.value = false
+      consumeModalState('syncSettings')
     }
 
     // Callback when sync settings are saved
@@ -6448,6 +6575,7 @@ export default {
       closeSettingsMenu()
       closeDrawer()
       showSettings.value = true
+      pushModalState('syncSettings')
     }
 
     // Open backup/import modal from menu
@@ -6455,11 +6583,13 @@ export default {
       closeSettingsMenu()
       closeDrawer()
       showBackupImport.value = true
+      pushModalState('backupImport')
     }
 
     // Close backup/import modal
     const closeBackupImport = () => {
       showBackupImport.value = false
+      consumeModalState('backupImport')
     }
 
     const openAbout = () => {
