@@ -5282,6 +5282,35 @@ export default {
       startMemorization(memorizingVerse.value, mode)
     }
 
+    const getCurrentSourceState = () => {
+      if (currentCollectionId.value) {
+        return {
+          view: 'collection',
+          collectionId: currentCollectionId.value
+        }
+      }
+
+      if (currentView.value === 'review-list') {
+        return { view: 'review-list' }
+      }
+
+      if (currentView.value === 'stats') {
+        return { view: 'stats' }
+      }
+
+      return { view: 'collections' }
+    }
+
+    const clearReviewSessionState = () => {
+      stopSpeaking()
+      reviewingVerse.value = null
+      reviewSourceList.value = null
+      reviewSourceState.value = null
+      currentReviewSaved.value = false
+      firstAttemptGrade.value = null
+      firstAttemptMistakes.value = null
+    }
+
     // Start memorizing a verse
     const startMemorization = (verse, mode) => {
       if (
@@ -5301,23 +5330,7 @@ export default {
 
       // Store the source state for navigation (only if not already set, to preserve it during mode advancement)
       if (!memorizationSourceState.value) {
-        if (currentCollectionId.value) {
-          // Coming from a collection - store collection state
-          memorizationSourceState.value = {
-            view: 'collection',
-            collectionId: currentCollectionId.value
-          }
-        } else if (currentView.value === 'review-list') {
-          // Coming from review list - store review list state
-          memorizationSourceState.value = {
-            view: 'review-list'
-          }
-        } else if (currentView.value === 'collections') {
-          // Coming from collections view - store collections state
-          memorizationSourceState.value = {
-            view: 'collections'
-          }
-        }
+        memorizationSourceState.value = getCurrentSourceState()
       }
       
       resetPracticeSequence(verse, mode, memorizeRetryCount.value)
@@ -5373,6 +5386,13 @@ export default {
         // If not mastered, start memorization instead
         const nextMode = getNextMemorizationMode(verse.memorizationStatus)
         if (nextMode) {
+          if (reviewingVerse.value) {
+            // Sequential review from a collection can hand off into memorization.
+            // End the review session first so the old review overlay/header unmounts
+            // and browser back still returns to the original collection.
+            memorizationSourceState.value = reviewSourceState.value || getCurrentSourceState()
+            clearReviewSessionState()
+          }
           startMemorization(verse, nextMode)
         }
         return

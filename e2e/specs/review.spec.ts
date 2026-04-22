@@ -354,6 +354,73 @@ test('review: input focused after Next Verse', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
+test('collection review handoff to an unmastered next verse shows the memorization header', async ({
+  page,
+}) => {
+  const yesterday = new Date(Date.now() - 86400000).toISOString()
+  const verses = [
+    {
+      id: 'collection-review-mastered',
+      reference: 'Psalm 1:1',
+      content: 'Blessed is',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: yesterday,
+      nextReviewDate: yesterday,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: ['collection-review-seq'],
+    },
+    {
+      id: 'collection-review-learn',
+      reference: 'Psalm 2:1',
+      content: 'Why do',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'unmemorized',
+      reviewCount: 0,
+      lastReviewed: null,
+      nextReviewDate: null,
+      easeFactor: 2.5,
+      interval: 0,
+      reviewHistory: [],
+      collectionIds: ['collection-review-seq'],
+    },
+  ]
+  const collections = [
+    {
+      id: 'collection-review-seq',
+      name: 'Collection Review',
+      description: '',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+    },
+  ]
+
+  await seedStorage(page, verses, collections)
+  await page.reload()
+  await gotoApp(page, '?view=collections')
+  await page.getByText('Collection Review').click()
+  await page.getByText('Psalm 1:1').click()
+
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.locator('#letter-input-review')).toHaveCount(0)
+  await expect(page.locator('h1').last()).toContainText('Psalm 2:1')
+})
+
 test('review: last verse in list shows Done button and exits to review list', async ({ page }) => {
   // Two mastered verses, both due for review. Order in the review list is determined
   // by nextReviewDate ascending — give Psalm 1:1 an earlier date so it's first.
