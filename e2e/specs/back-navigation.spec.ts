@@ -86,6 +86,56 @@ test.describe('Collection navigation', () => {
 })
 
 test.describe('Review screen back behavior', () => {
+  test('after reviewing multiple verses inside a collection, one browser back returns to Collections', async ({
+    page,
+  }) => {
+    const collection = {
+      id: 'col-review',
+      name: 'Review Collection',
+      description: '',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+    }
+    const verses = [
+      masteredVerse({
+        id: 'rc1',
+        reference: 'Psalm 1:1',
+        content: 'Blessed is',
+        collectionIds: ['col-review'],
+      }),
+      masteredVerse({
+        id: 'rc2',
+        reference: 'Psalm 2:1',
+        content: 'Why the',
+        collectionIds: ['col-review'],
+      }),
+    ]
+
+    await seedStorage(page, verses, [collection])
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByText('Review Collection').click()
+    await expect(page).toHaveURL(/\?view=collection&collection=col-review/)
+
+    await page.getByText('Psalm 1:1').first().click()
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+    await page.locator('#letter-input-review').focus()
+    await page.keyboard.type('bi', { delay: 50 })
+
+    await page.getByRole('button', { name: 'Next Verse' }).click()
+    await expect(page.locator('h1')).toContainText('Psalm 2:1')
+
+    // Return to the collection with the in-app back button.
+    await page.locator('header button').first().click()
+    await expect(page).toHaveURL(/\?view=collection&collection=col-review/)
+
+    // One browser-back should now leave the collection entirely.
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collections/)
+    await expect(page).not.toHaveURL(/collection=col-review/)
+  })
+
   test('browser back from review returns to review list (not to a prior verse)', async ({
     page,
   }) => {

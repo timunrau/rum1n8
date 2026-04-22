@@ -2660,8 +2660,18 @@ export default {
       } else if (viewParam === 'collection') {
         const collectionId = urlParams.get('collection')
         if (collectionId) {
+          // Deep-link to a collection. Seed Collections underneath so back always
+          // moves up one level instead of exiting the app.
+          currentView.value = 'collections'
+          const parentState = { view: 'collections' }
+          const parentUrl = buildNavigationUrl(parentState)
+          window.history.replaceState(parentState, '', parentUrl)
           currentCollectionId.value = collectionId
+          pushNavigationState({ view: 'collection', collectionId })
+          window.addEventListener('popstate', handlePopState)
+          return
         }
+        shouldNormalizeUrl = true
       } else if (viewParam === 'memorization' || viewParam === 'review') {
         // Deep-link to a practice screen. Seed a parent history entry underneath
         // so pressing back (in-app or browser) goes up one level to the parent
@@ -5302,14 +5312,71 @@ export default {
       toastState.value.action = null
     }
 
+    const resolveSourceNavigationState = (sourceState, fallbackView = 'collections') => {
+      if (sourceState?.collectionId) {
+        return { view: 'collection', collectionId: sourceState.collectionId }
+      }
+
+      if (sourceState?.view === 'review-list') {
+        return { view: 'review-list' }
+      }
+
+      if (sourceState?.view === 'stats') {
+        return { view: 'stats' }
+      }
+
+      if (sourceState?.view === 'collections') {
+        return { view: 'collections' }
+      }
+
+      return { view: fallbackView }
+    }
+
+    const applyNavigationStateLocally = (state) => {
+      currentCollectionId.value = state.collectionId || null
+
+      if (state.view === 'review-list' || state.view === 'collections' || state.view === 'stats') {
+        currentView.value = state.view
+      } else if (state.view === 'collection') {
+        currentView.value = 'collections'
+      } else {
+        currentView.value = 'collections'
+      }
+    }
+
+    const canPopHistoryToState = (targetState) => {
+      const currentState = window.history.state
+      if (!currentState) return false
+
+      const leavingCollectionForCollections =
+        currentState.view === 'collection' &&
+        targetState.view === 'collections' &&
+        !targetState.collectionId
+
+      const leavingPracticeForParentCollection =
+        (currentState.view === 'review' || currentState.view === 'memorization') &&
+        !!currentState.collectionId &&
+        targetState.view === 'collection' &&
+        targetState.collectionId === currentState.collectionId
+
+      return leavingCollectionForCollections || leavingPracticeForParentCollection
+    }
+
+    const navigateUpToState = (targetState) => {
+      if (!isHandlingBackButton && canPopHistoryToState(targetState)) {
+        window.history.back()
+        return
+      }
+
+      applyNavigationStateLocally(targetState)
+      replaceNavigationState(targetState)
+    }
+
     // View all verses (back from collection view)
     const viewAllVerses = () => {
-      currentCollectionId.value = null
       searchQuery.value = ''
       searchActive.value = false
-      // Keep current view (review-list or collections) — replace so browser back
-      // from here goes up another level (or exits) rather than back into the collection.
-      replaceNavigationState({ view: currentView.value })
+      navigateUpToState({ view: 'collections' })
     }
 
     // Check if we can switch to a given memorization mode
@@ -5688,35 +5755,8 @@ export default {
       typedLetter.value = ''
       reviewMistakes.value = 0
       
-      // Navigate to source state — replace the memorization history entry so back button
-      // returns to the screen before memorization, not back into the memorization flow
-      if (sourceState) {
-        if (sourceState.collectionId) {
-          currentCollectionId.value = sourceState.collectionId
-          replaceNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
-        } else if (sourceState.view === 'review-list') {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          replaceNavigationState({ view: 'review-list' })
-        } else if (sourceState.view === 'collections') {
-          currentCollectionId.value = null
-          currentView.value = 'collections'
-          replaceNavigationState({ view: 'collections' })
-        } else if (sourceState.view === 'stats') {
-          currentCollectionId.value = null
-          currentView.value = 'stats'
-          replaceNavigationState({ view: 'stats' })
-        } else {
-          // Fallback
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          replaceNavigationState({ view: 'review-list' })
-        }
-      } else {
-        currentCollectionId.value = null
-        currentView.value = 'collections'
-        replaceNavigationState({ view: 'collections' })
-      }
+      const targetState = resolveSourceNavigationState(sourceState, 'collections')
+      navigateUpToState(targetState)
     }
 
     // Retry memorization (reset without saving)
@@ -6018,30 +6058,8 @@ export default {
       reviewMistakes.value = 0
       currentReviewSaved.value = false
       
-      // Navigate to source state — replace the review history entry so back button
-      // returns to the screen before review, not back into the review flow
-      if (sourceState) {
-        if (sourceState.collectionId) {
-          currentCollectionId.value = sourceState.collectionId
-          replaceNavigationState({ view: 'collection', collectionId: sourceState.collectionId })
-        } else if (sourceState.view === 'review-list') {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          replaceNavigationState({ view: 'review-list' })
-        } else if (sourceState.view === 'stats') {
-          currentCollectionId.value = null
-          currentView.value = 'stats'
-          replaceNavigationState({ view: 'stats' })
-        } else {
-          currentCollectionId.value = null
-          currentView.value = 'review-list'
-          replaceNavigationState({ view: 'review-list' })
-        }
-      } else {
-        currentCollectionId.value = null
-        currentView.value = 'review-list'
-        replaceNavigationState({ view: 'review-list' })
-      }
+      const targetState = resolveSourceNavigationState(sourceState, 'review-list')
+      navigateUpToState(targetState)
     }
 
     // Focus input when clicking on verse text
