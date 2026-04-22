@@ -1,3 +1,10 @@
+## [1.15.4](https://github.com/timunrau/rum1n8/compare/v1.15.3...v1.15.4) (2026-04-22)
+
+
+### Bug Fixes
+
+* normalize collection back navigation ([7c78326](https://github.com/timunrau/rum1n8/commit/7c783262a5ef7dd206b245661b0ad66ab8b05182))
+
 ## [1.15.3](https://github.com/timunrau/rum1n8/compare/v1.15.2...v1.15.3) (2026-04-22)
 
 
