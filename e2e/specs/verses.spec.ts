@@ -33,6 +33,52 @@ test('add verse: FAB -> New Verse -> reference + content (manual) -> add -> appe
   await expect(page.getByText('John 3:16')).toBeVisible()
 })
 
+test('add verse: normalized and overlapping saved references show a subtle warning', async ({ page }) => {
+  const verses = [
+    {
+      id: 'exact',
+      reference: 'John 3:16',
+      content: 'For God so loved the world.',
+      bibleVersion: 'ESV',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      lastModified: '2024-01-01T00:00:00.000Z',
+      memorizationStatus: 'unmemorized',
+      reviewCount: 0,
+      lastReviewed: null,
+      nextReviewDate: null,
+      easeFactor: 2.5,
+      interval: 0,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+    {
+      id: 'overlap',
+      reference: 'John 3:16-17',
+      content: 'For God so loved the world, and more.',
+      bibleVersion: 'NIV',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      lastModified: '2024-01-01T00:00:00.000Z',
+      memorizationStatus: 'unmemorized',
+      reviewCount: 0,
+      lastReviewed: null,
+      nextReviewDate: null,
+      easeFactor: 2.5,
+      interval: 0,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+  ]
+
+  await seedStorage(page, verses, [])
+  await gotoApp(page, '?view=collections')
+  await page.getByTestId('fab-trigger').click()
+  await page.getByTestId('fab-new-verse').click()
+
+  await expect(page.getByTestId('modal-add-verse')).toBeVisible()
+  await page.getByLabel(/Verse Reference/i).fill('Jn 3:16')
+  await expect(page.getByText('Already in your library: John 3:16 (ESV); John 3:16-17 (NIV)')).toBeVisible()
+})
+
 test.skip('add verse with Bible import: mock API -> enter reference + version -> Import Content', async ({
   page,
 }) => {
@@ -64,6 +110,20 @@ test('edit verse: search on Verses tab -> edit -> change content -> save', async
 
   await expect(page.getByTestId('modal-edit-verse')).not.toBeVisible()
   await expect(page.getByText('Updated verse content.')).toBeVisible()
+})
+
+test('edit verse: changing the reference shows duplicate warnings but ignores the verse itself', async ({ page }) => {
+  await seedStorage(page, sampleVerses, [])
+  await gotoApp(page, '?view=collections')
+  await page.getByTestId('search-bar').click()
+  await page.getByPlaceholder(/Search verses/i).fill('John')
+  await page.waitForTimeout(500)
+  await page.getByRole('button', { name: 'Edit verse' }).first().click()
+
+  await expect(page.getByTestId('modal-edit-verse')).toBeVisible()
+  await expect(page.getByText(/Already in your library:/i)).toHaveCount(0)
+  await page.getByLabel(/Verse Reference/i).fill('Ps 23:1')
+  await expect(page.getByText('Already in your library: Psalm 23:1 (BSB)')).toBeVisible()
 })
 
 test('copy verse: copy button triggers copy', async ({ page }) => {

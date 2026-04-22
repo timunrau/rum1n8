@@ -1168,6 +1168,9 @@
               required
               class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
+            <p v-if="newVerseReferenceWarning" class="mt-2 text-xs leading-relaxed text-text-muted">
+              {{ newVerseReferenceWarning }}
+            </p>
           </div>
 
           <div>
@@ -1275,6 +1278,9 @@
               required
               class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
             />
+            <p v-if="editedVerseReferenceWarning" class="mt-2 text-xs leading-relaxed text-text-muted">
+              {{ editedVerseReferenceWarning }}
+            </p>
           </div>
 
           <div>
@@ -1822,6 +1828,7 @@ import {
   rememberAppUrl
 } from './ui-state.js'
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
+import { findReferenceMatches, formatReferenceMatchSummary, parseSimpleVerseReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
@@ -2218,9 +2225,9 @@ export default {
       if (!ref || !version) return null
       const versionId = youVersionIds[version]
       if (!versionId) return null
-      const parsed = parseVerseReference(ref)
+      const parsed = parseSimpleVerseReference(ref)
       if (!parsed) return null
-      const bookCode = getBookId(parsed.bookName)
+      const bookCode = parsed.bookId
       const usfmBook = youVersionBookOverrides[bookCode] || bookCode.toUpperCase()
       const verseRef = parsed.verseEnd > parsed.verseStart ? `${parsed.verseStart}-${parsed.verseEnd}` : `${parsed.verseStart}`
       return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.chapter}.${verseRef}.${version}`
@@ -2230,6 +2237,26 @@ export default {
       if (!editingVerse.value) return false
       return getVerseDraftField(editingVerse.value, 'reference') !== getVerseDraftField(editingVerse.value, 'originalReference')
     })
+
+    const newVerseReferenceMatches = computed(() => (
+      findReferenceMatches(getVerseDraftField(newVerse.value, 'reference'), verses.value)
+    ))
+
+    const newVerseReferenceWarning = computed(() => (
+      formatReferenceMatchSummary(newVerseReferenceMatches.value)
+    ))
+
+    const editedVerseReferenceMatches = computed(() => {
+      if (!editingVerse.value) return []
+
+      return findReferenceMatches(getVerseDraftField(editingVerse.value, 'reference'), verses.value, {
+        excludeVerseId: editingVerse.value.id
+      })
+    })
+
+    const editedVerseReferenceWarning = computed(() => (
+      formatReferenceMatchSummary(editedVerseReferenceMatches.value)
+    ))
 
     const newVerse = ref({
       reference: '',
@@ -4120,103 +4147,6 @@ export default {
       return { client: bibleClient.value, collection: bibleCollection.value }
     }
 
-    // Parse verse reference into components
-    const parseVerseReference = (reference) => {
-      // Handles: "John 3:16", "John 3:16-17", "1 John 1:9", "Psalm 23:1-6"
-      const match = reference.match(/^(\d?\s*[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?$/)
-      if (!match) return null
-
-      const bookName = match[1].trim()
-      const chapter = parseInt(match[2], 10)
-      const verseStart = parseInt(match[3], 10)
-      const verseEnd = match[4] ? parseInt(match[4], 10) : verseStart
-
-      return { bookName, chapter, verseStart, verseEnd }
-    }
-
-    // Map book name to API book ID
-    const getBookId = (bookName) => {
-      const normalizedName = bookName.toLowerCase().replace(/\s+/g, '')
-
-      // Common variations mapping
-      const variations = {
-        'psalm': 'psa', 'psalms': 'psa', 'ps': 'psa',
-        'genesis': 'gen', 'gen': 'gen',
-        'exodus': 'exo', 'exod': 'exo', 'ex': 'exo',
-        'leviticus': 'lev', 'lev': 'lev',
-        'numbers': 'num', 'num': 'num',
-        'deuteronomy': 'deu', 'deut': 'deu',
-        'joshua': 'jos', 'josh': 'jos',
-        'judges': 'jdg', 'judg': 'jdg',
-        'ruth': 'rut',
-        '1samuel': '1sa', '1sam': '1sa',
-        '2samuel': '2sa', '2sam': '2sa',
-        '1kings': '1ki', '1kgs': '1ki',
-        '2kings': '2ki', '2kgs': '2ki',
-        '1chronicles': '1ch', '1chr': '1ch',
-        '2chronicles': '2ch', '2chr': '2ch',
-        'ezra': 'ezr',
-        'nehemiah': 'neh', 'neh': 'neh',
-        'esther': 'est', 'esth': 'est',
-        'job': 'job',
-        'proverbs': 'pro', 'prov': 'pro',
-        'ecclesiastes': 'ecc', 'eccl': 'ecc',
-        'songofsolomon': 'sng', 'songofsongs': 'sng', 'song': 'sng', 'sos': 'sng',
-        'isaiah': 'isa', 'isa': 'isa',
-        'jeremiah': 'jer', 'jer': 'jer',
-        'lamentations': 'lam', 'lam': 'lam',
-        'ezekiel': 'ezk', 'ezek': 'ezk',
-        'daniel': 'dan', 'dan': 'dan',
-        'hosea': 'hos', 'hos': 'hos',
-        'joel': 'jol', 'joe': 'jol',
-        'amos': 'amo', 'amo': 'amo',
-        'obadiah': 'oba', 'obad': 'oba',
-        'jonah': 'jon', 'jon': 'jon',
-        'micah': 'mic', 'mic': 'mic',
-        'nahum': 'nam', 'nah': 'nam',
-        'habakkuk': 'hab', 'hab': 'hab',
-        'zephaniah': 'zep', 'zeph': 'zep',
-        'haggai': 'hag', 'hag': 'hag',
-        'zechariah': 'zec', 'zech': 'zec',
-        'malachi': 'mal', 'mal': 'mal',
-        'matthew': 'mat', 'matt': 'mat', 'mt': 'mat',
-        'mark': 'mrk', 'mk': 'mrk', 'mar': 'mrk',
-        'luke': 'luk', 'lk': 'luk',
-        'john': 'jhn', 'jn': 'jhn',
-        'acts': 'act',
-        'romans': 'rom', 'rom': 'rom',
-        '1corinthians': '1co', '1cor': '1co',
-        '2corinthians': '2co', '2cor': '2co',
-        'galatians': 'gal', 'gal': 'gal',
-        'ephesians': 'eph', 'eph': 'eph',
-        'philippians': 'php', 'phil': 'php',
-        'colossians': 'col', 'col': 'col',
-        '1thessalonians': '1th', '1thess': '1th',
-        '2thessalonians': '2th', '2thess': '2th',
-        '1timothy': '1ti', '1tim': '1ti',
-        '2timothy': '2ti', '2tim': '2ti',
-        'titus': 'tit', 'tit': 'tit',
-        'philemon': 'phm', 'phlm': 'phm',
-        'hebrews': 'heb', 'heb': 'heb',
-        'james': 'jas', 'jam': 'jas',
-        '1peter': '1pe', '1pet': '1pe',
-        '2peter': '2pe', '2pet': '2pe',
-        '1john': '1jn', '1jn': '1jn',
-        '2john': '2jn', '2jn': '2jn',
-        '3john': '3jn', '3jn': '3jn',
-        'jude': 'jud',
-        'revelation': 'rev', 'rev': 'rev'
-      }
-
-      // Try direct variation match
-      if (variations[normalizedName]) {
-        return variations[normalizedName]
-      }
-
-      // Try first 3 characters as fallback
-      return normalizedName.substring(0, 3)
-    }
-
     // Main import function
     const importVerseContent = async (verseDraft = newVerse.value) => {
       resetImportState()
@@ -4229,7 +4159,7 @@ export default {
         return
       }
 
-      const parsed = parseVerseReference(reference)
+      const parsed = parseSimpleVerseReference(reference)
       if (!parsed) {
         importError.value = "Could not parse verse reference. Please use format like 'John 3:16' or 'John 3:16-17'."
         return
@@ -4265,7 +4195,7 @@ export default {
         }
 
         // Get the book ID
-        const bookId = getBookId(parsed.bookName)
+        const bookId = parsed.bookId
 
         // Check if book exists in this translation
         if (!collection.has_book(translationId, bookId)) {
@@ -7195,6 +7125,8 @@ export default {
       getBibleGatewayUrl,
       getYouVersionUrl,
       hasEditedReferenceChanged,
+      newVerseReferenceWarning,
+      editedVerseReferenceWarning,
       importVerseContent,
       isPWAInstalled,
       showIOSModal,
