@@ -1188,7 +1188,7 @@
           <div>
             <button
               type="button"
-              @click="importVerseContent"
+              @click="importVerseContent()"
               :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
               class="btn-secondary btn--sm"
             >
@@ -1203,8 +1203,8 @@
               <template v-if="importErrorShowLink">
                 <p class="text-sm text-status-amber-text">This translation is copyrighted. Copy the text from one of the links below and paste it into <strong>Verse Content</strong>.</p>
                 <div class="flex flex-wrap gap-2">
-                  <a :href="bibleGatewayUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">Bible Gateway</a>
-                  <a v-if="youVersionUrl" :href="youVersionUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">YouVersion</a>
+                  <a :href="getBibleGatewayUrl(newVerse)" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">Bible Gateway</a>
+                  <a v-if="getYouVersionUrl(newVerse)" :href="getYouVersionUrl(newVerse)" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">YouVersion</a>
                 </div>
                 <a
                   href="https://fetch.bible/content/need/"
@@ -1290,6 +1290,40 @@
               class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
               style="text-transform: uppercase;"
             />
+          </div>
+
+          <div v-if="hasEditedReferenceChanged">
+            <button
+              type="button"
+              @click="importVerseContent(editingVerse)"
+              :disabled="!editingVerse.reference || !editingVerse.bibleVersion || importingVerse"
+              class="btn-secondary btn--sm"
+            >
+              <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
+            </button>
+
+            <div v-if="importError" ref="importErrorRef" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg space-y-2">
+              <template v-if="importErrorShowLink">
+                <p class="text-sm text-status-amber-text">This translation is copyrighted. Copy the text from one of the links below and paste it into <strong>Verse Content</strong>.</p>
+                <div class="flex flex-wrap gap-2">
+                  <a :href="getBibleGatewayUrl(editingVerse)" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">Bible Gateway</a>
+                  <a v-if="getYouVersionUrl(editingVerse)" :href="getYouVersionUrl(editingVerse)" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1 rounded-full border border-status-amber-border text-sm text-status-purple-text hover:bg-status-amber-border transition-colors">YouVersion</a>
+                </div>
+                <a
+                  href="https://fetch.bible/content/need/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm text-status-purple-text hover:underline inline-block"
+                >
+                  Find out why popular Bibles can't be freely shared
+                </a>
+              </template>
+              <p v-else class="text-sm text-status-amber-text">{{ importError }}</p>
+            </div>
           </div>
 
           <div>
@@ -2160,16 +2194,27 @@ export default {
     // Corrections where getBookId's 3-char fallback differs from USFM/YouVersion codes
     const youVersionBookOverrides = { joh: 'JHN', mar: 'MRK', phi: 'PHP', jam: 'JAS' }
 
-    const bibleGatewayUrl = computed(() => {
-      const ref = newVerse.value.reference.trim()
-      const version = newVerse.value.bibleVersion.trim().toUpperCase()
+    const getVerseDraftField = (verseDraft, key) => {
+      const value = verseDraft?.[key]
+      return typeof value === 'string' ? value.trim() : ''
+    }
+
+    const resetImportState = () => {
+      importError.value = null
+      importErrorShowLink.value = false
+      importingVerse.value = false
+    }
+
+    const getBibleGatewayUrl = (verseDraft = newVerse.value) => {
+      const ref = getVerseDraftField(verseDraft, 'reference')
+      const version = getVerseDraftField(verseDraft, 'bibleVersion').toUpperCase()
       if (!ref || !version) return 'https://www.biblegateway.com/'
       return `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=${encodeURIComponent(version)}`
-    })
+    }
 
-    const youVersionUrl = computed(() => {
-      const ref = newVerse.value.reference.trim()
-      const version = newVerse.value.bibleVersion.trim().toUpperCase()
+    const getYouVersionUrl = (verseDraft = newVerse.value) => {
+      const ref = getVerseDraftField(verseDraft, 'reference')
+      const version = getVerseDraftField(verseDraft, 'bibleVersion').toUpperCase()
       if (!ref || !version) return null
       const versionId = youVersionIds[version]
       if (!versionId) return null
@@ -2179,6 +2224,11 @@ export default {
       const usfmBook = youVersionBookOverrides[bookCode] || bookCode.toUpperCase()
       const verseRef = parsed.verseEnd > parsed.verseStart ? `${parsed.verseStart}-${parsed.verseEnd}` : `${parsed.verseStart}`
       return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.chapter}.${verseRef}.${version}`
+    }
+
+    const hasEditedReferenceChanged = computed(() => {
+      if (!editingVerse.value) return false
+      return getVerseDraftField(editingVerse.value, 'reference') !== getVerseDraftField(editingVerse.value, 'originalReference')
     })
 
     const newVerse = ref({
@@ -4045,9 +4095,7 @@ export default {
         collectionIds: []
       }
       fabMenuOpen.value = false
-      importError.value = null
-      importErrorShowLink.value = false
-      importingVerse.value = false
+      resetImportState()
       consumeModalState('addVerse')
     }
 
@@ -4160,12 +4208,11 @@ export default {
     }
 
     // Main import function
-    const importVerseContent = async () => {
-      importError.value = null
-      importErrorShowLink.value = false
+    const importVerseContent = async (verseDraft = newVerse.value) => {
+      resetImportState()
 
-      const reference = newVerse.value.reference.trim()
-      const version = newVerse.value.bibleVersion.trim().toLowerCase()
+      const reference = getVerseDraftField(verseDraft, 'reference')
+      const version = getVerseDraftField(verseDraft, 'bibleVersion').toLowerCase()
 
       if (!reference || !version) {
         importError.value = 'Please enter both a verse reference and Bible version first.'
@@ -4249,7 +4296,7 @@ export default {
           return
         }
 
-        newVerse.value.content = verseText
+        verseDraft.content = verseText
         importingVerse.value = false
 
       } catch (err) {
@@ -4907,8 +4954,10 @@ export default {
 
     // Edit verse
     const startEditVerse = (verse) => {
+      resetImportState()
       editingVerse.value = {
         ...verse,
+        originalReference: verse.reference,
         collectionIds: verse.collectionIds ? [...verse.collectionIds] : []
       }
       showEditVerseForm.value = true
@@ -4936,6 +4985,7 @@ export default {
       showEditVerseForm.value = false
       editingVerse.value = null
       scheduleActionsOpen.value = false
+      resetImportState()
       consumeModalState('editVerse')
     }
 
@@ -7124,8 +7174,9 @@ export default {
       importError,
       importErrorShowLink,
       importErrorRef,
-      bibleGatewayUrl,
-      youVersionUrl,
+      getBibleGatewayUrl,
+      getYouVersionUrl,
+      hasEditedReferenceChanged,
       importVerseContent,
       isPWAInstalled,
       showIOSModal,

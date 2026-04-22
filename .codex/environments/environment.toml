@@ -8,7 +8,4 @@ script = ""
 [[actions]]
 name = "Run"
 icon = "run"
-command = '''
-npm install
-NEXTCLOUD_URL=https://nc.unrau.xyz/remote.php/dav/files/timu npm run dev:all -- --host
-'''
+command = "NEXTCLOUD_URL=https://nc.unrau.xyz/remote.php/dav/files/timu npm run dev:all"
