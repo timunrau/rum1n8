@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/timunrau/rum1n8/compare/v1.15.0...v1.15.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **navigation:** back button always goes up a level ([880ab2b](https://github.com/timunrau/rum1n8/commit/880ab2b4037b07efe0ccad964cd615a050bad9c0))
+
 # [1.15.0](https://github.com/timunrau/rum1n8/compare/v1.14.0...v1.15.0) (2026-04-21)
 
 
