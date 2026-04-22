@@ -1,3 +1,10 @@
+## [1.15.2](https://github.com/timunrau/rum1n8/compare/v1.15.1...v1.15.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* clear review state before collection handoff ([58be49a](https://github.com/timunrau/rum1n8/commit/58be49aa1948ca7c098c3dc3efa0bff57e5c6855))
+
 ## [1.15.1](https://github.com/timunrau/rum1n8/compare/v1.15.0...v1.15.1) (2026-04-22)
 
 
