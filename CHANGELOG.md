@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/timunrau/rum1n8/compare/v1.16.0...v1.17.0) (2026-04-28)
+
+
+### Features
+
+* pwa polish ([277ca46](https://github.com/timunrau/rum1n8/commit/277ca46488376b9889dbac961b21caab9be050dc))
+
 # [1.16.0](https://github.com/timunrau/rum1n8/compare/v1.15.4...v1.16.0) (2026-04-22)
 
 
