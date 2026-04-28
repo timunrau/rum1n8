@@ -5,6 +5,11 @@
       <p class="text-sm text-text-secondary -mt-1">
         Keep your verses safe and in sync across all your devices.
       </p>
+      <div v-if="!isOnline" class="rounded-xl border border-status-info-border bg-status-info-bg p-3">
+        <p class="text-sm text-status-info-text">
+          Sync setup and connection checks need the internet. Your saved verses still work offline.
+        </p>
+      </div>
 
       <!-- Google Drive hero (primary path) -->
       <div v-if="selectedProvider === 'gdrive'" class="space-y-3">
@@ -27,7 +32,7 @@
         <div v-else class="space-y-3">
           <button
             @click="signInWithGoogle"
-            :disabled="signingIn"
+            :disabled="signingIn || !isOnline"
             data-testid="sync-gdrive-signin"
             class="w-full px-4 py-3 rounded-xl border border-border-input text-text-primary font-medium hover:bg-surface-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
@@ -37,7 +42,7 @@
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            {{ signingIn ? 'Signing in…' : 'Continue with Google' }}
+            {{ !isOnline ? 'Offline' : signingIn ? 'Signing in…' : 'Continue with Google' }}
           </button>
           <p class="text-xs text-text-muted text-center">
             Your verses are stored in your own Google Drive. We never see them.
@@ -174,7 +179,8 @@ export default {
   name: 'SyncSettingsModal',
   components: { ModalSheet },
   props: {
-    show: { type: Boolean, required: true }
+    show: { type: Boolean, required: true },
+    isOnline: { type: Boolean, default: true }
   },
   emits: ['close', 'saved'],
   setup(props, { emit }) {
@@ -196,6 +202,7 @@ export default {
     })
 
     const canTest = computed(() => {
+      if (!props.isOnline) return false
       if (selectedProvider.value !== 'webdav') return false
       const provider = getProvider('webdav')
       if (!provider) return false
@@ -252,6 +259,11 @@ export default {
     }
 
     async function signInWithGoogle() {
+      if (!props.isOnline) {
+        status.value = { type: 'error', message: 'Connect to the internet before setting up Google Drive sync.' }
+        return
+      }
+
       signingIn.value = true
       status.value = null
       try {
@@ -289,6 +301,11 @@ export default {
     }
 
     async function testConnection() {
+      if (!props.isOnline) {
+        status.value = { type: 'error', message: 'Connect to the internet before testing sync.' }
+        return
+      }
+
       testingConnection.value = true
       status.value = null
 

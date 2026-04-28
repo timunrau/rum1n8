@@ -6,8 +6,11 @@
 
       <!-- Panel -->
       <div
-        class="modal-sheet-panel relative flex flex-col h-full w-full bg-chrome sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-brand sm:shadow-soft sm:w-full rounded-t-3xl"
-        :class="maxWidth"
+        class="modal-sheet-panel flex flex-col w-full bg-chrome rounded-t-3xl sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-brand sm:shadow-soft sm:w-full"
+        :class="[
+          compact ? 'absolute inset-x-0 bottom-0 h-auto max-h-[85vh] shadow-soft' : 'relative h-full',
+          maxWidth
+        ]"
       >
         <!-- Sticky header -->
         <div class="flex items-center justify-between px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 flex-shrink-0">
@@ -57,6 +60,10 @@ export default {
     maxWidth: {
       type: String,
       default: 'sm:max-w-2xl',
+    },
+    compact: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['close'],

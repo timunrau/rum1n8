@@ -321,11 +321,11 @@
 
         <!-- Right side actions -->
         <div class="flex items-center gap-1 flex-shrink-0">
-          <!-- Install app button (top-level verses screen only) -->
+          <!-- Install app button (top-level verses screen only, when actionable) -->
           <button
-            v-if="!isPWAInstalled() && !currentCollectionId"
+            v-if="showInstallHeaderAction"
             data-testid="install-app-header"
-            @click="triggerInstall"
+            @click="openInstallFromHeader"
             class="btn-primary btn--sm"
           >
             Install app
@@ -387,6 +387,7 @@
               class="rounded-xl border p-3"
               :class="[
                 syncStatus.kind === 'error' ? 'border-status-error-border bg-status-error-bg' :
+                syncStatus.kind === 'offline' ? 'border-status-info-border bg-status-info-bg' :
                 syncStatus.kind === 'unconfigured' ? 'border-status-info-border bg-status-info-bg' :
                 'border-border-default bg-surface-card'
               ]"
@@ -430,21 +431,22 @@
                   <p v-if="syncStatus.detail" class="text-xs text-text-muted mt-0.5 break-words">{{ syncStatus.detail }}</p>
                   <div class="mt-2 flex gap-2">
                     <button
-                      v-if="syncStatus.kind === 'unconfigured'"
+                      v-if="syncStatus.kind === 'unconfigured' || (syncStatus.kind === 'offline' && !hasSyncConfigured)"
                       data-testid="drawer-sync-setup"
                       @click="openSyncSettings"
-                      class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+                      :disabled="!isOnline"
+                      class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Set up sync
+                      {{ !isOnline ? 'Offline' : 'Set up sync' }}
                     </button>
                     <template v-else>
                       <button
                         data-testid="settings-sync-now"
                         @click="manualSyncFromDrawer"
-                        :disabled="syncing"
+                        :disabled="syncing || !isOnline"
                         class="px-3 py-1.5 rounded-lg border border-border-input text-text-secondary hover:bg-surface-hover text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {{ syncStatus.kind === 'error' ? 'Retry' : 'Sync now' }}
+                        {{ !isOnline ? 'Offline' : syncStatus.kind === 'error' ? 'Retry' : 'Sync now' }}
                       </button>
                       <button
                         data-testid="settings-sync"
@@ -479,6 +481,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Backup & Restore
+          </button>
+          <button
+            v-if="showInstallMenuAction"
+            data-testid="settings-install-app"
+            @click="openInstallFromDrawer"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4l-4-4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
+            </svg>
+            Install app
           </button>
           <button
             data-testid="settings-share"
@@ -951,12 +965,43 @@
             </button>
             <p class="hero-onboarding__eyebrow">rum1n8</p>
             <h2 class="hero-onboarding__title">Start ruminating.</h2>
-            <p class="hero-onboarding__subtitle">Choose a verse to get started.</p>
+            <p class="hero-onboarding__subtitle">
+              {{ shouldShowIOSInstallFirstPrompt ? 'Use rum1n8 as an app, or keep going in your browser.' : 'Choose a verse to get started.' }}
+            </p>
             <div class="mt-7 flex flex-wrap items-center gap-4">
-              <PrimaryButton @click="openHeroVerseModal">
+              <PrimaryButton
+                v-if="shouldShowIOSInstallFirstPrompt"
+                @click="triggerInstallFirstPrompt"
+              >
+                Install app
+              </PrimaryButton>
+              <SecondaryButton
+                v-if="shouldShowIOSInstallFirstPrompt"
+                @click="continueInBrowserFromInstallFirst"
+              >
+                Continue in browser
+              </SecondaryButton>
+              <PrimaryButton v-else @click="openHeroVerseModal">
                 Add your first verse
                 <span class="sr-only">Add a verse</span>
               </PrimaryButton>
+            </div>
+            <div
+              v-if="shouldShowIOSInstalledSyncRestoreHint"
+              class="mt-6 rounded-xl border border-status-info-border bg-status-info-bg p-4 text-left"
+            >
+              <p class="text-sm font-semibold text-status-info-text">Looking for verses from Safari?</p>
+              <p class="mt-1 text-sm leading-6 text-status-info-text">
+                Set up sync here too, and rum1n8 will bring them into the Home Screen app.
+              </p>
+              <button
+                type="button"
+                class="btn-secondary btn--sm mt-3"
+                :disabled="!isOnline"
+                @click="openSyncSettings"
+              >
+                {{ isOnline ? 'Set up sync here' : 'Offline' }}
+              </button>
             </div>
           </div>
 
@@ -966,6 +1011,23 @@
             </svg>
             <p class="empty-state__title">No verses yet.</p>
             <p class="empty-state__body">Tap + to add a verse</p>
+            <div
+              v-if="shouldShowIOSInstalledSyncRestoreHint"
+              class="mx-auto mt-5 max-w-sm rounded-xl border border-status-info-border bg-status-info-bg p-4 text-left"
+            >
+              <p class="text-sm font-semibold text-status-info-text">Looking for verses from Safari?</p>
+              <p class="mt-1 text-sm leading-6 text-status-info-text">
+                Set up sync here too, and rum1n8 will bring them into the Home Screen app.
+              </p>
+              <button
+                type="button"
+                class="btn-secondary btn--sm mt-3"
+                :disabled="!isOnline"
+                @click="openSyncSettings"
+              >
+                {{ isOnline ? 'Set up sync here' : 'Offline' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1122,7 +1184,8 @@
   <!-- iOS Install Modal -->
   <IOSInstallModal
     v-if="showIOSModal"
-    @close="closeIOSModal"
+    :is-safari="isIOSSafari()"
+    @close="handleIOSInstallModalClose"
   />
 
   <!-- Toast Notification - rendered at root level to appear above all screens -->
@@ -1192,15 +1255,18 @@
             <button
               type="button"
               @click="importVerseContent()"
-              :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse"
+              :disabled="!newVerse.reference || !newVerse.bibleVersion || importingVerse || !isOnline"
               class="btn-secondary btn--sm"
             >
               <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
+              <span>{{ !isOnline ? 'Offline' : importingVerse ? 'Importing...' : 'Import Content' }}</span>
             </button>
+            <p v-if="!isOnline" class="mt-2 text-sm text-text-muted">
+              Verse text import needs the internet. You can still paste content manually.
+            </p>
 
             <div v-if="importError" ref="importErrorRef" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg space-y-2">
               <template v-if="importErrorShowLink">
@@ -1302,15 +1368,18 @@
             <button
               type="button"
               @click="importVerseContent(editingVerse)"
-              :disabled="!editingVerse.reference || !editingVerse.bibleVersion || importingVerse"
+              :disabled="!editingVerse.reference || !editingVerse.bibleVersion || importingVerse || !isOnline"
               class="btn-secondary btn--sm"
             >
               <svg v-if="importingVerse" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ importingVerse ? 'Importing...' : 'Import Content' }}</span>
+              <span>{{ !isOnline ? 'Offline' : importingVerse ? 'Importing...' : 'Import Content' }}</span>
             </button>
+            <p v-if="!isOnline" class="mt-2 text-sm text-text-muted">
+              Verse text import needs the internet. You can still paste content manually.
+            </p>
 
             <div v-if="importError" ref="importErrorRef" class="mt-2 p-3 bg-status-amber-bg border border-status-amber-border rounded-lg space-y-2">
               <template v-if="importErrorShowLink">
@@ -1732,7 +1801,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
       </ModalSheet>
 
       <!-- Sync Settings Modal -->
-      <SyncSettingsModal :show="showSettings" @close="closeSettings" @saved="onSyncSettingsSaved" />
+      <SyncSettingsModal :show="showSettings" :is-online="isOnline" @close="closeSettings" @saved="onSyncSettingsSaved" />
 
       <!-- Backup & Restore Modal -->
       <ModalSheet :show="showBackupImport" title="Backup & Restore" data-testid="modal-backup-restore" @close="closeBackupImport">
@@ -1792,6 +1861,47 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         </template>
       </ModalSheet>
 
+      <ModalSheet
+        :show="showIOSInstallBackupFirst"
+        title="Keep your verses with you"
+        data-testid="modal-ios-install-backup-first"
+        max-width="sm:max-w-md"
+        compact
+        @close="closeIOSInstallBackupFirst"
+      >
+        <div class="space-y-4">
+          <p class="text-sm text-text-secondary">
+            Turn on sync before installing. If the Home Screen app opens empty, set up sync there too and rum1n8 will bring your verses in.
+          </p>
+          <div
+            v-if="iosInstallBackupDownloaded"
+            class="rounded-xl border border-status-success-border bg-status-success-bg p-3"
+          >
+            <p class="text-sm text-status-success-text">Backup file downloaded. Keep it somewhere safe in case you need to restore later.</p>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              class="btn-primary"
+              :disabled="!isOnline"
+              @click="setUpSyncForIOSInstall"
+            >
+              Set up sync
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="continueToIOSInstallSteps"
+            >
+              Continue without sync
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
 </template>
 
 <script>
@@ -1819,13 +1929,16 @@ import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } 
 import {
   buildAboutUrl,
   dismissOnboarding as dismissOnboardingUiState,
+  getInstallReminderState,
   getCurrentAppUrl,
   hasLegacyAppPresence,
   getOnboardingUiState,
+  isInstallPromptSnoozed,
   markAppOpened,
   markPracticeModeHintSeen as persistPracticeModeHintSeen,
   updateOnboardingUiState,
-  rememberAppUrl
+  rememberAppUrl,
+  snoozeInstallPrompt
 } from './ui-state.js'
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
 import { findReferenceMatches, formatReferenceMatchSummary, parseSimpleVerseReference } from './utils/bible-reference.js'
@@ -2102,6 +2215,10 @@ export default {
     const drawerOpen = ref(false)
     const showBackupImport = ref(false)
     const showImportCSV = ref(false)
+    const showIOSInstallBackupFirst = ref(false)
+    const iosInstallBackupDownloaded = ref(false)
+    const iosInstallModalSource = ref(null)
+    const continueInstallAfterSyncSetup = ref(false)
     const editingVerse = ref(null)
     const scheduleActionsOpen = ref(false)
     const editingCollection = ref(null)
@@ -2136,6 +2253,7 @@ export default {
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
     const isScrolled = ref(false)
+    const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine !== false)
     const isDev = import.meta.env.DEV
     const csvFileInput = ref(null)
     const csvTextarea = ref(null)
@@ -2155,6 +2273,13 @@ export default {
     let syncFeedbackRequested = false
     const dailyActivityScrollRef = ref(null)
     const lastBackupTimestamp = ref(localStorage.getItem('rum1n8-last-backup'))
+    const initialInstallReminderState = getInstallReminderState()
+    const installReminderVersion = ref(
+      initialInstallReminderState.installPromptDismissedUntil ||
+      initialInstallReminderState.installFirstPromptDismissedUntil
+        ? 1
+        : 0
+    )
     const backupNudgeStage = ref(Number(localStorage.getItem('rum1n8-backup-nudge-stage') || 0))
     const reviewCompletedCount = ref(Number(localStorage.getItem('rum1n8-review-completed-count') || 0))
     const appSettings = ref(getAppSettings())
@@ -2173,15 +2298,13 @@ export default {
     // PWA install
     const {
       isPWAInstalled,
+      isIOS,
+      isIOSSafari,
+      isInstallActionable,
       showIOSModal,
       triggerInstall: triggerInstallRaw,
       closeIOSModal
     } = usePWAInstall()
-
-    const triggerInstall = () => {
-      trackEvent('install_prompt_clicked')
-      triggerInstallRaw()
-    }
 
     // Bible verse import state
     const importingVerse = ref(false)
@@ -2523,6 +2646,9 @@ export default {
 
       showSettings.value = false
       showBackupImport.value = false
+      showIOSInstallBackupFirst.value = false
+      iosInstallBackupDownloaded.value = false
+      continueInstallAfterSyncSetup.value = false
       showPracticeSettings.value = false
       fabMenuOpen.value = false
     }
@@ -3417,9 +3543,19 @@ export default {
       syncStateVersion.value
       syncTick.value
       syncing.value // keep reactive while syncing
+      isOnline.value
       const state = getSyncState()
       const configured = hasSyncConfigured.value
 
+      if (!isOnline.value) {
+        return {
+          kind: 'offline',
+          title: 'Offline',
+          detail: configured
+            ? 'Sync is unavailable until your connection returns'
+            : 'Set up sync when you are back online'
+        }
+      }
       if (syncing.value) {
         return { kind: 'syncing', title: 'Syncing\u2026', detail: '' }
       }
@@ -3493,6 +3629,97 @@ export default {
       } else {
         return 'Just now'
       }
+    }
+
+    const getLocalDataTimestamp = (record) => {
+      const timestamp = record?.lastModified || record?.createdAt || record?.lastReviewed || null
+      const time = timestamp ? new Date(timestamp).getTime() : 0
+      return Number.isFinite(time) ? time : 0
+    }
+
+    const latestLocalDataTimestamp = computed(() => {
+      const verseTimes = verses.value.map(getLocalDataTimestamp)
+      const collectionTimes = collections.value.map(getLocalDataTimestamp)
+      return Math.max(0, ...verseTimes, ...collectionTimes)
+    })
+
+    const hasCurrentBackup = computed(() => {
+      if (!lastBackupTimestamp.value) return false
+      const backupTime = new Date(lastBackupTimestamp.value).getTime()
+      if (!Number.isFinite(backupTime)) return false
+      return latestLocalDataTimestamp.value > 0 && backupTime >= latestLocalDataTimestamp.value
+    })
+
+    const isInstallFirstPromptSnoozed = computed(() => {
+      installReminderVersion.value
+      return isInstallPromptSnoozed('first')
+    })
+
+    const showInstallMenuAction = computed(() => (
+      !isPWAInstalled() && isInstallActionable.value
+    ))
+
+    const shouldRequireIOSBackupBeforeInstall = computed(() => (
+      isIOS() &&
+      totalVerseCount.value > 0 &&
+      !hasSyncConfigured.value &&
+      !hasCurrentBackup.value
+    ))
+
+    const shouldShowIOSInstallFirstPrompt = computed(() => (
+      isIOS() &&
+      !isPWAInstalled() &&
+      isInstallActionable.value &&
+      isLibraryEmpty.value &&
+      !isInstallFirstPromptSnoozed.value
+    ))
+
+    const shouldShowIOSInstalledSyncRestoreHint = computed(() => (
+      isIOS() &&
+      isPWAInstalled() &&
+      isLibraryEmpty.value &&
+      !hasSyncConfigured.value
+    ))
+
+    const showInstallHeaderAction = computed(() => (
+      currentView.value === 'collections' &&
+      !currentCollectionId.value &&
+      !shouldShowIOSInstallFirstPrompt.value &&
+      !isPWAInstalled() &&
+      isInstallActionable.value
+    ))
+
+    const markInstallReminderStateChanged = () => {
+      installReminderVersion.value++
+    }
+
+    const snoozeInstallFirstPrompt = () => {
+      snoozeInstallPrompt('first')
+      markInstallReminderStateChanged()
+    }
+
+    const triggerInstallFromSurface = async (source = 'menu') => {
+      trackEvent('install_prompt_clicked', { source })
+      const result = await triggerInstallRaw()
+
+      if (result === 'ios-guidance') {
+        iosInstallModalSource.value = source
+      }
+
+      return result
+    }
+
+    const triggerInstallFirstPrompt = () => {
+      triggerInstallFromSurface('first')
+    }
+
+    const continueInBrowserFromInstallFirst = () => {
+      snoozeInstallFirstPrompt()
+    }
+
+    const handleIOSInstallModalClose = () => {
+      closeIOSModal()
+      iosInstallModalSource.value = null
     }
 
     // Active nudge card prompting sync/backup setup at escalating milestones.
@@ -4150,6 +4377,11 @@ export default {
     // Main import function
     const importVerseContent = async (verseDraft = newVerse.value) => {
       resetImportState()
+
+      if (!isOnline.value) {
+        importError.value = 'Verse text import needs an internet connection. You can still paste content manually.'
+        return
+      }
 
       const reference = getVerseDraftField(verseDraft, 'reference')
       const version = getVerseDraftField(verseDraft, 'bibleVersion').toLowerCase()
@@ -6266,6 +6498,16 @@ export default {
     const triggerSync = async (showFeedback = false) => {
       syncFeedbackRequested = syncFeedbackRequested || showFeedback
 
+      if (!isOnline.value) {
+        syncRequestedWhileSyncing = false
+        syncFeedbackRequested = false
+        syncStateVersion.value++
+        if (showFeedback) {
+          showToast('Sync is unavailable offline. Your saved verses still work.', true)
+        }
+        return
+      }
+
       if (syncing.value) {
         syncRequestedWhileSyncing = true
         console.log('[triggerSync] Already syncing, queueing another sync')
@@ -6529,15 +6771,21 @@ export default {
     const closeSettings = () => {
       showSettings.value = false
       consumeModalState('syncSettings')
+      continueInstallAfterSyncSetup.value = false
     }
 
     // Callback when sync settings are saved
     const onSyncSettingsSaved = () => {
+      const shouldContinueInstall = continueInstallAfterSyncSetup.value
+      continueInstallAfterSyncSetup.value = false
       // Bump reactive trigger so hasSyncConfigured recomputes
       syncConfigVersion.value++
       // Trigger sync after saving settings
-      setTimeout(() => {
-        triggerSync(false)
+      setTimeout(async () => {
+        await triggerSync(false)
+        if (shouldContinueInstall && isInstallActionable.value) {
+          triggerInstallFromSurface('sync-setup')
+        }
       }, 500)
     }
 
@@ -6589,10 +6837,20 @@ export default {
     }
 
     // Open sync settings from menu
-    const openSyncSettings = () => {
+    const openSyncSettings = ({ replaceCurrentModal = false } = {}) => {
       closeSettingsMenu()
       closeDrawer()
       showSettings.value = true
+
+      if (replaceCurrentModal && !isHandlingBackButton && window.history.state?.modal) {
+        window.history.replaceState(
+          { ...getNavigationState(), modal: 'syncSettings' },
+          '',
+          window.location.href
+        )
+        return
+      }
+
       pushModalState('syncSettings')
     }
 
@@ -6608,6 +6866,56 @@ export default {
     const closeBackupImport = () => {
       showBackupImport.value = false
       consumeModalState('backupImport')
+    }
+
+    const openInstallFlow = (source = 'menu') => {
+      if (!showInstallMenuAction.value) return
+
+      if (shouldRequireIOSBackupBeforeInstall.value) {
+        iosInstallBackupDownloaded.value = false
+        showIOSInstallBackupFirst.value = true
+        pushModalState('iosInstallBackup')
+        return
+      }
+
+      triggerInstallFromSurface(source)
+    }
+
+    const openInstallFromDrawer = () => {
+      closeSettingsMenu()
+      closeDrawer()
+      openInstallFlow('menu')
+    }
+
+    const openInstallFromHeader = () => {
+      openInstallFlow('header')
+    }
+
+    const closeIOSInstallBackupFirst = () => {
+      showIOSInstallBackupFirst.value = false
+      iosInstallBackupDownloaded.value = false
+      consumeModalState('iosInstallBackup')
+    }
+
+    const downloadBackupForIOSInstall = () => {
+      if (backupAllData()) {
+        iosInstallBackupDownloaded.value = true
+        markInstallReminderStateChanged()
+      }
+    }
+
+    const setUpSyncForIOSInstall = () => {
+      if (!isOnline.value) return
+
+      showIOSInstallBackupFirst.value = false
+      iosInstallBackupDownloaded.value = false
+      continueInstallAfterSyncSetup.value = true
+      openSyncSettings({ replaceCurrentModal: true })
+    }
+
+    const continueToIOSInstallSteps = () => {
+      closeIOSInstallBackupFirst()
+      triggerInstallFromSurface('menu')
     }
 
     const openAbout = () => {
@@ -6681,9 +6989,11 @@ export default {
         const timestamp = new Date().toISOString()
         localStorage.setItem('rum1n8-last-backup', timestamp)
         lastBackupTimestamp.value = timestamp
+        return true
       } catch (error) {
         console.error('Error backing up data:', error)
         alert('Failed to backup data. Please try again.')
+        return false
       }
     }
 
@@ -6873,6 +7183,16 @@ export default {
       isScrolled.value = scrollTop > 4
     }
 
+    const handleConnectivityChange = () => {
+      const wasOnline = isOnline.value
+      isOnline.value = typeof navigator === 'undefined' ? true : navigator.onLine !== false
+      syncStateVersion.value++
+
+      if (!wasOnline && isOnline.value && isSyncConfigured()) {
+        triggerSync(false)
+      }
+    }
+
     // Load verses on mount
     onMounted(async () => {
       loadCollections()
@@ -6899,6 +7219,9 @@ export default {
       })
 
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
+      window.addEventListener('online', handleConnectivityChange)
+      window.addEventListener('offline', handleConnectivityChange)
+      handleConnectivityChange()
       handleWindowScroll()
 
       syncTickIntervalId = setInterval(() => { syncTick.value++ }, 60_000)
@@ -6911,6 +7234,8 @@ export default {
     onBeforeUnmount(() => {
       window.removeEventListener('popstate', handlePopState)
       document.removeEventListener('scroll', handleWindowScroll, { capture: true })
+      window.removeEventListener('online', handleConnectivityChange)
+      window.removeEventListener('offline', handleConnectivityChange)
       if (toastTimeoutId) {
         clearTimeout(toastTimeoutId)
       }
@@ -6940,6 +7265,7 @@ export default {
       guidedOnboardingStep,
       guidedOnboardingVerseId,
       shouldShowHeroOnboarding,
+      shouldShowIOSInstalledSyncRestoreHint,
       shouldShowVerseOnboardingCallout,
       shouldShowStartReviewCallout,
       shouldShowPracticeModesHint,
@@ -7073,6 +7399,9 @@ export default {
       toggleDrawer,
       closeDrawer,
       showBackupImport,
+      showIOSInstallBackupFirst,
+      iosInstallBackupDownloaded,
+      showInstallMenuAction,
       isDev,
       closePracticeSettings,
       closeSettings,
@@ -7086,6 +7415,12 @@ export default {
       onSyncSettingsSaved,
       openBackupImport,
       closeBackupImport,
+      openInstallFromDrawer,
+      openInstallFromHeader,
+      closeIOSInstallBackupFirst,
+      downloadBackupForIOSInstall,
+      setUpSyncForIOSInstall,
+      continueToIOSInstallSteps,
       openAbout,
       shareApp,
       backupAllData,
@@ -7097,6 +7432,7 @@ export default {
       snoozeBackupNudge,
       handleNudgeSync,
       backupFileInput,
+      isOnline,
       manualSync,
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
@@ -7129,9 +7465,13 @@ export default {
       editedVerseReferenceWarning,
       importVerseContent,
       isPWAInstalled,
+      isIOSSafari,
       showIOSModal,
-      triggerInstall,
-      closeIOSModal,
+      handleIOSInstallModalClose,
+      showInstallHeaderAction,
+      shouldShowIOSInstallFirstPrompt,
+      triggerInstallFirstPrompt,
+      continueInBrowserFromInstallFirst,
       memorizationPracticeRef,
       memorizationInstanceKey,
       reviewPracticeRef,

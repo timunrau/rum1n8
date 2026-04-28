@@ -417,9 +417,11 @@ export default defineConfig(({ mode }) => {
           theme_color: '#ffffff',
           background_color: '#ffffff',
           display: 'standalone',
+          display_override: ['standalone', 'minimal-ui', 'browser'],
           orientation: 'portrait',
           start_url: siteMetadata.appPath,
           scope: '/',
+          categories: ['education', 'lifestyle', 'productivity'],
           screenshots: [
             {
               src: 'marketing/screenshot-empty.png',
@@ -441,6 +443,47 @@ export default defineConfig(({ mode }) => {
               type: 'image/png',
               form_factor: 'narrow',
               label: 'Review list view',
+            },
+          ],
+          shortcuts: [
+            {
+              name: 'Collections',
+              short_name: 'Collections',
+              description: 'Open your verse library',
+              url: '/app/?view=collections',
+              icons: [
+                {
+                  src: 'icons/icon-192x192.png',
+                  sizes: '192x192',
+                  type: 'image/png',
+                },
+              ],
+            },
+            {
+              name: 'Review',
+              short_name: 'Review',
+              description: 'Open verses due for review',
+              url: '/app/?view=review-list',
+              icons: [
+                {
+                  src: 'icons/icon-192x192.png',
+                  sizes: '192x192',
+                  type: 'image/png',
+                },
+              ],
+            },
+            {
+              name: 'Stats',
+              short_name: 'Stats',
+              description: 'Open memorization stats',
+              url: '/app/?view=stats',
+              icons: [
+                {
+                  src: 'icons/icon-192x192.png',
+                  sizes: '192x192',
+                  type: 'image/png',
+                },
+              ],
             },
           ],
           icons: [

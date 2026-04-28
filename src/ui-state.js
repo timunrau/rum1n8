@@ -7,6 +7,14 @@ const DEFAULT_UI_STATE = Object.freeze({
   lastAppUrl: null,
 })
 
+const INSTALL_PROMPT_SNOOZE_DAYS = 14
+const INSTALL_PROMPT_SNOOZE_MS = INSTALL_PROMPT_SNOOZE_DAYS * 24 * 60 * 60 * 1000
+
+const INSTALL_SNOOZE_KEYS = Object.freeze({
+  primary: 'installPromptDismissedUntil',
+  first: 'installFirstPromptDismissedUntil',
+})
+
 const PRACTICE_MODE_HINT_MODES = ['learn', 'memorize', 'master']
 
 const DEFAULT_PRACTICE_MODE_HINTS_SEEN = Object.freeze({
@@ -72,12 +80,20 @@ export function normalizeAppUrl(value) {
 }
 
 export function normalizeUiState(state = {}) {
-  return {
+  const normalized = {
     ...DEFAULT_UI_STATE,
     ...(state && typeof state === 'object' && !Array.isArray(state) ? state : {}),
     hasOpenedApp: !!state?.hasOpenedApp,
     lastAppUrl: normalizeAppUrl(state?.lastAppUrl),
   }
+
+  for (const key of Object.values(INSTALL_SNOOZE_KEYS)) {
+    if (Object.prototype.hasOwnProperty.call(normalized, key)) {
+      normalized[key] = normalizeInstallSnoozeTimestamp(normalized[key])
+    }
+  }
+
+  return normalized
 }
 
 export function getUiState() {
@@ -112,6 +128,50 @@ export function updateUiState(patch) {
   return saveUiState({
     ...current,
     ...patch,
+  })
+}
+
+function normalizeInstallSnoozeTimestamp(value) {
+  if (!value || typeof value !== 'string') return null
+  const timestamp = new Date(value).getTime()
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null
+}
+
+function getInstallSnoozeKey(kind = 'primary') {
+  return INSTALL_SNOOZE_KEYS[kind] || INSTALL_SNOOZE_KEYS.primary
+}
+
+export function getInstallReminderState() {
+  const state = getUiState()
+  return {
+    installPromptDismissedUntil: state.installPromptDismissedUntil || null,
+    installFirstPromptDismissedUntil: state.installFirstPromptDismissedUntil || null,
+  }
+}
+
+export function isInstallPromptSnoozed(kind = 'primary', now = Date.now()) {
+  const key = getInstallSnoozeKey(kind)
+  const value = getUiState()[key]
+  if (!value) return false
+
+  const timestamp = new Date(value).getTime()
+  return Number.isFinite(timestamp) && timestamp > now
+}
+
+export function snoozeInstallPrompt(kind = 'primary', now = new Date()) {
+  const key = getInstallSnoozeKey(kind)
+  const baseTime = now instanceof Date ? now.getTime() : new Date(now).getTime()
+  const startTime = Number.isFinite(baseTime) ? baseTime : Date.now()
+
+  return updateUiState({
+    [key]: new Date(startTime + INSTALL_PROMPT_SNOOZE_MS).toISOString(),
+  })
+}
+
+export function clearInstallPromptSnoozes() {
+  return updateUiState({
+    installPromptDismissedUntil: null,
+    installFirstPromptDismissedUntil: null,
   })
 }
 
