@@ -421,6 +421,84 @@ test('collection review handoff to an unmastered next verse shows the memorizati
   await expect(page.locator('h1').last()).toContainText('Psalm 2:1')
 })
 
+test('collection review follows collection order and Done returns to the collection', async ({
+  page,
+}) => {
+  const older = new Date(Date.now() - 2 * 86400000).toISOString()
+  const newer = new Date(Date.now() - 86400000).toISOString()
+  const verses = [
+    {
+      id: 'collection-done-psalm-2',
+      reference: 'Psalm 2:1',
+      content: 'Why do',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: older,
+      nextReviewDate: older,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: ['collection-done-seq'],
+    },
+    {
+      id: 'collection-done-psalm-1',
+      reference: 'Psalm 1:1',
+      content: 'Blessed is',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: newer,
+      nextReviewDate: newer,
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: ['collection-done-seq'],
+    },
+  ]
+  const collections = [
+    {
+      id: 'collection-done-seq',
+      name: 'Done Collection',
+      description: '',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+    },
+  ]
+
+  await seedStorage(page, verses, collections)
+  await page.reload()
+  await gotoApp(page, '?view=collections')
+  await page.getByText('Done Collection').click()
+  await expect(page.getByText('Psalm 1:1')).toBeVisible()
+  await expect(page.getByText('Psalm 2:1')).toBeVisible()
+
+  await page.getByText('Psalm 1:1').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('bi', { delay: 50 })
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await nextButton.click()
+  await expect(page.locator('h1')).toContainText('Psalm 2:1')
+
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('wd', { delay: 50 })
+
+  const doneButton = page.getByRole('button', { name: 'Done' })
+  await expect(doneButton).toBeVisible({ timeout: 5000 })
+  await doneButton.click()
+
+  await expect(page.locator('#letter-input-review')).toHaveCount(0)
+  await expect(page).toHaveURL(/\?view=collection&collection=collection-done-seq/)
+  await expect(page.getByText('Done Collection')).toBeVisible()
+})
+
 test('review: last verse in list shows Done button and exits to review list', async ({ page }) => {
   // Two mastered verses, both due for review. Order in the review list is determined
   // by nextReviewDate ascending — give Psalm 1:1 an earlier date so it's first.

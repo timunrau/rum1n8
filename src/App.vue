@@ -2949,14 +2949,26 @@ export default {
       return getTimeUntilReview(verse)
     })
 
+    const getNextReviewSourceVerse = () => {
+      if (!reviewingVerse.value) return null
+
+      const sourceVerses = reviewSourceList.value?.length
+        ? reviewSourceList.value
+        : verses.value.filter(v => isDueForReview(v))
+
+      if (!sourceVerses.length) return null
+
+      const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
+      if (currentIndex === -1) return null
+
+      return sourceVerses[currentIndex + 1] || null
+    }
+
     // True when the current reviewing verse is the last one in the source list,
     // so the completion tray can offer "Done" instead of looping back to the first verse.
     const isLastInReviewList = computed(() => {
       if (!reviewingVerse.value) return false
-      const list = reviewSourceList.value
-      if (!list || list.length === 0) return false
-      const idx = list.findIndex(v => v.id === reviewingVerse.value.id)
-      return idx === list.length - 1
+      return !getNextReviewSourceVerse()
     })
 
     const isGuidedPracticeOnboardingActive = computed(() => {
@@ -5738,20 +5750,20 @@ export default {
         // Store the original source state
         if (currentCollectionId.value) {
           // Coming from a collection - store sorted collection verses (what user sees)
-          reviewSourceList.value = sortedVerses.value
+          reviewSourceList.value = [...sortedVerses.value]
           reviewSourceState.value = {
             view: 'collection',
             collectionId: currentCollectionId.value
           }
         } else if (currentView.value === 'review-list') {
           // Coming from review list - store review list verses (what user sees)
-          reviewSourceList.value = reviewSortedVerses.value
+          reviewSourceList.value = [...reviewSortedVerses.value]
           reviewSourceState.value = {
             view: 'review-list'
           }
         } else {
           // Coming from collections view — use the full review sorted list so "Next Verse" walks all mastered verses
-          reviewSourceList.value = reviewSortedVerses.value
+          reviewSourceList.value = [...reviewSortedVerses.value]
           reviewSourceState.value = {
             view: 'review-list'
           }
@@ -6068,38 +6080,13 @@ export default {
           })
         }
         
-        // Find next verse in the source list
-        let sourceVerses = null
-        
-        if (reviewSourceList.value && reviewSourceList.value.length > 0) {
-          // Use the source list from where we came
-          sourceVerses = reviewSourceList.value
+        const nextSourceVerse = getNextReviewSourceVerse()
+        if (nextSourceVerse) {
+          startReview(nextSourceVerse)
         } else {
-          // Fallback: use all verses due for review
-          sourceVerses = verses.value.filter(v => isDueForReview(v))
-        }
-        
-        if (sourceVerses.length > 0) {
-          // Find current verse index in source list
-          const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
-          
-          if (currentIndex !== -1) {
-            const nextIndex = currentIndex + 1
-            if (nextIndex < sourceVerses.length) {
-              startReview(sourceVerses[nextIndex])
-            } else {
-              // Reached the end of the source list — exit back to the origin screen
-              // instead of wrapping around to the first verse.
-              console.log('[nextVerse] End of source list, calling exitReview()')
-              exitReview()
-            }
-          } else {
-            // Current verse not in source list, go to first verse
-            startReview(sourceVerses[0])
-          }
-        } else {
-          // No more verses in source list, exit review
-          console.log('[nextVerse] No more verses, calling exitReview()')
+          // Reached the end of the source list — exit back to the origin screen
+          // instead of wrapping around to the first verse.
+          console.log('[nextVerse] End of source list, calling exitReview()')
           exitReview()
         }
       } else {
