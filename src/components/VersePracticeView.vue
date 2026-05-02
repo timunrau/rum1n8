@@ -6,6 +6,8 @@
         <div
           class="text-xl leading-relaxed text-text-primary font-serif"
           @click="focusInput"
+          @touchstart.passive="onVerseTouchStart"
+          @touchend.passive="onVerseTouchEnd"
         >
           <span
             v-for="(word, index) in reviewWords"
@@ -211,10 +213,11 @@ export default {
     showTray: { type: Boolean, default: false },
     showPracticeModesHint: { type: Boolean, default: false }
   },
-  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint'],
+  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint', 'swipe-verse'],
   setup(props, { emit, expose }) {
     const inputRef = ref(null)
     const scrollContainer = ref(null)
+    const verseTouchStart = ref(null)
     const practiceModeHint = computed(() => {
       if (props.memorizationMode === 'learn') {
         return {
@@ -282,6 +285,30 @@ export default {
       if (inputRef.value) {
         inputRef.value.focus()
       }
+    }
+
+    function onVerseTouchStart(e) {
+      if (e.touches.length !== 1) {
+        verseTouchStart.value = null
+        return
+      }
+
+      const touch = e.touches[0]
+      verseTouchStart.value = { x: touch.clientX, y: touch.clientY }
+    }
+
+    function onVerseTouchEnd(e) {
+      if (!verseTouchStart.value) return
+
+      const touch = e.changedTouches[0]
+      const dx = touch.clientX - verseTouchStart.value.x
+      const dy = touch.clientY - verseTouchStart.value.y
+      verseTouchStart.value = null
+
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return
+
+      emit('swipe-verse', dx < 0 ? 'next' : 'previous')
+      nextTick(() => focusInput())
     }
 
     function shouldRenderReferenceSegments(word) {
@@ -380,6 +407,8 @@ export default {
       onInput,
       onKeydown,
       focusInput,
+      onVerseTouchStart,
+      onVerseTouchEnd,
       shouldRenderReferenceSegments,
       getReferenceSegments,
       getReferenceSegmentClass

@@ -153,6 +153,7 @@
         @keydown="handleKeyPress"
         @switch-mode="switchToMemorizationMode"
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
+        @swipe-verse="handlePracticeVerseSwipe"
       />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
@@ -246,6 +247,7 @@
         @keydown="handleKeyPress"
         @switch-mode="switchReviewMode"
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
+        @swipe-verse="handlePracticeVerseSwipe"
       />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
@@ -2233,6 +2235,7 @@ export default {
     const memorizingVerse = ref(null)
     const memorizationMode = ref(null) // 'learn', 'memorize', 'master'
     const memorizationSourceState = ref(null) // Track the original source navigation state for memorization
+    const memorizationSourceList = ref(null) // Track the source list for swipe navigation in memorization
     const reviewWords = ref([])
     const typedLetter = ref('')
     const reviewInput = ref(null)
@@ -2768,6 +2771,8 @@ export default {
         
         memorizingVerse.value = null
         memorizationMode.value = null
+        memorizationSourceState.value = null
+        memorizationSourceList.value = null
         reviewingVerse.value = null
         reviewWords.value = []
         typedLetter.value = ''
@@ -2949,20 +2954,26 @@ export default {
       return getTimeUntilReview(verse)
     })
 
-    const getNextReviewSourceVerse = () => {
-      if (!reviewingVerse.value) return null
-
-      const sourceVerses = reviewSourceList.value?.length
+    const getReviewSourceVerses = () => {
+      return reviewSourceList.value?.length
         ? reviewSourceList.value
         : verses.value.filter(v => isDueForReview(v))
+    }
 
+    const getAdjacentReviewSourceVerse = (offset) => {
+      if (!reviewingVerse.value) return null
+
+      const sourceVerses = getReviewSourceVerses()
       if (!sourceVerses.length) return null
 
       const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
       if (currentIndex === -1) return null
 
-      return sourceVerses[currentIndex + 1] || null
+      return sourceVerses[currentIndex + offset] || null
     }
+
+    const getNextReviewSourceVerse = () => getAdjacentReviewSourceVerse(1)
+    const getPreviousReviewSourceVerse = () => getAdjacentReviewSourceVerse(-1)
 
     // True when the current reviewing verse is the last one in the source list,
     // so the completion tray can offer "Done" instead of looping back to the first verse.
@@ -5592,6 +5603,36 @@ export default {
       return { view: 'collections' }
     }
 
+    const getCurrentPracticeSourceList = () => {
+      if (currentCollectionId.value) {
+        return [...sortedVerses.value]
+      }
+
+      if (currentView.value === 'review-list') {
+        return [...reviewSortedVerses.value]
+      }
+
+      return [...sortedVerses.value]
+    }
+
+    const getMemorizationSourceVerses = () => {
+      return memorizationSourceList.value?.length
+        ? memorizationSourceList.value
+        : getCurrentPracticeSourceList()
+    }
+
+    const getAdjacentMemorizationSourceVerse = (offset) => {
+      if (!memorizingVerse.value) return null
+
+      const sourceVerses = getMemorizationSourceVerses()
+      if (!sourceVerses.length) return null
+
+      const currentIndex = sourceVerses.findIndex(v => v.id === memorizingVerse.value.id)
+      if (currentIndex === -1) return null
+
+      return sourceVerses[currentIndex + offset] || null
+    }
+
     const clearReviewSessionState = () => {
       stopSpeaking()
       reviewingVerse.value = null
@@ -5622,6 +5663,10 @@ export default {
       // Store the source state for navigation (only if not already set, to preserve it during mode advancement)
       if (!memorizationSourceState.value) {
         memorizationSourceState.value = getCurrentSourceState()
+      }
+
+      if (!memorizationSourceList.value) {
+        memorizationSourceList.value = getCurrentPracticeSourceList()
       }
       
       resetPracticeSequence(verse, mode, memorizeRetryCount.value)
@@ -5681,7 +5726,9 @@ export default {
             // Sequential review from a collection can hand off into memorization.
             // End the review session first so the old review overlay/header unmounts
             // and browser back still returns to the original collection.
+            const sourceList = reviewSourceList.value?.length ? [...reviewSourceList.value] : null
             memorizationSourceState.value = reviewSourceState.value || getCurrentSourceState()
+            memorizationSourceList.value = sourceList
             clearReviewSessionState()
           }
           startMemorization(verse, nextMode)
@@ -5921,6 +5968,7 @@ export default {
       
       // Clear source tracking
       memorizationSourceState.value = null
+      memorizationSourceList.value = null
       
       // Reset memorization state
       memorizingVerse.value = null
@@ -5955,6 +6003,59 @@ export default {
         // Re-initialize current mode (so user stays in Learn/Memorize if they were in that mode)
         const mode = memorizationMode.value || 'master'
         switchReviewMode(mode)
+      }
+    }
+
+    const navigateMemorizationVerse = (offset) => {
+      if (!memorizingVerse.value) return
+
+      const targetVerse = getAdjacentMemorizationSourceVerse(offset)
+      if (!targetVerse) return
+
+      stopSpeaking()
+
+      if (targetVerse.memorizationStatus === 'mastered') {
+        const sourceVerses = getMemorizationSourceVerses()
+        const sourceState = memorizationSourceState.value || getCurrentSourceState()
+
+        memorizingVerse.value = null
+        memorizationMode.value = null
+        reviewWords.value = []
+        typedLetter.value = ''
+        reviewMistakes.value = 0
+        memorizationSourceState.value = null
+        memorizationSourceList.value = null
+
+        reviewSourceList.value = sourceVerses.length ? [...sourceVerses] : null
+        reviewSourceState.value = sourceState
+        startReview(targetVerse)
+        return
+      }
+
+      const nextMode = getNextMemorizationMode(targetVerse.memorizationStatus)
+      if (nextMode) {
+        startMemorization(targetVerse, nextMode)
+      }
+    }
+
+    const previousVerse = () => {
+      if (!reviewingVerse.value) return
+
+      const previousSourceVerse = getPreviousReviewSourceVerse()
+      if (previousSourceVerse) {
+        startReview(previousSourceVerse)
+      }
+    }
+
+    const handlePracticeVerseSwipe = (direction) => {
+      if (reviewingVerse.value) {
+        if (direction === 'next') nextVerse()
+        else previousVerse()
+        return
+      }
+
+      if (memorizingVerse.value) {
+        navigateMemorizationVerse(direction === 'next' ? 1 : -1)
       }
     }
 
@@ -7295,6 +7396,7 @@ export default {
       startReview,
       retryReview,
       nextVerse,
+      handlePracticeVerseSwipe,
       exitReview,
       focusInput,
       reviewInstanceKey,
