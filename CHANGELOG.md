@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/timunrau/rum1n8/compare/v1.17.1...v1.18.0) (2026-05-02)
+
+
+### Features
+
+* add swipe verse navigation in practice ([3e542cd](https://github.com/timunrau/rum1n8/commit/3e542cd1ca3f8ef0afa5741f6928027d7bc590c0))
+
 ## [1.17.1](https://github.com/timunrau/rum1n8/compare/v1.17.0...v1.17.1) (2026-05-02)
 
 
