@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/timunrau/rum1n8/compare/v1.17.0...v1.17.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* preserve collection review order ([f7cbaa6](https://github.com/timunrau/rum1n8/commit/f7cbaa68ad49b1f4e095a7de7865653e80b525ec))
+
 # [1.17.0](https://github.com/timunrau/rum1n8/compare/v1.16.0...v1.17.0) (2026-04-28)
 
 
