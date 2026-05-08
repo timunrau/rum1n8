@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/timunrau/rum1n8/compare/v1.19.0...v1.19.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* include number row in fuzzy typing ([72d5303](https://github.com/timunrau/rum1n8/commit/72d530344895a33bf176c90177691d4f55e80bf1))
+
 # [1.19.0](https://github.com/timunrau/rum1n8/compare/v1.18.0...v1.19.0) (2026-05-08)
 
 
