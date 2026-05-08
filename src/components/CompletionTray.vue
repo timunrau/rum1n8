@@ -12,7 +12,6 @@
         <template v-else>
           <template v-if="memorizationMode === 'master'">
             You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy.
-            <span v-if="isLastInList"> That's the last verse — nicely done!</span>
           </template>
           <template v-else>Practice complete (doesn't count as review).</template>
         </template>
