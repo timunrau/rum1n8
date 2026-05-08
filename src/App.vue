@@ -290,85 +290,6 @@
     @touchend.passive="handleSwipeTouchEnd"
     @touchcancel="resetViewSwipe"
   >
-    <!-- Top App Bar (verses/collections screen only) -->
-    <header v-if="currentView === 'collections'" :class="['glass-chrome fixed top-0 left-0 right-0 z-40', isScrolled ? '' : 'glass-chrome--transparent']">
-      <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
-        <!-- Hamburger menu button (top-level only) -->
-        <button
-          v-if="!currentCollectionId"
-          @click="toggleDrawer"
-          data-testid="hamburger-button"
-          class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative flex-shrink-0"
-          title="Menu"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <!-- Back button (inside collection) -->
-        <button
-          v-if="currentCollectionId"
-          @click="viewAllVerses"
-          class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors flex-shrink-0"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <!-- Search bar (top-level verses screen) -->
-        <div
-          v-if="!currentCollectionId"
-          class="flex-1 mx-2 cursor-pointer"
-          data-testid="search-bar"
-          @click="openSearch"
-        >
-          <div class="flex items-center h-10 bg-surface rounded-full px-4 gap-2 border border-border-default">
-            <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span class="text-text-muted text-sm flex-1">Search verses...</span>
-          </div>
-        </div>
-
-        <!-- Collection title -->
-        <h1 v-if="currentCollectionId" class="text-xl font-serif font-normal tracking-tight text-text-primary flex-1 ml-2 truncate">
-          {{ getCollectionName(currentCollectionId) }}
-        </h1>
-
-        <!-- Right side actions -->
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <!-- Install app button (top-level verses screen only, when actionable) -->
-          <button
-            v-if="showInstallHeaderAction"
-            data-testid="install-app-header"
-            @click="openInstallFromHeader"
-            class="btn-primary btn--sm"
-          >
-            Install app
-          </button>
-          <!-- Expand/collapse all verses (collection view only) -->
-          <button
-            v-if="currentCollectionId && sortedVerses.length > 0"
-            @click="toggleAllCollectionVersesExpanded"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
-            :title="allCollectionVersesExpanded ? 'Collapse all' : 'Expand all'"
-          >
-            <!-- Collapse: chevrons pointing inward (toward center) -->
-            <svg v-if="allCollectionVersesExpanded" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 2l7 7 7-7" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 22l-7-7-7 7" />
-            </svg>
-            <!-- Expand: chevrons pointing outward (away from center) -->
-            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 9l7-7 7 7" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 15l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </header>
-
     <!-- Navigation Drawer -->
       <div
         v-if="drawerVisible"
@@ -580,41 +501,116 @@
       </div>
     </div>
 
-    <!-- Content Area: fixed header + bottom nav padding only on collections/verses screen -->
-    <div class="app-view-stage">
+    <!-- Content Area -->
+    <div
+      class="app-view-stage"
+      :class="{ 'app-view-stage--moving': isViewSwipeMoving }"
+    >
       <div
-        v-if="viewSwipePreview"
-        class="swipe-peek"
-        :class="[`swipe-peek--${viewSwipePreview.edge}`, { 'swipe-peek--edge': !viewSwipePreview.canNavigate }]"
-        :style="viewSwipePreviewStyle"
-        aria-hidden="true"
+        class="app-view-track"
+        :class="{
+          'app-view-track--ready': viewTrackReady,
+          'app-view-track--dragging': isViewSwipeDragging,
+          'app-view-track--settling': isViewSwipeSettling
+        }"
+        :style="appViewTrackStyle"
+        @transitionend="handleViewTrackTransitionEnd"
       >
-        <div class="swipe-peek__panel">
-          <p class="swipe-peek__title">{{ viewSwipePreview.label }}</p>
-          <p v-if="viewSwipePreview.meta" class="swipe-peek__meta">{{ viewSwipePreview.meta }}</p>
-          <div class="swipe-peek__skeleton" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-
-      <Transition :name="viewTransitionName" mode="out-in">
-        <div
-          :key="mainViewKey"
-          class="app-view-surface"
-          :class="{
-            'app-view-surface--dragging': isViewSwipeDragging,
-            'app-view-surface--settling': isViewSwipeSettling
-          }"
-          :style="appViewSwipeStyle"
+        <section
+          v-for="panelView in swipeViews"
+          :key="panelView"
+          class="app-view-panel"
+          :class="{ 'app-view-panel--active': panelView === currentView }"
+          :aria-hidden="panelView !== currentView"
+          :inert="panelView !== currentView ? '' : null"
         >
-    <div :class="['px-4', currentView === 'collections' ? 'pt-16 pb-24' : '']">
+          <template v-if="shouldRenderViewPanel(panelView)">
+          <header
+            v-if="panelView === 'collections'"
+            :class="['app-view-header glass-chrome', isScrolled ? '' : 'glass-chrome--transparent']"
+          >
+            <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
+              <!-- Hamburger menu button (top-level only) -->
+              <button
+                v-if="!currentCollectionId"
+                @click="toggleDrawer"
+                data-testid="hamburger-button"
+                class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors relative flex-shrink-0"
+                title="Menu"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <!-- Back button (inside collection) -->
+              <button
+                v-if="currentCollectionId"
+                @click="viewAllVerses"
+                class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors flex-shrink-0"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <!-- Search bar (top-level verses screen) -->
+              <div
+                v-if="!currentCollectionId"
+                class="flex-1 mx-2 cursor-pointer"
+                data-testid="search-bar"
+                @click="openSearch"
+              >
+                <div class="flex items-center h-10 bg-surface rounded-full px-4 gap-2 border border-border-default">
+                  <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span class="text-text-muted text-sm flex-1">Search verses...</span>
+                </div>
+              </div>
+
+              <!-- Collection title -->
+              <h1 v-if="currentCollectionId" class="text-xl font-serif font-normal tracking-tight text-text-primary flex-1 ml-2 truncate">
+                {{ getCollectionName(currentCollectionId) }}
+              </h1>
+
+              <!-- Right side actions -->
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <!-- Install app button (top-level verses screen only, when actionable) -->
+                <button
+                  v-if="showInstallHeaderAction"
+                  data-testid="install-app-header"
+                  @click="openInstallFromHeader"
+                  class="btn-primary btn--sm"
+                >
+                  Install app
+                </button>
+                <!-- Expand/collapse all verses (collection view only) -->
+                <button
+                  v-if="currentCollectionId && sortedVerses.length > 0"
+                  @click="toggleAllCollectionVersesExpanded"
+                  class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+                  :title="allCollectionVersesExpanded ? 'Collapse all' : 'Expand all'"
+                >
+                  <!-- Collapse: chevrons pointing inward (toward center) -->
+                  <svg v-if="allCollectionVersesExpanded" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 2l7 7 7-7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 22l-7-7-7 7" />
+                  </svg>
+                  <!-- Expand: chevrons pointing outward (away from center) -->
+                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 9l7-7 7 7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 15l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </header>
+
+    <div :class="['px-4', panelView === 'collections' ? 'pt-16 pb-24' : '']">
       <div class="max-w-4xl mx-auto">
 
       <!-- Review List View -->
-      <div v-if="currentView === 'review-list' && !currentCollectionId" class="">
+      <div v-if="panelView === 'review-list' && !currentCollectionId" class="">
         <div class="space-y-2 py-4 overflow-y-auto stagger-fade" style="max-height: calc(100vh - 4rem);">
           <BackupNudgeCard
             v-if="shouldShowBackupNudge"
@@ -665,7 +661,7 @@
       </div>
 
       <!-- Collections View -->
-      <div v-if="currentView === 'collections' && !currentCollectionId && collections.length > 0">
+      <div v-if="panelView === 'collections' && !currentCollectionId && collections.length > 0">
 
         <div class="overflow-y-auto -mt-16 -mb-24 -mx-4 px-4 pt-20 pb-28" style="max-height: 100dvh;">
           <BackupNudgeCard
@@ -787,7 +783,7 @@
       </div>
 
       <!-- Stats View -->
-      <div v-if="currentView === 'stats' && !currentCollectionId" class="">
+      <div v-if="panelView === 'stats' && !currentCollectionId" class="">
         <div class="space-y-6 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 4rem);">
 
           <!-- Streak Card -->
@@ -849,14 +845,14 @@
 
       <!-- Collection View -->
       <div
-        v-if="currentCollectionId || (currentView === 'collections' && !currentCollectionId && collections.length === 0)"
-        :class="currentView === 'collections' && !currentCollectionId && collections.length === 0
+        v-if="panelView === 'collections' && (currentCollectionId || (!currentCollectionId && collections.length === 0))"
+        :class="panelView === 'collections' && !currentCollectionId && collections.length === 0
           ? `flex min-h-0 flex-col overflow-hidden${totalVerseCount > 0 ? ' pt-4' : ''}`
           : ''"
-        :style="currentView === 'collections' && !currentCollectionId && collections.length === 0 ? { maxHeight: 'calc(100vh - 8rem)' } : null"
+        :style="panelView === 'collections' && !currentCollectionId && collections.length === 0 ? { maxHeight: 'calc(100vh - 8rem)' } : null"
       >
         <CollectionsAlmanac
-          v-if="currentView === 'collections' && !currentCollectionId && collections.length === 0 && totalVerseCount > 0"
+          v-if="panelView === 'collections' && !currentCollectionId && collections.length === 0 && totalVerseCount > 0"
           :current-streak="currentStreak"
           :due-verses-count="dueVersesCount"
           :mastered-count="masteredCount"
@@ -873,7 +869,7 @@
         <div
           :class="[
             'space-y-3 py-4 stagger-fade',
-            currentView === 'collections' && !currentCollectionId && collections.length === 0
+            panelView === 'collections' && !currentCollectionId && collections.length === 0
               ? `min-h-0 flex-1 overflow-y-auto pb-36${totalVerseCount > 0 ? ' pt-0' : ''}`
               : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
           ]"
@@ -1079,8 +1075,9 @@
       </div>
       </div>
     </div>
-        </div>
-      </Transition>
+          </template>
+        </section>
+      </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -2341,12 +2338,15 @@ export default {
     const startReviewCalloutBody = 'Review your verses each day to keep ruminating on the Word.'
     const verseCardRefs = new Map()
     const swipeViews = ['collections', 'review-list', 'stats']
-    const viewTransitionDirection = ref('forward')
+    const viewTrackReady = ref(false)
+    const viewNavAnimating = ref(false)
+    const renderedViewPanels = ref(['collections'])
     const practiceVerseTransitionName = ref('practice-mode-fade')
     const createEmptyViewSwipe = () => ({
       started: false,
       dragging: false,
       settling: false,
+      baseIndex: null,
       startX: 0,
       startY: 0,
       lastX: 0,
@@ -2363,6 +2363,8 @@ export default {
     })
     const viewSwipe = ref(createEmptyViewSwipe())
     let viewSwipeResetTimer = null
+    let viewSwipeAnimationFrame = null
+    let viewNavAnimationTimer = null
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -5388,7 +5390,6 @@ export default {
     // Navigate to review list view — top-level tabs use replace so that browser back
     // from any top-level tab exits the app rather than cycling through previously visited tabs.
     const navigateToReviewList = () => {
-      setViewTransitionByView(currentView.value, 'review-list')
       currentCollectionId.value = null
       currentView.value = 'review-list'
       searchQuery.value = ''
@@ -5400,14 +5401,12 @@ export default {
     }
 
     const navigateToCollections = () => {
-      setViewTransitionByView(currentView.value, 'collections')
       currentCollectionId.value = null
       currentView.value = 'collections'
       replaceNavigationState({ view: 'collections' })
     }
 
     const navigateToStats = () => {
-      setViewTransitionByView(currentView.value, 'stats')
       currentCollectionId.value = null
       currentView.value = 'stats'
       searchQuery.value = ''
@@ -5415,37 +5414,65 @@ export default {
       replaceNavigationState({ view: 'stats' })
     }
 
-    const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
     const getViewportWidth = () => (typeof window === 'undefined' ? 390 : Math.max(window.innerWidth || 390, 1))
-    const viewTransitionName = computed(() => (
-      viewTransitionDirection.value === 'back' ? 'app-view-back' : 'app-view-forward'
-    ))
-    const mainViewKey = computed(() => (
-      currentCollectionId.value ? `collection-${currentCollectionId.value}` : currentView.value
-    ))
+    const getSwipeSurfaceWidth = (el) => {
+      const rect = el?.getBoundingClientRect?.()
+      return Math.max(rect?.width || getViewportWidth(), 1)
+    }
+    const currentViewIndex = computed(() => {
+      const index = swipeViews.indexOf(currentView.value)
+      return index === -1 ? 0 : index
+    })
+    const setRenderedViewPanels = (views) => {
+      renderedViewPanels.value = [...new Set(views.filter(view => swipeViews.includes(view)))]
+    }
+    const shouldRenderViewPanel = (view) => renderedViewPanels.value.includes(view)
     const isViewSwipeDragging = computed(() => viewSwipe.value.dragging && !viewSwipe.value.settling)
     const isViewSwipeSettling = computed(() => viewSwipe.value.settling)
-    const viewSwipeProgress = computed(() => clamp(Math.abs(viewSwipe.value.dx) / viewSwipe.value.width, 0, 1))
-    const appViewSwipeStyle = computed(() => {
+    const isViewSwipeMoving = computed(() => (
+      viewSwipe.value.dragging ||
+      viewSwipe.value.settling ||
+      viewNavAnimating.value
+    ))
+    const appViewTrackStyle = computed(() => {
       const state = viewSwipe.value
-      if (!state.dragging && !state.settling) return null
-
-      const progress = viewSwipeProgress.value
-      const scale = state.canNavigate ? 1 - progress * 0.014 : 1 - progress * 0.004
-      const shadowDirection = state.dx < 0 ? -1 : 1
-
+      const isSwiping = state.dragging || state.settling
+      const baseIndex = isSwiping && Number.isFinite(state.baseIndex)
+        ? state.baseIndex
+        : currentViewIndex.value
+      const dx = isSwiping ? state.dx : 0
       return {
-        transform: `translate3d(${state.dx}px, 0, 0) scale(${scale})`,
-        boxShadow: `${shadowDirection * -20}px 0 42px rgba(20, 35, 58, ${0.08 + progress * 0.1})`
+        transform: `translate3d(calc(${-baseIndex * 100}% + ${dx}px), 0, 0)`
       }
     })
 
-    const setViewTransitionByView = (fromView, toView) => {
-      const fromIndex = swipeViews.indexOf(fromView)
-      const toIndex = swipeViews.indexOf(toView)
-      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return
-      viewTransitionDirection.value = toIndex > fromIndex ? 'forward' : 'back'
+    const startViewNavAnimation = (_fromView, toView) => {
+      if (!viewTrackReady.value) return
+      if (viewNavAnimationTimer) {
+        clearTimeout(viewNavAnimationTimer)
+      }
+      setRenderedViewPanels([toView])
+      viewNavAnimating.value = true
+      viewNavAnimationTimer = setTimeout(() => {
+        viewNavAnimating.value = false
+        setRenderedViewPanels([currentView.value])
+        viewNavAnimationTimer = null
+      }, 380)
     }
+
+    watch(currentView, (view, previousView) => {
+      if (!viewTrackReady.value) {
+        setRenderedViewPanels([view])
+        return
+      }
+      if (view === previousView) return
+      if (!swipeViews.includes(view) || !swipeViews.includes(previousView)) return
+      if (viewSwipe.value.dragging || viewSwipe.value.settling) {
+        setRenderedViewPanels(swipeViews)
+        return
+      }
+      startViewNavAnimation(previousView, view)
+    })
 
     const setPracticeTransition = (direction) => {
       if (direction === 'previous') {
@@ -5471,69 +5498,6 @@ export default {
       return swipeViews[currentIndex + offset] || null
     }
 
-    const getSwipeViewLabel = (view) => ({
-      collections: 'Verses',
-      'review-list': 'Review',
-      stats: 'Stats'
-    }[view] || 'Verses')
-
-    const getSwipeViewMeta = (view) => {
-      if (view === 'collections') {
-        return totalVerseCount.value === 1 ? '1 verse' : `${totalVerseCount.value} verses`
-      }
-      if (view === 'review-list') {
-        return dueVersesCount.value > 0
-          ? `${dueVersesCount.value} due`
-          : `${reviewSortedVerses.value.length} scheduled`
-      }
-      if (view === 'stats') {
-        return currentStreak.value === 1 ? '1 day streak' : `${currentStreak.value} day streak`
-      }
-      return ''
-    }
-
-    const viewSwipePreview = computed(() => {
-      const state = viewSwipe.value
-      if (!state.dragging || !state.direction) return null
-
-      const targetView = state.targetView
-      const edge = state.direction === 'next' ? 'right' : 'left'
-      if (targetView) {
-        return {
-          edge,
-          canNavigate: true,
-          label: getSwipeViewLabel(targetView),
-          meta: getSwipeViewMeta(targetView)
-        }
-      }
-
-      return {
-        edge,
-        canNavigate: false,
-        label: state.direction === 'next' ? 'Last view' : 'First view',
-        meta: getSwipeViewLabel(currentView.value)
-      }
-    })
-
-    const viewSwipePreviewStyle = computed(() => {
-      const state = viewSwipe.value
-      if (!viewSwipePreview.value) return null
-
-      const progress = viewSwipeProgress.value
-      if (!state.canNavigate) {
-        return {
-          opacity: String(clamp(progress * 1.6, 0, 0.88))
-        }
-      }
-
-      const sign = state.direction === 'next' ? 1 : -1
-      const offset = sign * Math.max(0, state.width - Math.abs(state.dx) * 1.04)
-      return {
-        opacity: String(clamp(0.28 + progress * 0.86, 0, 1)),
-        transform: `translate3d(${offset}px, 0, 0)`
-      }
-    })
-
     const getViewDisplayDx = (rawDx, hasTarget, width) => {
       const sign = rawDx < 0 ? -1 : 1
       const distance = Math.abs(rawDx)
@@ -5555,23 +5519,61 @@ export default {
       }
     }
 
+    const clearViewSwipeAnimationFrame = () => {
+      if (viewSwipeAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(viewSwipeAnimationFrame)
+      }
+      viewSwipeAnimationFrame = null
+    }
+
     const resetViewSwipe = () => {
       clearViewSwipeResetTimer()
+      clearViewSwipeAnimationFrame()
       viewSwipe.value = createEmptyViewSwipe()
+      setRenderedViewPanels([currentView.value])
+    }
+
+    const settleViewSwipeTo = (targetDx) => {
+      clearViewSwipeResetTimer()
+      clearViewSwipeAnimationFrame()
+      const baseIndex = Number.isFinite(viewSwipe.value.baseIndex)
+        ? viewSwipe.value.baseIndex
+        : currentViewIndex.value
+
+      viewSwipe.value = {
+        ...viewSwipe.value,
+        baseIndex,
+        settling: true,
+        dragging: false
+      }
+
+      const finishFrame = () => {
+        viewSwipeAnimationFrame = null
+        viewSwipe.value = {
+          ...viewSwipe.value,
+          dx: targetDx,
+          rawDx: targetDx
+        }
+      }
+
+      if (typeof requestAnimationFrame === 'undefined') {
+        finishFrame()
+      } else {
+        viewSwipeAnimationFrame = requestAnimationFrame(finishFrame)
+      }
+
+      viewSwipeResetTimer = setTimeout(() => {
+        resetViewSwipe()
+      }, 360)
     }
 
     const settleViewSwipeBack = () => {
-      clearViewSwipeResetTimer()
-      viewSwipe.value = {
-        ...viewSwipe.value,
-        settling: true,
-        dragging: false,
-        dx: 0,
-        rawDx: 0
-      }
-      viewSwipeResetTimer = setTimeout(() => {
-        resetViewSwipe()
-      }, 260)
+      settleViewSwipeTo(0)
+    }
+
+    const handleViewTrackTransitionEnd = (event) => {
+      if (event.target !== event.currentTarget || !viewSwipe.value.settling) return
+      resetViewSwipe()
     }
 
     const hasHorizontalScrollableAncestor = (target, root) => {
@@ -5608,14 +5610,17 @@ export default {
 
       const touch = e.touches[0]
       clearViewSwipeResetTimer()
+      clearViewSwipeAnimationFrame()
+      setRenderedViewPanels(swipeViews)
       viewSwipe.value = {
         ...createEmptyViewSwipe(),
         started: true,
+        baseIndex: currentViewIndex.value,
         startX: touch.clientX,
         startY: touch.clientY,
         lastX: touch.clientX,
         lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
-        width: getViewportWidth()
+        width: getSwipeSurfaceWidth(e.currentTarget)
       }
     }
 
@@ -5685,8 +5690,10 @@ export default {
       const isFastEnough = Math.abs(state.velocityX) > 0.48 && absDx > 36
 
       if (targetView && (absDx >= threshold || isFastEnough)) {
-        setViewTransitionByView(currentView.value, targetView)
-        resetViewSwipe()
+        const fromIndex = Number.isFinite(state.baseIndex) ? state.baseIndex : currentViewIndex.value
+        const targetIndex = swipeViews.indexOf(targetView)
+        const targetDx = (fromIndex - targetIndex) * state.width
+        settleViewSwipeTo(targetDx)
         navigateToSwipeView(targetView)
         return
       }
@@ -7667,6 +7674,9 @@ export default {
 
       // Initialize history state tracking for back button
       initializeHistory()
+      nextTick(() => {
+        viewTrackReady.value = true
+      })
       syncLocalUiState()
       markAppOpened(getCurrentAppUrl())
 
@@ -7702,6 +7712,12 @@ export default {
       }
       if (viewSwipeResetTimer) {
         clearTimeout(viewSwipeResetTimer)
+      }
+      if (viewSwipeAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(viewSwipeAnimationFrame)
+      }
+      if (viewNavAnimationTimer) {
+        clearTimeout(viewNavAnimationTimer)
       }
       if (updateStateTimeoutId) {
         clearTimeout(updateStateTimeoutId)
@@ -7825,13 +7841,14 @@ export default {
       handleSwipeTouchMove,
       handleSwipeTouchEnd,
       resetViewSwipe,
-      mainViewKey,
-      viewTransitionName,
+      handleViewTrackTransitionEnd,
+      swipeViews,
+      viewTrackReady,
+      shouldRenderViewPanel,
       isViewSwipeDragging,
       isViewSwipeSettling,
-      appViewSwipeStyle,
-      viewSwipePreview,
-      viewSwipePreviewStyle,
+      isViewSwipeMoving,
+      appViewTrackStyle,
       clearSearch,
       openSearch,
       searchActive,
@@ -7983,147 +8000,56 @@ export default {
 .app-view-stage {
   position: relative;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
-.app-view-surface {
-  position: relative;
-  z-index: 1;
+.app-view-track {
+  display: flex;
+  width: 100%;
   min-height: 100dvh;
-  transform-origin: center center;
   will-change: transform;
 }
 
-.app-view-surface--dragging {
+.app-view-track--ready {
+  transition: transform 340ms cubic-bezier(0.2, 0.86, 0.22, 1);
+}
+
+.app-view-track--dragging {
   transition: none;
 }
 
-.app-view-surface--settling {
-  transition:
-    transform 260ms cubic-bezier(0.2, 0.85, 0.25, 1),
-    box-shadow 260ms ease;
+.app-view-track--settling {
+  transition: transform 360ms cubic-bezier(0.18, 0.88, 0.24, 1);
 }
 
-.swipe-peek {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  padding: 5.5rem 1.2rem 6rem;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.swipe-peek--right {
-  justify-content: flex-end;
-  text-align: right;
-}
-
-.swipe-peek--left {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.swipe-peek__panel {
-  width: min(74vw, 22rem);
-  border: 1px solid var(--color-border-default);
-  border-radius: 1rem;
-  background:
-    linear-gradient(180deg, rgba(var(--color-bg-chrome-rgb), 0.96), rgba(var(--color-bg-chrome-rgb), 0.82));
-  box-shadow: 0 20px 48px rgba(20, 35, 58, 0.14);
-  padding: 1rem;
-}
-
-.dark .swipe-peek__panel {
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.36);
-}
-
-.swipe-peek--edge .swipe-peek__panel {
-  width: auto;
-  max-width: min(66vw, 18rem);
-  opacity: 0.72;
-}
-
-.swipe-peek__title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-family: var(--font-serif);
-  font-size: 1.7rem;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
-
-.swipe-peek__meta {
-  margin: 0.35rem 0 0;
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.swipe-peek__skeleton {
-  display: grid;
-  gap: 0.45rem;
-  margin-top: 0.9rem;
-}
-
-.swipe-peek__skeleton span {
-  display: block;
-  height: 0.55rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text-muted) 22%, transparent);
-}
-
-.swipe-peek__skeleton span:nth-child(2) {
-  width: 72%;
-}
-
-.swipe-peek__skeleton span:nth-child(3) {
-  width: 46%;
-}
-
-.app-view-forward-enter-active,
-.app-view-forward-leave-active,
-.app-view-back-enter-active,
-.app-view-back-leave-active {
-  transition:
-    transform 330ms cubic-bezier(0.2, 0.82, 0.22, 1),
-    opacity 260ms ease,
-    filter 330ms ease;
-}
-
-.app-view-forward-leave-active,
-.app-view-back-leave-active {
-  position: absolute;
-  inset: 0;
+.app-view-panel {
+  position: relative;
+  flex: 0 0 100%;
   width: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-view-panel:not(.app-view-panel--active) {
   pointer-events: none;
 }
 
-.app-view-forward-enter-from {
-  opacity: 0.72;
-  filter: blur(0.5px);
-  transform: translate3d(22%, 0, 0) scale(0.992);
+.app-view-stage:not(.app-view-stage--moving) .app-view-panel:not(.app-view-panel--active) {
+  visibility: hidden;
 }
 
-.app-view-forward-leave-to {
-  opacity: 0.48;
-  filter: blur(0.5px);
-  transform: translate3d(-18%, 0, 0) scale(0.988);
+.app-view-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
 }
 
-.app-view-back-enter-from {
-  opacity: 0.72;
-  filter: blur(0.5px);
-  transform: translate3d(-22%, 0, 0) scale(0.992);
-}
-
-.app-view-back-leave-to {
-  opacity: 0.48;
-  filter: blur(0.5px);
-  transform: translate3d(18%, 0, 0) scale(0.988);
+.app-view-track .stagger-fade > * {
+  opacity: 1;
+  animation: none;
 }
 
 .practice-view-stage {
@@ -8187,12 +8113,7 @@ export default {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-view-surface,
-  .swipe-peek,
-  .app-view-forward-enter-active,
-  .app-view-forward-leave-active,
-  .app-view-back-enter-active,
-  .app-view-back-leave-active,
+  .app-view-track,
   .practice-verse-next-enter-active,
   .practice-verse-next-leave-active,
   .practice-verse-previous-enter-active,
