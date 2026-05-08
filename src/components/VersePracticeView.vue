@@ -1,13 +1,15 @@
 <template>
-  <div class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4">
+  <div
+    class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4"
+    @touchstart.passive="onPracticeTouchStart"
+    @touchend.passive="onPracticeTouchEnd"
+  >
     <!-- Scrollable verse text -->
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
       <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
         <div
           class="text-xl leading-relaxed text-text-primary font-serif"
           @click="focusInput"
-          @touchstart.passive="onVerseTouchStart"
-          @touchend.passive="onVerseTouchEnd"
         >
           <span
             v-for="(word, index) in reviewWords"
@@ -217,7 +219,7 @@ export default {
   setup(props, { emit, expose }) {
     const inputRef = ref(null)
     const scrollContainer = ref(null)
-    const verseTouchStart = ref(null)
+    const practiceTouchStart = ref(null)
     const practiceModeHint = computed(() => {
       if (props.memorizationMode === 'learn') {
         return {
@@ -287,23 +289,23 @@ export default {
       }
     }
 
-    function onVerseTouchStart(e) {
+    function onPracticeTouchStart(e) {
       if (e.touches.length !== 1) {
-        verseTouchStart.value = null
+        practiceTouchStart.value = null
         return
       }
 
       const touch = e.touches[0]
-      verseTouchStart.value = { x: touch.clientX, y: touch.clientY }
+      practiceTouchStart.value = { x: touch.clientX, y: touch.clientY }
     }
 
-    function onVerseTouchEnd(e) {
-      if (!verseTouchStart.value) return
+    function onPracticeTouchEnd(e) {
+      if (!practiceTouchStart.value) return
 
       const touch = e.changedTouches[0]
-      const dx = touch.clientX - verseTouchStart.value.x
-      const dy = touch.clientY - verseTouchStart.value.y
-      verseTouchStart.value = null
+      const dx = touch.clientX - practiceTouchStart.value.x
+      const dy = touch.clientY - practiceTouchStart.value.y
+      practiceTouchStart.value = null
 
       if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return
 
@@ -407,8 +409,8 @@ export default {
       onInput,
       onKeydown,
       focusInput,
-      onVerseTouchStart,
-      onVerseTouchEnd,
+      onPracticeTouchStart,
+      onPracticeTouchEnd,
       shouldRenderReferenceSegments,
       getReferenceSegments,
       getReferenceSegmentClass

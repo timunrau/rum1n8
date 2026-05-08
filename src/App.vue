@@ -1305,7 +1305,6 @@
           </div>
 
           <CollectionPicker
-            v-if="!currentCollectionId || currentCollectionId === 'master-list'"
             :collections="collections"
             v-model="newVerse.collectionIds"
           />
@@ -2389,6 +2388,21 @@ export default {
       content: '',
       bibleVersion: '',
       collectionIds: []
+    })
+
+    const virtualCollectionIds = new Set(['master-list', 'no-collection', 'to-learn'])
+
+    const getAssignableCurrentCollectionId = () => (
+      currentCollectionId.value && !virtualCollectionIds.has(currentCollectionId.value)
+        ? currentCollectionId.value
+        : null
+    )
+
+    const createEmptyVerseDraft = (collectionIds = []) => ({
+      reference: '',
+      content: '',
+      bibleVersion: '',
+      collectionIds: [...collectionIds]
     })
 
     const newCollection = ref({
@@ -4334,15 +4348,9 @@ export default {
     const addVerse = () => {
       if (newVerse.value.reference && newVerse.value.content) {
         const now = new Date().toISOString()
-        
-        // If inside a collection (and not master-list), automatically add to that collection
-        let collectionIds = newVerse.value.collectionIds || []
-        if (currentCollectionId.value && currentCollectionId.value !== 'master-list') {
-          // Ensure the current collection is included
-          if (!collectionIds.includes(currentCollectionId.value)) {
-            collectionIds = [...collectionIds, currentCollectionId.value]
-          }
-        }
+        const collectionIds = Array.isArray(newVerse.value.collectionIds)
+          ? [...newVerse.value.collectionIds]
+          : []
         
         const verse = {
           id: Date.now().toString(),
@@ -4375,12 +4383,7 @@ export default {
     // Close form and reset
     const closeForm = () => {
       showForm.value = false
-      newVerse.value = {
-        reference: '',
-        content: '',
-        bibleVersion: '',
-        collectionIds: []
-      }
+      newVerse.value = createEmptyVerseDraft()
       fabMenuOpen.value = false
       resetImportState()
       consumeModalState('addVerse')
@@ -4537,6 +4540,8 @@ export default {
     // Open new verse from FAB menu
     const openNewVerse = () => {
       fabMenuOpen.value = false
+      const collectionId = getAssignableCurrentCollectionId()
+      newVerse.value = createEmptyVerseDraft(collectionId ? [collectionId] : [])
       showForm.value = true
       pushModalState('addVerse')
     }
@@ -5447,24 +5452,38 @@ export default {
       const textToCopy = `${verseObj.content}\n${verseObj.reference}`
       
       try {
-        await navigator.clipboard.writeText(textToCopy)
+        await copyTextToClipboard(textToCopy)
         showToast('Verse copied to clipboard')
       } catch (err) {
         console.error('Failed to copy verse:', err)
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea')
-        textArea.value = textToCopy
-        textArea.style.position = 'fixed'
-        textArea.style.opacity = '0'
-        document.body.appendChild(textArea)
-        textArea.select()
-        try {
-          document.execCommand('copy')
-          showToast('Verse copied to clipboard')
-        } catch (fallbackErr) {
-          console.error('Fallback copy failed:', fallbackErr)
-          showToast('Failed to copy verse', true)
+        showToast('Failed to copy verse', true)
+      }
+    }
+
+    const copyTextToClipboard = async (text) => {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        return
+      }
+
+      if (typeof document === 'undefined') {
+        throw new Error('Clipboard is not available.')
+      }
+
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.setAttribute('readonly', '')
+      textArea.style.position = 'fixed'
+      textArea.style.top = '-9999px'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+
+      try {
+        if (!document.execCommand('copy')) {
+          throw new Error('Copy command was not accepted.')
         }
+      } finally {
         document.body.removeChild(textArea)
       }
     }
@@ -7015,9 +7034,17 @@ export default {
     const shareApp = async () => {
       closeSettingsMenu()
       closeDrawer()
+      const appUrl = getMarketingPageUrl()
 
       if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
-        showToast('Sharing is not available in this browser.', true)
+        try {
+          await copyTextToClipboard(appUrl)
+          shareSuccess.value = true
+          showToast('App link copied to clipboard')
+        } catch (error) {
+          console.error('Failed to copy app link:', error)
+          showToast('Failed to copy app link', true)
+        }
         return
       }
 
@@ -7025,7 +7052,7 @@ export default {
         await navigator.share({
           title: 'rum1n8',
           text: 'Memorize Bible verses with rum1n8.',
-          url: getMarketingPageUrl()
+          url: appUrl
         })
         shareSuccess.value = true
         showToast('App link shared')
