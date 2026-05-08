@@ -1,3 +1,10 @@
+## [1.20.4](https://github.com/timunrau/rum1n8/compare/v1.20.3...v1.20.4) (2026-05-08)
+
+
+### Bug Fixes
+
+* match practice swipe preview mode ([5232633](https://github.com/timunrau/rum1n8/commit/5232633b4f9c9fc1a02cd406bef708bbc26d5b04))
+
 ## [1.20.3](https://github.com/timunrau/rum1n8/compare/v1.20.2...v1.20.3) (2026-05-08)
 
 
