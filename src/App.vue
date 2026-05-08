@@ -147,7 +147,9 @@
         :get-partial-word-text="getPartialWordText"
         :get-remaining-part-text="getRemainingPartText"
         :previous-verse="previousMemorizationVerse"
+        :previous-verse-words="previousMemorizationVerseWords"
         :next-verse="nextMemorizationVerse"
+        :next-verse-words="nextMemorizationVerseWords"
         input-id="letter-input-memorize"
         :show-tray="allWordsRevealed && !!memorizationMode"
         :show-practice-modes-hint="shouldShowPracticeModesHint"
@@ -243,7 +245,9 @@
         :get-partial-word-text="getPartialWordText"
         :get-remaining-part-text="getRemainingPartText"
         :previous-verse="previousReviewVerse"
+        :previous-verse-words="previousReviewVerseWords"
         :next-verse="nextReviewVerse"
+        :next-verse-words="nextReviewVerseWords"
         input-id="letter-input-review"
         :show-tray="allWordsRevealed && !!reviewingVerse"
         :show-practice-modes-hint="shouldShowPracticeModesHint"
@@ -3058,6 +3062,8 @@ export default {
     const getPreviousReviewSourceVerse = () => getAdjacentReviewSourceVerse(-1)
     const nextReviewVerse = computed(() => getNextReviewSourceVerse())
     const previousReviewVerse = computed(() => getPreviousReviewSourceVerse())
+    const nextReviewVerseWords = computed(() => buildPracticeWords(nextReviewVerse.value, memorizationMode.value, reviewMemorizeRetryCount.value))
+    const previousReviewVerseWords = computed(() => buildPracticeWords(previousReviewVerse.value, memorizationMode.value, reviewMemorizeRetryCount.value))
 
     // True when the current reviewing verse is the last one in the source list,
     // so the completion tray can offer "Done" instead of looping back to the first verse.
@@ -4106,7 +4112,8 @@ export default {
       })
     }
 
-    const resetPracticeSequence = (verse, mode, retryOffset = 0) => {
+    const buildPracticeWords = (verse, mode, retryOffset = 0) => {
+      if (!verse || !mode) return []
       const contentWords = buildContentPracticeWords(verse.content, mode, retryOffset)
       const referenceWords = shouldRequireReferenceTyping(verse)
         ? buildReferencePracticeUnits(verse.reference).map((unit) => ({
@@ -4114,10 +4121,14 @@ export default {
             visible: mode === 'learn'
           }))
         : []
-      reviewWords.value = [...contentWords, ...referenceWords].map((word, index) => ({
+      return [...contentWords, ...referenceWords].map((word, index) => ({
         ...word,
         index
       }))
+    }
+
+    const resetPracticeSequence = (verse, mode, retryOffset = 0) => {
+      reviewWords.value = buildPracticeWords(verse, mode, retryOffset)
       typedLetter.value = ''
     }
 
@@ -5988,6 +5999,8 @@ export default {
     }
     const nextMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(1))
     const previousMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(-1))
+    const nextMemorizationVerseWords = computed(() => buildPracticeWords(nextMemorizationVerse.value, memorizationMode.value, memorizeRetryCount.value))
+    const previousMemorizationVerseWords = computed(() => buildPracticeWords(previousMemorizationVerse.value, memorizationMode.value, memorizeRetryCount.value))
 
     const clearReviewSessionState = () => {
       stopSpeaking()
@@ -7795,8 +7808,12 @@ export default {
       meetsAccuracyRequirement,
       previousMemorizationVerse,
       nextMemorizationVerse,
+      previousMemorizationVerseWords,
+      nextMemorizationVerseWords,
       previousReviewVerse,
       nextReviewVerse,
+      previousReviewVerseWords,
+      nextReviewVerseWords,
       practiceVerseTransitionName,
       preparePracticeViewLeave,
       reviewingVerseNextReviewLabel,

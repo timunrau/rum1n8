@@ -235,7 +235,9 @@ export default {
     showTray: { type: Boolean, default: false },
     showPracticeModesHint: { type: Boolean, default: false },
     previousVerse: { type: Object, default: null },
-    nextVerse: { type: Object, default: null }
+    previousVerseWords: { type: Array, default: () => [] },
+    nextVerse: { type: Object, default: null },
+    nextVerseWords: { type: Array, default: () => [] }
   },
   emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint', 'swipe-verse'],
   setup(props, { emit, expose }) {
@@ -349,29 +351,12 @@ export default {
       return direction === 'next' ? props.nextVerse : props.previousVerse
     }
 
-    function buildPreviewWords(verse) {
-      if (!verse) return []
-      const text = `${verse.content || ''} ${verse.reference || ''}`.trim()
-      if (!text) return []
-
-      return text.split(/\s+/).map((word, index) => ({
-        text: word,
-        visible: true,
-        revealed: true,
-        index,
-        separatorAfter: '',
-        isReferenceUnit: false,
-        incorrect: false,
-        incorrectLetterIndices: []
-      }))
-    }
-
     const practicePanels = computed(() => [
       {
         key: props.previousVerse?.id || 'previous-edge',
         direction: 'previous',
         verse: props.previousVerse,
-        words: buildPreviewWords(props.previousVerse),
+        words: props.previousVerseWords,
         mode: props.memorizationMode,
         isCurrent: false
       },
@@ -387,7 +372,7 @@ export default {
         key: props.nextVerse?.id || 'next-edge',
         direction: 'next',
         verse: props.nextVerse,
-        words: buildPreviewWords(props.nextVerse),
+        words: props.nextVerseWords,
         mode: props.memorizationMode,
         isCurrent: false
       }
