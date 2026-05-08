@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/timunrau/rum1n8/compare/v1.18.0...v1.19.0) (2026-05-08)
+
+
+### Features
+
+* polish sharing and verse practice flows ([0376ce5](https://github.com/timunrau/rum1n8/commit/0376ce5f57de9e78172ec11eea9b220c301f13ca))
+
 # [1.18.0](https://github.com/timunrau/rum1n8/compare/v1.17.1...v1.18.0) (2026-05-02)
 
 
