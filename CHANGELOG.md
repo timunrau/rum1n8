@@ -1,3 +1,10 @@
+## [1.20.3](https://github.com/timunrau/rum1n8/compare/v1.20.2...v1.20.3) (2026-05-08)
+
+
+### Bug Fixes
+
+* completion tray text ([56c0ed7](https://github.com/timunrau/rum1n8/commit/56c0ed7a5aaf5578d4d43443bfec1d17534829b3))
+
 ## [1.20.2](https://github.com/timunrau/rum1n8/compare/v1.20.1...v1.20.2) (2026-05-08)
 
 
