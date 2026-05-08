@@ -1,9 +1,32 @@
 <template>
   <div
-    class="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4"
+    class="practice-swipe-frame flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4"
     @touchstart.passive="onPracticeTouchStart"
+    @touchmove="onPracticeTouchMove"
     @touchend.passive="onPracticeTouchEnd"
+    @touchcancel="resetPracticeSwipe"
   >
+    <div
+      v-if="practiceSwipePreview"
+      class="practice-swipe-peek"
+      :class="[`practice-swipe-peek--${practiceSwipePreview.edge}`, { 'practice-swipe-peek--edge': !practiceSwipePreview.canNavigate }]"
+      :style="practiceSwipePreviewStyle"
+      aria-hidden="true"
+    >
+      <div class="practice-swipe-peek__panel">
+        <p class="practice-swipe-peek__reference">{{ practiceSwipePreview.reference }}</p>
+        <p v-if="practiceSwipePreview.content" class="practice-swipe-peek__content">{{ practiceSwipePreview.content }}</p>
+      </div>
+    </div>
+
+    <div
+      class="practice-swipe-current flex-1 flex flex-col min-h-0"
+      :class="{
+        'practice-swipe-current--dragging': isPracticeSwipeDragging,
+        'practice-swipe-current--settling': isPracticeSwipeSettling
+      }"
+      :style="practiceSwipeCurrentStyle"
+    >
     <!-- Scrollable verse text -->
     <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
       <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
@@ -192,11 +215,12 @@
         @keydown="onKeydown"
       />
     </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { computed, ref, onMounted, nextTick } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 export default {
   name: 'VersePracticeView',
@@ -213,13 +237,33 @@ export default {
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
     showTray: { type: Boolean, default: false },
-    showPracticeModesHint: { type: Boolean, default: false }
+    showPracticeModesHint: { type: Boolean, default: false },
+    previousVerse: { type: Object, default: null },
+    nextVerse: { type: Object, default: null }
   },
   emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint', 'swipe-verse'],
   setup(props, { emit, expose }) {
     const inputRef = ref(null)
     const scrollContainer = ref(null)
-    const practiceTouchStart = ref(null)
+    const createEmptyPracticeSwipe = () => ({
+      started: false,
+      dragging: false,
+      settling: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastTime: 0,
+      rawDx: 0,
+      dx: 0,
+      dy: 0,
+      velocityX: 0,
+      direction: null,
+      lockedAxis: null,
+      canNavigate: false,
+      width: 1
+    })
+    const practiceSwipe = ref(createEmptyPracticeSwipe())
+    let practiceSwipeResetTimer = null
     const practiceModeHint = computed(() => {
       if (props.memorizationMode === 'learn') {
         return {
@@ -289,29 +333,211 @@ export default {
       }
     }
 
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value))
+    }
+
+    function getViewportWidth() {
+      if (typeof window === 'undefined') return 390
+      return Math.max(window.innerWidth || 390, 1)
+    }
+
+    function getSwipeTarget(direction) {
+      return direction === 'next' ? props.nextVerse : props.previousVerse
+    }
+
+    function getDisplayDx(rawDx, hasTarget, width) {
+      const sign = rawDx < 0 ? -1 : 1
+      const distance = Math.abs(rawDx)
+
+      if (!hasTarget) {
+        return sign * Math.min(54, 8 + Math.sqrt(distance) * 4.4)
+      }
+
+      const maxDistance = width * 0.92
+      if (distance <= maxDistance) return rawDx
+
+      return sign * (maxDistance + (distance - maxDistance) * 0.16)
+    }
+
+    function clearPracticeSwipeResetTimer() {
+      if (practiceSwipeResetTimer) {
+        clearTimeout(practiceSwipeResetTimer)
+        practiceSwipeResetTimer = null
+      }
+    }
+
+    function resetPracticeSwipe() {
+      clearPracticeSwipeResetTimer()
+      practiceSwipe.value = createEmptyPracticeSwipe()
+    }
+
+    function setPracticeSwipe(nextState) {
+      practiceSwipe.value = {
+        ...practiceSwipe.value,
+        ...nextState
+      }
+    }
+
+    function settlePracticeSwipeBack() {
+      clearPracticeSwipeResetTimer()
+      setPracticeSwipe({ settling: true, dragging: false, dx: 0, rawDx: 0 })
+      practiceSwipeResetTimer = setTimeout(() => {
+        resetPracticeSwipe()
+      }, 260)
+    }
+
     function onPracticeTouchStart(e) {
       if (e.touches.length !== 1) {
-        practiceTouchStart.value = null
+        resetPracticeSwipe()
         return
       }
 
       const touch = e.touches[0]
-      practiceTouchStart.value = { x: touch.clientX, y: touch.clientY }
+      clearPracticeSwipeResetTimer()
+      practiceSwipe.value = {
+        ...createEmptyPracticeSwipe(),
+        started: true,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastX: touch.clientX,
+        lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+        width: getViewportWidth()
+      }
+    }
+
+    function onPracticeTouchMove(e) {
+      const state = practiceSwipe.value
+      if (!state.started || e.touches.length !== 1) return
+
+      const touch = e.touches[0]
+      const rawDx = touch.clientX - state.startX
+      const dy = touch.clientY - state.startY
+      const absDx = Math.abs(rawDx)
+      const absDy = Math.abs(dy)
+
+      let lockedAxis = state.lockedAxis
+      if (!lockedAxis) {
+        if (absDx > 10 && absDx > absDy * 1.2) {
+          lockedAxis = 'x'
+        } else if (absDy > 10 && absDy > absDx) {
+          resetPracticeSwipe()
+          return
+        } else {
+          return
+        }
+      }
+
+      if (lockedAxis !== 'x') return
+      e.preventDefault()
+
+      const direction = rawDx < 0 ? 'next' : 'previous'
+      const target = getSwipeTarget(direction)
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      const elapsed = Math.max(now - state.lastTime, 1)
+      const velocityX = (touch.clientX - state.lastX) / elapsed
+      const displayDx = getDisplayDx(rawDx, !!target, state.width)
+
+      practiceSwipe.value = {
+        ...state,
+        dragging: true,
+        settling: false,
+        lockedAxis,
+        rawDx,
+        dx: displayDx,
+        dy,
+        direction,
+        canNavigate: !!target,
+        velocityX,
+        lastX: touch.clientX,
+        lastTime: now
+      }
     }
 
     function onPracticeTouchEnd(e) {
-      if (!practiceTouchStart.value) return
+      const state = practiceSwipe.value
+      if (!state.started) return
+
+      if (!state.dragging) {
+        resetPracticeSwipe()
+        return
+      }
 
       const touch = e.changedTouches[0]
-      const dx = touch.clientX - practiceTouchStart.value.x
-      const dy = touch.clientY - practiceTouchStart.value.y
-      practiceTouchStart.value = null
+      const rawDx = touch.clientX - state.startX
+      const absDx = Math.abs(rawDx)
+      const target = getSwipeTarget(state.direction)
+      const threshold = Math.min(110, Math.max(62, state.width * 0.22))
+      const isFastEnough = Math.abs(state.velocityX) > 0.48 && absDx > 38
 
-      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return
+      if (target && (absDx >= threshold || isFastEnough)) {
+        emit('swipe-verse', state.direction)
+        resetPracticeSwipe()
+        nextTick(() => focusInput())
+        return
+      }
 
-      emit('swipe-verse', dx < 0 ? 'next' : 'previous')
-      nextTick(() => focusInput())
+      settlePracticeSwipeBack()
     }
+
+    const isPracticeSwipeDragging = computed(() => practiceSwipe.value.dragging && !practiceSwipe.value.settling)
+    const isPracticeSwipeSettling = computed(() => practiceSwipe.value.settling)
+    const practiceSwipeProgress = computed(() => clamp(Math.abs(practiceSwipe.value.dx) / practiceSwipe.value.width, 0, 1))
+    const practiceSwipeCurrentStyle = computed(() => {
+      const state = practiceSwipe.value
+      if (!state.dragging && !state.settling) return null
+
+      const progress = practiceSwipeProgress.value
+      const scale = state.canNavigate ? 1 - progress * 0.018 : 1 - progress * 0.006
+      const shadowDirection = state.dx < 0 ? -1 : 1
+
+      return {
+        transform: `translate3d(${state.dx}px, 0, 0) scale(${scale})`,
+        boxShadow: `${shadowDirection * -18}px 0 38px rgba(20, 35, 58, ${0.08 + progress * 0.08})`
+      }
+    })
+
+    const practiceSwipePreview = computed(() => {
+      const state = practiceSwipe.value
+      if (!state.dragging || !state.direction) return null
+
+      const target = getSwipeTarget(state.direction)
+      const edge = state.direction === 'next' ? 'right' : 'left'
+      if (target) {
+        return {
+          edge,
+          canNavigate: true,
+          reference: target.reference || 'Next verse',
+          content: target.content ? target.content.slice(0, 132) : ''
+        }
+      }
+
+      return {
+        edge,
+        canNavigate: false,
+        reference: state.direction === 'next' ? 'End of list' : 'Start of list',
+        content: props.verse?.reference || ''
+      }
+    })
+
+    const practiceSwipePreviewStyle = computed(() => {
+      const state = practiceSwipe.value
+      if (!practiceSwipePreview.value) return null
+
+      const progress = practiceSwipeProgress.value
+      if (!state.canNavigate) {
+        return {
+          opacity: String(clamp(progress * 1.5, 0, 0.92))
+        }
+      }
+
+      const sign = state.direction === 'next' ? 1 : -1
+      const offset = sign * Math.max(0, state.width - Math.abs(state.dx) * 1.04)
+      return {
+        opacity: String(clamp(0.34 + progress * 0.82, 0, 1)),
+        transform: `translate3d(${offset}px, 0, 0)`
+      }
+    })
 
     function shouldRenderReferenceSegments(word) {
       return !!(
@@ -382,6 +608,10 @@ export default {
       })
     })
 
+    onBeforeUnmount(() => {
+      clearPracticeSwipeResetTimer()
+    })
+
     function scrollToEnd() {
       if (!scrollContainer.value) return
       const words = scrollContainer.value.querySelectorAll('[id^="practice-word-"]')
@@ -410,7 +640,14 @@ export default {
       onKeydown,
       focusInput,
       onPracticeTouchStart,
+      onPracticeTouchMove,
       onPracticeTouchEnd,
+      resetPracticeSwipe,
+      isPracticeSwipeDragging,
+      isPracticeSwipeSettling,
+      practiceSwipeCurrentStyle,
+      practiceSwipePreview,
+      practiceSwipePreviewStyle,
       shouldRenderReferenceSegments,
       getReferenceSegments,
       getReferenceSegmentClass
@@ -418,3 +655,93 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.practice-swipe-frame {
+  position: relative;
+  touch-action: pan-y;
+}
+
+.practice-swipe-current {
+  position: relative;
+  z-index: 1;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.practice-swipe-current--dragging {
+  transition: none;
+}
+
+.practice-swipe-current--settling {
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.85, 0.25, 1),
+    box-shadow 260ms ease;
+}
+
+.practice-swipe-peek {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.2rem 5.5rem;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.practice-swipe-peek--right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.practice-swipe-peek--left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.practice-swipe-peek__panel {
+  width: min(78vw, 24rem);
+  border: 1px solid var(--color-border-default);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(var(--color-bg-chrome-rgb), 0.96), rgba(var(--color-bg-chrome-rgb), 0.84));
+  box-shadow: 0 18px 45px rgba(20, 35, 58, 0.14);
+  padding: 1rem;
+}
+
+.dark .practice-swipe-peek__panel {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+}
+
+.practice-swipe-peek--edge .practice-swipe-peek__panel {
+  width: auto;
+  max-width: min(68vw, 18rem);
+  opacity: 0.72;
+}
+
+.practice-swipe-peek__reference {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.practice-swipe-peek__content {
+  margin: 0.55rem 0 0;
+  color: var(--color-text-secondary);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice-swipe-current,
+  .practice-swipe-peek {
+    transition-duration: 0ms !important;
+  }
+}
+</style>

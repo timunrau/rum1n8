@@ -132,29 +132,33 @@
       </div>
     </header>
 
-    <div class="relative flex-1 min-h-0 flex flex-col">
-      <VersePracticeView
-        :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
-        ref="memorizationPracticeRef"
-        :verse="memorizingVerse"
-        :memorization-mode="memorizationMode"
-        :review-words="reviewWords"
-        context="memorization"
-        v-model:typed-letter="typedLetter"
-        :get-memorization-status="getMemorizationStatus"
-        :can-switch-to-mode="canSwitchToMode"
-        :is-partially-typed="isPartiallyTyped"
-        :get-partial-word-text="getPartialWordText"
-        :get-remaining-part-text="getRemainingPartText"
-        input-id="letter-input-memorize"
-        :show-tray="allWordsRevealed && !!memorizationMode"
-        :show-practice-modes-hint="shouldShowPracticeModesHint"
-        @input="checkLetter"
-        @keydown="handleKeyPress"
-        @switch-mode="switchToMemorizationMode"
-        @dismiss-practice-modes-hint="dismissPracticeModesHint"
-        @swipe-verse="handlePracticeVerseSwipe"
-      />
+    <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
+      <Transition :name="practiceVerseTransitionName" @before-leave="preparePracticeViewLeave">
+        <VersePracticeView
+          :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
+          ref="memorizationPracticeRef"
+          :verse="memorizingVerse"
+          :memorization-mode="memorizationMode"
+          :review-words="reviewWords"
+          context="memorization"
+          v-model:typed-letter="typedLetter"
+          :get-memorization-status="getMemorizationStatus"
+          :can-switch-to-mode="canSwitchToMode"
+          :is-partially-typed="isPartiallyTyped"
+          :get-partial-word-text="getPartialWordText"
+          :get-remaining-part-text="getRemainingPartText"
+          :previous-verse="previousMemorizationVerse"
+          :next-verse="nextMemorizationVerse"
+          input-id="letter-input-memorize"
+          :show-tray="allWordsRevealed && !!memorizationMode"
+          :show-practice-modes-hint="shouldShowPracticeModesHint"
+          @input="checkLetter"
+          @keydown="handleKeyPress"
+          @switch-mode="switchToMemorizationMode"
+          @dismiss-practice-modes-hint="dismissPracticeModesHint"
+          @swipe-verse="handlePracticeVerseSwipe"
+        />
+      </Transition>
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>
@@ -226,29 +230,33 @@
       </div>
     </header>
 
-    <div class="relative flex-1 min-h-0 flex flex-col">
-      <VersePracticeView
-        :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
-        ref="reviewPracticeRef"
-        :verse="reviewingVerse"
-        :memorization-mode="memorizationMode"
-        :review-words="reviewWords"
-        context="review"
-        v-model:typed-letter="typedLetter"
-        :get-memorization-status="getMemorizationStatus"
-        :can-switch-to-mode="canSwitchToModeForReview"
-        :is-partially-typed="isPartiallyTyped"
-        :get-partial-word-text="getPartialWordText"
-        :get-remaining-part-text="getRemainingPartText"
-        input-id="letter-input-review"
-        :show-tray="allWordsRevealed && !!reviewingVerse"
-        :show-practice-modes-hint="shouldShowPracticeModesHint"
-        @input="checkLetter"
-        @keydown="handleKeyPress"
-        @switch-mode="switchReviewMode"
-        @dismiss-practice-modes-hint="dismissPracticeModesHint"
-        @swipe-verse="handlePracticeVerseSwipe"
-      />
+    <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
+      <Transition :name="practiceVerseTransitionName" @before-leave="preparePracticeViewLeave">
+        <VersePracticeView
+          :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
+          ref="reviewPracticeRef"
+          :verse="reviewingVerse"
+          :memorization-mode="memorizationMode"
+          :review-words="reviewWords"
+          context="review"
+          v-model:typed-letter="typedLetter"
+          :get-memorization-status="getMemorizationStatus"
+          :can-switch-to-mode="canSwitchToModeForReview"
+          :is-partially-typed="isPartiallyTyped"
+          :get-partial-word-text="getPartialWordText"
+          :get-remaining-part-text="getRemainingPartText"
+          :previous-verse="previousReviewVerse"
+          :next-verse="nextReviewVerse"
+          input-id="letter-input-review"
+          :show-tray="allWordsRevealed && !!reviewingVerse"
+          :show-practice-modes-hint="shouldShowPracticeModesHint"
+          @input="checkLetter"
+          @keydown="handleKeyPress"
+          @switch-mode="switchReviewMode"
+          @dismiss-practice-modes-hint="dismissPracticeModesHint"
+          @swipe-verse="handlePracticeVerseSwipe"
+        />
+      </Transition>
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>
@@ -274,7 +282,14 @@
   </div>
 
   <!-- Main Content -->
-  <AppShell v-if="!memorizingVerse && !reviewingVerse" class="min-h-screen" @touchstart.passive="handleSwipeTouchStart" @touchend.passive="handleSwipeTouchEnd">
+  <AppShell
+    v-if="!memorizingVerse && !reviewingVerse"
+    class="min-h-screen"
+    @touchstart.passive="handleSwipeTouchStart"
+    @touchmove="handleSwipeTouchMove"
+    @touchend.passive="handleSwipeTouchEnd"
+    @touchcancel="resetViewSwipe"
+  >
     <!-- Top App Bar (verses/collections screen only) -->
     <header v-if="currentView === 'collections'" :class="['glass-chrome fixed top-0 left-0 right-0 z-40', isScrolled ? '' : 'glass-chrome--transparent']">
       <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
@@ -566,6 +581,35 @@
     </div>
 
     <!-- Content Area: fixed header + bottom nav padding only on collections/verses screen -->
+    <div class="app-view-stage">
+      <div
+        v-if="viewSwipePreview"
+        class="swipe-peek"
+        :class="[`swipe-peek--${viewSwipePreview.edge}`, { 'swipe-peek--edge': !viewSwipePreview.canNavigate }]"
+        :style="viewSwipePreviewStyle"
+        aria-hidden="true"
+      >
+        <div class="swipe-peek__panel">
+          <p class="swipe-peek__title">{{ viewSwipePreview.label }}</p>
+          <p v-if="viewSwipePreview.meta" class="swipe-peek__meta">{{ viewSwipePreview.meta }}</p>
+          <div class="swipe-peek__skeleton" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+      <Transition :name="viewTransitionName" mode="out-in">
+        <div
+          :key="mainViewKey"
+          class="app-view-surface"
+          :class="{
+            'app-view-surface--dragging': isViewSwipeDragging,
+            'app-view-surface--settling': isViewSwipeSettling
+          }"
+          :style="appViewSwipeStyle"
+        >
     <div :class="['px-4', currentView === 'collections' ? 'pt-16 pb-24' : '']">
       <div class="max-w-4xl mx-auto">
 
@@ -1034,6 +1078,9 @@
         </div>
       </div>
       </div>
+    </div>
+        </div>
+      </Transition>
     </div>
 
     <!-- Bottom Navigation -->
@@ -2293,6 +2340,29 @@ export default {
     const startReviewCalloutTitle = "You've mastered your first verse."
     const startReviewCalloutBody = 'Review your verses each day to keep ruminating on the Word.'
     const verseCardRefs = new Map()
+    const swipeViews = ['collections', 'review-list', 'stats']
+    const viewTransitionDirection = ref('forward')
+    const practiceVerseTransitionName = ref('practice-mode-fade')
+    const createEmptyViewSwipe = () => ({
+      started: false,
+      dragging: false,
+      settling: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastTime: 0,
+      rawDx: 0,
+      dx: 0,
+      dy: 0,
+      velocityX: 0,
+      direction: null,
+      targetView: null,
+      lockedAxis: null,
+      canNavigate: false,
+      width: 1
+    })
+    const viewSwipe = ref(createEmptyViewSwipe())
+    let viewSwipeResetTimer = null
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -2988,6 +3058,8 @@ export default {
 
     const getNextReviewSourceVerse = () => getAdjacentReviewSourceVerse(1)
     const getPreviousReviewSourceVerse = () => getAdjacentReviewSourceVerse(-1)
+    const nextReviewVerse = computed(() => getNextReviewSourceVerse())
+    const previousReviewVerse = computed(() => getPreviousReviewSourceVerse())
 
     // True when the current reviewing verse is the last one in the source list,
     // so the completion tray can offer "Done" instead of looping back to the first verse.
@@ -4226,10 +4298,12 @@ export default {
         // Not mastered yet - start memorization
         const nextMode = getNextMemorizationMode(verse.memorizationStatus)
         if (nextMode) {
+          setPracticeTransition('mode')
           startMemorization(verse, nextMode)
         }
       } else {
         // Mastered - start review
+        setPracticeTransition('mode')
         startReview(verse)
       }
     }
@@ -5314,6 +5388,7 @@ export default {
     // Navigate to review list view — top-level tabs use replace so that browser back
     // from any top-level tab exits the app rather than cycling through previously visited tabs.
     const navigateToReviewList = () => {
+      setViewTransitionByView(currentView.value, 'review-list')
       currentCollectionId.value = null
       currentView.value = 'review-list'
       searchQuery.value = ''
@@ -5325,12 +5400,14 @@ export default {
     }
 
     const navigateToCollections = () => {
+      setViewTransitionByView(currentView.value, 'collections')
       currentCollectionId.value = null
       currentView.value = 'collections'
       replaceNavigationState({ view: 'collections' })
     }
 
     const navigateToStats = () => {
+      setViewTransitionByView(currentView.value, 'stats')
       currentCollectionId.value = null
       currentView.value = 'stats'
       searchQuery.value = ''
@@ -5338,40 +5415,283 @@ export default {
       replaceNavigationState({ view: 'stats' })
     }
 
-    const swipeViews = ['collections', 'review-list', 'stats']
-    const swipeTouchStart = ref(null)
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+    const getViewportWidth = () => (typeof window === 'undefined' ? 390 : Math.max(window.innerWidth || 390, 1))
+    const viewTransitionName = computed(() => (
+      viewTransitionDirection.value === 'back' ? 'app-view-back' : 'app-view-forward'
+    ))
+    const mainViewKey = computed(() => (
+      currentCollectionId.value ? `collection-${currentCollectionId.value}` : currentView.value
+    ))
+    const isViewSwipeDragging = computed(() => viewSwipe.value.dragging && !viewSwipe.value.settling)
+    const isViewSwipeSettling = computed(() => viewSwipe.value.settling)
+    const viewSwipeProgress = computed(() => clamp(Math.abs(viewSwipe.value.dx) / viewSwipe.value.width, 0, 1))
+    const appViewSwipeStyle = computed(() => {
+      const state = viewSwipe.value
+      if (!state.dragging && !state.settling) return null
 
-    const handleSwipeTouchStart = (e) => {
-      if (currentCollectionId.value) return
-      let el = e.target
-      while (el && el !== e.currentTarget) {
+      const progress = viewSwipeProgress.value
+      const scale = state.canNavigate ? 1 - progress * 0.014 : 1 - progress * 0.004
+      const shadowDirection = state.dx < 0 ? -1 : 1
+
+      return {
+        transform: `translate3d(${state.dx}px, 0, 0) scale(${scale})`,
+        boxShadow: `${shadowDirection * -20}px 0 42px rgba(20, 35, 58, ${0.08 + progress * 0.1})`
+      }
+    })
+
+    const setViewTransitionByView = (fromView, toView) => {
+      const fromIndex = swipeViews.indexOf(fromView)
+      const toIndex = swipeViews.indexOf(toView)
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return
+      viewTransitionDirection.value = toIndex > fromIndex ? 'forward' : 'back'
+    }
+
+    const setPracticeTransition = (direction) => {
+      if (direction === 'previous') {
+        practiceVerseTransitionName.value = 'practice-verse-previous'
+      } else if (direction === 'next') {
+        practiceVerseTransitionName.value = 'practice-verse-next'
+      } else {
+        practiceVerseTransitionName.value = 'practice-mode-fade'
+      }
+    }
+
+    const preparePracticeViewLeave = (el) => {
+      el.setAttribute('aria-hidden', 'true')
+      el.querySelectorAll('input[id]').forEach((input) => {
+        input.removeAttribute('id')
+      })
+    }
+
+    const getAdjacentSwipeView = (direction) => {
+      const currentIndex = swipeViews.indexOf(currentView.value)
+      if (currentIndex === -1) return null
+      const offset = direction === 'next' ? 1 : -1
+      return swipeViews[currentIndex + offset] || null
+    }
+
+    const getSwipeViewLabel = (view) => ({
+      collections: 'Verses',
+      'review-list': 'Review',
+      stats: 'Stats'
+    }[view] || 'Verses')
+
+    const getSwipeViewMeta = (view) => {
+      if (view === 'collections') {
+        return totalVerseCount.value === 1 ? '1 verse' : `${totalVerseCount.value} verses`
+      }
+      if (view === 'review-list') {
+        return dueVersesCount.value > 0
+          ? `${dueVersesCount.value} due`
+          : `${reviewSortedVerses.value.length} scheduled`
+      }
+      if (view === 'stats') {
+        return currentStreak.value === 1 ? '1 day streak' : `${currentStreak.value} day streak`
+      }
+      return ''
+    }
+
+    const viewSwipePreview = computed(() => {
+      const state = viewSwipe.value
+      if (!state.dragging || !state.direction) return null
+
+      const targetView = state.targetView
+      const edge = state.direction === 'next' ? 'right' : 'left'
+      if (targetView) {
+        return {
+          edge,
+          canNavigate: true,
+          label: getSwipeViewLabel(targetView),
+          meta: getSwipeViewMeta(targetView)
+        }
+      }
+
+      return {
+        edge,
+        canNavigate: false,
+        label: state.direction === 'next' ? 'Last view' : 'First view',
+        meta: getSwipeViewLabel(currentView.value)
+      }
+    })
+
+    const viewSwipePreviewStyle = computed(() => {
+      const state = viewSwipe.value
+      if (!viewSwipePreview.value) return null
+
+      const progress = viewSwipeProgress.value
+      if (!state.canNavigate) {
+        return {
+          opacity: String(clamp(progress * 1.6, 0, 0.88))
+        }
+      }
+
+      const sign = state.direction === 'next' ? 1 : -1
+      const offset = sign * Math.max(0, state.width - Math.abs(state.dx) * 1.04)
+      return {
+        opacity: String(clamp(0.28 + progress * 0.86, 0, 1)),
+        transform: `translate3d(${offset}px, 0, 0)`
+      }
+    })
+
+    const getViewDisplayDx = (rawDx, hasTarget, width) => {
+      const sign = rawDx < 0 ? -1 : 1
+      const distance = Math.abs(rawDx)
+
+      if (!hasTarget) {
+        return sign * Math.min(48, 6 + Math.sqrt(distance) * 4)
+      }
+
+      const maxDistance = width * 0.9
+      if (distance <= maxDistance) return rawDx
+
+      return sign * (maxDistance + (distance - maxDistance) * 0.14)
+    }
+
+    const clearViewSwipeResetTimer = () => {
+      if (viewSwipeResetTimer) {
+        clearTimeout(viewSwipeResetTimer)
+        viewSwipeResetTimer = null
+      }
+    }
+
+    const resetViewSwipe = () => {
+      clearViewSwipeResetTimer()
+      viewSwipe.value = createEmptyViewSwipe()
+    }
+
+    const settleViewSwipeBack = () => {
+      clearViewSwipeResetTimer()
+      viewSwipe.value = {
+        ...viewSwipe.value,
+        settling: true,
+        dragging: false,
+        dx: 0,
+        rawDx: 0
+      }
+      viewSwipeResetTimer = setTimeout(() => {
+        resetViewSwipe()
+      }, 260)
+    }
+
+    const hasHorizontalScrollableAncestor = (target, root) => {
+      let el = target
+      while (el && el !== root) {
         const style = window.getComputedStyle(el)
         if ((style.overflowX === 'auto' || style.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
-          return
+          return true
         }
         el = el.parentElement
       }
-      const t = e.touches[0]
-      swipeTouchStart.value = { x: t.clientX, y: t.clientY }
+      return false
+    }
+
+    const navigateToSwipeView = (view) => {
+      if (view === 'collections') navigateToCollections()
+      else if (view === 'review-list') navigateToReviewList()
+      else if (view === 'stats') navigateToStats()
+    }
+
+    const handleSwipeTouchStart = (e) => {
+      if (
+        currentCollectionId.value ||
+        searchActive.value ||
+        drawerVisible.value ||
+        fabMenuOpen.value ||
+        e.touches.length !== 1
+      ) {
+        resetViewSwipe()
+        return
+      }
+
+      if (hasHorizontalScrollableAncestor(e.target, e.currentTarget)) return
+
+      const touch = e.touches[0]
+      clearViewSwipeResetTimer()
+      viewSwipe.value = {
+        ...createEmptyViewSwipe(),
+        started: true,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastX: touch.clientX,
+        lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+        width: getViewportWidth()
+      }
+    }
+
+    const handleSwipeTouchMove = (e) => {
+      const state = viewSwipe.value
+      if (!state.started || e.touches.length !== 1 || currentCollectionId.value) return
+
+      const touch = e.touches[0]
+      const rawDx = touch.clientX - state.startX
+      const dy = touch.clientY - state.startY
+      const absDx = Math.abs(rawDx)
+      const absDy = Math.abs(dy)
+
+      let lockedAxis = state.lockedAxis
+      if (!lockedAxis) {
+        if (absDx > 10 && absDx > absDy * 1.2) {
+          lockedAxis = 'x'
+        } else if (absDy > 10 && absDy > absDx) {
+          resetViewSwipe()
+          return
+        } else {
+          return
+        }
+      }
+
+      if (lockedAxis !== 'x') return
+      e.preventDefault()
+
+      const direction = rawDx < 0 ? 'next' : 'previous'
+      const targetView = getAdjacentSwipeView(direction)
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      const elapsed = Math.max(now - state.lastTime, 1)
+      const velocityX = (touch.clientX - state.lastX) / elapsed
+      const displayDx = getViewDisplayDx(rawDx, !!targetView, state.width)
+
+      viewSwipe.value = {
+        ...state,
+        dragging: true,
+        settling: false,
+        lockedAxis,
+        rawDx,
+        dx: displayDx,
+        dy,
+        direction,
+        targetView,
+        canNavigate: !!targetView,
+        velocityX,
+        lastX: touch.clientX,
+        lastTime: now
+      }
     }
 
     const handleSwipeTouchEnd = (e) => {
-      if (!swipeTouchStart.value || currentCollectionId.value) return
-      const t = e.changedTouches[0]
-      const dx = t.clientX - swipeTouchStart.value.x
-      const dy = t.clientY - swipeTouchStart.value.y
-      swipeTouchStart.value = null
-      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
-      const idx = swipeViews.indexOf(currentView.value)
-      if (dx < 0 && idx < swipeViews.length - 1) {
-        const next = swipeViews[idx + 1]
-        if (next === 'review-list') navigateToReviewList()
-        else if (next === 'stats') navigateToStats()
-      } else if (dx > 0 && idx > 0) {
-        const prev = swipeViews[idx - 1]
-        if (prev === 'collections') navigateToCollections()
-        else if (prev === 'review-list') navigateToReviewList()
+      const state = viewSwipe.value
+      if (!state.started || currentCollectionId.value) return
+
+      if (!state.dragging) {
+        resetViewSwipe()
+        return
       }
+
+      const touch = e.changedTouches[0]
+      const rawDx = touch.clientX - state.startX
+      const absDx = Math.abs(rawDx)
+      const targetView = state.targetView
+      const threshold = Math.min(116, Math.max(58, state.width * 0.2))
+      const isFastEnough = Math.abs(state.velocityX) > 0.48 && absDx > 36
+
+      if (targetView && (absDx >= threshold || isFastEnough)) {
+        setViewTransitionByView(currentView.value, targetView)
+        resetViewSwipe()
+        navigateToSwipeView(targetView)
+        return
+      }
+
+      settleViewSwipeBack()
     }
 
     const clearSearch = () => {
@@ -5611,6 +5931,7 @@ export default {
       if (mode !== memorizationMode.value) {
         dismissPracticeModesHint()
       }
+      setPracticeTransition('mode')
       startMemorization(memorizingVerse.value, mode)
     }
 
@@ -5662,6 +5983,8 @@ export default {
 
       return sourceVerses[currentIndex + offset] || null
     }
+    const nextMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(1))
+    const previousMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(-1))
 
     const clearReviewSessionState = () => {
       stopSpeaking()
@@ -5729,6 +6052,7 @@ export default {
       if (mode !== memorizationMode.value) {
         dismissPracticeModesHint()
       }
+      setPracticeTransition('mode')
       if (mode === 'memorize') reviewMemorizeRetryCount.value += 1
       const verse = reviewingVerse.value
       resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
@@ -5876,6 +6200,7 @@ export default {
       if (!meetsAccuracyRequirement.value) return
 
       markCurrentPracticeModeHintSeen()
+      setPracticeTransition('mode')
       
       const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
       if (verse) {
@@ -6014,6 +6339,7 @@ export default {
     // Retry memorization (reset without saving)
     const retryMemorization = () => {
       if (memorizingVerse.value) {
+        setPracticeTransition('mode')
         memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows
         const verse = memorizingVerse.value
         const mode = memorizationMode.value
@@ -6029,6 +6355,7 @@ export default {
     // Retry current review
     const retryReview = () => {
       if (reviewingVerse.value) {
+        setPracticeTransition('mode')
         reviewInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows (same as Next Verse)
         // Re-initialize current mode (so user stays in Learn/Memorize if they were in that mode)
         const mode = memorizationMode.value || 'master'
@@ -6042,6 +6369,7 @@ export default {
       const targetVerse = getAdjacentMemorizationSourceVerse(offset)
       if (!targetVerse) return
 
+      setPracticeTransition(offset > 0 ? 'next' : 'previous')
       stopSpeaking()
 
       if (targetVerse.memorizationStatus === 'mastered') {
@@ -6073,18 +6401,21 @@ export default {
 
       const previousSourceVerse = getPreviousReviewSourceVerse()
       if (previousSourceVerse) {
+        setPracticeTransition('previous')
         startReview(previousSourceVerse)
       }
     }
 
     const handlePracticeVerseSwipe = (direction) => {
       if (reviewingVerse.value) {
+        setPracticeTransition(direction)
         if (direction === 'next') nextVerse()
         else previousVerse()
         return
       }
 
       if (memorizingVerse.value) {
+        setPracticeTransition(direction)
         navigateMemorizationVerse(direction === 'next' ? 1 : -1)
       }
     }
@@ -6213,6 +6544,7 @@ export default {
         
         const nextSourceVerse = getNextReviewSourceVerse()
         if (nextSourceVerse) {
+          setPracticeTransition('next')
           startReview(nextSourceVerse)
         } else {
           // Reached the end of the source list — exit back to the origin screen
@@ -7368,6 +7700,9 @@ export default {
       if (drawerHideTimeoutId) {
         clearTimeout(drawerHideTimeoutId)
       }
+      if (viewSwipeResetTimer) {
+        clearTimeout(viewSwipeResetTimer)
+      }
       if (updateStateTimeoutId) {
         clearTimeout(updateStateTimeoutId)
       }
@@ -7446,6 +7781,12 @@ export default {
       isPartiallyTyped,
       accuracy,
       meetsAccuracyRequirement,
+      previousMemorizationVerse,
+      nextMemorizationVerse,
+      previousReviewVerse,
+      nextReviewVerse,
+      practiceVerseTransitionName,
+      preparePracticeViewLeave,
       reviewingVerseNextReviewLabel,
       isLastInReviewList,
       collections,
@@ -7481,7 +7822,16 @@ export default {
       navigateToCollections,
       navigateToStats,
       handleSwipeTouchStart,
+      handleSwipeTouchMove,
       handleSwipeTouchEnd,
+      resetViewSwipe,
+      mainViewKey,
+      viewTransitionName,
+      isViewSwipeDragging,
+      isViewSwipeSettling,
+      appViewSwipeStyle,
+      viewSwipePreview,
+      viewSwipePreviewStyle,
       clearSearch,
       openSearch,
       searchActive,
@@ -7628,5 +7978,228 @@ export default {
 .result-overlay-enter-from,
 .result-overlay-leave-to {
   opacity: 0;
+}
+
+.app-view-stage {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.app-view-surface {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.app-view-surface--dragging {
+  transition: none;
+}
+
+.app-view-surface--settling {
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.85, 0.25, 1),
+    box-shadow 260ms ease;
+}
+
+.swipe-peek {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  padding: 5.5rem 1.2rem 6rem;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.swipe-peek--right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.swipe-peek--left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.swipe-peek__panel {
+  width: min(74vw, 22rem);
+  border: 1px solid var(--color-border-default);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(var(--color-bg-chrome-rgb), 0.96), rgba(var(--color-bg-chrome-rgb), 0.82));
+  box-shadow: 0 20px 48px rgba(20, 35, 58, 0.14);
+  padding: 1rem;
+}
+
+.dark .swipe-peek__panel {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.36);
+}
+
+.swipe-peek--edge .swipe-peek__panel {
+  width: auto;
+  max-width: min(66vw, 18rem);
+  opacity: 0.72;
+}
+
+.swipe-peek__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.swipe-peek__meta {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.swipe-peek__skeleton {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+}
+
+.swipe-peek__skeleton span {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted) 22%, transparent);
+}
+
+.swipe-peek__skeleton span:nth-child(2) {
+  width: 72%;
+}
+
+.swipe-peek__skeleton span:nth-child(3) {
+  width: 46%;
+}
+
+.app-view-forward-enter-active,
+.app-view-forward-leave-active,
+.app-view-back-enter-active,
+.app-view-back-leave-active {
+  transition:
+    transform 330ms cubic-bezier(0.2, 0.82, 0.22, 1),
+    opacity 260ms ease,
+    filter 330ms ease;
+}
+
+.app-view-forward-leave-active,
+.app-view-back-leave-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.app-view-forward-enter-from {
+  opacity: 0.72;
+  filter: blur(0.5px);
+  transform: translate3d(22%, 0, 0) scale(0.992);
+}
+
+.app-view-forward-leave-to {
+  opacity: 0.48;
+  filter: blur(0.5px);
+  transform: translate3d(-18%, 0, 0) scale(0.988);
+}
+
+.app-view-back-enter-from {
+  opacity: 0.72;
+  filter: blur(0.5px);
+  transform: translate3d(-22%, 0, 0) scale(0.992);
+}
+
+.app-view-back-leave-to {
+  opacity: 0.48;
+  filter: blur(0.5px);
+  transform: translate3d(18%, 0, 0) scale(0.988);
+}
+
+.practice-view-stage {
+  overflow: hidden;
+}
+
+.practice-verse-next-enter-active,
+.practice-verse-next-leave-active,
+.practice-verse-previous-enter-active,
+.practice-verse-previous-leave-active,
+.practice-mode-fade-enter-active,
+.practice-mode-fade-leave-active {
+  transition:
+    transform 310ms cubic-bezier(0.2, 0.82, 0.22, 1),
+    opacity 240ms ease,
+    filter 310ms ease;
+}
+
+.practice-verse-next-leave-active,
+.practice-verse-previous-leave-active,
+.practice-mode-fade-leave-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.practice-verse-next-enter-from {
+  opacity: 0.64;
+  filter: blur(0.5px);
+  transform: translate3d(28%, 0, 0) scale(0.992);
+}
+
+.practice-verse-next-leave-to {
+  opacity: 0.42;
+  filter: blur(0.5px);
+  transform: translate3d(-22%, 0, 0) scale(0.988);
+}
+
+.practice-verse-previous-enter-from {
+  opacity: 0.64;
+  filter: blur(0.5px);
+  transform: translate3d(-28%, 0, 0) scale(0.992);
+}
+
+.practice-verse-previous-leave-to {
+  opacity: 0.42;
+  filter: blur(0.5px);
+  transform: translate3d(22%, 0, 0) scale(0.988);
+}
+
+.practice-mode-fade-enter-from {
+  opacity: 0;
+  filter: blur(0.5px);
+  transform: translate3d(0, 8px, 0) scale(0.992);
+}
+
+.practice-mode-fade-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -6px, 0) scale(0.992);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-view-surface,
+  .swipe-peek,
+  .app-view-forward-enter-active,
+  .app-view-forward-leave-active,
+  .app-view-back-enter-active,
+  .app-view-back-leave-active,
+  .practice-verse-next-enter-active,
+  .practice-verse-next-leave-active,
+  .practice-verse-previous-enter-active,
+  .practice-verse-previous-leave-active,
+  .practice-mode-fade-enter-active,
+  .practice-mode-fade-leave-active {
+    transition-duration: 0ms !important;
+  }
 }
 </style>
