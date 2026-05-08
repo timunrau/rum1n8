@@ -1,3 +1,10 @@
+## [1.20.2](https://github.com/timunrau/rum1n8/compare/v1.20.1...v1.20.2) (2026-05-08)
+
+
+### Bug Fixes
+
+* smooth practice verse swipes ([943ad5e](https://github.com/timunrau/rum1n8/commit/943ad5e81cc6c14335980ca674f4aa43d0c495b1))
+
 ## [1.20.1](https://github.com/timunrau/rum1n8/compare/v1.20.0...v1.20.1) (2026-05-08)
 
 
