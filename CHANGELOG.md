@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/timunrau/rum1n8/compare/v1.19.1...v1.20.0) (2026-05-08)
+
+
+### Features
+
+* improve swipe animations ([f2f7d96](https://github.com/timunrau/rum1n8/commit/f2f7d96b0762d9b195ca543540c9c2f29a26629e))
+
 ## [1.19.1](https://github.com/timunrau/rum1n8/compare/v1.19.0...v1.19.1) (2026-05-08)
 
 
