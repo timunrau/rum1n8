@@ -133,32 +133,30 @@
     </header>
 
     <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
-      <Transition :name="practiceVerseTransitionName" @before-leave="preparePracticeViewLeave">
-        <VersePracticeView
-          :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
-          ref="memorizationPracticeRef"
-          :verse="memorizingVerse"
-          :memorization-mode="memorizationMode"
-          :review-words="reviewWords"
-          context="memorization"
-          v-model:typed-letter="typedLetter"
-          :get-memorization-status="getMemorizationStatus"
-          :can-switch-to-mode="canSwitchToMode"
-          :is-partially-typed="isPartiallyTyped"
-          :get-partial-word-text="getPartialWordText"
-          :get-remaining-part-text="getRemainingPartText"
-          :previous-verse="previousMemorizationVerse"
-          :next-verse="nextMemorizationVerse"
-          input-id="letter-input-memorize"
-          :show-tray="allWordsRevealed && !!memorizationMode"
-          :show-practice-modes-hint="shouldShowPracticeModesHint"
-          @input="checkLetter"
-          @keydown="handleKeyPress"
-          @switch-mode="switchToMemorizationMode"
-          @dismiss-practice-modes-hint="dismissPracticeModesHint"
-          @swipe-verse="handlePracticeVerseSwipe"
-        />
-      </Transition>
+      <VersePracticeView
+        :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
+        ref="memorizationPracticeRef"
+        :verse="memorizingVerse"
+        :memorization-mode="memorizationMode"
+        :review-words="reviewWords"
+        context="memorization"
+        v-model:typed-letter="typedLetter"
+        :get-memorization-status="getMemorizationStatus"
+        :can-switch-to-mode="canSwitchToMode"
+        :is-partially-typed="isPartiallyTyped"
+        :get-partial-word-text="getPartialWordText"
+        :get-remaining-part-text="getRemainingPartText"
+        :previous-verse="previousMemorizationVerse"
+        :next-verse="nextMemorizationVerse"
+        input-id="letter-input-memorize"
+        :show-tray="allWordsRevealed && !!memorizationMode"
+        :show-practice-modes-hint="shouldShowPracticeModesHint"
+        @input="checkLetter"
+        @keydown="handleKeyPress"
+        @switch-mode="switchToMemorizationMode"
+        @dismiss-practice-modes-hint="dismissPracticeModesHint"
+        @swipe-verse="handlePracticeVerseSwipe"
+      />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>
@@ -231,32 +229,30 @@
     </header>
 
     <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
-      <Transition :name="practiceVerseTransitionName" @before-leave="preparePracticeViewLeave">
-        <VersePracticeView
-          :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
-          ref="reviewPracticeRef"
-          :verse="reviewingVerse"
-          :memorization-mode="memorizationMode"
-          :review-words="reviewWords"
-          context="review"
-          v-model:typed-letter="typedLetter"
-          :get-memorization-status="getMemorizationStatus"
-          :can-switch-to-mode="canSwitchToModeForReview"
-          :is-partially-typed="isPartiallyTyped"
-          :get-partial-word-text="getPartialWordText"
-          :get-remaining-part-text="getRemainingPartText"
-          :previous-verse="previousReviewVerse"
-          :next-verse="nextReviewVerse"
-          input-id="letter-input-review"
-          :show-tray="allWordsRevealed && !!reviewingVerse"
-          :show-practice-modes-hint="shouldShowPracticeModesHint"
-          @input="checkLetter"
-          @keydown="handleKeyPress"
-          @switch-mode="switchReviewMode"
-          @dismiss-practice-modes-hint="dismissPracticeModesHint"
-          @swipe-verse="handlePracticeVerseSwipe"
-        />
-      </Transition>
+      <VersePracticeView
+        :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
+        ref="reviewPracticeRef"
+        :verse="reviewingVerse"
+        :memorization-mode="memorizationMode"
+        :review-words="reviewWords"
+        context="review"
+        v-model:typed-letter="typedLetter"
+        :get-memorization-status="getMemorizationStatus"
+        :can-switch-to-mode="canSwitchToModeForReview"
+        :is-partially-typed="isPartiallyTyped"
+        :get-partial-word-text="getPartialWordText"
+        :get-remaining-part-text="getRemainingPartText"
+        :previous-verse="previousReviewVerse"
+        :next-verse="nextReviewVerse"
+        input-id="letter-input-review"
+        :show-tray="allWordsRevealed && !!reviewingVerse"
+        :show-practice-modes-hint="shouldShowPracticeModesHint"
+        @input="checkLetter"
+        @keydown="handleKeyPress"
+        @switch-mode="switchReviewMode"
+        @dismiss-practice-modes-hint="dismissPracticeModesHint"
+        @swipe-verse="handlePracticeVerseSwipe"
+      />
       <Transition name="result-overlay">
         <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
       </Transition>

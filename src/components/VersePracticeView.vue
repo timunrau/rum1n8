@@ -7,40 +7,35 @@
     @touchcancel="resetPracticeSwipe"
   >
     <div
-      v-if="practiceSwipePreview"
-      class="practice-swipe-peek"
-      :class="[`practice-swipe-peek--${practiceSwipePreview.edge}`, { 'practice-swipe-peek--edge': !practiceSwipePreview.canNavigate }]"
-      :style="practiceSwipePreviewStyle"
-      aria-hidden="true"
-    >
-      <div class="practice-swipe-peek__panel">
-        <p class="practice-swipe-peek__reference">{{ practiceSwipePreview.reference }}</p>
-        <p v-if="practiceSwipePreview.content" class="practice-swipe-peek__content">{{ practiceSwipePreview.content }}</p>
-      </div>
-    </div>
-
-    <div
-      class="practice-swipe-current flex-1 flex flex-col min-h-0"
+      class="practice-swipe-track flex-1 min-h-0"
       :class="{
-        'practice-swipe-current--dragging': isPracticeSwipeDragging,
-        'practice-swipe-current--settling': isPracticeSwipeSettling
+        'practice-swipe-track--dragging': isPracticeSwipeDragging,
+        'practice-swipe-track--settling': isPracticeSwipeSettling
       }"
-      :style="practiceSwipeCurrentStyle"
+      :style="practiceSwipeTrackStyle"
     >
-    <!-- Scrollable verse text -->
-    <div ref="scrollContainer" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-      <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
-        <div
-          class="text-xl leading-relaxed text-text-primary font-serif"
-          @click="focusInput"
+      <section
+        v-for="panel in practicePanels"
+        :key="panel.key"
+        class="practice-swipe-panel flex flex-col min-h-0"
+        :class="{ 'practice-swipe-panel--active': panel.isCurrent }"
+        :aria-hidden="!panel.isCurrent"
+        :inert="!panel.isCurrent ? '' : null"
+      >
+      <!-- Scrollable verse text -->
+      <div :ref="panel.isCurrent ? 'scrollContainer' : null" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
+        <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
+          <div
+            class="text-xl leading-relaxed text-text-primary font-serif"
+            @click="panel.isCurrent && focusInput()"
         >
           <span
-            v-for="(word, index) in reviewWords"
+            v-for="(word, index) in panel.words"
             :key="index"
-            :id="`practice-word-${index}`"
+            :id="panel.isCurrent ? `practice-word-${index}` : null"
             :class="word.isReferenceUnit && word.separatorAfter ? 'inline-block' : 'inline-block mr-2'"
           >
-            <span v-if="memorizationMode === 'learn'">
+            <span v-if="panel.mode === 'learn'">
               <template v-if="word.revealed">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
@@ -67,7 +62,7 @@
                 <span class="text-word-unrevealed">{{ word.text }}{{ word.separatorAfter || '' }}</span>
               </template>
             </span>
-            <span v-else-if="memorizationMode === 'memorize'">
+            <span v-else-if="panel.mode === 'memorize'">
               <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-word-unrevealed">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
@@ -99,7 +94,7 @@
                 <span class="border-b-2 border-word-unrevealed text-transparent select-none">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
-            <span v-else-if="memorizationMode === 'master'">
+            <span v-else-if="panel.mode === 'master'">
               <template v-if="word.revealed">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
@@ -133,7 +128,7 @@
       </div>
     </div>
 
-    <div v-if="showPracticeModesHint && !showTray && practiceModeHint" class="px-4 pb-1">
+    <div v-if="panel.isCurrent && showPracticeModesHint && !showTray && practiceModeHint" class="px-4 pb-1">
       <div class="practice-hint">
         <div class="flex items-start gap-3">
           <div class="practice-hint__icon">
@@ -162,7 +157,7 @@
     </div>
 
     <!-- Mode buttons: Learn | Memorize | Master -->
-    <div v-if="!showTray" class="my-2 flex-shrink-0">
+    <div v-if="!showTray && (panel.isCurrent || isPracticeSwipeActive)" class="my-2 flex-shrink-0">
       <div class="flex items-center justify-center gap-1">
         <div
           v-for="(stage, index) in stages"
@@ -170,10 +165,10 @@
           class="flex items-center"
         >
           <div
-            @click="onSwitchMode(stage.mode)"
+            @click="panel.isCurrent && onSwitchMode(stage.mode)"
             :class="[
               'mode-chip',
-              memorizationMode === stage.mode
+              panel.mode === stage.mode
                 ? 'mode-chip--active'
                 : isStageComplete(stage)
                 ? 'mode-chip--complete'
@@ -198,7 +193,7 @@
     </div>
 
     <!-- Hidden letter input -->
-    <div class="text-center flex-shrink-0">
+    <div v-if="panel.isCurrent" class="text-center flex-shrink-0">
       <input
         ref="inputRef"
         :value="typedLetter"
@@ -215,6 +210,7 @@
         @keydown="onKeydown"
       />
     </div>
+    </section>
     </div>
   </div>
 </template>
@@ -264,6 +260,7 @@ export default {
     })
     const practiceSwipe = ref(createEmptyPracticeSwipe())
     let practiceSwipeResetTimer = null
+    let practiceSwipeAnimationFrame = null
     const practiceModeHint = computed(() => {
       if (props.memorizationMode === 'learn') {
         return {
@@ -327,14 +324,15 @@ export default {
       emit('keydown', e)
     }
 
-    function focusInput() {
-      if (inputRef.value) {
-        inputRef.value.focus()
-      }
+    function getRefElement(value) {
+      return Array.isArray(value) ? value[0] : value
     }
 
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value))
+    function focusInput() {
+      const input = getRefElement(inputRef.value)
+      if (input) {
+        input.focus()
+      }
     }
 
     function getViewportWidth() {
@@ -342,9 +340,58 @@ export default {
       return Math.max(window.innerWidth || 390, 1)
     }
 
+    function getSwipeSurfaceWidth(el) {
+      const rect = el?.getBoundingClientRect?.()
+      return Math.max(rect?.width || getViewportWidth(), 1)
+    }
+
     function getSwipeTarget(direction) {
       return direction === 'next' ? props.nextVerse : props.previousVerse
     }
+
+    function buildPreviewWords(verse) {
+      if (!verse) return []
+      const text = `${verse.content || ''} ${verse.reference || ''}`.trim()
+      if (!text) return []
+
+      return text.split(/\s+/).map((word, index) => ({
+        text: word,
+        visible: true,
+        revealed: true,
+        index,
+        separatorAfter: '',
+        isReferenceUnit: false,
+        incorrect: false,
+        incorrectLetterIndices: []
+      }))
+    }
+
+    const practicePanels = computed(() => [
+      {
+        key: props.previousVerse?.id || 'previous-edge',
+        direction: 'previous',
+        verse: props.previousVerse,
+        words: buildPreviewWords(props.previousVerse),
+        mode: props.memorizationMode,
+        isCurrent: false
+      },
+      {
+        key: props.verse?.id || 'current',
+        direction: 'current',
+        verse: props.verse,
+        words: props.reviewWords,
+        mode: props.memorizationMode,
+        isCurrent: true
+      },
+      {
+        key: props.nextVerse?.id || 'next-edge',
+        direction: 'next',
+        verse: props.nextVerse,
+        words: buildPreviewWords(props.nextVerse),
+        mode: props.memorizationMode,
+        isCurrent: false
+      }
+    ])
 
     function getDisplayDx(rawDx, hasTarget, width) {
       const sign = rawDx < 0 ? -1 : 1
@@ -367,8 +414,16 @@ export default {
       }
     }
 
+    function clearPracticeSwipeAnimationFrame() {
+      if (practiceSwipeAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(practiceSwipeAnimationFrame)
+      }
+      practiceSwipeAnimationFrame = null
+    }
+
     function resetPracticeSwipe() {
       clearPracticeSwipeResetTimer()
+      clearPracticeSwipeAnimationFrame()
       practiceSwipe.value = createEmptyPracticeSwipe()
     }
 
@@ -380,11 +435,29 @@ export default {
     }
 
     function settlePracticeSwipeBack() {
+      settlePracticeSwipeTo(0)
+    }
+
+    function settlePracticeSwipeTo(targetDx, afterSettle) {
       clearPracticeSwipeResetTimer()
-      setPracticeSwipe({ settling: true, dragging: false, dx: 0, rawDx: 0 })
+      clearPracticeSwipeAnimationFrame()
+      setPracticeSwipe({ settling: true, dragging: false })
+
+      const finishFrame = () => {
+        practiceSwipeAnimationFrame = null
+        setPracticeSwipe({ dx: targetDx, rawDx: targetDx })
+      }
+
+      if (typeof requestAnimationFrame === 'undefined') {
+        finishFrame()
+      } else {
+        practiceSwipeAnimationFrame = requestAnimationFrame(finishFrame)
+      }
+
       practiceSwipeResetTimer = setTimeout(() => {
+        afterSettle?.()
         resetPracticeSwipe()
-      }, 260)
+      }, 360)
     }
 
     function onPracticeTouchStart(e) {
@@ -395,6 +468,7 @@ export default {
 
       const touch = e.touches[0]
       clearPracticeSwipeResetTimer()
+      clearPracticeSwipeAnimationFrame()
       practiceSwipe.value = {
         ...createEmptyPracticeSwipe(),
         started: true,
@@ -402,7 +476,7 @@ export default {
         startY: touch.clientY,
         lastX: touch.clientX,
         lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
-        width: getViewportWidth()
+        width: getSwipeSurfaceWidth(e.currentTarget)
       }
     }
 
@@ -471,9 +545,11 @@ export default {
       const isFastEnough = Math.abs(state.velocityX) > 0.48 && absDx > 38
 
       if (target && (absDx >= threshold || isFastEnough)) {
-        emit('swipe-verse', state.direction)
-        resetPracticeSwipe()
-        nextTick(() => focusInput())
+        const targetDx = state.direction === 'next' ? -state.width : state.width
+        settlePracticeSwipeTo(targetDx, () => {
+          emit('swipe-verse', state.direction)
+          nextTick(() => focusInput())
+        })
         return
       }
 
@@ -482,60 +558,12 @@ export default {
 
     const isPracticeSwipeDragging = computed(() => practiceSwipe.value.dragging && !practiceSwipe.value.settling)
     const isPracticeSwipeSettling = computed(() => practiceSwipe.value.settling)
-    const practiceSwipeProgress = computed(() => clamp(Math.abs(practiceSwipe.value.dx) / practiceSwipe.value.width, 0, 1))
-    const practiceSwipeCurrentStyle = computed(() => {
+    const isPracticeSwipeActive = computed(() => isPracticeSwipeDragging.value || isPracticeSwipeSettling.value)
+    const practiceSwipeTrackStyle = computed(() => {
       const state = practiceSwipe.value
-      if (!state.dragging && !state.settling) return null
-
-      const progress = practiceSwipeProgress.value
-      const scale = state.canNavigate ? 1 - progress * 0.018 : 1 - progress * 0.006
-      const shadowDirection = state.dx < 0 ? -1 : 1
-
+      const dx = state.dragging || state.settling ? state.dx : 0
       return {
-        transform: `translate3d(${state.dx}px, 0, 0) scale(${scale})`,
-        boxShadow: `${shadowDirection * -18}px 0 38px rgba(20, 35, 58, ${0.08 + progress * 0.08})`
-      }
-    })
-
-    const practiceSwipePreview = computed(() => {
-      const state = practiceSwipe.value
-      if (!state.dragging || !state.direction) return null
-
-      const target = getSwipeTarget(state.direction)
-      const edge = state.direction === 'next' ? 'right' : 'left'
-      if (target) {
-        return {
-          edge,
-          canNavigate: true,
-          reference: target.reference || 'Next verse',
-          content: target.content ? target.content.slice(0, 132) : ''
-        }
-      }
-
-      return {
-        edge,
-        canNavigate: false,
-        reference: state.direction === 'next' ? 'End of list' : 'Start of list',
-        content: props.verse?.reference || ''
-      }
-    })
-
-    const practiceSwipePreviewStyle = computed(() => {
-      const state = practiceSwipe.value
-      if (!practiceSwipePreview.value) return null
-
-      const progress = practiceSwipeProgress.value
-      if (!state.canNavigate) {
-        return {
-          opacity: String(clamp(progress * 1.5, 0, 0.92))
-        }
-      }
-
-      const sign = state.direction === 'next' ? 1 : -1
-      const offset = sign * Math.max(0, state.width - Math.abs(state.dx) * 1.04)
-      return {
-        opacity: String(clamp(0.34 + progress * 0.82, 0, 1)),
-        transform: `translate3d(${offset}px, 0, 0)`
+        transform: `translate3d(calc(-100% + ${dx}px), 0, 0)`
       }
     })
 
@@ -610,11 +638,13 @@ export default {
 
     onBeforeUnmount(() => {
       clearPracticeSwipeResetTimer()
+      clearPracticeSwipeAnimationFrame()
     })
 
     function scrollToEnd() {
-      if (!scrollContainer.value) return
-      const words = scrollContainer.value.querySelectorAll('[id^="practice-word-"]')
+      const scroller = getRefElement(scrollContainer.value)
+      if (!scroller) return
+      const words = scroller.querySelectorAll('[id^="practice-word-"]')
       const lastWord = words[words.length - 1]
       if (lastWord) {
         lastWord.scrollIntoView({ block: 'nearest' })
@@ -631,6 +661,7 @@ export default {
     return {
       stages,
       practiceModeHint,
+      practicePanels,
       inputRef,
       scrollContainer,
       isStageComplete,
@@ -645,9 +676,8 @@ export default {
       resetPracticeSwipe,
       isPracticeSwipeDragging,
       isPracticeSwipeSettling,
-      practiceSwipeCurrentStyle,
-      practiceSwipePreview,
-      practiceSwipePreviewStyle,
+      isPracticeSwipeActive,
+      practiceSwipeTrackStyle,
       shouldRenderReferenceSegments,
       getReferenceSegments,
       getReferenceSegmentClass
@@ -662,85 +692,40 @@ export default {
   touch-action: pan-y;
 }
 
-.practice-swipe-current {
+.practice-swipe-track {
+  display: flex;
+  width: 100%;
   position: relative;
   z-index: 1;
-  transform-origin: center center;
   will-change: transform;
+  transform: translate3d(-100%, 0, 0);
 }
 
-.practice-swipe-current--dragging {
+.practice-swipe-track--dragging {
   transition: none;
 }
 
-.practice-swipe-current--settling {
-  transition:
-    transform 260ms cubic-bezier(0.2, 0.85, 0.25, 1),
-    box-shadow 260ms ease;
+.practice-swipe-track--settling {
+  transition: transform 360ms cubic-bezier(0.18, 0.88, 0.24, 1);
 }
 
-.practice-swipe-peek {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  padding: 1rem 1.2rem 5.5rem;
+.practice-swipe-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  overflow: hidden;
+  padding-inline: 0;
+}
+
+.practice-swipe-panel:not(.practice-swipe-panel--active) {
   pointer-events: none;
-  will-change: transform, opacity;
 }
 
-.practice-swipe-peek--right {
-  justify-content: flex-end;
-  text-align: right;
-}
-
-.practice-swipe-peek--left {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.practice-swipe-peek__panel {
-  width: min(78vw, 24rem);
-  border: 1px solid var(--color-border-default);
-  border-radius: 1rem;
-  background:
-    linear-gradient(180deg, rgba(var(--color-bg-chrome-rgb), 0.96), rgba(var(--color-bg-chrome-rgb), 0.84));
-  box-shadow: 0 18px 45px rgba(20, 35, 58, 0.14);
-  padding: 1rem;
-}
-
-.dark .practice-swipe-peek__panel {
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
-}
-
-.practice-swipe-peek--edge .practice-swipe-peek__panel {
-  width: auto;
-  max-width: min(68vw, 18rem);
-  opacity: 0.72;
-}
-
-.practice-swipe-peek__reference {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-family: var(--font-serif);
-  font-size: 1.25rem;
-  line-height: 1.15;
-  letter-spacing: 0;
-}
-
-.practice-swipe-peek__content {
-  margin: 0.55rem 0 0;
-  color: var(--color-text-secondary);
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
-  font-style: italic;
-  line-height: 1.45;
+.practice-swipe-track .fade-in {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .practice-swipe-current,
-  .practice-swipe-peek {
+  .practice-swipe-track {
     transition-duration: 0ms !important;
   }
 }
