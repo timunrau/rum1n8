@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/timunrau/rum1n8/compare/v1.20.0...v1.20.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* smooth top-level swipe navigation ([948c14a](https://github.com/timunrau/rum1n8/commit/948c14ac5f6bb0054025921e94f91a37220b5580))
+
 # [1.20.0](https://github.com/timunrau/rum1n8/compare/v1.19.1...v1.20.0) (2026-05-08)
 
 
