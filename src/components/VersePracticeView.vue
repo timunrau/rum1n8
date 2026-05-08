@@ -1,6 +1,6 @@
 <template>
   <div
-    class="practice-swipe-frame flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full sm:px-4"
+    class="practice-swipe-frame flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full"
     @touchstart.passive="onPracticeTouchStart"
     @touchmove="onPracticeTouchMove"
     @touchend.passive="onPracticeTouchEnd"
@@ -17,7 +17,7 @@
       <section
         v-for="panel in practicePanels"
         :key="panel.key"
-        class="practice-swipe-panel flex flex-col min-h-0"
+        class="practice-swipe-panel flex flex-col min-h-0 sm:px-4"
         :class="{ 'practice-swipe-panel--active': panel.isCurrent }"
         :aria-hidden="!panel.isCurrent"
         :inert="!panel.isCurrent ? '' : null"
@@ -33,7 +33,7 @@
             v-for="(word, index) in panel.words"
             :key="index"
             :id="panel.isCurrent ? `practice-word-${index}` : null"
-            :class="word.isReferenceUnit && word.separatorAfter ? 'inline-block' : 'inline-block mr-2'"
+            :class="word.separatorAfter ? 'inline-block' : 'inline-block mr-2'"
           >
             <span v-if="panel.mode === 'learn'">
               <template v-if="word.revealed">
@@ -261,6 +261,8 @@ export default {
       width: 1
     })
     const practiceSwipe = ref(createEmptyPracticeSwipe())
+    const practiceSwipeSettleMs = 220
+    const settlingPracticePanels = ref(null)
     let practiceSwipeResetTimer = null
     let practiceSwipeAnimationFrame = null
     const practiceModeHint = computed(() => {
@@ -351,32 +353,36 @@ export default {
       return direction === 'next' ? props.nextVerse : props.previousVerse
     }
 
-    const practicePanels = computed(() => [
-      {
+    function buildPracticePanels() {
+      return [
+        {
         key: props.previousVerse?.id || 'previous-edge',
         direction: 'previous',
         verse: props.previousVerse,
         words: props.previousVerseWords,
         mode: props.memorizationMode,
         isCurrent: false
-      },
-      {
+        },
+        {
         key: props.verse?.id || 'current',
         direction: 'current',
         verse: props.verse,
         words: props.reviewWords,
         mode: props.memorizationMode,
         isCurrent: true
-      },
-      {
+        },
+        {
         key: props.nextVerse?.id || 'next-edge',
         direction: 'next',
         verse: props.nextVerse,
         words: props.nextVerseWords,
         mode: props.memorizationMode,
         isCurrent: false
-      }
-    ])
+        }
+      ]
+    }
+
+    const practicePanels = computed(() => settlingPracticePanels.value || buildPracticePanels())
 
     function getDisplayDx(rawDx, hasTarget, width) {
       const sign = rawDx < 0 ? -1 : 1
@@ -409,6 +415,7 @@ export default {
     function resetPracticeSwipe() {
       clearPracticeSwipeResetTimer()
       clearPracticeSwipeAnimationFrame()
+      settlingPracticePanels.value = null
       practiceSwipe.value = createEmptyPracticeSwipe()
     }
 
@@ -442,7 +449,7 @@ export default {
       practiceSwipeResetTimer = setTimeout(() => {
         afterSettle?.()
         resetPracticeSwipe()
-      }, 360)
+      }, practiceSwipeSettleMs)
     }
 
     function onPracticeTouchStart(e) {
@@ -531,8 +538,9 @@ export default {
 
       if (target && (absDx >= threshold || isFastEnough)) {
         const targetDx = state.direction === 'next' ? -state.width : state.width
+        settlingPracticePanels.value = buildPracticePanels()
+        emit('swipe-verse', state.direction)
         settlePracticeSwipeTo(targetDx, () => {
-          emit('swipe-verse', state.direction)
           nextTick(() => focusInput())
         })
         return
@@ -691,7 +699,7 @@ export default {
 }
 
 .practice-swipe-track--settling {
-  transition: transform 360ms cubic-bezier(0.18, 0.88, 0.24, 1);
+  transition: transform 220ms cubic-bezier(0.18, 0.88, 0.24, 1);
 }
 
 .practice-swipe-panel {

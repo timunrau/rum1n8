@@ -99,6 +99,27 @@ test('Stats tab shows Daily Activity card with chart', async ({ page }) => {
   await expect(page.locator('canvas').first()).toBeVisible()
 })
 
+test('Stats tab scrolls Daily Activity chart to the most recent days by default', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  const verses = Array.from({ length: 31 }, (_, index) =>
+    makeVerse(`v${index}`, `Test ${index + 1}:1`, {
+      reviewDates: [daysAgo(30 - index)],
+    })
+  )
+  await seedVerses(page, verses)
+  await page.reload()
+
+  await page.getByTestId('nav-stats').click()
+  const scroller = page.getByTestId('daily-activity-scroll')
+  await expect(scroller).toBeVisible()
+  await expect.poll(async () =>
+    scroller.evaluate((el) => el.scrollWidth - el.clientWidth)
+  ).toBeGreaterThan(0)
+  await expect.poll(async () =>
+    scroller.evaluate((el) => Math.round(el.scrollWidth - el.clientWidth - el.scrollLeft))
+  ).toBeLessThanOrEqual(1)
+})
+
 test('Stats tab shows Verses Mastered card with chart', async ({ page }) => {
   const verses = [
     makeVerse('v1', 'Psalm 23:1', {

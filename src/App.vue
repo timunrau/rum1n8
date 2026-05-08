@@ -757,13 +757,13 @@
             class="collection-tile cursor-pointer"
             :class="{ 'collection-tile--due': getCollectionDueCount(collection.id) > 0 }"
           >
-            <div class="flex items-start justify-between gap-2">
+            <div :class="['flex justify-between gap-2 pr-8', collection.description ? 'items-start' : 'items-center']">
               <h3 class="collection-tile__name flex-1">{{ collection.name }}</h3>
-              <div class="flex items-center gap-1 shrink-0">
+              <div class="absolute right-4 top-4 flex items-center gap-1">
                 <POSBadge v-if="getCollectionDueCount(collection.id) > 0" status="mastered" :due="true" />
                 <button
                   @click.stop="startEditCollection(collection)"
-                  class="text-text-muted hover:text-accent-warm hover:bg-surface-hover p-1.5 rounded-full transition-colors"
+                  class="text-text-muted hover:text-accent-warm hover:bg-surface-hover w-5 h-5 rounded-full transition-colors inline-flex items-center justify-center"
                   title="Edit collection"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -817,7 +817,7 @@
                   <span v-for="label in yAxisLabels" :key="label" class="text-text-muted leading-none" style="font-size: 10px;">{{ label }}</span>
                 </div>
                 <!-- Scrollable chart -->
-                <div ref="dailyActivityScrollRef" class="overflow-x-auto flex-1 min-w-0" style="height: 200px;">
+                <div ref="dailyActivityScrollRef" data-testid="daily-activity-scroll" class="overflow-x-auto flex-1 min-w-0" style="height: 200px;">
                   <div class="min-w-full" :style="{ width: Math.max(dailyActivityData.labels.length * 40, 0) + 'px', height: '200px' }">
                     <Bar :key="'bar-' + isDark" :data="dailyBarChartData" :options="barChartOptions" />
                   </div>
@@ -1950,7 +1950,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, computed, nextTick, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onUpdated, computed, nextTick, watch } from 'vue'
 import Fuse from 'fuse.js'
 import { BibleClient } from '@gracious.tech/fetch-client'
 import {
@@ -3436,16 +3436,28 @@ export default {
       }
     }))
 
-    // Auto-scroll daily activity chart to the right when stats view is shown
-    watch(currentView, (view) => {
-      if (view === 'stats') {
-        nextTick(() => {
-          if (dailyActivityScrollRef.value) {
-            dailyActivityScrollRef.value.scrollLeft = dailyActivityScrollRef.value.scrollWidth
-          }
+    // Auto-scroll daily activity chart to the most recent days when stats view is shown.
+    const scrollDailyActivityToLatest = () => {
+      if (currentView.value !== 'stats') return
+
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          const scroller = Array.isArray(dailyActivityScrollRef.value)
+            ? dailyActivityScrollRef.value[0]
+            : dailyActivityScrollRef.value
+          if (!scroller) return
+
+          scroller.scrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0)
         })
-      }
-    })
+      })
+    }
+
+    watch(
+      [currentView, () => dailyActivityData.value.labels.length],
+      scrollDailyActivityToLatest,
+      { flush: 'post' }
+    )
+    onUpdated(scrollDailyActivityToLatest)
 
     // Biblical book order for sorting
     const bookOrder = {
