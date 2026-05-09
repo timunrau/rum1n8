@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/timunrau/rum1n8/compare/v1.21.0...v1.21.1) (2026-05-09)
+
+
+### Bug Fixes
+
+* style scripture references on lifehack page ([1140cd1](https://github.com/timunrau/rum1n8/commit/1140cd12d55b513d729e78aeb77b0a5b83ca7319))
+
 # [1.21.0](https://github.com/timunrau/rum1n8/compare/v1.20.4...v1.21.0) (2026-05-09)
 
 
