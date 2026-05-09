@@ -1,4 +1,6 @@
 import './marketing.css'
+import { initAnalytics } from './analytics.js'
+import { getAppSettings } from './app-settings.js'
 import {
   APP_ROOT_PATH,
   ABOUT_PATH,
@@ -51,6 +53,8 @@ function initMarketingPage() {
   updateAppLinks(appTarget || APP_ROOT_PATH, appLabel)
   updateReturnLink(appTarget || APP_ROOT_PATH)
 }
+
+initAnalytics({ optOut: getAppSettings().analyticsOptOut })
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initMarketingPage, { once: true })
