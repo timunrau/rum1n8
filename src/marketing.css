@@ -14,6 +14,8 @@
   --gradient-primary: linear-gradient(180deg, #3768c6 0%, #224787 100%);
   --font-serif: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
   --font-sans: "Source Sans 3", "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   --shadow: 0 24px 60px rgba(20, 35, 58, 0.12);
   --max-width: 1080px;
 }
@@ -678,6 +680,22 @@ img {
   font-family: var(--font-serif);
   font-size: 1.08rem;
   line-height: 1.75;
+}
+
+.scripture-quote__source {
+  display: block;
+  margin-top: 0.9rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.scripture-quote__source cite {
+  font-style: normal;
 }
 
 .essay-section--final {
