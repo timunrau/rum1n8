@@ -1,3 +1,10 @@
+## [1.21.2](https://github.com/timunrau/rum1n8/compare/v1.21.1...v1.21.2) (2026-05-09)
+
+
+### Bug Fixes
+
+* track analytics on marketing pages ([35c96d0](https://github.com/timunrau/rum1n8/commit/35c96d0f16e04dda66a3e908155ca62a6378abb8))
+
 ## [1.21.1](https://github.com/timunrau/rum1n8/compare/v1.21.0...v1.21.1) (2026-05-09)
 
 
