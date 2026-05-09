@@ -50,6 +50,14 @@ test('about stays public even for returning users', async ({ page }) => {
   )
 })
 
+test('privacy page is available at the clean URL', async ({ page }) => {
+  await page.goto('/privacy')
+
+  await expect(page).toHaveURL(/\/privacy$/)
+  await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible()
+  await expect(page.getByText('No data is sent to or stored on any rum1n8 server.')).toBeVisible()
+})
+
 test('legacy root app query redirects into the app path', async ({ page }) => {
   await page.goto('/?view=review-list')
 

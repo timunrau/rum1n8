@@ -63,16 +63,21 @@ function buildSiteMetadata(env) {
   const productName = 'rum1n8'
   const title = `${productName} - Bible Memory App`
   const defaultDescription = 'A simple Bible memory app that gives you control of your data.'
+  const memorizationBenefitsTitle = 'Memorization Is A Spiritual Life-Hack'
+  const memorizationBenefitsDescription = "A short case for why Scripture memorization unlocks real growth in your walk with God."
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL)
 
   return {
     productName,
     title,
     defaultDescription,
+    memorizationBenefitsTitle,
+    memorizationBenefitsDescription,
     siteUrl,
     rootUrl: siteUrl ? `${siteUrl}/` : null,
     appPath: '/app/',
     aboutPath: '/about/',
+    memorizationBenefitsPath: '/memorization-is-a-spiritual-life-hack/',
     socialPreviewImagePath: '/marketing/og-card.png',
     socialPreviewImageAlt: 'rum1n8 app preview',
     screenshotPaths: [
@@ -125,27 +130,35 @@ function buildSocialImageUrl(siteMetadata) {
 }
 
 function buildCanonicalRootTags(siteMetadata) {
-  if (!siteMetadata.rootUrl) return ''
+  return buildCanonicalTags(siteMetadata, '/')
+}
+
+function buildCanonicalTags(siteMetadata, path) {
+  if (!siteMetadata.siteUrl) return ''
+
+  const canonicalUrl = getAbsoluteSitePath(siteMetadata.siteUrl, path)
 
   return [
-    `<link rel="canonical" href="${escapeHtml(siteMetadata.rootUrl)}" />`,
-    `<meta property="og:url" content="${escapeHtml(siteMetadata.rootUrl)}" />`,
+    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
   ].join('\n    ')
 }
 
-function buildSocialTags(siteMetadata) {
+function buildSocialTags(siteMetadata, pageMetadata = {}) {
   const socialImageUrl = buildSocialImageUrl(siteMetadata)
+  const title = pageMetadata.title || siteMetadata.title
+  const description = pageMetadata.description || siteMetadata.defaultDescription
 
   return [
-    `<meta property="og:title" content="${escapeHtml(siteMetadata.title)}" />`,
-    `<meta property="og:description" content="${escapeHtml(siteMetadata.defaultDescription)}" />`,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
     '<meta property="og:type" content="website" />',
     `<meta property="og:site_name" content="${escapeHtml(siteMetadata.productName)}" />`,
     `<meta property="og:image" content="${escapeHtml(socialImageUrl)}" />`,
     `<meta property="og:image:alt" content="${escapeHtml(siteMetadata.socialPreviewImageAlt)}" />`,
     '<meta name="twitter:card" content="summary_large_image" />',
-    `<meta name="twitter:title" content="${escapeHtml(siteMetadata.title)}" />`,
-    `<meta name="twitter:description" content="${escapeHtml(siteMetadata.defaultDescription)}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(socialImageUrl)}" />`,
     `<meta name="twitter:image:alt" content="${escapeHtml(siteMetadata.socialPreviewImageAlt)}" />`,
   ].join('\n    ')
@@ -162,17 +175,35 @@ function detectHtmlPage(ctx) {
     return 'about'
   }
 
+  if (
+    path.includes('/memorization-is-a-spiritual-life-hack/') ||
+    path.endsWith('/memorization-is-a-spiritual-life-hack/index.html')
+  ) {
+    return 'memorizationBenefits'
+  }
+
   return 'marketing'
 }
 
 function buildHtmlReplacements(siteMetadata, page) {
-  const pageTitle = page === 'app' ? `${siteMetadata.productName} App` : siteMetadata.title
-  const pageDescription = siteMetadata.defaultDescription
-  const robots = page === 'marketing'
+  const pageMetadata = page === 'memorizationBenefits'
+    ? {
+        title: siteMetadata.memorizationBenefitsTitle,
+        description: siteMetadata.memorizationBenefitsDescription,
+        canonicalPath: siteMetadata.memorizationBenefitsPath,
+      }
+    : {
+        title: page === 'app' ? `${siteMetadata.productName} App` : siteMetadata.title,
+        description: siteMetadata.defaultDescription,
+        canonicalPath: '/',
+      }
+  const pageTitle = pageMetadata.title
+  const pageDescription = pageMetadata.description
+  const robots = page === 'marketing' || page === 'memorizationBenefits'
     ? 'index,follow'
     : (page === 'about' ? 'noindex,follow' : 'noindex,nofollow')
-  const canonicalTags = page === 'app' ? '' : buildCanonicalRootTags(siteMetadata)
-  const socialTags = page === 'app' ? '' : buildSocialTags(siteMetadata)
+  const canonicalTags = page === 'app' ? '' : buildCanonicalTags(siteMetadata, pageMetadata.canonicalPath)
+  const socialTags = page === 'app' ? '' : buildSocialTags(siteMetadata, pageMetadata)
   const jsonLdTag = page === 'marketing'
     ? `<script type="application/ld+json">${serializeJsonForHtmlScript(buildJsonLd(siteMetadata))}</script>`
     : ''
@@ -198,11 +229,13 @@ function buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, options = {}
   const socialImageUrl = escapeHtml(buildSocialImageUrl(siteMetadata))
   template = template.replaceAll(socialImageUrl, '${RUM1N8_SOCIAL_IMAGE_URL}')
 
-  const canonicalTags = buildCanonicalRootTags(siteMetadata)
+  const canonicalPlaceholder = options.canonicalPlaceholder || '${RUM1N8_CANONICAL_ROOT_TAGS}'
+  const canonicalPath = options.canonicalPath || '/'
+  const canonicalTags = buildCanonicalTags(siteMetadata, canonicalPath)
   if (canonicalTags) {
-    template = template.replace(canonicalTags, '${RUM1N8_CANONICAL_ROOT_TAGS}')
+    template = template.replace(canonicalTags, canonicalPlaceholder)
   } else {
-    template = template.replace('</head>', '${RUM1N8_CANONICAL_ROOT_TAGS}\n</head>')
+    template = template.replace('</head>', `${canonicalPlaceholder}\n</head>`)
   }
 
   if (options.includeJsonLd) {
@@ -235,6 +268,9 @@ function buildRuntimeSitemapXmlTemplate() {
     '  <url>',
     '    <loc>${RUM1N8_ROOT_URL}</loc>',
     '  </url>',
+    '  <url>',
+    '    <loc>${RUM1N8_ROOT_URL}memorization-is-a-spiritual-life-hack/</loc>',
+    '  </url>',
     '</urlset>',
     '',
   ].join('\n')
@@ -261,6 +297,9 @@ function buildSitemapXml(siteMetadata) {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     '  <url>',
     `    <loc>${escapeXml(siteMetadata.rootUrl)}</loc>`,
+    '  </url>',
+    '  <url>',
+    `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, siteMetadata.memorizationBenefitsPath))}</loc>`,
     '  </url>',
     '</urlset>',
     '',
@@ -350,16 +389,26 @@ function createSiteMetadataPlugin(siteMetadata, { analyticsEnabled = false } = {
       const htmlTemplates = [
         { fileName: 'index.html', includeJsonLd: true },
         { fileName: 'about/index.html', includeJsonLd: false },
+        {
+          fileName: 'memorization-is-a-spiritual-life-hack/index.html',
+          includeJsonLd: false,
+          canonicalPath: siteMetadata.memorizationBenefitsPath,
+          canonicalPlaceholder: '${RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS}',
+        },
       ]
 
-      htmlTemplates.forEach(({ fileName, includeJsonLd }) => {
+      htmlTemplates.forEach(({ fileName, includeJsonLd, canonicalPath, canonicalPlaceholder }) => {
         const filePath = resolve(outDir, fileName)
         if (!existsSync(filePath)) return
 
         const finalHtml = readFileSync(filePath, 'utf-8')
         writeFileSync(
           resolve(outDir, `${fileName}.template`),
-          buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, { includeJsonLd }),
+          buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, {
+            includeJsonLd,
+            canonicalPath,
+            canonicalPlaceholder,
+          }),
         )
       })
     },
@@ -388,6 +437,10 @@ export default defineConfig(({ mode }) => {
         input: {
           marketing: resolve(process.cwd(), 'home/index.html'),
           about: resolve(process.cwd(), 'about/index.html'),
+          memorizationBenefits: resolve(
+            process.cwd(),
+            'memorization-is-a-spiritual-life-hack/index.html'
+          ),
           app: resolve(process.cwd(), 'app/index.html'),
         },
       },
@@ -400,6 +453,8 @@ export default defineConfig(({ mode }) => {
             const [pathname, query] = (req.url || '').split('?')
             if (pathname === '/' || pathname === '/index.html') {
               req.url = `/home/index.html${query ? `?${query}` : ''}`
+            } else if (pathname === '/privacy' || pathname === '/privacy/') {
+              req.url = `/privacy.html${query ? `?${query}` : ''}`
             }
             next()
           })

@@ -4,6 +4,7 @@ set -eu
 HTML_ROOT="/usr/share/nginx/html"
 INDEX_TEMPLATE="${HTML_ROOT}/index.html.template"
 ABOUT_TEMPLATE="${HTML_ROOT}/about/index.html.template"
+MEMORIZATION_BENEFITS_TEMPLATE="${HTML_ROOT}/memorization-is-a-spiritual-life-hack/index.html.template"
 ROBOTS_TEMPLATE="${HTML_ROOT}/robots.txt.template"
 SITEMAP_TEMPLATE="${HTML_ROOT}/sitemap.xml.template"
 
@@ -32,6 +33,7 @@ esac
 
 RUM1N8_SOCIAL_IMAGE_URL="/marketing/og-card.png"
 RUM1N8_CANONICAL_ROOT_TAGS=""
+RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS=""
 RUM1N8_JSON_LD_URL_FIELDS=""
 RUM1N8_SITEMAP_LINE=""
 RUM1N8_ROOT_URL=""
@@ -44,6 +46,11 @@ if [ -n "$SITE_URL" ]; then
     <meta property="og:url" content="${RUM1N8_ROOT_URL}" />
 EOF
 )"
+  RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS="$(cat <<EOF
+<link rel="canonical" href="${SITE_URL}/memorization-is-a-spiritual-life-hack/" />
+    <meta property="og:url" content="${SITE_URL}/memorization-is-a-spiritual-life-hack/" />
+EOF
+)"
   RUM1N8_JSON_LD_URL_FIELDS="$(cat <<EOF
 ,"url":"${RUM1N8_ROOT_URL}","image":"${RUM1N8_SOCIAL_IMAGE_URL}","screenshot":["${SITE_URL}/marketing/screenshot-empty.png","${SITE_URL}/marketing/screenshot-practice.png","${SITE_URL}/marketing/screenshot-review.png"]
 EOF
@@ -53,6 +60,7 @@ fi
 
 export RUM1N8_SOCIAL_IMAGE_URL
 export RUM1N8_CANONICAL_ROOT_TAGS
+export RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS
 export RUM1N8_JSON_LD_URL_FIELDS
 export RUM1N8_SITEMAP_LINE
 export RUM1N8_ROOT_URL
@@ -67,6 +75,12 @@ if [ -f "$ABOUT_TEMPLATE" ]; then
   envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_ROOT_TAGS}' \
     < "$ABOUT_TEMPLATE" \
     > "${HTML_ROOT}/about/index.html"
+fi
+
+if [ -f "$MEMORIZATION_BENEFITS_TEMPLATE" ]; then
+  envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS}' \
+    < "$MEMORIZATION_BENEFITS_TEMPLATE" \
+    > "${HTML_ROOT}/memorization-is-a-spiritual-life-hack/index.html"
 fi
 
 if [ -f "$ROBOTS_TEMPLATE" ]; then
