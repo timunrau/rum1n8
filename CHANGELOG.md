@@ -1,3 +1,10 @@
+## [1.21.3](https://github.com/timunrau/rum1n8/compare/v1.21.2...v1.21.3) (2026-05-09)
+
+
+### Bug Fixes
+
+* update verse ([65d9040](https://github.com/timunrau/rum1n8/commit/65d90406c815db4e49f4bcfd5d04e45847531119))
+
 ## [1.21.2](https://github.com/timunrau/rum1n8/compare/v1.21.1...v1.21.2) (2026-05-09)
 
 
