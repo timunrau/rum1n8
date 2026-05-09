@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/timunrau/rum1n8/compare/v1.20.4...v1.21.0) (2026-05-09)
+
+
+### Features
+
+* add memorization benefits page ([a4a638f](https://github.com/timunrau/rum1n8/commit/a4a638f1692874401a29c867cd404d2fc62dc384))
+
 ## [1.20.4](https://github.com/timunrau/rum1n8/compare/v1.20.3...v1.20.4) (2026-05-08)
 
 
