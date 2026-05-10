@@ -868,7 +868,8 @@
         <!-- Verse List -->
         <div
           :class="[
-            'space-y-3 py-4 stagger-fade',
+            'space-y-3 py-4',
+            currentCollectionId ? 'stagger-fade stagger-fade--collection-enter' : '',
             panelView === 'collections' && !currentCollectionId && collections.length === 0
               ? `min-h-0 flex-1 overflow-y-auto pb-36${totalVerseCount > 0 ? ' pt-0' : ''}`
               : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
@@ -8077,7 +8078,8 @@ export default {
   z-index: 40;
 }
 
-.app-view-track .stagger-fade > * {
+.app-view-track .stagger-fade:not(.stagger-fade--collection-enter) > *,
+.app-view-stage--moving .stagger-fade > * {
   opacity: 1;
   animation: none;
 }
