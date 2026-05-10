@@ -6711,6 +6711,11 @@ export default {
       }
     }
 
+    const getPracticeScrollContainer = (practiceRef) => {
+      const rawContainer = practiceRef?.scrollContainer?.value ?? practiceRef?.scrollContainer
+      return Array.isArray(rawContainer) ? rawContainer[0] : rawContainer
+    }
+
     // Scroll when the user reaches the first word of the last visible line.
     // Scrolls just enough to keep a couple of already-typed lines at the top.
     const scrollToCurrentWord = () => {
@@ -6718,8 +6723,8 @@ export default {
       if (nextWordIndex === -1) return
 
       const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
-      const container = practiceRef?.scrollContainer?.value ?? practiceRef?.scrollContainer
-      if (!container) return
+      const container = getPracticeScrollContainer(practiceRef)
+      if (!container || typeof container.querySelectorAll !== 'function') return
 
       nextTick(() => {
         requestAnimationFrame(() => {

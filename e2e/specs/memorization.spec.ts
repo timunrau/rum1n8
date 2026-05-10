@@ -31,6 +31,42 @@ test('start from verse list -> click verse -> enters memorization screen', async
   await expect(page.locator('#letter-input-memorize')).toBeFocused()
 })
 
+test('memorization practice scrolls as typing reaches the last visible line', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 380 })
+  const content = Array.from({ length: 96 }, (_, index) => `word${index + 1}`).join(' ')
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'long-auto-scroll',
+      reference: 'Scroll 1:1',
+      content,
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await page.reload()
+  await gotoApp(page, '?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Scroll 1:1').first().click()
+
+  const input = page.locator('#letter-input-memorize')
+  await expect(input).toBeAttached()
+  await input.focus()
+
+  const getPracticeScrollTop = async () => page.locator('#practice-word-0').evaluate((el) => {
+    const scroller = el.closest('.overflow-y-auto')
+    return scroller ? scroller.scrollTop : 0
+  })
+
+  expect(await getPracticeScrollTop()).toBe(0)
+  await page.keyboard.type('w'.repeat(72), { delay: 10 })
+
+  await expect.poll(getPracticeScrollTop).toBeGreaterThan(0)
+})
+
 test('memorization: input focused after Continue to Memorize', async ({ page }) => {
   const shortVerse = [
     {
