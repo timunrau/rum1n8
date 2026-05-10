@@ -1,3 +1,10 @@
+## [1.21.5](https://github.com/timunrau/rum1n8/compare/v1.21.4...v1.21.5) (2026-05-10)
+
+
+### Bug Fixes
+
+* restore collection verse list animation ([acbda10](https://github.com/timunrau/rum1n8/commit/acbda10ac1e2bfa96ec13f529117928e52265f18))
+
 ## [1.21.4](https://github.com/timunrau/rum1n8/compare/v1.21.3...v1.21.4) (2026-05-10)
 
 
