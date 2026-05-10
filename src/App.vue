@@ -132,7 +132,10 @@
       </div>
     </header>
 
-    <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
+    <div
+      class="practice-view-stage relative flex-1 min-h-0 flex flex-col"
+      :data-practice-transition="practiceVerseTransitionName"
+    >
       <VersePracticeView
         :key="`${memorizingVerse?.id}-${memorizationMode}-${memorizationInstanceKey}`"
         ref="memorizationPracticeRef"
@@ -230,7 +233,10 @@
       </div>
     </header>
 
-    <div class="practice-view-stage relative flex-1 min-h-0 flex flex-col">
+    <div
+      class="practice-view-stage relative flex-1 min-h-0 flex flex-col"
+      :data-practice-transition="practiceVerseTransitionName"
+    >
       <VersePracticeView
         :key="`${reviewingVerse.id}-${reviewInstanceKey}`"
         ref="reviewPracticeRef"
@@ -611,7 +617,13 @@
 
       <!-- Review List View -->
       <div v-if="panelView === 'review-list' && !currentCollectionId" class="">
-        <div class="space-y-2 py-4 overflow-y-auto stagger-fade" style="max-height: calc(100vh - 4rem);">
+        <div
+          :class="[
+            'space-y-2 py-4 overflow-y-auto stagger-fade',
+            listFloatInTarget === 'review-list' ? 'stagger-fade--nav-enter' : ''
+          ]"
+          style="max-height: calc(100vh - 4rem);"
+        >
           <BackupNudgeCard
             v-if="shouldShowBackupNudge"
             @sync="handleNudgeSync"
@@ -686,7 +698,13 @@
           />
 
           <!-- Collection Cards -->
-          <div v-if="collections.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-fade">
+          <div
+            v-if="collections.length > 0"
+            :class="[
+              'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-fade',
+              listFloatInTarget === 'collections-root' ? 'stagger-fade--nav-enter' : ''
+            ]"
+          >
           <!-- Master List Collection -->
           <div
             @click="viewCollection('master-list')"
@@ -869,7 +887,7 @@
         <div
           :class="[
             'space-y-3 py-4',
-            currentCollectionId ? 'stagger-fade stagger-fade--collection-enter' : '',
+            currentCollectionId || listFloatInTarget === 'collections-root' ? 'stagger-fade stagger-fade--nav-enter' : '',
             panelView === 'collections' && !currentCollectionId && collections.length === 0
               ? `min-h-0 flex-1 overflow-y-auto pb-36${totalVerseCount > 0 ? ' pt-0' : ''}`
               : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
@@ -2342,6 +2360,7 @@ export default {
     const viewTrackReady = ref(false)
     const viewNavAnimating = ref(false)
     const renderedViewPanels = ref(['collections'])
+    const listFloatInTarget = ref(null)
     const practiceVerseTransitionName = ref('practice-mode-fade')
     const createEmptyViewSwipe = () => ({
       started: false,
@@ -2366,6 +2385,7 @@ export default {
     let viewSwipeResetTimer = null
     let viewSwipeAnimationFrame = null
     let viewNavAnimationTimer = null
+    let listFloatInTimer = null
 
     // Color scheme (auto dark/light mode)
     const { isDark } = useColorScheme()
@@ -5403,6 +5423,7 @@ export default {
 
     // View collection
     const viewCollection = (collectionId) => {
+      triggerListFloatIn('collection')
       currentCollectionId.value = collectionId
       pushNavigationState({ view: 'collection', collectionId })
     }
@@ -5874,6 +5895,25 @@ export default {
       toastState.value.action = null
     }
 
+    const triggerListFloatIn = (target) => {
+      if (listFloatInTimer) {
+        clearTimeout(listFloatInTimer)
+        listFloatInTimer = null
+      }
+
+      listFloatInTarget.value = null
+
+      nextTick(() => {
+        listFloatInTarget.value = target
+        listFloatInTimer = setTimeout(() => {
+          if (listFloatInTarget.value === target) {
+            listFloatInTarget.value = null
+          }
+          listFloatInTimer = null
+        }, 900)
+      })
+    }
+
     const resolveSourceNavigationState = (sourceState, fallbackView = 'collections') => {
       if (sourceState?.collectionId) {
         return { view: 'collection', collectionId: sourceState.collectionId }
@@ -5938,6 +5978,7 @@ export default {
     const viewAllVerses = () => {
       searchQuery.value = ''
       searchActive.value = false
+      triggerListFloatIn('collections-root')
       navigateUpToState({ view: 'collections' })
     }
 
@@ -6362,6 +6403,11 @@ export default {
       reviewMistakes.value = 0
       
       const targetState = resolveSourceNavigationState(sourceState, 'collections')
+      if (targetState.view === 'collection') {
+        triggerListFloatIn('collection')
+      } else if (targetState.view === 'review-list') {
+        triggerListFloatIn('review-list')
+      }
       navigateUpToState(targetState)
     }
 
@@ -6700,6 +6746,11 @@ export default {
       currentReviewSaved.value = false
       
       const targetState = resolveSourceNavigationState(sourceState, 'review-list')
+      if (targetState.view === 'collection') {
+        triggerListFloatIn('collection')
+      } else if (targetState.view === 'review-list') {
+        triggerListFloatIn('review-list')
+      }
       navigateUpToState(targetState)
     }
 
@@ -7746,6 +7797,9 @@ export default {
       if (viewNavAnimationTimer) {
         clearTimeout(viewNavAnimationTimer)
       }
+      if (listFloatInTimer) {
+        clearTimeout(listFloatInTimer)
+      }
       if (updateStateTimeoutId) {
         clearTimeout(updateStateTimeoutId)
       }
@@ -7833,6 +7887,7 @@ export default {
       previousReviewVerseWords,
       nextReviewVerseWords,
       practiceVerseTransitionName,
+      listFloatInTarget,
       preparePracticeViewLeave,
       reviewingVerseNextReviewLabel,
       isLastInReviewList,
@@ -8078,7 +8133,7 @@ export default {
   z-index: 40;
 }
 
-.app-view-track .stagger-fade:not(.stagger-fade--collection-enter) > *,
+.app-view-track .stagger-fade:not(.stagger-fade--nav-enter) > *,
 .app-view-stage--moving .stagger-fade > * {
   opacity: 1;
   animation: none;
