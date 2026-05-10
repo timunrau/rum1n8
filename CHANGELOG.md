@@ -1,3 +1,10 @@
+## [1.21.4](https://github.com/timunrau/rum1n8/compare/v1.21.3...v1.21.4) (2026-05-10)
+
+
+### Bug Fixes
+
+* restore practice auto-scroll while typing ([ecea394](https://github.com/timunrau/rum1n8/commit/ecea3944484eb2ef15592ba0b72efcf3dcac26e3))
+
 ## [1.21.3](https://github.com/timunrau/rum1n8/compare/v1.21.2...v1.21.3) (2026-05-09)
 
 
