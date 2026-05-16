@@ -205,6 +205,34 @@ test('learn mode: verse with dash (no spaces) treats parts as separate words', a
   await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
 })
 
+test('learn mode: preserves authored spacing around dashes without spacing hyphenated words', async ({ page }) => {
+  const verseWithDashSpacing = [
+    {
+      ...sampleVerses[0],
+      id: 'dash-spacing-learn',
+      reference: 'Genesis 17:9',
+      content: 'One - two self-seeking',
+      memorizationStatus: 'unmemorized',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verseWithDashSpacing, collections)
+  await page.reload()
+  await gotoApp(page, '?view=collections')
+  await expect(page.getByText('All Verses')).toBeVisible({ timeout: 5000 })
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('Genesis 17:9').first().click()
+
+  await expect(page.locator('#letter-input-memorize')).toBeAttached()
+  await expect(page.getByText('Learn')).toHaveClass(/mode-chip--active/)
+
+  await expect.poll(async () => page.locator('#practice-word-0').evaluate(el => el.textContent)).toBe('One - ')
+  await expect.poll(async () => page.locator('#practice-word-1').evaluate(el => el.textContent)).toBe('two')
+  await expect.poll(async () => page.locator('#practice-word-2').evaluate(el => el.textContent)).toBe('self-')
+  await expect.poll(async () => page.locator('#practice-word-3').evaluate(el => el.textContent)).toBe('seeking')
+})
+
 test('memorize mode: verse with dash treats parts as separate words', async ({ page }) => {
   const verseWithDash = [
     {
