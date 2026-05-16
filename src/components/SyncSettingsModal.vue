@@ -14,7 +14,7 @@
       <!-- Google Drive hero (primary path) -->
       <div v-if="selectedProvider === 'gdrive'" class="space-y-3">
         <!-- Connected state -->
-        <div v-if="oauthEmail" class="flex items-center justify-between p-3 rounded-xl bg-status-success-bg border border-status-success-border">
+        <div v-if="oauthEmail" class="flex items-center justify-between p-3 rounded-lg bg-status-success-bg border border-status-success-border">
           <div class="min-w-0">
             <p class="text-sm font-medium text-status-success-text">Synced with Google Drive</p>
             <p class="text-xs text-status-success-text opacity-80 truncate">{{ oauthEmail }}</p>
@@ -34,7 +34,7 @@
             @click="signInWithGoogle"
             :disabled="signingIn || !isOnline"
             data-testid="sync-gdrive-signin"
-            class="w-full px-4 py-3 rounded-xl border border-border-input text-text-primary font-medium hover:bg-surface-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            class="w-full px-4 py-3 rounded-lg border border-border-input text-text-primary font-medium hover:bg-surface-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             <svg v-if="!signingIn" class="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -57,7 +57,7 @@
           <button
             type="button"
             @click="switchToGoogle"
-            class="text-xs text-blue-600 hover:underline"
+            class="text-xs text-accent hover:underline"
           >
             Use Google Drive instead
           </button>
@@ -71,7 +71,7 @@
                   :id="`sync-field-${field.key}`"
                   v-model="formSettings[field.key]"
                   type="checkbox"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-accent-warm"
+                  class="rounded border-border-input text-accent focus:ring-0 focus:border-accent"
                 />
                 <label :for="`sync-field-${field.key}`" class="text-sm font-medium text-text-secondary">
                   {{ field.label }}
@@ -86,7 +86,7 @@
                   v-model="formSettings[field.key]"
                   :type="field.type"
                   :placeholder="field.placeholder || ''"
-                  class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+                  class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
                 />
                 <p v-if="field.hint" class="text-xs text-text-muted mt-1">{{ field.hint }}</p>
               </div>
@@ -133,7 +133,7 @@
           type="button"
           @click="testConnection"
           :disabled="testingConnection || !canTest"
-          class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-6 py-2.5 border border-border-input rounded-lg text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ testingConnection ? 'Testing...' : 'Test' }}
         </button>
@@ -141,7 +141,7 @@
           <button
             type="button"
             @click="close"
-            class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+            class="px-6 py-2.5 border border-border-input rounded-lg text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
           >
             Cancel
           </button>
@@ -149,7 +149,7 @@
             type="button"
             @click="save"
             :disabled="!canSave"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-2.5 bg-action text-action-text border border-action-border rounded-lg font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save
           </button>
@@ -159,7 +159,7 @@
         <button
           type="button"
           @click="close"
-          class="px-6 py-2.5 border border-border-input rounded-xl text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
+          class="px-6 py-2.5 border border-border-input rounded-lg text-text-secondary hover:bg-surface-hover transition-colors duration-200 font-medium"
         >
           Done
         </button>

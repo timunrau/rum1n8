@@ -427,14 +427,16 @@ async function captureOgCard(browser, baseUrl) {
           <style>
             :root {
               color-scheme: light;
-              --bg: #f4efe7;
-              --bg-accent: #dce8f9;
-              --ink: #132238;
-              --muted: #4f6178;
-              --blue: #295ea7;
-              --gold: #d3a64f;
-              --card: rgba(255, 255, 255, 0.76);
-              --stroke: rgba(19, 34, 56, 0.08);
+              --bg: #EFE9DD;
+              --bg-soft: #FBF8F2;
+              --bg-sunken: #E7DED0;
+              --ink: #1E1E1E;
+              --muted: #4F5B54;
+              --forest: #1F3D2E;
+              --forest-strong: #14291F;
+              --gold: #C8A45A;
+              --card: rgba(251, 248, 242, 0.78);
+              --stroke: rgba(30, 30, 30, 0.14);
             }
             * {
               box-sizing: border-box;
@@ -445,10 +447,7 @@ async function captureOgCard(browser, baseUrl) {
               height: 630px;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
               color: var(--ink);
-              background:
-                radial-gradient(circle at top left, rgba(211, 166, 79, 0.28), transparent 36%),
-                radial-gradient(circle at bottom right, rgba(41, 94, 167, 0.22), transparent 32%),
-                linear-gradient(135deg, var(--bg) 0%, #fbf8f2 46%, var(--bg-accent) 100%);
+              background: linear-gradient(135deg, var(--bg-soft) 0%, var(--bg) 100%);
             }
             .frame {
               position: relative;
@@ -461,13 +460,7 @@ async function captureOgCard(browser, baseUrl) {
               overflow: hidden;
             }
             .glow {
-              position: absolute;
-              inset: auto auto 30px 36px;
-              width: 420px;
-              height: 420px;
-              border-radius: 999px;
-              background: radial-gradient(circle, rgba(41, 94, 167, 0.18), transparent 72%);
-              filter: blur(16px);
+              display: none;
             }
             .left {
               position: relative;
@@ -484,10 +477,10 @@ async function captureOgCard(browser, baseUrl) {
               gap: 12px;
               width: fit-content;
               padding: 10px 16px;
-              border-radius: 999px;
-              background: rgba(255, 255, 255, 0.8);
+              border-radius: 14px;
+              background: rgba(251, 248, 242, 0.82);
               border: 1px solid var(--stroke);
-              box-shadow: 0 18px 44px rgba(19, 34, 56, 0.08);
+              box-shadow: none;
               font-size: 18px;
               font-weight: 700;
               letter-spacing: 0.02em;
@@ -499,8 +492,9 @@ async function captureOgCard(browser, baseUrl) {
               width: 34px;
               height: 34px;
               border-radius: 12px;
-              background: linear-gradient(180deg, #2a5eaa, #183f73);
-              color: white;
+              background: #1F3D2E;
+              border: 1px solid #14291F;
+              color: #FBF8F2;
               font-size: 19px;
             }
             h1 {
@@ -514,7 +508,7 @@ async function captureOgCard(browser, baseUrl) {
               font-size: 30px;
               font-weight: 600;
               letter-spacing: -0.02em;
-              color: var(--blue);
+              color: var(--forest);
               margin-top: 18px;
             }
             p {
@@ -532,9 +526,9 @@ async function captureOgCard(browser, baseUrl) {
             }
             .chip {
               padding: 10px 14px;
-              border-radius: 999px;
-              background: rgba(255, 255, 255, 0.84);
-              border: 1px solid rgba(19, 34, 56, 0.08);
+              border-radius: 12px;
+              background: rgba(251, 248, 242, 0.84);
+              border: 1px solid rgba(30, 30, 30, 0.10);
               color: var(--ink);
               font-size: 16px;
               font-weight: 600;
@@ -556,9 +550,8 @@ async function captureOgCard(browser, baseUrl) {
               overflow: hidden;
               border-radius: 28px;
               background: var(--card);
-              border: 1px solid rgba(19, 34, 56, 0.12);
-              box-shadow: 0 24px 60px rgba(19, 34, 56, 0.18);
-              backdrop-filter: blur(6px);
+              border: 1px solid rgba(30, 30, 30, 0.12);
+              box-shadow: 0 1px 1px rgba(30, 30, 30, 0.04), 0 2px 4px rgba(30, 30, 30, 0.05);
             }
             .phone img {
               width: 100%;

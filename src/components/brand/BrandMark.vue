@@ -18,9 +18,9 @@ defineProps({
   place-items: center;
   width: 2.3rem;
   height: 2.3rem;
-  border-radius: 1rem;
-  background-image: var(--gradient-primary);
-  color: #ffffff;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-action-bg);
+  color: var(--color-action-text);
   font-family: var(--font-serif);
   font-weight: 700;
   font-size: 1.25rem;
@@ -28,13 +28,14 @@ defineProps({
   letter-spacing: 0;
   padding: 0 0 0.25em 0.1em;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(20, 35, 58, 0.15);
+  border: 1px solid var(--color-action-border);
+  box-shadow: none;
 }
 
 .brand-mark--sm {
   width: 1.8rem;
   height: 1.8rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-md);
   font-size: 1rem;
 }
 </style>

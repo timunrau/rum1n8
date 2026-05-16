@@ -58,7 +58,7 @@ const parts = computed(() => {
   right: 15%;
   bottom: -0.1em;
   height: 2px;
-  background: linear-gradient(90deg, var(--color-accent-warm), rgba(199, 154, 43, 0));
+  background: linear-gradient(90deg, var(--color-accent-warm), color-mix(in srgb, var(--color-accent-warm) 0%, transparent));
   border-radius: 1px;
   opacity: 0.75;
   pointer-events: none;

@@ -3,7 +3,7 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4"
     @click.self="$emit('close')"
   >
-    <div class="bg-elevated rounded-t-2xl sm:rounded-2xl shadow-xl max-w-md w-full p-6 pb-8 sm:pb-6">
+    <div class="bg-elevated rounded-t-xl sm:rounded-xl shadow-soft border border-border-default max-w-md w-full p-6 pb-8 sm:pb-6">
       <h2 class="text-xl font-bold text-text-primary mb-3">
         {{ isSafari ? 'Add to Home Screen' : 'Open in Safari to install' }}
       </h2>

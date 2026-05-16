@@ -6,7 +6,7 @@
     class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
-    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
+    <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4 gap-2 max-w-4xl mx-auto w-full">
         <button
           @click="clearSearch"
@@ -22,7 +22,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search verses..."
-            class="w-full py-2 pl-10 border border-border-default rounded-full focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
+            class="w-full py-2 pl-10 border border-border-default rounded-lg shadow-soft focus:ring-0 focus:border-accent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
             :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
             @keydown.escape="clearSearch"
           />
@@ -49,7 +49,7 @@
           v-for="result in searchResults"
           :key="result.item.id"
           @click="handleVerseClick(result.item); clearSearch()"
-          class="bg-surface rounded-2xl shadow-sm py-3 px-4 border border-border-default transition-all duration-200 cursor-pointer active:scale-98 relative"
+          class="bg-surface rounded-lg py-3 px-4 border border-border-default transition-colors duration-200 cursor-pointer active:scale-98 relative"
         >
           <div class="flex flex-col gap-2">
             <div class="flex items-start justify-between gap-2">
@@ -78,7 +78,7 @@
             <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
           </div>
         </div>
-        <div v-if="searchResults.length === 0" class="bg-surface rounded-2xl shadow-sm p-12 text-center">
+        <div v-if="searchResults.length === 0" class="bg-surface rounded-lg border border-border-default p-12 text-center">
           <p class="text-text-muted text-lg">No results found</p>
           <p class="text-text-muted text-sm mt-2">Try different search terms</p>
         </div>
@@ -100,7 +100,7 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
+    <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitMemorization"
@@ -118,7 +118,7 @@
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse)"
             class="p-2 rounded-full transition-colors"
-            :class="isSpeaking ? 'text-blue-600' : 'text-text-secondary active:bg-surface-active'"
+            :class="isSpeaking ? 'text-accent' : 'text-text-secondary active:bg-surface-active'"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
           >
             <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-chrome shadow-sm z-40 flex-shrink-0">
+    <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
       <div class="h-16 flex items-center px-4">
         <button
           @click="exitReview"
@@ -209,7 +209,7 @@
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse)"
             class="p-2 rounded-full transition-colors"
-            :class="isSpeaking ? 'text-blue-600' : 'text-text-secondary active:bg-surface-active'"
+            :class="isSpeaking ? 'text-accent' : 'text-text-secondary active:bg-surface-active'"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
           >
             <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -310,7 +310,7 @@
         />
         <!-- Drawer panel -->
         <div
-          class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-chrome shadow-2xl flex flex-col pointer-events-auto transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform"
+          class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-chrome border-r border-border-default shadow-soft flex flex-col pointer-events-auto transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform"
           :class="drawerOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-95'"
           style="border-radius: 0 16px 16px 0;"
         >
@@ -379,7 +379,7 @@
                       data-testid="drawer-sync-setup"
                       @click="openSyncSettings"
                       :disabled="!isOnline"
-                      class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="px-3 py-1.5 rounded-lg bg-action text-action-text border border-action-border text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {{ !isOnline ? 'Offline' : 'Set up sync' }}
                     </button>
@@ -486,7 +486,7 @@
     <!-- Sync Error Toast -->
     <div
       v-if="syncError"
-      class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-status-due-bg border border-status-due-border rounded-lg shadow-lg p-4 max-w-md mx-4"
+      class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-status-due-bg border border-status-due-border rounded-lg shadow-soft p-4 max-w-md mx-4"
     >
       <div class="flex items-start gap-3">
         <svg class="w-5 h-5 text-status-error-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,7 +566,7 @@
                 data-testid="search-bar"
                 @click="openSearch"
               >
-                <div class="flex items-center h-10 bg-surface rounded-full px-4 gap-2 border border-border-default">
+                <div class="flex items-center h-10 bg-surface rounded-lg px-4 gap-2 border border-border-default shadow-soft">
                   <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -662,8 +662,8 @@
           </div>
 
           <!-- Empty state when no verses to review -->
-          <div v-if="reviewSortedVerses.length === 0" class="bg-chrome rounded-2xl border border-border-default p-12 text-center mt-8">
-            <svg class="w-16 h-16 mx-auto mb-4 text-accent-warm opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="reviewSortedVerses.length === 0" class="bg-chrome rounded-xl border border-border-default p-12 text-center mt-8">
+            <svg class="w-16 h-16 mx-auto mb-4 text-text-muted opacity-35" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="font-serif text-lg text-text-primary">No verses to review</p>
@@ -755,7 +755,7 @@
           >
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-accent-warm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 </svg>
                 <h3 class="collection-tile__name">{{ getCollectionName('to-learn') }}</h3>
@@ -781,7 +781,7 @@
                 <POSBadge v-if="getCollectionDueCount(collection.id) > 0" status="mastered" :due="true" />
                 <button
                   @click.stop="startEditCollection(collection)"
-                  class="text-text-muted hover:text-accent-warm hover:bg-surface-hover w-5 h-5 rounded-full transition-colors inline-flex items-center justify-center"
+                  class="text-text-muted hover:text-accent hover:bg-surface-hover w-5 h-5 rounded-full transition-colors inline-flex items-center justify-center"
                   title="Edit collection"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -907,10 +907,10 @@
             v-if="shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId"
             class="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex px-4"
           >
-            <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
+            <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-lg border border-border-default bg-elevated px-4 py-3 shadow-soft">
               <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
               <div class="flex items-start gap-3">
-                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-warm text-white shadow-sm">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-warm text-accent-warm-contrast">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18h6" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 22h4" />
@@ -956,7 +956,7 @@
             <button
               type="button"
               @click="toggleVerseExpanded(verse, $event)"
-              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-accent-warm transition-all duration-200"
+              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-accent transition-all duration-200"
               :class="{ 'rotate-90': isVerseExpanded(verse) }"
               :aria-label="isVerseExpanded(verse) ? 'Collapse verse' : 'Expand verse'"
             >
@@ -979,7 +979,7 @@
                   <span v-else class="verse-card__meta">{{ getTimeUntilReview(verse) }}</span>
                   <button
                     @click.stop="startEditVerse(verse)"
-                    class="text-text-muted hover:text-accent-warm hover:bg-surface-hover p-1.5 rounded-full shrink-0 transition-colors"
+                    class="text-text-muted hover:text-accent hover:bg-surface-hover p-1.5 rounded-full shrink-0 transition-colors"
                     title="Edit verse"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1067,7 +1067,7 @@
           </div>
 
           <div v-else-if="sortedVerses.length === 0" class="empty-state mt-8">
-            <svg class="w-14 h-14 mx-auto mb-4 text-accent-warm opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-14 h-14 mx-auto mb-4 text-text-muted opacity-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             <p class="empty-state__title">No verses yet.</p>
@@ -1134,7 +1134,7 @@
               </svg>
               <span
                 v-if="dueVersesCount > 0"
-                class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-white bg-accent-warm rounded-full px-0.5"
+                class="absolute -top-1 -right-2 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.6rem] font-bold leading-none text-accent-warm-contrast bg-accent-warm rounded-full px-0.5"
               >{{ dueVersesCount > 99 ? '99+' : dueVersesCount }}</span>
             </div>
             <span class="tab-btn__label">Review</span>
@@ -1178,11 +1178,11 @@
           key="verse"
           data-testid="fab-new-verse"
           @click="openNewVerse"
-          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1, boxShadow: '0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2)' }"
+          class="fab-menu__item bg-surface text-text-primary rounded-lg border border-border-default shadow-lift transition-colors duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1 }"
         >
-          <div class="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <div class="w-10 h-10 bg-action rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
@@ -1195,11 +1195,11 @@
           key="collection"
           data-testid="fab-new-collection"
           @click="openNewCollection"
-          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="--fab-index: 1; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          class="fab-menu__item bg-surface text-text-primary rounded-lg border border-border-default shadow-lift transition-colors duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          style="--fab-index: 1;"
         >
-          <div class="w-10 h-10 bg-accent-warm rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <div class="w-10 h-10 bg-accent-warm rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-accent-warm-contrast" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
@@ -1212,11 +1212,11 @@
           key="import"
           data-testid="fab-import-csv"
           @click="openImportCSV"
-          class="fab-menu__item bg-elevated text-text-primary rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active"
-          style="--fab-index: 0; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.2);"
+          class="fab-menu__item bg-surface text-text-primary rounded-lg border border-border-default shadow-lift transition-colors duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          style="--fab-index: 0;"
         >
-          <div class="w-10 h-10 bg-accent-strong rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <div class="w-10 h-10 bg-action rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
@@ -1228,11 +1228,11 @@
       <button
         data-testid="fab-trigger"
         @click="handleFabClick"
-        class="w-14 h-14 bg-gradient-primary active:scale-95 text-white rounded-full shadow-lift transition-all duration-200 flex items-center justify-center"
+        class="w-14 h-14 bg-action active:scale-95 text-action-text rounded-full border border-action-border shadow-lift transition-all duration-200 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         :class="{ 'rotate-45': fabMenuOpen }"
         :title="currentCollectionId ? 'Add new verse' : 'Add new item'"
       >
-        <svg class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <svg class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -1257,7 +1257,7 @@
   <transition name="toast">
     <div
       v-if="toastState.show"
-      class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] px-4 py-3 rounded-xl shadow-lg max-w-sm"
+      class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] px-4 py-3 rounded-xl shadow-soft max-w-sm"
       :class="toastState.isError ? 'bg-status-error-bg text-status-error-text border border-status-error-border' : 'bg-status-success-bg text-status-success-text border border-status-success-border'"
     >
       <div class="flex items-center gap-2">
@@ -1307,7 +1307,7 @@
               type="text"
               placeholder="e.g., BSB, NIV, ESV"
               maxlength="10"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary uppercase tracking-wider"
               style="text-transform: uppercase;"
             />
           </div>
@@ -1359,7 +1359,7 @@
               rows="6"
               placeholder="Enter the verse text here..."
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
 
@@ -1415,7 +1415,7 @@
               type="text"
               placeholder="e.g., BSB, NIV, ESV"
               maxlength="10"
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary uppercase tracking-wider"
               style="text-transform: uppercase;"
             />
           </div>
@@ -1467,7 +1467,7 @@
               rows="6"
               placeholder="Enter the verse text here..."
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
 
@@ -1487,14 +1487,14 @@
               type="button"
               @click="scheduleActionsOpen = !scheduleActionsOpen"
               data-testid="verse-schedule-change"
-              class="text-accent-warm hover:underline focus:outline-none"
+              class="text-accent-warm-text hover:underline focus:outline-none"
             >Change</button>
             <span class="mx-1.5 opacity-60">&middot;</span>
             <button
               type="button"
               @click="resetVerseProgress"
               data-testid="verse-schedule-reset"
-              class="text-accent-warm hover:underline focus:outline-none"
+              class="text-accent-warm-text hover:underline focus:outline-none"
             >Reset</button>
 
             <div
@@ -1503,11 +1503,11 @@
               class="absolute bottom-full left-0 mb-2 flex flex-wrap gap-1.5 rounded-xl border border-border-default bg-chrome p-2 shadow-soft z-10"
               data-testid="verse-schedule-popover"
             >
-              <button type="button" @click="overrideNextReview(0)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">Now</button>
-              <button type="button" @click="overrideNextReview(1)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1d</button>
-              <button type="button" @click="overrideNextReview(3)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+3d</button>
-              <button type="button" @click="overrideNextReview(7)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1w</button>
-              <button type="button" @click="overrideNextReview(30)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-white transition-colors">+1mo</button>
+              <button type="button" @click="overrideNextReview(0)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">Now</button>
+              <button type="button" @click="overrideNextReview(1)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1d</button>
+              <button type="button" @click="overrideNextReview(3)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+3d</button>
+              <button type="button" @click="overrideNextReview(7)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1w</button>
+              <button type="button" @click="overrideNextReview(30)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1mo</button>
             </div>
           </div>
         </form>
@@ -1554,7 +1554,7 @@
               type="text"
               placeholder="e.g., Favorite Verses, Daily Devotion"
               required
-              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1567,7 +1567,7 @@
               v-model="newCollection.description"
               rows="3"
               placeholder="Describe this collection..."
-              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
         </form>
@@ -1605,7 +1605,7 @@
               type="text"
               placeholder="e.g., Favorite Verses, Daily Devotion"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
             />
           </div>
 
@@ -1618,7 +1618,7 @@
               v-model="editingCollection.description"
               rows="3"
               placeholder="Describe this collection..."
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary resize-none"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
         </form>
@@ -1685,7 +1685,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 type="file"
                 accept=".csv"
                 @change="handleCSVFileSelect"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+                class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
               />
             </div>
 
@@ -1708,7 +1708,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                 @input="handleCSVPaste"
                 placeholder="Paste your CSV content here..."
                 rows="6"
-                class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary font-mono text-sm"
+                class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary font-mono text-sm"
               ></textarea>
             </div>
           </div>
@@ -1792,7 +1792,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 
       <ModalSheet :show="showPracticeSettings" title="Settings" data-testid="modal-practice-settings" max-width="sm:max-w-lg" @close="closePracticeSettings">
         <div class="space-y-4">
-          <div class="rounded-2xl bg-sunken p-4">
+          <div class="rounded-xl bg-sunken p-4">
             <label class="flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
                 <p class="text-base font-semibold text-text-primary">Require typing the reference after the verse</p>
@@ -1816,7 +1816,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
               </button>
             </label>
           </div>
-          <div v-if="analyticsAvailable" class="rounded-2xl bg-sunken p-4" data-testid="analytics-opt-out-row">
+          <div v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" data-testid="analytics-opt-out-row">
             <label class="flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
                 <p class="text-base font-semibold text-text-primary">Share anonymous usage analytics</p>
@@ -3472,7 +3472,7 @@ export default {
       return {
         text: getCssVar('--color-text-secondary'),
         muted: getCssVar('--color-text-muted'),
-        grid: getCssVar('--color-border-default'),
+        grid: getCssVar('--color-chart-grid'),
         accent: getCssVar('--color-accent'),
         success: getCssVar('--color-accent-warm'),
       }
@@ -3504,12 +3504,14 @@ export default {
       scales: {
         x: {
           ticks: { color: chartColors.value.muted, maxTicksLimit: 6 },
-          grid: { color: chartColors.value.grid + '40' }
+          grid: { color: chartColors.value.grid },
+          border: { color: chartColors.value.grid }
         },
         y: {
           beginAtZero: true,
           ticks: { color: chartColors.value.muted, precision: 0 },
-          grid: { color: chartColors.value.grid + '40' }
+          grid: { color: chartColors.value.grid },
+          border: { color: chartColors.value.grid }
         }
       }
     }))
@@ -3566,13 +3568,15 @@ export default {
         x: {
           stacked: true,
           ticks: { color: chartColors.value.muted, maxRotation: 45, font: { size: 10 } },
-          grid: { display: false }
+          grid: { display: false },
+          border: { color: chartColors.value.grid }
         },
         y: {
           stacked: true,
           beginAtZero: true,
           ticks: { display: false },
-          grid: { color: chartColors.value.grid + '40' }
+          grid: { color: chartColors.value.grid },
+          border: { color: chartColors.value.grid }
         }
       }
     }))

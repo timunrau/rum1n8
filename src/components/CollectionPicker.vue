@@ -9,9 +9,9 @@
         :key="collection.id"
         type="button"
         @click="toggle(collection.id)"
-        class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-150"
+        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150"
         :class="isSelected(collection.id)
-          ? 'bg-blue-600 text-white border border-blue-600'
+          ? 'bg-action text-action-text border border-action-border'
           : 'bg-transparent text-text-secondary border border-border-input hover:bg-surface-hover'"
       >
         {{ collection.name }}

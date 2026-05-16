@@ -18,8 +18,7 @@
       <div class="relative flex flex-col items-center">
         <button
           type="button"
-          class="btn-accent-soft"
-          :class="showStartReviewCallout ? 'ring-2 ring-accent-warm shadow-lg' : ''"
+          class="btn-primary"
           data-testid="almanac-start-review"
           @click="$emit('start-review')"
         >
@@ -32,7 +31,7 @@
           v-if="showStartReviewCallout"
           class="pointer-events-auto relative z-10 mt-4 w-72 max-w-[calc(100vw-2rem)]"
         >
-          <div class="relative rounded-2xl border border-border-default bg-elevated px-4 py-3 shadow-xl">
+          <div class="relative rounded-lg border border-border-default bg-elevated px-4 py-3 shadow-soft">
             <div class="absolute left-1/2 bottom-full h-4 w-4 -translate-x-1/2 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
             <button
               type="button"

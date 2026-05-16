@@ -65,13 +65,14 @@ const variant = computed(() => {
 }
 
 .pos-badge-el--due {
-  color: #6b4a0e;
-  background: rgba(199, 154, 43, 0.18);
+  color: var(--color-status-due-text);
+  background: var(--color-status-due-bg);
+  border: 1px solid var(--color-status-due-border);
 }
 
 .dark .pos-badge-el--due {
-  color: #f0d38b;
-  background: rgba(199, 154, 43, 0.18);
+  color: var(--color-status-due-text);
+  background: var(--color-status-due-bg);
 }
 
 .dark .pos-badge-el--mastered {

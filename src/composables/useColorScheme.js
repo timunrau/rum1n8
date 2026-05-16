@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const LIGHT_THEME_COLOR = '#f3ede2'
-const DARK_THEME_COLOR = '#08101b'
+const LIGHT_THEME_COLOR = '#EFE9DD'
+const DARK_THEME_COLOR = '#121411'
 
 export function useColorScheme() {
   let mediaQuery = null

@@ -6,7 +6,7 @@
 
       <!-- Panel -->
       <div
-        class="modal-sheet-panel flex flex-col w-full bg-chrome rounded-t-3xl sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-brand sm:shadow-soft sm:w-full"
+        class="modal-sheet-panel flex flex-col w-full bg-chrome rounded-t-xl sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-brand sm:shadow-soft sm:w-full"
         :class="[
           compact ? 'absolute inset-x-0 bottom-0 h-auto max-h-[85vh] shadow-soft' : 'relative h-full',
           maxWidth
@@ -17,7 +17,7 @@
           <h2 class="text-2xl font-serif font-normal tracking-tight text-text-primary">{{ title }}</h2>
           <button
             @click="$emit('close')"
-            class="p-2 -mr-2 rounded-xl text-text-muted hover:text-accent-warm hover:bg-surface-hover transition-colors duration-200"
+            class="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-200"
             aria-label="Close"
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

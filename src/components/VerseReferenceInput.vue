@@ -4,7 +4,7 @@
       {{ label }}
     </label>
 
-    <div class="relative rounded-xl border border-border-input bg-overlay focus-within:ring-2 focus-within:ring-accent-warm focus-within:border-transparent">
+    <div class="relative rounded-lg border border-border-input bg-overlay focus-within:ring-0 focus-within:border-accent">
       <div
         v-if="completion"
         class="pointer-events-none absolute inset-0 z-10 flex items-center overflow-hidden whitespace-pre px-4 py-3 text-base leading-6"
@@ -14,7 +14,7 @@
           type="button"
           tabindex="-1"
           :aria-label="`Use ${completion.book.name}`"
-          class="pointer-events-auto min-h-6 text-left text-text-muted transition-colors hover:text-accent-warm focus:outline-none"
+          class="pointer-events-auto min-h-6 text-left text-text-muted transition-colors hover:text-accent focus:outline-none"
           @mousedown.prevent
           @click="acceptCompletion"
         >
