@@ -166,18 +166,31 @@
       </div>
     </template>
   </ModalSheet>
+
+  <AppDialog
+    :show="showDisconnectConfirm"
+    title="Disconnect Google Drive?"
+    message="Your verses stay on this device, but they won’t sync to Google Drive or your other devices anymore."
+    mode="confirm"
+    variant="danger"
+    confirm-label="Disconnect"
+    data-testid="modal-sync-disconnect-confirm"
+    @confirm="disconnectGoogle"
+    @cancel="showDisconnectConfirm = false"
+  />
 </template>
 
 <script>
 import { ref, computed, watch } from 'vue'
 import ModalSheet from './ModalSheet.vue'
+import AppDialog from './AppDialog.vue'
 import { getAllProviders, getProvider } from '../sync/providers/index.js'
 import { getActiveProviderId, setActiveProviderId } from '../sync/sync-manager.js'
 import { startOAuthFlow } from '../sync/providers/gdrive-provider.js'
 
 export default {
   name: 'SyncSettingsModal',
-  components: { ModalSheet },
+  components: { ModalSheet, AppDialog },
   props: {
     show: { type: Boolean, required: true },
     isOnline: { type: Boolean, default: true }
@@ -191,6 +204,7 @@ export default {
     const testingConnection = ref(false)
     const signingIn = ref(false)
     const oauthEmail = ref('')
+    const showDisconnectConfirm = ref(false)
 
     const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
 
@@ -286,10 +300,11 @@ export default {
     }
 
     function confirmDisconnect() {
-      const ok = typeof window !== 'undefined'
-        ? window.confirm('Disconnect Google Drive? Your verses stay on this device, but they won\u2019t sync to Google Drive or your other devices anymore.')
-        : true
-      if (!ok) return
+      showDisconnectConfirm.value = true
+    }
+
+    function disconnectGoogle() {
+      showDisconnectConfirm.value = false
       const provider = getProvider('gdrive')
       if (provider) {
         provider.clearSettings()
@@ -384,6 +399,7 @@ export default {
       testingConnection,
       signingIn,
       oauthEmail,
+      showDisconnectConfirm,
       isDev,
       canTest,
       canSave,
@@ -391,6 +407,7 @@ export default {
       switchToGoogle,
       signInWithGoogle,
       confirmDisconnect,
+      disconnectGoogle,
       testConnection,
       save,
       close

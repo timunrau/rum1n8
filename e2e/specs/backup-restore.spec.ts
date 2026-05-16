@@ -26,7 +26,6 @@ test('download backup: Settings -> Backup/Import -> Download -> file download tr
 })
 
 test('restore: Settings -> choose backup file -> confirm -> data replaced', async ({ page }) => {
-  page.on('dialog', (dialog) => dialog.accept())
   await page.getByTestId('hamburger-button').click()
   await page.getByTestId('settings-backup').click()
 
@@ -34,7 +33,10 @@ test('restore: Settings -> choose backup file -> confirm -> data replaced', asyn
   const fileInput = page.locator('#backup-file-input')
   await fileInput.setInputFiles(path.join(__dirname, '../fixtures/sample-backup.json'))
 
-  await page.waitForTimeout(2000)
+  await expect(page.getByTestId('modal-restore-backup-confirm')).toBeVisible()
+  await page.getByTestId('modal-restore-backup-confirm').getByRole('button', { name: 'Restore' }).click()
+  await expect(page.getByTestId('modal-restore-backup-success')).toBeVisible()
+  await page.getByTestId('modal-restore-backup-success').getByRole('button', { name: 'OK' }).click()
   await expect(page.getByTestId('modal-backup-restore')).not.toBeVisible({ timeout: 10000 })
   await page.getByRole('heading', { name: 'Restored Collection' }).click()
   await expect(page.getByText('Philippians 4:13')).toBeVisible({ timeout: 10000 })

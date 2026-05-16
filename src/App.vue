@@ -1966,6 +1966,19 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
         </template>
       </ModalSheet>
 
+      <AppDialog
+        :show="appDialog.show"
+        :title="appDialog.title"
+        :message="appDialog.message"
+        :mode="appDialog.mode"
+        :variant="appDialog.variant"
+        :confirm-label="appDialog.confirmLabel"
+        :cancel-label="appDialog.cancelLabel"
+        :data-testid="appDialog.dataTestid"
+        @confirm="handleAppDialogConfirm"
+        @cancel="handleAppDialogCancel"
+      />
+
 </template>
 
 <script>
@@ -2025,6 +2038,7 @@ import IOSInstallModal from './components/IOSInstallModal.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
 import CompletionTray from './components/CompletionTray.vue'
 import ModalSheet from './components/ModalSheet.vue'
+import AppDialog from './components/AppDialog.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
 import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
@@ -2043,7 +2057,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -2280,6 +2294,17 @@ export default {
     const showBackupImport = ref(false)
     const showImportCSV = ref(false)
     const showIOSInstallBackupFirst = ref(false)
+    const appDialog = ref({
+      show: false,
+      title: '',
+      message: '',
+      mode: 'alert',
+      variant: 'default',
+      confirmLabel: 'OK',
+      cancelLabel: 'Cancel',
+      dataTestid: 'modal-app-dialog',
+    })
+    let appDialogResolver = null
     const iosInstallBackupDownloaded = ref(false)
     const iosInstallModalSource = ref(null)
     const continueInstallAfterSyncSetup = ref(false)
@@ -2318,6 +2343,60 @@ export default {
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
     const isScrolled = ref(false)
+
+    const closeAppDialog = () => {
+      appDialog.value = {
+        ...appDialog.value,
+        show: false,
+      }
+    }
+
+    const openAppDialog = (options) => {
+      if (appDialogResolver) {
+        appDialogResolver(false)
+        appDialogResolver = null
+      }
+
+      appDialog.value = {
+        show: true,
+        title: options.title,
+        message: options.message,
+        mode: options.mode || 'alert',
+        variant: options.variant || 'default',
+        confirmLabel: options.confirmLabel || 'OK',
+        cancelLabel: options.cancelLabel || 'Cancel',
+        dataTestid: options.dataTestid || 'modal-app-dialog',
+      }
+
+      return new Promise((resolve) => {
+        appDialogResolver = resolve
+      })
+    }
+
+    const showAppMessage = (options) => openAppDialog({
+      ...options,
+      mode: 'alert',
+    })
+
+    const requestAppConfirmation = (options) => openAppDialog({
+      ...options,
+      mode: 'confirm',
+    })
+
+    const resolveAppDialog = (value) => {
+      const resolver = appDialogResolver
+      appDialogResolver = null
+      closeAppDialog()
+      resolver?.(value)
+    }
+
+    const handleAppDialogConfirm = () => {
+      resolveAppDialog(true)
+    }
+
+    const handleAppDialogCancel = () => {
+      resolveAppDialog(false)
+    }
     const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine !== false)
     const isDev = import.meta.env.DEV
     const csvFileInput = ref(null)
@@ -5162,15 +5241,23 @@ export default {
     }
 
     // Handle delete collection from edit modal
-    const handleDeleteCollectionFromModal = () => {
-      if (editingCollection.value && deleteCollection(editingCollection.value.id)) {
+    const handleDeleteCollectionFromModal = async () => {
+      if (editingCollection.value && await deleteCollection(editingCollection.value.id)) {
         closeEditCollectionForm()
       }
     }
 
     // Delete collection
-    const deleteCollection = (collectionId) => {
-      if (confirm('Are you sure you want to delete this collection? Verses will not be deleted, but will be removed from this collection.')) {
+    const deleteCollection = async (collectionId) => {
+      const confirmed = await requestAppConfirmation({
+        title: 'Delete Collection?',
+        message: 'Are you sure you want to delete this collection? Verses will not be deleted, but will be removed from this collection.',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        dataTestid: 'modal-delete-collection-confirm',
+      })
+
+      if (confirmed) {
         // Mark as deleted for sync FIRST (before removing from array)
         markCollectionDeleted(collectionId)
         
@@ -5317,15 +5404,23 @@ export default {
     }
 
     // Handle delete verse from edit modal
-    const handleDeleteVerseFromModal = () => {
-      if (editingVerse.value && deleteVerse(editingVerse.value.id)) {
+    const handleDeleteVerseFromModal = async () => {
+      if (editingVerse.value && await deleteVerse(editingVerse.value.id)) {
         closeEditVerseForm()
       }
     }
 
     // Delete verse
-    const deleteVerse = (verseId) => {
-      if (confirm('Are you sure you want to delete this verse?')) {
+    const deleteVerse = async (verseId) => {
+      const confirmed = await requestAppConfirmation({
+        title: 'Delete Verse?',
+        message: 'Are you sure you want to delete this verse?',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        dataTestid: 'modal-delete-verse-confirm',
+      })
+
+      if (confirmed) {
         // Mark as deleted for sync
         markVerseDeleted(verseId)
         
@@ -7495,7 +7590,7 @@ export default {
     }
 
     // Backup all data
-    const backupAllData = () => {
+    const backupAllData = async () => {
       try {
         const webdavProvider = getProvider('webdav')
         const gdriveProvider = getProvider('gdrive')
@@ -7535,7 +7630,11 @@ export default {
         return true
       } catch (error) {
         console.error('Error backing up data:', error)
-        alert('Failed to backup data. Please try again.')
+        await showAppMessage({
+          title: 'Backup Failed',
+          message: 'Failed to backup data. Please try again.',
+          dataTestid: 'modal-backup-failed',
+        })
         return false
       }
     }
@@ -7548,19 +7647,30 @@ export default {
 
         // Validate backup structure
         if (!backupData.verses || !Array.isArray(backupData.verses)) {
-          alert('Invalid backup file: missing verses array')
+          await showAppMessage({
+            title: 'Invalid Backup File',
+            message: 'Invalid backup file: missing verses array',
+            dataTestid: 'modal-backup-invalid',
+          })
           return
         }
         if (!backupData.collections || !Array.isArray(backupData.collections)) {
-          alert('Invalid backup file: missing collections array')
+          await showAppMessage({
+            title: 'Invalid Backup File',
+            message: 'Invalid backup file: missing collections array',
+            dataTestid: 'modal-backup-invalid',
+          })
           return
         }
 
         // Show confirmation
-        const confirmed = confirm(
-          'This will replace all your current data with the backup data. ' +
-          'This action cannot be undone. Are you sure you want to continue?'
-        )
+        const confirmed = await requestAppConfirmation({
+          title: 'Restore Backup?',
+          message: 'This will replace all your current data with the backup data. This action cannot be undone. Are you sure you want to continue?',
+          confirmLabel: 'Restore',
+          variant: 'danger',
+          dataTestid: 'modal-restore-backup-confirm',
+        })
 
         if (!confirmed) {
           return
@@ -7619,10 +7729,18 @@ export default {
         // Close modal
         closeBackupImport()
 
-        alert('Data imported successfully!')
+        await showAppMessage({
+          title: 'Backup Restored',
+          message: 'Data imported successfully!',
+          dataTestid: 'modal-restore-backup-success',
+        })
       } catch (error) {
         console.error('Error importing backup:', error)
-        alert('Failed to import backup. Please check that the file is valid.')
+        await showAppMessage({
+          title: 'Import Failed',
+          message: 'Failed to import backup. Please check that the file is valid.',
+          dataTestid: 'modal-restore-backup-failed',
+        })
       }
     }
 
@@ -8059,7 +8177,10 @@ export default {
       totalPracticeUnitCount,
       updateCheckState,
       checkForUpdate,
-      appVersion
+      appVersion,
+      appDialog,
+      handleAppDialogConfirm,
+      handleAppDialogCancel
     }
   }
 }
