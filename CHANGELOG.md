@@ -1,3 +1,10 @@
+## [1.21.8](https://github.com/timunrau/rum1n8/compare/v1.21.7...v1.21.8) (2026-05-16)
+
+
+### Bug Fixes
+
+* replace browser dialogs with app modals ([d2022e9](https://github.com/timunrau/rum1n8/commit/d2022e9774b144af39c506118543120c86c2ae76))
+
 ## [1.21.7](https://github.com/timunrau/rum1n8/compare/v1.21.6...v1.21.7) (2026-05-16)
 
 
