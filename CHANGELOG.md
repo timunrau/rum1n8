@@ -1,3 +1,10 @@
+## [1.21.6](https://github.com/timunrau/rum1n8/compare/v1.21.5...v1.21.6) (2026-05-16)
+
+
+### Bug Fixes
+
+* return 404 for unknown marketing routes ([763bc03](https://github.com/timunrau/rum1n8/commit/763bc035226151498755c837766e47377e92c3a3))
+
 ## [1.21.5](https://github.com/timunrau/rum1n8/compare/v1.21.4...v1.21.5) (2026-05-10)
 
 
