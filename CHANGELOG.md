@@ -1,3 +1,10 @@
+## [1.21.9](https://github.com/timunrau/rum1n8/compare/v1.21.8...v1.21.9) (2026-05-16)
+
+
+### Bug Fixes
+
+* preserve dash spacing in typing practice ([0cfb93d](https://github.com/timunrau/rum1n8/commit/0cfb93dc168e34783cc610eb337df5730707171a))
+
 ## [1.21.8](https://github.com/timunrau/rum1n8/compare/v1.21.7...v1.21.8) (2026-05-16)
 
 
