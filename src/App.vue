@@ -1285,18 +1285,14 @@
       <ModalSheet :show="showForm" title="Add New Verse" data-testid="modal-add-verse" @close="closeForm">
         <form id="add-verse-form" @submit.prevent="addVerse" class="space-y-4">
           <div>
-            <label for="reference" class="block text-sm font-medium text-text-secondary mb-2">
-              Verse Reference
-            </label>
-            <input
+            <VerseReferenceInput
               id="reference"
               v-model="newVerse.reference"
-              type="text"
               placeholder="e.g., Joshua 1:8-9"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+              @blur="handleNewVerseReferenceBlur"
             />
-            <p v-if="newVerseReferenceWarning" class="mt-2 text-xs leading-relaxed text-text-muted">
+            <p v-if="newVerseReferenceWarning" class="mt-2 text-xs leading-relaxed" :class="newVerseReferenceWarningClass">
               {{ newVerseReferenceWarning }}
             </p>
           </div>
@@ -1397,18 +1393,14 @@
       <ModalSheet :show="showEditVerseForm" title="Edit Verse" data-testid="modal-edit-verse" @close="closeEditVerseForm">
         <form id="edit-verse-form" @submit.prevent="saveEditedVerse" class="space-y-4" v-if="editingVerse">
           <div>
-            <label for="edit-reference" class="block text-sm font-medium text-text-secondary mb-2">
-              Verse Reference
-            </label>
-            <input
+            <VerseReferenceInput
               id="edit-reference"
               v-model="editingVerse.reference"
-              type="text"
               placeholder="e.g., Joshua 1:8-9"
               required
-              class="w-full px-4 py-3 border border-border-input rounded-xl focus:ring-2 focus:ring-accent-warm focus:border-transparent outline-none bg-overlay text-text-primary"
+              @blur="handleEditedVerseReferenceBlur"
             />
-            <p v-if="editedVerseReferenceWarning" class="mt-2 text-xs leading-relaxed text-text-muted">
+            <p v-if="editedVerseReferenceWarning" class="mt-2 text-xs leading-relaxed" :class="editedVerseReferenceWarningClass">
               {{ editedVerseReferenceWarning }}
             </p>
           </div>
@@ -2018,7 +2010,7 @@ import {
   snoozeInstallPrompt
 } from './ui-state.js'
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
-import { findReferenceMatches, formatReferenceMatchSummary, parseSimpleVerseReference } from './utils/bible-reference.js'
+import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
@@ -2040,6 +2032,7 @@ import CompletionTray from './components/CompletionTray.vue'
 import ModalSheet from './components/ModalSheet.vue'
 import AppDialog from './components/AppDialog.vue'
 import CollectionPicker from './components/CollectionPicker.vue'
+import VerseReferenceInput from './components/VerseReferenceInput.vue'
 import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
 import BackupNudgeCard from './components/BackupNudgeCard.vue'
@@ -2057,7 +2050,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, CollectionsAlmanac, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseReferenceInput, CollectionsAlmanac, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, HeadwordReference, POSBadge },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -2487,6 +2480,9 @@ export default {
     const importErrorRef = ref(null)
     const bibleClient = ref(null)
     const bibleCollection = ref(null)
+    const newVerseReferenceTouched = ref(false)
+    const editedVerseReferenceTouched = ref(false)
+    const invalidReferenceMessage = 'Use a reference like "John 3:16" or "John 3:16-17".'
 
     // YouVersion numeric IDs for common translations
     const youVersionIds = {
@@ -2495,12 +2491,39 @@ export default {
       AMP: 1588, WEB: 206, GNT: 68, CEV: 392, ERV: 406, ICB: 1359,
       NRSVUE: 3523, CEB: 37, TPT: 1849, VOICE: 1240
     }
-    // Corrections where getBookId's 3-char fallback differs from USFM/YouVersion codes
-    const youVersionBookOverrides = { joh: 'JHN', mar: 'MRK', phi: 'PHP', jam: 'JAS' }
-
     const getVerseDraftField = (verseDraft, key) => {
       const value = verseDraft?.[key]
       return typeof value === 'string' ? value.trim() : ''
+    }
+
+    const markReferenceTouched = (verseDraft) => {
+      if (verseDraft === newVerse.value) {
+        newVerseReferenceTouched.value = true
+      } else if (verseDraft === editingVerse.value) {
+        editedVerseReferenceTouched.value = true
+      }
+    }
+
+    const normalizeVerseDraftReference = (verseDraft) => {
+      const normalizedReference = normalizeVerseReference(getVerseDraftField(verseDraft, 'reference'))
+      if (normalizedReference && verseDraft) {
+        verseDraft.reference = normalizedReference
+      }
+      return normalizedReference
+    }
+
+    const handleNewVerseReferenceBlur = () => {
+      normalizeVerseDraftReference(newVerse.value)
+    }
+
+    const handleEditedVerseReferenceBlur = () => {
+      normalizeVerseDraftReference(editingVerse.value)
+    }
+
+    const getReferenceValidationWarning = (verseDraft, shouldShow) => {
+      const reference = getVerseDraftField(verseDraft, 'reference')
+      if (!reference || !shouldShow) return ''
+      return parseSimpleVerseReference(reference) ? '' : invalidReferenceMessage
     }
 
     const resetImportState = () => {
@@ -2524,8 +2547,7 @@ export default {
       if (!versionId) return null
       const parsed = parseSimpleVerseReference(ref)
       if (!parsed) return null
-      const bookCode = parsed.bookId
-      const usfmBook = youVersionBookOverrides[bookCode] || bookCode.toUpperCase()
+      const usfmBook = parsed.bookId.toUpperCase()
       const verseRef = parsed.verseEnd > parsed.verseStart ? `${parsed.verseStart}-${parsed.verseEnd}` : `${parsed.verseStart}`
       return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.chapter}.${verseRef}.${version}`
     }
@@ -2539,8 +2561,16 @@ export default {
       findReferenceMatches(getVerseDraftField(newVerse.value, 'reference'), verses.value)
     ))
 
+    const newVerseReferenceValidationWarning = computed(() => (
+      getReferenceValidationWarning(newVerse.value, newVerseReferenceTouched.value)
+    ))
+
     const newVerseReferenceWarning = computed(() => (
-      formatReferenceMatchSummary(newVerseReferenceMatches.value)
+      newVerseReferenceValidationWarning.value || formatReferenceMatchSummary(newVerseReferenceMatches.value)
+    ))
+
+    const newVerseReferenceWarningClass = computed(() => (
+      newVerseReferenceValidationWarning.value ? 'text-status-amber-text' : 'text-text-muted'
     ))
 
     const editedVerseReferenceMatches = computed(() => {
@@ -2551,8 +2581,16 @@ export default {
       })
     })
 
+    const editedVerseReferenceValidationWarning = computed(() => (
+      getReferenceValidationWarning(editingVerse.value, editedVerseReferenceTouched.value)
+    ))
+
     const editedVerseReferenceWarning = computed(() => (
-      formatReferenceMatchSummary(editedVerseReferenceMatches.value)
+      editedVerseReferenceValidationWarning.value || formatReferenceMatchSummary(editedVerseReferenceMatches.value)
+    ))
+
+    const editedVerseReferenceWarningClass = computed(() => (
+      editedVerseReferenceValidationWarning.value ? 'text-status-amber-text' : 'text-text-muted'
     ))
 
     const newVerse = ref({
@@ -2713,6 +2751,7 @@ export default {
 
     const openHeroVerseModal = () => {
       trackEvent('onboarding_add_verse_clicked')
+      newVerseReferenceTouched.value = false
       showForm.value = true
       pushModalState('addVerse')
     }
@@ -2812,6 +2851,7 @@ export default {
     const closeAllModalUi = () => {
       showForm.value = false
       newVerse.value = { reference: '', content: '', bibleVersion: '', collectionIds: [] }
+      newVerseReferenceTouched.value = false
       importError.value = null
       importErrorShowLink.value = false
       importingVerse.value = false
@@ -2824,6 +2864,7 @@ export default {
 
       showEditVerseForm.value = false
       editingVerse.value = null
+      editedVerseReferenceTouched.value = false
       scheduleActionsOpen.value = false
 
       showImportCSV.value = false
@@ -4555,6 +4596,10 @@ export default {
 
     // Add new verse
     const addVerse = () => {
+      newVerseReferenceTouched.value = true
+      const normalizedReference = normalizeVerseDraftReference(newVerse.value)
+      if (!normalizedReference) return
+
       if (newVerse.value.reference && newVerse.value.content) {
         const now = new Date().toISOString()
         const collectionIds = Array.isArray(newVerse.value.collectionIds)
@@ -4593,6 +4638,7 @@ export default {
     const closeForm = () => {
       showForm.value = false
       newVerse.value = createEmptyVerseDraft()
+      newVerseReferenceTouched.value = false
       fabMenuOpen.value = false
       resetImportState()
       consumeModalState('addVerse')
@@ -4612,6 +4658,8 @@ export default {
     // Main import function
     const importVerseContent = async (verseDraft = newVerse.value) => {
       resetImportState()
+      markReferenceTouched(verseDraft)
+      normalizeVerseDraftReference(verseDraft)
 
       if (!isOnline.value) {
         importError.value = 'Verse text import needs an internet connection. You can still paste content manually.'
@@ -4751,6 +4799,7 @@ export default {
       fabMenuOpen.value = false
       const collectionId = getAssignableCurrentCollectionId()
       newVerse.value = createEmptyVerseDraft(collectionId ? [collectionId] : [])
+      newVerseReferenceTouched.value = false
       showForm.value = true
       pushModalState('addVerse')
     }
@@ -5372,6 +5421,7 @@ export default {
     // Edit verse
     const startEditVerse = (verse) => {
       resetImportState()
+      editedVerseReferenceTouched.value = false
       editingVerse.value = {
         ...verse,
         originalReference: verse.reference,
@@ -5383,6 +5433,10 @@ export default {
 
     // Save edited verse
     const saveEditedVerse = () => {
+      editedVerseReferenceTouched.value = true
+      const normalizedReference = normalizeVerseDraftReference(editingVerse.value)
+      if (!normalizedReference) return
+
       if (editingVerse.value && editingVerse.value.reference && editingVerse.value.content) {
         const verse = verses.value.find(v => v.id === editingVerse.value.id)
         if (verse) {
@@ -5401,6 +5455,7 @@ export default {
     const closeEditVerseForm = () => {
       showEditVerseForm.value = false
       editingVerse.value = null
+      editedVerseReferenceTouched.value = false
       scheduleActionsOpen.value = false
       resetImportState()
       consumeModalState('editVerse')
@@ -8162,8 +8217,12 @@ export default {
       getBibleGatewayUrl,
       getYouVersionUrl,
       hasEditedReferenceChanged,
+      handleNewVerseReferenceBlur,
+      handleEditedVerseReferenceBlur,
       newVerseReferenceWarning,
+      newVerseReferenceWarningClass,
       editedVerseReferenceWarning,
+      editedVerseReferenceWarningClass,
       importVerseContent,
       isPWAInstalled,
       isIOSSafari,

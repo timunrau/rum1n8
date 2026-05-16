@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -17,14 +18,18 @@ test.beforeEach(async ({ page }) => {
   await page.reload()
 })
 
-test('add verse: FAB -> New Verse -> reference + content (manual) -> add -> appears in list', async ({
-  page,
-}) => {
+async function openAddVerseModal(page: Page) {
   await page.getByTestId('nav-collections').click()
   await page.getByTestId('fab-trigger').click()
   await page.getByTestId('fab-new-verse').click()
-
   await expect(page.getByTestId('modal-add-verse')).toBeVisible()
+}
+
+test('add verse: FAB -> New Verse -> reference + content (manual) -> add -> appears in list', async ({
+  page,
+}) => {
+  await openAddVerseModal(page)
+
   await page.getByLabel(/Verse Reference/i).fill('John 3:16')
   await page.getByLabel(/Verse Content|Content/i).fill('For God so loved the world.')
   await page.getByRole('button', { name: /Save Verse/i }).click()
@@ -77,6 +82,63 @@ test('add verse: normalized and overlapping saved references show a subtle warni
   await expect(page.getByTestId('modal-add-verse')).toBeVisible()
   await page.getByLabel(/Verse Reference/i).fill('Jn 3:16')
   await expect(page.getByText('Already in your library: John 3:16 (ESV); John 3:16-17 (NIV)')).toBeVisible()
+})
+
+test('add verse reference input: accepts ghost suggestions by enter, tab, or click', async ({ page }) => {
+  await openAddVerseModal(page)
+  const reference = page.getByLabel(/Verse Reference/i)
+
+  await reference.fill('joh')
+  await reference.press('Space')
+  await expect(reference).toHaveValue('joh ')
+
+  await reference.fill('joh')
+  await reference.press('Enter')
+  await expect(reference).toHaveValue('John ')
+
+  await reference.fill('ps')
+  await expect(page.getByRole('button', { name: 'Use Psalms' })).toHaveText('alms')
+  await reference.press('Space')
+  await expect(reference).toHaveValue('ps ')
+  await expect(page.getByRole('button', { name: 'Use Psalms' })).toHaveCount(0)
+
+  await reference.fill('ps')
+  await reference.press('Tab')
+  await expect(reference).toHaveValue('Psalms ')
+
+  await reference.fill('1 Cor')
+  await expect(page.getByRole('button', { name: 'Use 1 Corinthians' })).toHaveText('inthians')
+
+  await reference.fill('jn')
+  await expect(page.getByRole('button', { name: 'Use John' })).toHaveCount(0)
+
+  await reference.fill('phile')
+  await page.getByRole('button', { name: 'Use Philemon' }).click()
+  await expect(reference).toHaveValue('Philemon ')
+})
+
+test('add verse reference input: normalizes on blur and waits until save to warn about invalid references', async ({ page }) => {
+  await openAddVerseModal(page)
+  const reference = page.getByLabel(/Verse Reference/i)
+  const content = page.getByLabel(/Verse Content|Content/i)
+
+  await reference.fill('john   3 : 16 - 17')
+  await content.click()
+  await expect(reference).toHaveValue('John 3:16-17')
+
+  await reference.fill('jn 3:16')
+  await content.click()
+  await expect(reference).toHaveValue('John 3:16')
+
+  await reference.fill('phil 1:6')
+  await content.click()
+  await expect(page.getByText(/Use a reference like/i)).toHaveCount(0)
+
+  await content.fill('I am sure of this.')
+  await page.getByRole('button', { name: /Save Verse/i }).click()
+
+  await expect(page.getByTestId('modal-add-verse')).toBeVisible()
+  await expect(page.getByText('Use a reference like "John 3:16" or "John 3:16-17".')).toBeVisible()
 })
 
 test.skip('add verse with Bible import: mock API -> enter reference + version -> Import Content', async ({
