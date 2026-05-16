@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/timunrau/rum1n8/compare/v1.21.9...v1.22.0) (2026-05-16)
+
+
+### Features
+
+* autocomplete verse reference books ([d1f7323](https://github.com/timunrau/rum1n8/commit/d1f7323ffb28d9975ad28d8c30d36e1172d28814))
+
 ## [1.21.9](https://github.com/timunrau/rum1n8/compare/v1.21.8...v1.21.9) (2026-05-16)
 
 
