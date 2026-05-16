@@ -646,9 +646,9 @@
             :class="{ 'verse-card--due': isDueForReview(verse) }"
           >
             <div class="flex items-center justify-between gap-2">
-              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+              <div class="flex flex-nowrap items-baseline gap-2 min-w-0 flex-1">
                 <HeadwordReference :reference="verse.reference" size="sm" />
-                <span v-if="verse.bibleVersion" class="verse-card__version">/{{ verse.bibleVersion.toLowerCase() }}/</span>
+                <span v-if="verse.bibleVersion" class="verse-card__version shrink-0">/{{ verse.bibleVersion.toLowerCase() }}/</span>
               </div>
               <div class="flex items-center gap-1 shrink-0">
                 <POSBadge
@@ -966,9 +966,9 @@
             </button>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 justify-between">
-                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                <div class="flex flex-nowrap items-baseline gap-2 min-w-0 flex-1">
                   <HeadwordReference :reference="verse.reference" size="sm" />
-                  <span v-if="verse.bibleVersion" class="verse-card__version">/{{ verse.bibleVersion.toLowerCase() }}/</span>
+                  <span v-if="verse.bibleVersion" class="verse-card__version shrink-0">/{{ verse.bibleVersion.toLowerCase() }}/</span>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                   <POSBadge

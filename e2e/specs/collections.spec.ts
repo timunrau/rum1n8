@@ -71,6 +71,62 @@ test('view master-list, no-collection, to-learn with seeded verses', async ({ pa
   await expect(page.getByText('Not Yet Mastered')).toBeVisible()
 })
 
+test('long numbered reference truncates the book without wrapping the verse reference', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  const now = new Date().toISOString()
+  await seedStorage(page, [
+    {
+      ...sampleVerses[0],
+      id: 'long-reference',
+      reference: '1 Corinthians 13:11-13',
+      content: 'When I was a child, I spoke as a child.',
+      bibleVersion: 'BSB',
+      memorizationStatus: 'unmemorized',
+      collectionIds: ['master-list'],
+      createdAt: now,
+      lastModified: now,
+    },
+  ], [])
+  await gotoApp(page, '?view=collection&collection=master-list')
+
+  const reference = page.locator('.headword-ref[aria-label="1 Corinthians 13:11-13"]')
+  await expect(reference).toBeVisible()
+
+  const layout = await reference.evaluate((el) => {
+    const book = el.querySelector('.headword-ref__book')
+    const verse = el.querySelector('.headword-ref__verse')
+    const version = el.nextElementSibling
+
+    if (!(book instanceof HTMLElement) || !(verse instanceof HTMLElement) || !(version instanceof HTMLElement)) {
+      throw new Error('Reference row markup changed')
+    }
+
+    const bookRect = book.getBoundingClientRect()
+    const verseRect = verse.getBoundingClientRect()
+    const versionRect = version.getBoundingClientRect()
+
+    return {
+      bookClientWidth: book.clientWidth,
+      bookScrollWidth: book.scrollWidth,
+      bookText: book.textContent,
+      verseText: verse.textContent?.trim(),
+      bookTop: bookRect.top,
+      verseTop: verseRect.top,
+      verseBottom: verseRect.bottom,
+      versionTop: versionRect.top,
+      versionBottom: versionRect.bottom,
+    }
+  })
+
+  expect(layout.bookText).toBe('1 Corinthians')
+  expect(layout.verseText).toBe('13:11-13')
+  expect(layout.bookScrollWidth).toBeGreaterThan(layout.bookClientWidth)
+  expect(Math.abs(layout.bookTop - layout.verseTop)).toBeLessThan(2)
+  expect(layout.versionTop).toBeLessThan(layout.verseBottom)
+  expect(layout.versionBottom).toBeGreaterThan(layout.verseTop)
+})
+
 test('empty state: no collections shows verse list or create CTA', async ({ page }) => {
   await clearAppStorage(page)
   await gotoApp(page, '?view=collections')

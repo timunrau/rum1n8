@@ -15,7 +15,7 @@ const parts = computed(() => {
 </script>
 
 <template>
-  <span class="headword-ref" :class="[`headword-ref--${size}`]">
+  <span class="headword-ref" :class="[`headword-ref--${size}`]" :aria-label="reference" :title="reference">
     <span class="headword-ref__book">{{ parts.book }}</span>
     <span v-if="parts.verseRef" class="headword-ref__verse">&nbsp;{{ parts.verseRef }}</span>
   </span>
