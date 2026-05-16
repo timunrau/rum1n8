@@ -1,3 +1,10 @@
+## [1.21.7](https://github.com/timunrau/rum1n8/compare/v1.21.6...v1.21.7) (2026-05-16)
+
+
+### Bug Fixes
+
+* truncate long verse list references ([6a03348](https://github.com/timunrau/rum1n8/commit/6a033488feb887ab6f418affcfc9a22b94957f6f))
+
 ## [1.21.6](https://github.com/timunrau/rum1n8/compare/v1.21.5...v1.21.6) (2026-05-16)
 
 
