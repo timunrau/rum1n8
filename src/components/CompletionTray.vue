@@ -1,42 +1,32 @@
 <template>
-  <div class="completion-tray pressed-paper">
+  <div
+    class="completion-tray"
+    :class="meetsAccuracyRequirement ? 'completion-tray--success' : 'completion-tray--retry'"
+  >
+    <div class="completion-tray__copy">
+      <p class="completion-tray__title">{{ completionTitle }}</p>
+      <p class="completion-tray__meta">{{ completionMeta }}</p>
+    </div>
     <div v-if="meetsAccuracyRequirement">
-      <p class="completion-tray__title">Great job!</p>
-      <p class="completion-tray__body" :class="context === 'review' && nextReviewLabel ? 'mb-1' : 'mb-4'">
-        <template v-if="context === 'memorization'">
-          <span v-if="memorizationMode === 'learn'">You've learned this verse. Ready to memorize it?</span>
-          <span v-else-if="memorizationMode === 'memorize'">You've memorized this verse. Ready to master it?</span>
-          <span v-else-if="memorizationMode === 'master'">You've mastered this verse. It's now in your spaced repetition system.</span>
-        </template>
-        <template v-else>
-          <template v-if="memorizationMode === 'master'">
-            You've reviewed this verse with {{ accuracy.toFixed(1) }}% accuracy.
-          </template>
-          <template v-else>Practice complete (doesn't count as review).</template>
-        </template>
-      </p>
-      <p v-if="context === 'review' && nextReviewLabel" class="completion-tray__meta">
-        Next review {{ nextReviewLabel === 'Due' || nextReviewLabel === 'Now' ? 'soon' : 'in ' + nextReviewLabel }}
-      </p>
-      <div class="flex justify-center gap-3">
+      <div class="completion-tray__actions">
         <template v-if="context === 'memorization'">
           <button
             @click="$emit('retry')"
-            class="btn-secondary"
+            class="btn-secondary btn--sm"
           >
             Retry
           </button>
           <button
             v-if="memorizationMode !== 'master'"
             @click="$emit('advance')"
-            class="btn-primary"
+            class="btn-primary btn--sm"
           >
             Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
           </button>
           <button
             v-else
             @click="$emit('exit')"
-            class="btn-primary"
+            class="btn-primary btn--sm"
           >
             Done
           </button>
@@ -44,21 +34,21 @@
         <template v-else>
           <button
             @click="$emit('retry')"
-            class="btn-secondary"
+            class="btn-secondary btn--sm"
           >
             Retry
           </button>
           <button
             v-if="isLastInList"
             @click="$emit('done')"
-            class="btn-primary"
+            class="btn-primary btn--sm"
           >
             Done
           </button>
           <button
             v-else
             @click="$emit('next-verse')"
-            class="btn-primary"
+            class="btn-primary btn--sm"
           >
             Next Verse
           </button>
@@ -66,19 +56,10 @@
       </div>
     </div>
     <div v-else>
-      <p class="completion-tray__title completion-tray__title--warn">Keep practicing!</p>
-      <p class="completion-tray__body" :class="context === 'review' && nextReviewLabel ? 'mb-1' : 'mb-4'">
-        Your accuracy is {{ accuracy.toFixed(1) }}%.
-        <span v-if="context === 'memorization'">You need 90% accuracy to advance.</span>
-        <span v-else>You need 90% accuracy to advance.</span>
-      </p>
-      <p v-if="context === 'review' && nextReviewLabel" class="completion-tray__meta">
-        Next review {{ nextReviewLabel === 'Due' || nextReviewLabel === 'Now' ? 'soon' : 'in ' + nextReviewLabel }}
-      </p>
-      <div class="flex justify-center">
+      <div class="completion-tray__actions">
         <button
           @click="$emit('retry')"
-          class="btn-primary"
+          class="btn-primary btn--sm"
         >
           Try Again
         </button>
@@ -100,6 +81,37 @@ export default {
     nextReviewLabel: { type: String, default: null },
     isLastInList: { type: Boolean, default: false }
   },
-  emits: ['advance', 'exit', 'retry', 'next-verse', 'done']
+  emits: ['advance', 'exit', 'retry', 'next-verse', 'done'],
+  computed: {
+    accuracyLabel() {
+      return `${this.accuracy.toFixed(1)}%`
+    },
+    completionTitle() {
+      if (!this.meetsAccuracyRequirement) return 'Keep going'
+      if (this.context === 'review') {
+        return this.memorizationMode === 'master' ? 'Reviewed' : 'Practice complete'
+      }
+      if (this.memorizationMode === 'learn') return 'Learned'
+      if (this.memorizationMode === 'memorize') return 'Memorized'
+      return 'Mastered'
+    },
+    accuracyMeta() {
+      return `${this.accuracyLabel} accuracy`
+    },
+    completionMeta() {
+      return [
+        this.accuracyMeta,
+        !this.meetsAccuracyRequirement ? '90% needed' : null,
+        this.nextReviewMeta
+      ].filter(Boolean).join(' · ')
+    },
+    nextReviewMeta() {
+      if (!this.meetsAccuracyRequirement || this.context !== 'review' || !this.nextReviewLabel) return null
+      const label = this.nextReviewLabel === 'Due' || this.nextReviewLabel === 'Now'
+        ? 'soon'
+        : `in ${this.nextReviewLabel}`
+      return `next review ${label}`
+    }
+  }
 }
 </script>

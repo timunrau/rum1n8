@@ -123,7 +123,7 @@ test('memorization: input focused after Try Again', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
   const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
   await tryAgainBtn.click()
 
@@ -197,12 +197,12 @@ test('learn mode: verse with dash (no spaces) treats parts as separate words', a
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('o', { delay: 50 })
   await page.waitForTimeout(100)
-  // After "o", "One" should be revealed; "two" still grey - completion modal should NOT appear
-  await expect(page.getByText('Great job!')).toHaveCount(0)
+  // After "o", "One" should be revealed; "two" still grey - completion tray should NOT appear
+  await expect(page.getByText('Learned')).toHaveCount(0)
 
   await page.keyboard.type('t', { delay: 50 })
   await page.waitForTimeout(200)
-  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText('Learned').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('learn mode: preserves authored spacing around dashes without spacing hyphenated words', async ({ page }) => {
@@ -260,11 +260,11 @@ test('memorize mode: verse with dash treats parts as separate words', async ({ p
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('a', { delay: 50 })
   await page.waitForTimeout(100)
-  await expect(page.getByText('Great job!')).toHaveCount(0)
+  await expect(page.getByText('Memorized')).toHaveCount(0)
 
   await page.keyboard.type('b', { delay: 50 })
   await page.waitForTimeout(200)
-  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText('Memorized').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('memorize mode: alternates hidden words on initial entry', async ({ page }) => {
@@ -323,10 +323,10 @@ test('reference typing shows full reference and requires shorthand to complete',
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('ot', { delay: 50 })
   await page.waitForTimeout(150)
-  await expect(page.getByText('Great job!')).toHaveCount(0)
+  await expect(page.getByText('Learned')).toHaveCount(0)
 
   await page.keyboard.type('j316', { delay: 50 })
-  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText('Learned').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('reference typing keeps an incorrect earlier digit red after a later digit is correct', async ({ page }) => {
@@ -421,7 +421,7 @@ test('memorize mode: retry flips hidden words', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 }) // wrong
   await page.keyboard.type('ab', { delay: 50 }) // correct: 'a' for Alpha, 'b' for Beta
 
-  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
   await page.getByRole('button', { name: 'Try Again' }).click()
   await page.waitForTimeout(200)
   await expect(page.locator('#letter-input-memorize')).toBeAttached()
@@ -457,5 +457,5 @@ test('master mode: verse with dash treats parts as separate words', async ({ pag
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('xy', { delay: 50 })
   await page.waitForTimeout(200)
-  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText('Mastered').first()).toBeVisible({ timeout: 3000 })
 })

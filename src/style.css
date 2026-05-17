@@ -777,42 +777,61 @@
     z-index: 10;
     flex-shrink: 0;
     width: min(calc(100% - 2rem), 42rem);
-    margin: 0 auto 0.85rem;
-    border-radius: var(--radius-xl);
-    padding: 1.05rem clamp(1rem, 4vw, 1.5rem) calc(1.1rem + env(safe-area-inset-bottom));
+    margin: 0 auto 0.7rem;
+    padding: 0.75rem clamp(0.85rem, 4vw, 1.35rem) calc(1.25rem + env(safe-area-inset-bottom));
+    color: var(--color-text-primary);
   }
-  .completion-tray > * {
-    position: relative;
-    z-index: 1;
+
+  .completion-tray__copy {
+    margin-inline: auto;
+    max-width: 32rem;
+    text-align: center;
   }
+
   .completion-tray__title {
     font-family: var(--font-serif);
-    font-size: 1.35rem;
+    font-size: 1.42rem;
     font-weight: 400;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     color: var(--color-text-primary);
-    text-align: center;
-    margin: 0 0 0.35rem;
-  }
-  .completion-tray__title--warn {
-    color: var(--color-accent-warm-text);
-  }
-  .completion-tray__body {
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-    text-align: center;
     margin: 0;
   }
+
   .completion-tray__meta {
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
+    line-height: 1.35;
+    letter-spacing: 0;
     color: var(--color-text-muted);
     text-align: center;
-    margin: 0.25rem 0 1rem;
+    margin: 0.4rem 0 0;
+  }
+
+  .completion-tray__actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+  }
+
+  .completion-tray__actions .btn-primary,
+  .completion-tray__actions .btn-secondary {
+    min-width: 6.25rem;
+  }
+
+  @media (max-width: 430px) {
+    .completion-tray {
+      width: min(calc(100% - 1.4rem), 42rem);
+      padding-inline: 0.7rem;
+    }
+
+    .completion-tray__title {
+      font-size: 1.28rem;
+    }
+
+    .completion-tray__actions {
+      flex-wrap: wrap;
+    }
   }
 
   .hero-onboarding {

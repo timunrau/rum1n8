@@ -646,7 +646,7 @@ test('review: input focused after Try Again', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
   const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
   await tryAgainBtn.click()
 
@@ -680,11 +680,11 @@ test('review mode: verse with dash (no spaces) treats parts as separate words', 
   await page.locator('#letter-input-review').focus()
   await page.keyboard.type('o', { delay: 50 })
   await page.waitForTimeout(100)
-  await expect(page.getByText('Great job!')).toHaveCount(0)
+  await expect(page.getByText('Reviewed')).toHaveCount(0)
 
   await page.keyboard.type('t', { delay: 50 })
   await page.waitForTimeout(200)
-  await expect(page.getByText('Great job!').first()).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText('Reviewed').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('review screen shows Learn, Memorize, Master buttons with Master selected', async ({ page }) => {
@@ -837,8 +837,8 @@ test('failed review (<90% accuracy) still updates SRS schedule', async ({ page }
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  // Should show "Keep practicing" since accuracy < 90%
-  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  // Should show retry copy since accuracy < 90%
+  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
 
   // But SRS should have been updated (interval reduced due to poor performance)
   await page.waitForTimeout(300)
@@ -891,7 +891,7 @@ test('retry after failed review does not overwrite SRS from first attempt', asyn
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText(/Keep practicing/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
 
   // Capture SRS state after first (failed) attempt
   await page.waitForTimeout(300)
@@ -916,7 +916,7 @@ test('retry after failed review does not overwrite SRS from first attempt', asyn
   await page.keyboard.type('bi', { delay: 50 })
 
   // Should now show success
-  await expect(page.getByText(/Great job/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Reviewed')).toBeVisible({ timeout: 5000 })
 
   // Click Done (only one verse in list) to trigger any save path
   const nextButton = page.getByRole('button', { name: 'Done' })
