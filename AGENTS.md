@@ -9,7 +9,7 @@
 
 ## Testing
 
-- Always run both test suites after making code changes.
+- Run tests when necessary based on the risk and scope of the change. Before committing or pushing, run both test suites unless the user explicitly says not to.
 - Do not add or update tests for new features until the user explicitly confirms the feature behavior is good.
 - Unit tests: `npm test`
 - End-to-end tests: `npm run test:e2e`
