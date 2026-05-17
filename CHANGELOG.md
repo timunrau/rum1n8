@@ -1,3 +1,15 @@
+# [1.23.0](https://github.com/timunrau/rum1n8/compare/v1.22.0...v1.23.0) (2026-05-17)
+
+
+### Bug Fixes
+
+* refine paper ink interface styling ([55c3bc3](https://github.com/timunrau/rum1n8/commit/55c3bc325e6712ea0428c463bd2a3d5efbe870fe))
+
+
+### Features
+
+* update color scheme ([ccfadd9](https://github.com/timunrau/rum1n8/commit/ccfadd96dfdb474e61342ee709661d0793be2a4a))
+
 # [1.22.0](https://github.com/timunrau/rum1n8/compare/v1.21.9...v1.22.0) (2026-05-16)
 
 
