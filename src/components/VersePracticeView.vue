@@ -23,9 +23,13 @@
         :inert="!panel.isCurrent ? '' : null"
       >
       <!-- Scrollable verse text -->
-      <div :ref="panel.isCurrent ? 'scrollContainer' : null" class="practice-scroll flex-1 overflow-y-auto min-h-0">
+      <div
+        class="practice-scroll flex-1 min-h-0"
+        :class="{ 'practice-scroll--completion': panel.isCurrent && showTray }"
+      >
         <article
-          class="practice-card pressed-paper fade-in"
+          :ref="panel.isCurrent ? 'scrollContainer' : null"
+          class="practice-card pressed-paper fade-in overflow-y-auto"
           @click="panel.isCurrent && focusInput()"
         >
           <div class="practice-card__text">
@@ -181,7 +185,6 @@
             ]"
             :aria-current="panel.mode === stage.mode ? 'step' : null"
           >
-            <span class="mode-chip__number">{{ index + 1 }}</span>
             <span
               :class="[
                 'mode-chip__label',
@@ -197,11 +200,6 @@
               {{ stage.name }}
             </span>
           </div>
-          <div
-            v-if="index < 2"
-            class="practice-stage-connector"
-            aria-hidden="true"
-          />
         </div>
       </div>
     </div>
@@ -656,11 +654,12 @@ export default {
     function scrollToEnd() {
       const scroller = getRefElement(scrollContainer.value)
       if (!scroller) return
-      const words = scroller.querySelectorAll('[id^="practice-word-"]')
-      const lastWord = words[words.length - 1]
-      if (lastWord) {
-        lastWord.scrollIntoView({ block: 'nearest' })
-      }
+      requestAnimationFrame(() => {
+        scroller.scrollTo({
+          top: Math.max(0, scroller.scrollHeight - scroller.clientHeight),
+          behavior: 'smooth'
+        })
+      })
     }
 
     expose({
@@ -701,17 +700,24 @@ export default {
 
 <style scoped>
 .practice-scroll {
+  display: flex;
   padding: 0.75rem 1rem 0.5rem;
+}
+
+.practice-scroll--completion {
+  padding-bottom: 1.25rem;
 }
 
 .practice-card {
   display: flex;
   width: 100%;
   max-width: 42rem;
-  min-height: clamp(15rem, 44vh, 24rem);
+  max-height: 100%;
+  min-height: min(clamp(15rem, 44vh, 24rem), 100%);
   flex-direction: column;
   margin-inline: auto;
-  border-radius: 18px;
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
   padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem);
 }
 
@@ -733,41 +739,24 @@ export default {
 }
 
 .practice-stage-shell {
-  padding: 0.35rem 1rem 0.85rem;
+  padding: 0.3rem 1rem 0.95rem;
 }
 
 .practice-stage-rail {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   width: 100%;
   max-width: 42rem;
   margin: 0 auto;
-  padding: 0.95rem 1rem 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--color-border-default) 82%, transparent);
-  border-radius: 16px;
-  background: var(--color-bg-chrome);
-  box-shadow: var(--shadow-soft);
+  padding: 0;
 }
 
 .practice-stage-item {
+  position: relative;
   display: flex;
-  flex: 1 1 0;
   align-items: center;
-  min-width: 0;
-}
-
-.practice-stage-item:last-child {
-  flex: 0 1 auto;
-}
-
-.practice-stage-connector {
-  flex: 1 1 2.5rem;
-  min-width: 1.6rem;
-  max-width: 6.5rem;
-  height: 1px;
-  margin: 0 0.65rem 1.3rem;
-  background: color-mix(in srgb, var(--color-text-muted) 44%, transparent);
+  flex: 0 0 auto;
 }
 
 .practice-swipe-frame {
@@ -813,7 +802,7 @@ export default {
   }
 
   .practice-card {
-    min-height: clamp(14rem, 42vh, 22rem);
+    min-height: min(clamp(14rem, 42vh, 22rem), 100%);
     padding-inline: 1rem;
   }
 
@@ -823,12 +812,7 @@ export default {
   }
 
   .practice-stage-rail {
-    padding-inline: 0.75rem;
-  }
-
-  .practice-stage-connector {
-    min-width: 1rem;
-    margin-inline: 0.45rem;
+    padding-inline: 0;
   }
 }
 
@@ -838,7 +822,7 @@ export default {
   }
 
   .practice-card {
-    min-height: 13rem;
+    min-height: min(13rem, 100%);
     padding-block: 1.15rem;
   }
 

@@ -654,14 +654,17 @@
   }
 
   .mode-chip {
+    position: relative;
     display: flex;
-    min-width: 4.5rem;
-    flex-direction: column;
+    min-width: 0;
+    flex-direction: row;
     align-items: center;
-    gap: 0.42rem;
-    padding: 0;
+    justify-content: center;
+    width: auto;
+    min-height: 2.25rem;
+    padding: 0.25rem 0.25rem 0.95rem;
     border: 0;
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     background-color: transparent;
     font-family: var(--font-sans);
     color: var(--color-text-muted);
@@ -670,64 +673,54 @@
     transition: color 160ms ease, opacity 160ms ease;
     user-select: none;
   }
-  .mode-chip__number {
-    display: inline-flex;
-    width: 2.1rem;
-    height: 2.1rem;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--color-text-muted) 74%, transparent);
+  .mode-chip::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0.35rem;
+    width: 0.25rem;
+    height: 0.25rem;
     border-radius: var(--radius-pill);
-    background-color: transparent;
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 0;
-    color: inherit;
-    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+    background: color-mix(in srgb, var(--color-text-muted) 34%, transparent);
+    transform: translateX(-50%);
+    transition: background-color 160ms ease, border-radius 160ms ease, height 160ms ease, width 160ms ease;
   }
   .mode-chip__label {
     font-size: 0.72rem;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
   }
-  .mode-chip--active {
+  .mode-chip.mode-chip--active {
     color: var(--color-accent);
     cursor: pointer;
   }
-  .mode-chip--active .mode-chip__number {
-    background-color: var(--color-action-bg);
-    border-color: var(--color-action-bg);
-    color: var(--color-action-text);
+  .mode-chip.mode-chip--active::after {
+    width: 2.35rem;
+    height: 1px;
+    border-radius: 1px;
+    background: var(--color-accent);
   }
-  .mode-chip--complete {
+  .mode-chip.mode-chip--complete {
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+  .mode-chip.mode-chip--complete::after {
+    background: color-mix(in srgb, var(--color-accent) 42%, transparent);
+  }
+  .mode-chip.mode-chip--complete:hover {
+    color: var(--color-text-primary);
+  }
+  .mode-chip.mode-chip--available {
     color: var(--color-text-secondary);
     cursor: pointer;
   }
-  .mode-chip--complete .mode-chip__number {
-    border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border-default));
-    background-color: color-mix(in srgb, var(--color-accent) 9%, transparent);
-  }
-  .mode-chip--complete:hover {
+  .mode-chip.mode-chip--available:hover {
     color: var(--color-text-primary);
   }
-  .mode-chip--available {
-    color: var(--color-text-secondary);
-    cursor: pointer;
-  }
-  .mode-chip--available .mode-chip__number {
-    border-color: var(--color-border-input);
-  }
-  .mode-chip--available:hover {
-    color: var(--color-text-primary);
-  }
-  .mode-chip--disabled {
+  .mode-chip.mode-chip--disabled {
     color: var(--color-text-muted);
     opacity: 0.52;
-  }
-  .mode-chip--disabled .mode-chip__number {
-    border-color: color-mix(in srgb, var(--color-border-default) 70%, transparent);
   }
 
   .practice-hint {
@@ -783,25 +776,18 @@
     position: relative;
     z-index: 10;
     flex-shrink: 0;
-    background-color: var(--color-bg-chrome);
-    border-top-left-radius: var(--radius-xl);
-    border-top-right-radius: var(--radius-xl);
-    padding: 1.25rem 1.25rem 2rem;
+    width: min(calc(100% - 2rem), 42rem);
+    margin: 0 auto 0.85rem;
+    border-radius: var(--radius-xl);
+    padding: 1.05rem clamp(1rem, 4vw, 1.5rem) calc(1.1rem + env(safe-area-inset-bottom));
   }
-  .completion-tray__rule {
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background: var(--color-accent-warm);
-    opacity: 0.6;
-    border-radius: 1px;
-    pointer-events: none;
+  .completion-tray > * {
+    position: relative;
+    z-index: 1;
   }
   .completion-tray__title {
     font-family: var(--font-serif);
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 400;
     letter-spacing: -0.02em;
     color: var(--color-text-primary);

@@ -1,6 +1,5 @@
 <template>
-  <div class="completion-tray">
-    <div class="completion-tray__rule" aria-hidden="true"></div>
+  <div class="completion-tray pressed-paper">
     <div v-if="meetsAccuracyRequirement">
       <p class="completion-tray__title">Great job!</p>
       <p class="completion-tray__body" :class="context === 'review' && nextReviewLabel ? 'mb-1' : 'mb-4'">

@@ -111,7 +111,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="practice-session-title flex-1 flex items-baseline min-w-0">
+        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
@@ -163,9 +163,6 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
         @swipe-verse="handlePracticeVerseSwipe"
       />
-      <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && memorizationMode" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
-      </Transition>
     </div>
 
   <!-- Completion Tray for Memorization -->
@@ -203,7 +200,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="practice-session-title flex-1 flex items-baseline min-w-0">
+        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
@@ -265,9 +262,6 @@
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
         @swipe-verse="handlePracticeVerseSwipe"
       />
-      <Transition name="result-overlay">
-        <div v-if="allWordsRevealed && reviewingVerse" class="absolute inset-x-0 top-0 -bottom-6 bg-black/20 pointer-events-none" />
-      </Transition>
     </div>
 
   <!-- Completion Tray for Review -->
@@ -8267,12 +8261,20 @@ export default {
 }
 
 .practice-session-title {
+  display: flex;
+  height: 2.5rem;
+  align-items: center;
   font-family: var(--font-serif);
   font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1;
   letter-spacing: 0;
+  margin: 0;
   color: var(--color-text-primary);
+}
+
+.practice-session-title > span {
+  transform: translateY(-0.05em);
 }
 
 .practice-header-button {
@@ -8308,23 +8310,6 @@ export default {
 
 .practice-header-button:hover {
   color: var(--color-text-primary);
-}
-
-.result-tray-enter-active,
-.result-tray-leave-active {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.result-tray-enter-from,
-.result-tray-leave-to {
-  transform: translateY(100%);
-}
-.result-overlay-enter-active,
-.result-overlay-leave-active {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.result-overlay-enter-from,
-.result-overlay-leave-to {
-  opacity: 0;
 }
 
 .app-view-stage {
