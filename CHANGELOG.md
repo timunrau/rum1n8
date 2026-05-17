@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/timunrau/rum1n8/compare/v1.23.3...v1.24.0) (2026-05-17)
+
+
+### Features
+
+* refine practice completion tray ([83e0780](https://github.com/timunrau/rum1n8/commit/83e07808e16bcdb2a2a8651e104ae4b9a0405f5a))
+
 ## [1.23.3](https://github.com/timunrau/rum1n8/compare/v1.23.2...v1.23.3) (2026-05-17)
 
 
