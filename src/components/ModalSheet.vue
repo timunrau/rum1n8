@@ -6,18 +6,18 @@
 
       <!-- Panel -->
       <div
-        class="modal-sheet-panel flex flex-col w-full bg-chrome rounded-t-xl sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-brand sm:shadow-soft sm:w-full"
+        class="modal-sheet-panel flex flex-col w-full bg-chrome rounded-t-[16px] sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:max-h-[85vh] sm:rounded-[16px] sm:shadow-soft sm:w-full"
         :class="[
           compact ? 'absolute inset-x-0 bottom-0 h-auto max-h-[85vh] shadow-soft' : 'relative h-full',
           maxWidth
         ]"
       >
         <!-- Sticky header -->
-        <div class="flex items-center justify-between px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 flex-shrink-0">
+        <div class="flex items-center justify-between gap-4 px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4 flex-shrink-0">
           <h2 class="text-2xl font-serif font-normal tracking-tight text-text-primary">{{ title }}</h2>
           <button
             @click="$emit('close')"
-            class="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-200"
+            class="p-2 -mr-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-200"
             aria-label="Close"
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

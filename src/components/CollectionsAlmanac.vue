@@ -18,7 +18,7 @@
       <div class="relative flex flex-col items-center">
         <button
           type="button"
-          class="btn-primary"
+          class="btn-secondary"
           data-testid="almanac-start-review"
           @click="$emit('start-review')"
         >
@@ -31,8 +31,8 @@
           v-if="showStartReviewCallout"
           class="pointer-events-auto relative z-10 mt-4 w-72 max-w-[calc(100vw-2rem)]"
         >
-          <div class="relative rounded-lg border border-border-default bg-elevated px-4 py-3 shadow-soft">
-            <div class="absolute left-1/2 bottom-full h-4 w-4 -translate-x-1/2 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
+          <div class="onboarding-callout relative rounded-lg px-4 py-3">
+            <div class="absolute left-1/2 bottom-full h-4 w-4 -translate-x-1/2 translate-y-2 rotate-45 border-l border-t border-border-default bg-[var(--color-bg-pressed-paper)]" />
             <button
               type="button"
               class="absolute right-3 top-3 rounded-full p-1 text-text-secondary transition-colors duration-200 hover:bg-surface-hover hover:text-text-primary"

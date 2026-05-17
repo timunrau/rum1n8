@@ -32,9 +32,9 @@ const variant = computed(() => {
 </script>
 
 <template>
-  <em class="pos-badge-el" :class="[`pos-badge-el--${variant}`]">
+  <span class="pos-badge-el" :class="[`pos-badge-el--${variant}`]">
     <span class="pos-badge-el__bracket">[</span>{{ label }}<span class="pos-badge-el__bracket">]</span>
-  </em>
+  </span>
 </template>
 
 <style scoped>
@@ -65,6 +65,11 @@ const variant = computed(() => {
 }
 
 .pos-badge-el--due {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--color-status-due-text);
   background: var(--color-status-due-bg);
   border: 1px solid var(--color-status-due-border);

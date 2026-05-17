@@ -322,16 +322,17 @@ img {
 
 .phone-frame {
   width: min(100%, 360px);
-  padding: 0.9rem;
+  padding: 1rem;
   border-radius: 1.25rem;
-  background: var(--page-bg-soft);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background: #E7DED0;
+  border: 1px solid rgba(30, 30, 30, 0.16);
+  box-shadow: none;
 }
 
 .phone-frame img {
   width: 100%;
   border-radius: 0.85rem;
+  border: 1px solid rgba(30, 30, 30, 0.10);
 }
 
 .section {
@@ -459,7 +460,6 @@ img {
   align-items: end;
   padding: 3.5rem;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent-warm);
   border-radius: 1rem;
   background: var(--page-bg-soft);
   box-shadow: none;
@@ -509,15 +509,17 @@ img {
 
 .step__number {
   margin: 0 0 1rem;
-  width: 2.4rem;
-  height: 2.4rem;
+  width: auto;
+  height: auto;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  color: var(--accent-contrast);
-  font-weight: 700;
-  font-size: 1.05rem;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
   line-height: 1;
 }
 
@@ -666,11 +668,11 @@ img {
 .scripture-quote {
   position: relative;
   margin: 1.45rem 0;
-  padding: 1rem 1.15rem 1.05rem 1.35rem;
-  border: 1px solid rgba(200, 164, 90, 0.24);
-  border-left: 4px solid var(--accent-warm);
+  padding: 1rem 1.15rem 1.05rem;
+  border: 1px solid var(--border);
   border-radius: 0.85rem;
   background: rgba(251, 248, 242, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 253, 248, 0.62);
 }
 
 .scripture-quote--major {
@@ -706,7 +708,6 @@ img {
   margin-top: 4rem;
   padding: 2rem;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent-warm);
   border-radius: 1rem;
   background: var(--page-bg-soft);
 }
@@ -899,6 +900,11 @@ img {
   }
 
   .phone-frame {
-    background: #1F231E;
+    background: #0D0F0C;
+    border-color: rgba(243, 239, 230, 0.16);
+  }
+
+  .phone-frame img {
+    border-color: rgba(243, 239, 230, 0.10);
   }
 }

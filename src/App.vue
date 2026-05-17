@@ -22,7 +22,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search verses..."
-            class="w-full py-2 pl-10 border border-border-default rounded-lg shadow-soft focus:ring-0 focus:border-accent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
+            class="w-full py-2 pl-10 border border-border-default rounded-lg focus:ring-1 focus:ring-accent focus:border-accent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
             :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
             @keydown.escape="clearSearch"
           />
@@ -100,32 +100,33 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
-      <div class="h-16 flex items-center px-4">
+    <header class="practice-session-header z-40 flex-shrink-0">
+      <div class="practice-session-header__inner">
         <button
           @click="exitMemorization"
-          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+          class="practice-header-button practice-header-button--plain -ml-1 mr-1"
+          aria-label="Back"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-text-primary flex-1 flex items-baseline min-w-0">
+        <h1 class="practice-session-title flex-1 flex items-baseline min-w-0">
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse)"
-            class="p-2 rounded-full transition-colors"
-            :class="isSpeaking ? 'text-accent' : 'text-text-secondary active:bg-surface-active'"
+            class="practice-header-button practice-header-button--plain"
+            :class="isSpeaking ? 'text-accent' : ''"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
           >
             <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
             <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
             </svg>
           </button>
         </div>
@@ -191,42 +192,43 @@
     style="height: 100dvh;"
   >
     <!-- Top App Bar -->
-    <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
-      <div class="h-16 flex items-center px-4">
+    <header class="practice-session-header z-40 flex-shrink-0">
+      <div class="practice-session-header__inner">
         <button
           @click="exitReview"
-          class="p-2 -ml-2 mr-1 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+          class="practice-header-button practice-header-button--plain -ml-1 mr-1"
+          aria-label="Back"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold text-text-primary flex-1 flex items-baseline min-w-0">
+        <h1 class="practice-session-title flex-1 flex items-baseline min-w-0">
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse)"
-            class="p-2 rounded-full transition-colors"
-            :class="isSpeaking ? 'text-accent' : 'text-text-secondary active:bg-surface-active'"
+            class="practice-header-button practice-header-button--plain"
+            :class="isSpeaking ? 'text-accent' : ''"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
           >
             <svg v-if="isSpeaking" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
             <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.68-.57-1.93-1.42A9.69 9.69 0 012.25 12c0-.83.1-1.64.28-2.28.25-.85 1.05-1.42 1.93-1.42h2.24z" />
             </svg>
           </button>
           <!-- Share Button -->
           <button
             @click="copyVerse(reviewingVerse)"
-            class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+            class="practice-header-button practice-header-button--plain"
             title="Share verse"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </button>
         </div>
@@ -566,7 +568,7 @@
                 data-testid="search-bar"
                 @click="openSearch"
               >
-                <div class="flex items-center h-10 bg-surface rounded-lg px-4 gap-2 border border-border-default shadow-soft">
+                <div class="flex items-center h-10 bg-surface rounded-lg px-4 gap-2 border border-border-default">
                   <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -907,8 +909,8 @@
             v-if="shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId"
             class="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex px-4"
           >
-            <div class="pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-lg border border-border-default bg-elevated px-4 py-3 shadow-soft">
-              <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-elevated" />
+            <div class="onboarding-callout pointer-events-auto relative w-[calc(100%-1rem)] max-w-sm rounded-lg px-4 py-3">
+              <div class="absolute left-8 bottom-full h-4 w-4 translate-y-2 rotate-45 border-l border-t border-border-default bg-[var(--color-bg-pressed-paper)]" />
               <div class="flex items-start gap-3">
                 <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-warm text-accent-warm-contrast">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -8253,6 +8255,64 @@ export default {
 </script>
 
 <style scoped>
+.practice-session-header {
+  background: var(--color-bg-base);
+}
+
+.practice-session-header__inner {
+  display: flex;
+  width: 100%;
+  max-width: 56rem;
+  min-height: 4rem;
+  align-items: center;
+  margin: 0 auto;
+  padding: 0.55rem 1rem;
+}
+
+.practice-session-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--color-text-primary);
+}
+
+.practice-header-button {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.practice-header-button svg {
+  opacity: 0.92;
+}
+
+.practice-header-button--plain {
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.practice-header-button--framed {
+  border: 1px solid color-mix(in srgb, var(--color-border-input) 76%, transparent);
+  background: color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+  box-shadow: none;
+}
+
+.practice-header-button:active {
+  background: var(--color-bg-active);
+}
+
+.practice-header-button:hover {
+  color: var(--color-text-primary);
+}
+
 .result-tray-enter-active,
 .result-tray-leave-active {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);

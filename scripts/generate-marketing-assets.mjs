@@ -435,7 +435,7 @@ async function captureOgCard(browser, baseUrl) {
               --forest: #1F3D2E;
               --forest-strong: #14291F;
               --gold: #C8A45A;
-              --card: rgba(251, 248, 242, 0.78);
+              --card: #E7DED0;
               --stroke: rgba(30, 30, 30, 0.14);
             }
             * {
@@ -550,7 +550,7 @@ async function captureOgCard(browser, baseUrl) {
               overflow: hidden;
               border-radius: 28px;
               background: var(--card);
-              border: 1px solid rgba(30, 30, 30, 0.12);
+              border: 1px solid rgba(30, 30, 30, 0.16);
               box-shadow: 0 1px 1px rgba(30, 30, 30, 0.04), 0 2px 4px rgba(30, 30, 30, 0.05);
             }
             .phone img {
@@ -558,6 +558,7 @@ async function captureOgCard(browser, baseUrl) {
               height: 100%;
               object-fit: cover;
               display: block;
+              border: 1px solid rgba(30, 30, 30, 0.10);
             }
             .phone.practice {
               left: 92px;

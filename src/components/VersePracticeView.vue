@@ -23,17 +23,20 @@
         :inert="!panel.isCurrent ? '' : null"
       >
       <!-- Scrollable verse text -->
-      <div :ref="panel.isCurrent ? 'scrollContainer' : null" class="flex-1 overflow-y-auto min-h-0 sm:py-4">
-        <div class="bg-chrome p-4 mb-2 sm:my-4 fade-in">
-          <div
-            class="text-xl leading-relaxed text-text-primary font-serif"
-            @click="panel.isCurrent && focusInput()"
+      <div :ref="panel.isCurrent ? 'scrollContainer' : null" class="practice-scroll flex-1 overflow-y-auto min-h-0">
+        <article
+          class="practice-card pressed-paper fade-in"
+          @click="panel.isCurrent && focusInput()"
         >
+          <div class="practice-card__text">
           <span
             v-for="(word, index) in panel.words"
             :key="index"
             :id="panel.isCurrent ? `practice-word-${index}` : null"
-            :class="word.separatorAfter ? 'inline-block' : 'inline-block mr-2'"
+            :class="[
+              word.separatorAfter ? 'practice-word inline-block' : 'practice-word inline-block mr-2',
+              panel.isCurrent && isCurrentPracticeWord(panel.words, index) ? 'practice-word--current' : ''
+            ]"
           >
             <span v-if="panel.mode === 'learn'">
               <template v-if="word.revealed">
@@ -87,11 +90,11 @@
                   >{{ segment.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
                 </template>
                 <template v-else>
-                  <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="word-blank">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                  <span :class="word.incorrect ? 'text-word-incorrect' : 'text-text-primary'">{{ getPartialWordText(word) }}</span><span class="word-blank text-transparent">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
                 </template>
               </template>
               <span v-else>
-                <span class="word-blank">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <span class="word-blank text-transparent">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
             <span v-else-if="panel.mode === 'master'">
@@ -116,17 +119,17 @@
                   >{{ segment.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
                 </template>
                 <template v-else>
-                  <span :class="word.incorrect ? 'text-word-incorrect' : (word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold')">{{ getPartialWordText(word) }}</span><span class="word-blank">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                  <span :class="word.incorrect ? 'text-word-incorrect' : (word.isReferenceUnit ? 'text-text-primary' : 'text-text-primary font-semibold')">{{ getPartialWordText(word) }}</span><span class="word-blank text-transparent">{{ getRemainingPartText(word) }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
                 </template>
               </template>
               <span v-else>
-                <span class="word-blank">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
+                <span class="word-blank text-transparent">{{ word.text }}</span><span class="text-word-unrevealed">{{ word.separatorAfter || '' }}</span>
               </span>
             </span>
           </span>
-        </div>
+          </div>
+        </article>
       </div>
-    </div>
 
     <div v-if="panel.isCurrent && showPracticeModesHint && !showTray && practiceModeHint" class="px-4 pb-1">
       <div class="practice-hint">
@@ -157,12 +160,12 @@
     </div>
 
     <!-- Mode buttons: Learn | Memorize | Master -->
-    <div v-if="!showTray && (panel.isCurrent || isPracticeSwipeActive)" class="my-2 flex-shrink-0">
-      <div class="flex items-center justify-center gap-1">
+    <div v-if="!showTray && (panel.isCurrent || isPracticeSwipeActive)" class="practice-stage-shell flex-shrink-0">
+      <div class="practice-stage-rail">
         <div
           v-for="(stage, index) in stages"
           :key="index"
-          class="flex items-center"
+          class="practice-stage-item"
         >
           <div
             @click="panel.isCurrent && onSwitchMode(stage.mode)"
@@ -176,18 +179,29 @@
                 ? 'mode-chip--available'
                 : 'mode-chip--disabled'
             ]"
+            :aria-current="panel.mode === stage.mode ? 'step' : null"
           >
-            {{ stage.name }}
+            <span class="mode-chip__number">{{ index + 1 }}</span>
+            <span
+              :class="[
+                'mode-chip__label',
+                panel.mode === stage.mode
+                  ? 'mode-chip--active'
+                  : isStageComplete(stage)
+                  ? 'mode-chip--complete'
+                  : canSwitch(stage.mode)
+                  ? 'mode-chip--available'
+                  : 'mode-chip--disabled'
+              ]"
+            >
+              {{ stage.name }}
+            </span>
           </div>
-          <svg
+          <div
             v-if="index < 2"
-            class="w-5 h-5 mx-1 text-text-muted"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
+            class="practice-stage-connector"
+            aria-hidden="true"
+          />
         </div>
       </div>
     </div>
@@ -311,6 +325,11 @@ export default {
     function canSwitch(mode) {
       if (props.context === 'review') return true
       return props.canSwitchToMode(mode)
+    }
+
+    function isCurrentPracticeWord(words, index) {
+      const currentIndex = words.findIndex((word) => !word.revealed)
+      return currentIndex === index
     }
 
     function onSwitchMode(mode) {
@@ -620,7 +639,7 @@ export default {
         return 'text-word-unrevealed'
       }
 
-      return 'word-blank'
+      return 'word-blank text-transparent'
     }
 
     onMounted(() => {
@@ -659,6 +678,7 @@ export default {
       scrollContainer,
       isStageComplete,
       canSwitch,
+      isCurrentPracticeWord,
       onSwitchMode,
       onInput,
       onKeydown,
@@ -680,6 +700,72 @@ export default {
 </script>
 
 <style scoped>
+.practice-scroll {
+  padding: 0.75rem 1rem 0.5rem;
+}
+
+.practice-card {
+  display: flex;
+  min-height: clamp(15rem, 44vh, 24rem);
+  flex-direction: column;
+  border-radius: 18px;
+  padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem);
+}
+
+.practice-card__text {
+  position: relative;
+  z-index: 1;
+}
+
+.practice-card__text {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.65;
+  letter-spacing: 0;
+  color: var(--color-text-primary);
+}
+
+.practice-word {
+  position: relative;
+}
+
+.practice-stage-shell {
+  padding: 0.35rem 1rem 0.85rem;
+}
+
+.practice-stage-rail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.95rem 1rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 82%, transparent);
+  border-radius: 16px;
+  background: var(--color-bg-chrome);
+  box-shadow: var(--shadow-soft);
+}
+
+.practice-stage-item {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+}
+
+.practice-stage-item:last-child {
+  flex: 0 1 auto;
+}
+
+.practice-stage-connector {
+  flex: 1 1 2.5rem;
+  min-width: 1.6rem;
+  max-width: 6.5rem;
+  height: 1px;
+  margin: 0 0.65rem 1.3rem;
+  background: color-mix(in srgb, var(--color-text-muted) 44%, transparent);
+}
+
 .practice-swipe-frame {
   position: relative;
   touch-action: pan-y;
@@ -715,6 +801,46 @@ export default {
 
 .practice-swipe-track .fade-in {
   animation: none;
+}
+
+@media (max-width: 420px) {
+  .practice-scroll {
+    padding-inline: 0.85rem;
+  }
+
+  .practice-card {
+    min-height: clamp(14rem, 42vh, 22rem);
+    padding-inline: 1rem;
+  }
+
+  .practice-card__text {
+    font-size: 1.25rem;
+    line-height: 1.65;
+  }
+
+  .practice-stage-rail {
+    padding-inline: 0.75rem;
+  }
+
+  .practice-stage-connector {
+    min-width: 1rem;
+    margin-inline: 0.45rem;
+  }
+}
+
+@media (max-height: 720px) {
+  .practice-scroll {
+    padding-top: 0.65rem;
+  }
+
+  .practice-card {
+    min-height: 13rem;
+    padding-block: 1.15rem;
+  }
+
+  .practice-stage-shell {
+    padding-bottom: 0.55rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
