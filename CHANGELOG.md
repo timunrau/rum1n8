@@ -1,3 +1,11 @@
+## [1.23.1](https://github.com/timunrau/rum1n8/compare/v1.23.0...v1.23.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* align practice mode rail with card ([51d0166](https://github.com/timunrau/rum1n8/commit/51d0166aa3b6d4e023ac407a6972673779f4abaf))
+* reuse almanac stats row on stats screen ([79849ca](https://github.com/timunrau/rum1n8/commit/79849ca7564f44b6eed44f396a5d21417f122ff8))
+
 # [1.23.0](https://github.com/timunrau/rum1n8/compare/v1.22.0...v1.23.0) (2026-05-17)
 
 
