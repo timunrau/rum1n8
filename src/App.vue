@@ -765,7 +765,7 @@
 
           <!-- User Collections -->
           <div
-            v-for="collection in collections"
+            v-for="collection in sortedCollections"
             :key="collection.id"
             @click="viewCollection(collection.id)"
             class="collection-tile cursor-pointer"
@@ -1357,7 +1357,7 @@
           </div>
 
           <CollectionPicker
-            :collections="collections"
+            :collections="sortedCollections"
             v-model="newVerse.collectionIds"
           />
         </form>
@@ -1465,7 +1465,7 @@
           </div>
 
           <CollectionPicker
-            :collections="collections"
+            :collections="sortedCollections"
             v-model="editingVerse.collectionIds"
           />
 
@@ -1742,7 +1742,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
           <!-- Collections selector (only when opening from collections screen) -->
           <CollectionPicker
             v-if="csvImportFromCollectionsScreen && collections.length > 0"
-            :collections="collections"
+            :collections="sortedCollections"
             v-model="csvImportTargetCollectionIds"
             label="Add to collections"
           />
@@ -3692,6 +3692,20 @@ export default {
     // Filtered verses for current view
     const filteredVerses = computed(() => {
       return getVersesForView()
+    })
+
+    const collectionNameCollator = new Intl.Collator(undefined, {
+      numeric: true,
+      sensitivity: 'base'
+    })
+
+    const sortedCollections = computed(() => {
+      return [...collections.value].sort((a, b) => {
+        const nameComparison = collectionNameCollator.compare(a.name || '', b.name || '')
+        if (nameComparison !== 0) return nameComparison
+
+        return String(a.id || '').localeCompare(String(b.id || ''))
+      })
     })
 
     // Sort filtered verses by biblical reference
@@ -8065,6 +8079,7 @@ export default {
       reviewingVerseNextReviewLabel,
       isLastInReviewList,
       collections,
+      sortedCollections,
       currentCollectionId,
       showCollectionForm,
       showEditVerseForm,
