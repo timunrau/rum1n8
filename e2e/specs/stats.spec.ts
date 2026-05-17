@@ -63,8 +63,8 @@ test.beforeEach(async ({ page }) => {
 test('Stats tab shows empty state when no verses exist', async ({ page }) => {
   await page.getByTestId('nav-stats').click()
   await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
-  await expect(page.getByText('Current Streak')).toBeVisible()
-  await expect(page.getByText(/0\s*day/)).toBeVisible()
+  await expect(page.getByText('day streak')).toBeVisible()
+  await expect(page.locator('.almanac__stat').filter({ hasText: 'day streak' }).getByText('0')).toBeVisible()
 })
 
 test('Stats tab shows current streak from review history', async ({ page }) => {
@@ -78,7 +78,7 @@ test('Stats tab shows current streak from review history', async ({ page }) => {
 
   await page.getByTestId('nav-stats').click()
   // Should show at least 2 days streak (today + yesterday)
-  await expect(page.getByText(/[2-9]\s*days/)).toBeVisible({ timeout: 5000 })
+  await expect(page.locator('.almanac__stat').filter({ hasText: 'day streak' }).getByText(/[2-9]/)).toBeVisible({ timeout: 5000 })
 })
 
 test('Stats tab shows Daily Activity card with chart', async ({ page }) => {

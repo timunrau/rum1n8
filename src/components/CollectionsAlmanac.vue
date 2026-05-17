@@ -49,7 +49,7 @@
         </div>
       </div>
     </div>
-    <h2 class="almanac__section-heading fade-in">{{ sectionTitle }}</h2>
+    <h2 v-if="sectionTitle" class="almanac__section-heading fade-in">{{ sectionTitle }}</h2>
   </section>
 </template>
 
@@ -62,7 +62,7 @@ defineProps({
   showStartReviewCallout: { type: Boolean, default: false },
   startReviewCalloutTitle: { type: String, default: '' },
   startReviewCalloutBody: { type: String, default: '' },
-  sectionTitle: { type: String, required: true },
+  sectionTitle: { type: String, default: '' },
 })
 
 defineEmits(['start-review', 'dismiss-start-review-callout'])

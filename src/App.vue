@@ -805,15 +805,12 @@
       <!-- Stats View -->
       <div v-if="panelView === 'stats' && !currentCollectionId" class="">
         <div class="space-y-6 py-4 overflow-y-auto pb-24" style="max-height: calc(100vh - 4rem);">
-
-          <!-- Streak Card -->
-          <div class="stats-card">
-            <h3 class="stats-card__label">Current Streak</h3>
-            <div class="flex items-baseline gap-2">
-              <span class="stats-card__numeral">{{ currentStreak }}</span>
-              <span class="text-lg text-text-muted font-serif italic">day{{ currentStreak !== 1 ? 's' : '' }}</span>
-            </div>
-          </div>
+          <CollectionsAlmanac
+            :current-streak="currentStreak"
+            :due-verses-count="dueVersesCount"
+            :mastered-count="masteredCount"
+            :show-start-review="false"
+          />
 
           <!-- Daily Activity Card -->
           <div class="stats-card">
