@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/timunrau/rum1n8/compare/v1.23.2...v1.23.3) (2026-05-17)
+
+
+### Bug Fixes
+
+* sort collections alphabetically ([312bce7](https://github.com/timunrau/rum1n8/commit/312bce7a7688365dae74859c7fb8b12e3493a050))
+
 ## [1.23.2](https://github.com/timunrau/rum1n8/compare/v1.23.1...v1.23.2) (2026-05-17)
 
 
