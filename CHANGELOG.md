@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/timunrau/rum1n8/compare/v1.23.1...v1.23.2) (2026-05-17)
+
+
+### Bug Fixes
+
+* polish practice completion layout ([14c4937](https://github.com/timunrau/rum1n8/commit/14c4937a3c5256025935f51dfbf2e30d816561f3))
+
 ## [1.23.1](https://github.com/timunrau/rum1n8/compare/v1.23.0...v1.23.1) (2026-05-17)
 
 
