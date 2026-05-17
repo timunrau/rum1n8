@@ -706,8 +706,11 @@ export default {
 
 .practice-card {
   display: flex;
+  width: 100%;
+  max-width: 42rem;
   min-height: clamp(15rem, 44vh, 24rem);
   flex-direction: column;
+  margin-inline: auto;
   border-radius: 18px;
   padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem);
 }
@@ -737,6 +740,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   max-width: 42rem;
   margin: 0 auto;
   padding: 0.95rem 1rem 0.8rem;
