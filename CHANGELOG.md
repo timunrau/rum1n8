@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/timunrau/rum1n8/compare/v1.25.1...v1.26.0) (2026-05-18)
+
+
+### Features
+
+* track app preference analytics ([e596758](https://github.com/timunrau/rum1n8/commit/e5967581c19baea01cffbd648cbcc09534a7bcae))
+
 ## [1.25.1](https://github.com/timunrau/rum1n8/compare/v1.25.0...v1.25.1) (2026-05-18)
 
 
