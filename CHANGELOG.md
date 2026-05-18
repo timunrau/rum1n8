@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/timunrau/rum1n8/compare/v1.24.0...v1.25.0) (2026-05-18)
+
+
+### Features
+
+* refresh app and marketing visuals ([2bc9964](https://github.com/timunrau/rum1n8/commit/2bc9964ae8254814ea4bd726cc6b3e4bae8cb3a1))
+
 # [1.24.0](https://github.com/timunrau/rum1n8/compare/v1.23.3...v1.24.0) (2026-05-17)
 
 
