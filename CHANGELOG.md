@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/timunrau/rum1n8/compare/v1.25.0...v1.25.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* align PWA manifest colors ([575dde2](https://github.com/timunrau/rum1n8/commit/575dde2aa9df9d08023bc9cf0a673ced9a648f36))
+
 # [1.25.0](https://github.com/timunrau/rum1n8/compare/v1.24.0...v1.25.0) (2026-05-18)
 
 
