@@ -3806,6 +3806,7 @@ export default {
     const syncConfigVersion = ref(0)
     const syncStateVersion = ref(0)
     const syncTick = ref(0) // bumps every minute so relative time stays fresh
+    const appProfileAnalyticsReady = ref(false)
 
     // Check if any sync provider is configured
     const hasSyncConfigured = computed(() => {
@@ -3820,6 +3821,27 @@ export default {
       if (id === 'webdav') return 'WebDAV'
       return 'cloud'
     })
+
+    const getSyncProviderAnalyticsValue = () => {
+      syncConfigVersion.value
+      if (!isSyncConfigured()) return 'none'
+
+      const id = getActiveProviderId()
+      if (id === 'gdrive') return 'google_drive'
+      if (id === 'webdav') return 'webdav'
+      return id || 'unknown'
+    }
+
+    const getAppProfileAnalyticsData = () => ({
+      sync_provider: getSyncProviderAnalyticsValue(),
+      color_scheme: isDark.value ? 'dark' : 'light',
+      practice_references: appSettings.value.requireReferenceTyping ? 'enabled' : 'disabled'
+    })
+
+    const trackAppProfile = () => {
+      if (!appProfileAnalyticsReady.value) return
+      trackEvent('app_profile', getAppProfileAnalyticsData())
+    }
 
     const syncStatus = computed(() => {
       syncStateVersion.value
@@ -7468,6 +7490,7 @@ export default {
         ...appSettings.value,
         requireReferenceTyping: enabled
       })
+      trackAppProfile()
     }
 
     const updateAnalyticsOptOut = (optOut) => {
@@ -7483,6 +7506,10 @@ export default {
 
     const analyticsAvailable = isAnalyticsConfigured()
 
+    watch(isDark, () => {
+      trackAppProfile()
+    })
+
     // Close settings modal
     const closeSettings = () => {
       showSettings.value = false
@@ -7496,6 +7523,7 @@ export default {
       continueInstallAfterSyncSetup.value = false
       // Bump reactive trigger so hasSyncConfigured recomputes
       syncConfigVersion.value++
+      trackAppProfile()
       // Trigger sync after saving settings
       setTimeout(async () => {
         await triggerSync(false)
@@ -7963,10 +7991,14 @@ export default {
       markAppOpened(getCurrentAppUrl())
 
       setAnalyticsOptOut(appSettings.value.analyticsOptOut)
+      appProfileAnalyticsReady.value = true
+      const appProfileAnalyticsData = getAppProfileAnalyticsData()
       trackEvent('app_opened', {
+        ...appProfileAnalyticsData,
         installed: isPWAInstalled(),
         verse_count: verses.value.length
       })
+      trackEvent('app_profile', appProfileAnalyticsData)
 
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
       window.addEventListener('online', handleConnectivityChange)
