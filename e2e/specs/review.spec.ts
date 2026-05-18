@@ -646,7 +646,7 @@ test('review: input focused after Try Again', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep practicing')).toBeVisible({ timeout: 5000 })
   const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
   await tryAgainBtn.click()
 
@@ -838,7 +838,7 @@ test('failed review (<90% accuracy) still updates SRS schedule', async ({ page }
   await page.keyboard.type('bi', { delay: 50 })
 
   // Should show retry copy since accuracy < 90%
-  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep practicing')).toBeVisible({ timeout: 5000 })
 
   // But SRS should have been updated (interval reduced due to poor performance)
   await page.waitForTimeout(300)
@@ -891,7 +891,7 @@ test('retry after failed review does not overwrite SRS from first attempt', asyn
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep practicing')).toBeVisible({ timeout: 5000 })
 
   // Capture SRS state after first (failed) attempt
   await page.waitForTimeout(300)

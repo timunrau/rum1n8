@@ -16,7 +16,7 @@
     --color-action-hover: #14291F;
     --color-action-text: #FBF8F2;
     --gradient-primary: linear-gradient(180deg, #1F3D2E 0%, #1F3D2E 100%);
-    --gradient-page: linear-gradient(180deg, #FBF8F2 0%, #EFE9DD 100%);
+    --gradient-page: linear-gradient(180deg, #FBF8F2 0%, #F1EEE8 100%);
     --shadow-soft:
       0 1px 1px rgba(30, 30, 30, 0.04),
       0 2px 4px rgba(30, 30, 30, 0.05);
@@ -41,7 +41,7 @@
     --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
     /* Semantic surface tokens */
-    --color-bg-base: #EFE9DD;
+    --color-bg-base: #F1EEE8;
     --color-bg-chrome: #FBF8F2;
     --color-bg-chrome-rgb: 251, 248, 242;
     --color-bg-surface: #FBF8F2;
@@ -91,7 +91,7 @@
     --color-chart-grid: rgba(30, 30, 30, 0.07);
 
     /* Marketing-page aliases — same source of truth */
-    --page-bg: #EFE9DD;
+    --page-bg: #F1EEE8;
     --page-bg-soft: #FBF8F2;
     --border: rgba(30, 30, 30, 0.14);
     --text: #1E1E1E;

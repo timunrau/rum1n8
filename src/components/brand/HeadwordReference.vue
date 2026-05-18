@@ -51,19 +51,6 @@ const parts = computed(() => {
   min-width: 0;
 }
 
-.headword-ref__book::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 15%;
-  bottom: -0.1em;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-accent-warm), color-mix(in srgb, var(--color-accent-warm) 0%, transparent));
-  border-radius: 1px;
-  opacity: 0.75;
-  pointer-events: none;
-}
-
 .headword-ref__verse {
   white-space: nowrap;
   flex-shrink: 0;

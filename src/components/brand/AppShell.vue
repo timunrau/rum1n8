@@ -18,7 +18,6 @@ defineProps({
   min-height: 100%;
   width: 100%;
   background-color: var(--color-bg-base);
-  background-image: var(--gradient-page);
   overflow: hidden;
   isolation: isolate;
 }

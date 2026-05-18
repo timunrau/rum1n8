@@ -123,7 +123,7 @@ test('memorization: input focused after Try Again', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 })
   await page.keyboard.type('bi', { delay: 50 })
 
-  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep practicing')).toBeVisible({ timeout: 5000 })
   const tryAgainBtn = page.getByRole('button', { name: 'Try Again' })
   await tryAgainBtn.click()
 
@@ -421,7 +421,7 @@ test('memorize mode: retry flips hidden words', async ({ page }) => {
   await page.keyboard.type('x', { delay: 50 }) // wrong
   await page.keyboard.type('ab', { delay: 50 }) // correct: 'a' for Alpha, 'b' for Beta
 
-  await expect(page.getByText('Keep going')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Keep practicing')).toBeVisible({ timeout: 5000 })
   await page.getByRole('button', { name: 'Try Again' }).click()
   await page.waitForTimeout(200)
   await expect(page.locator('#letter-input-memorize')).toBeAttached()

@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const LIGHT_THEME_COLOR = '#EFE9DD'
+const LIGHT_THEME_COLOR = '#F1EEE8'
 const DARK_THEME_COLOR = '#121411'
 
 export function useColorScheme() {

@@ -531,7 +531,11 @@
             v-if="panelView === 'collections'"
             :class="['app-view-header glass-chrome', isScrolled ? '' : 'glass-chrome--transparent']"
           >
-            <div class="h-16 flex items-center px-2 max-w-4xl mx-auto w-full">
+            <div
+              :class="currentCollectionId
+                ? 'practice-session-header__inner'
+                : 'h-16 flex items-center px-2 max-w-4xl mx-auto w-full'"
+            >
               <!-- Hamburger menu button (top-level only) -->
               <button
                 v-if="!currentCollectionId"
@@ -548,10 +552,11 @@
               <button
                 v-if="currentCollectionId"
                 @click="viewAllVerses"
-                class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors flex-shrink-0"
+                class="practice-header-button practice-header-button--plain -ml-1 mr-1"
+                aria-label="Back"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
@@ -571,8 +576,8 @@
               </div>
 
               <!-- Collection title -->
-              <h1 v-if="currentCollectionId" class="text-xl font-serif font-normal tracking-tight text-text-primary flex-1 ml-2 truncate">
-                {{ getCollectionName(currentCollectionId) }}
+              <h1 v-if="currentCollectionId" class="practice-session-title flex-1 min-w-0">
+                <span class="truncate min-w-0">{{ getCollectionName(currentCollectionId) }}</span>
               </h1>
 
               <!-- Right side actions -->
@@ -4470,6 +4475,7 @@ export default {
 
     // Handle verse click - route to memorization or review
     const handleVerseClick = (verse) => {
+      collapseVerseListItems()
       if (verse.memorizationStatus !== 'mastered') {
         // Not mastered yet - start memorization
         const nextMode = getNextMemorizationMode(verse.memorizationStatus)
@@ -4488,6 +4494,11 @@ export default {
       const verse = reviewSortedVerses.value[0]
       if (!verse) return
       handleVerseClick(verse)
+    }
+
+    const collapseVerseListItems = () => {
+      if (Object.keys(expandedVerseIds.value).length === 0) return
+      expandedVerseIds.value = {}
     }
 
     const isVerseExpanded = (verse) => !!expandedVerseIds.value[verse.id]
@@ -5677,6 +5688,12 @@ export default {
         return
       }
       startViewNavAnimation(previousView, view)
+    })
+
+    watch(currentCollectionId, (collectionId, previousCollectionId) => {
+      if (previousCollectionId && previousCollectionId !== collectionId) {
+        collapseVerseListItems()
+      }
     })
 
     const setPracticeTransition = (direction) => {
@@ -8282,13 +8299,16 @@ export default {
   font-family: var(--font-serif);
   font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.35;
   letter-spacing: 0;
   margin: 0;
   color: var(--color-text-primary);
 }
 
 .practice-session-title > span {
+  display: block;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
   transform: translateY(-0.05em);
 }
 
@@ -8375,6 +8395,14 @@ export default {
   left: 0;
   right: 0;
   z-index: 40;
+}
+
+.app-view-header.glass-chrome {
+  background-color: var(--color-bg-base);
+}
+
+.app-view-header.glass-chrome--transparent {
+  background-color: transparent;
 }
 
 .app-view-track .stagger-fade:not(.stagger-fade--nav-enter) > *,

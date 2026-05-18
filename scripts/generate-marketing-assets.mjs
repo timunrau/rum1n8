@@ -186,7 +186,7 @@ async function showKeyboardOverlay(page, colorScheme = 'light') {
   const isDark = colorScheme === 'dark'
   await page.addStyleTag({
     content: `
-      body.marketing-keyboard-open .my-2.flex-shrink-0 {
+      body.marketing-keyboard-open .practice-stage-shell {
         margin-bottom: 228px !important;
         position: relative;
         z-index: 80;

@@ -87,7 +87,7 @@ export default {
       return `${this.accuracy.toFixed(1)}%`
     },
     completionTitle() {
-      if (!this.meetsAccuracyRequirement) return 'Keep going'
+      if (!this.meetsAccuracyRequirement) return 'Keep practicing'
       if (this.context === 'review') {
         return this.memorizationMode === 'master' ? 'Reviewed' : 'Practice complete'
       }
