@@ -50,4 +50,37 @@ describe('sync deletion tracking', () => {
       { id: 'verse-2', deletedAt: '2026-04-09T09:30:00.000Z' }
     ])
   })
+
+  it('cleans collection parent links when the parent is deleted remotely', async () => {
+    const { mergeData } = await import('./sync-manager.js')
+
+    const result = mergeData([], [
+      {
+        id: 'child',
+        name: 'Child',
+        description: '',
+        parentId: 'parent',
+        createdAt: '2026-04-09T09:30:00.000Z',
+        lastModified: '2026-04-09T09:30:00.000Z'
+      }
+    ], {
+      verses: [],
+      collections: [],
+      deletedVerses: [],
+      deletedCollections: [
+        { id: 'parent', deletedAt: '2026-04-10T09:30:00.000Z' }
+      ]
+    })
+
+    expect(result.collections).toEqual([
+      {
+        id: 'child',
+        name: 'Child',
+        description: '',
+        parentId: null,
+        createdAt: '2026-04-09T09:30:00.000Z',
+        lastModified: '2026-04-09T09:30:00.000Z'
+      }
+    ])
+  })
 })

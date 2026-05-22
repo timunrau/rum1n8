@@ -32,6 +32,24 @@ test('create collection: FAB -> New Collection -> fill -> submit -> appears in l
   await expect(page.getByText('Test Collection')).toBeVisible()
 })
 
+test('create child collection from inside a parent collection', async ({ page }) => {
+  await page.getByTestId('nav-collections').click()
+  await page.getByTestId('fab-trigger').click()
+  await page.getByTestId('fab-new-collection').click()
+  await page.getByLabel(/Collection Name/i).fill('Parent')
+  await page.getByRole('button', { name: /Create Collection/i }).click()
+  await page.getByText('Parent').click()
+
+  await page.getByTestId('fab-trigger').click()
+  await page.getByTestId('fab-new-collection').click()
+  await page.getByLabel(/Collection Name/i).fill('Child')
+  await page.getByRole('button', { name: /Create Collection/i }).click()
+
+  await expect(page.getByText('Child')).toBeVisible()
+  await page.locator('header button').first().click()
+  await expect(page.getByText('Child')).not.toBeVisible()
+})
+
 test('edit collection: create collection -> edit -> change name -> save', async ({ page }) => {
   await page.getByTestId('nav-collections').click()
   await page.getByTestId('fab-trigger').click()
@@ -69,6 +87,115 @@ test('view master-list, no-collection, to-learn with seeded verses', async ({ pa
   await expect(page.getByText('All Verses')).toBeVisible()
   await expect(page.getByText('Uncategorized')).toBeVisible()
   await expect(page.getByText('Not Yet Mastered')).toBeVisible()
+})
+
+test('one-level child collections: parent metrics aggregate while parent view shows direct verses', async ({ page }) => {
+  const now = new Date().toISOString()
+  const collections = [
+    { id: 'parent', name: 'Parent', description: '', parentId: null, createdAt: now, lastModified: now },
+    { id: 'child', name: 'Child', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+  ]
+  const verses = [
+    {
+      ...sampleVerses[0],
+      id: 'direct-verse',
+      reference: 'Psalm 1:1',
+      content: 'Direct parent verse',
+      collectionIds: ['parent'],
+      createdAt: now,
+      lastModified: now,
+    },
+    {
+      ...sampleVerses[0],
+      id: 'child-verse',
+      reference: 'Psalm 2:1',
+      content: 'Child only verse',
+      collectionIds: ['child'],
+      createdAt: now,
+      lastModified: now,
+    },
+    {
+      ...sampleVerses[0],
+      id: 'other-verse',
+      reference: 'Psalm 3:1',
+      content: 'Other verse',
+      collectionIds: ['other'],
+      createdAt: now,
+      lastModified: now,
+    },
+  ]
+
+  await seedStorage(page, verses, collections)
+  await gotoApp(page, '?view=collections')
+
+  await expect(page.getByTestId('collection-tile-parent')).toContainText('2 verses')
+  await expect(page.getByTestId('collection-tile-child')).toHaveCount(0)
+
+  await page.getByTestId('collection-tile-parent').click()
+  await expect(page).toHaveURL(/\?view=collection&collection=parent/)
+  await expect(page.getByTestId('collection-tile-child')).toBeVisible()
+  await expect(page.getByText('Psalm 1:1')).toBeVisible()
+  await expect(page.getByText('Psalm 2:1')).not.toBeVisible()
+  await expect(page.getByText('Psalm 3:1')).not.toBeVisible()
+
+  await page.getByTestId('collection-tile-child').click()
+  await expect(page).toHaveURL(/\?view=collection&collection=child/)
+  await expect(page.getByText('Psalm 2:1')).toBeVisible()
+  await expect(page.getByText('Psalm 1:1')).not.toBeVisible()
+  await expect(page.getByText('Psalm 3:1')).not.toBeVisible()
+
+  await page.getByTestId('fab-trigger').click()
+  await expect(page.getByTestId('fab-new-collection')).not.toBeVisible()
+})
+
+test('collection picker shows child collections as flat path chips', async ({ page }) => {
+  const now = new Date().toISOString()
+  const collections = [
+    { id: 'parent', name: 'Parent', description: '', parentId: null, createdAt: now, lastModified: now },
+    { id: 'child', name: 'Child', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+  ]
+
+  await seedStorage(page, [], collections)
+  await gotoApp(page, '?view=collections')
+
+  await page.getByTestId('fab-trigger').click()
+  await page.getByTestId('fab-new-verse').click()
+
+  const parentChip = page.getByRole('button', { name: 'Parent', exact: true })
+  const childChip = page.getByRole('button', { name: 'Parent / Child', exact: true })
+
+  await expect(parentChip).toBeVisible()
+  await expect(childChip).toBeVisible()
+
+  await parentChip.click()
+  await expect(parentChip).toHaveClass(/bg-action/)
+  await childChip.click()
+  await expect(parentChip).not.toHaveClass(/bg-action/)
+  await expect(childChip).toHaveClass(/bg-action/)
+
+  await parentChip.click()
+  await expect(parentChip).toHaveClass(/bg-action/)
+  await expect(childChip).not.toHaveClass(/bg-action/)
+})
+
+test('deleting a parent collection with children is blocked', async ({ page }) => {
+  const now = new Date().toISOString()
+  const collections = [
+    { id: 'parent', name: 'Parent', description: '', parentId: null, createdAt: now, lastModified: now },
+    { id: 'child', name: 'Child', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+  ]
+
+  await seedStorage(page, [], collections)
+  await gotoApp(page, '?view=collections')
+
+  await page.getByTestId('collection-tile-parent').locator('button[title="Edit collection"]').click()
+  await expect(page.getByTestId('modal-edit-collection')).toBeVisible()
+  await page.getByRole('button', { name: /^Delete$/i }).click()
+  await expect(page.getByTestId('modal-delete-collection-blocked')).toBeVisible()
+  await page.getByRole('button', { name: 'OK' }).click()
+  await page.keyboard.press('Escape')
+
+  await expect(page.getByTestId('collection-tile-parent')).toBeVisible()
 })
 
 test('long numbered reference truncates the book without wrapping the verse reference', async ({ page }) => {

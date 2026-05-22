@@ -1,5 +1,6 @@
 import { getProvider, getAllProviders } from './providers/index.js'
 import { getAppSettingsRecord, saveAppSettingsRecord, mergeAppSettingsRecords } from '../app-settings.js'
+import { normalizeCollections } from '../utils/collections.js'
 
 const SYNC_STATE_KEY = 'rum1n8-sync-state'
 const SYNC_PROVIDER_KEY = 'rum1n8-sync-provider'
@@ -344,9 +345,11 @@ export function mergeData(localVerses, localCollections, remoteData) {
     }
   }
 
+  const mergedCollections = normalizeCollections(Array.from(collectionMap.values()))
+
   return {
     verses: mergedVerses,
-    collections: Array.from(collectionMap.values()),
+    collections: mergedCollections,
     appSettings: mergedAppSettingsRecord.appSettings,
     appSettingsLastModified: mergedAppSettingsRecord.appSettingsLastModified
   }

@@ -190,6 +190,12 @@ test('edit verse: changing the reference shows duplicate warnings but ignores th
 
 test('copy verse: copy button triggers copy', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-write', 'clipboard-read'])
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: undefined,
+    })
+  })
   await seedStorage(page, sampleVerses, [])
   await gotoApp(page, '?view=collections')
   await page.getByTestId('search-bar').click()

@@ -770,8 +770,9 @@
 
           <!-- User Collections -->
           <div
-            v-for="collection in sortedCollections"
+            v-for="collection in rootSortedCollections"
             :key="collection.id"
+            :data-testid="`collection-tile-${collection.id}`"
             @click="viewCollection(collection.id)"
             class="collection-tile cursor-pointer"
             :class="{ 'collection-tile--due': getCollectionDueCount(collection.id) > 0 }"
@@ -891,6 +892,40 @@
               : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
           ]"
         >
+          <div
+            v-if="currentChildCollections.length > 0"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+          >
+            <div
+              v-for="collection in currentChildCollections"
+              :key="collection.id"
+              :data-testid="`collection-tile-${collection.id}`"
+              @click="viewCollection(collection.id)"
+              class="collection-tile cursor-pointer"
+              :class="{ 'collection-tile--due': getCollectionDueCount(collection.id) > 0 }"
+            >
+              <div :class="['flex justify-between gap-2 pr-8', collection.description ? 'items-start' : 'items-center']">
+                <h3 class="collection-tile__name flex-1">{{ collection.name }}</h3>
+                <div class="absolute right-4 top-4 flex items-center gap-1">
+                  <POSBadge v-if="getCollectionDueCount(collection.id) > 0" status="mastered" :due="true" />
+                  <button
+                    @click.stop="startEditCollection(collection)"
+                    class="text-text-muted hover:text-accent hover:bg-surface-hover w-5 h-5 rounded-full transition-colors inline-flex items-center justify-center"
+                    title="Edit collection"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p v-if="collection.description" class="collection-tile__description line-clamp-2">{{ collection.description }}</p>
+              <div class="collection-tile__meta">
+                {{ getCollectionVerseCount(collection.id) }} verse{{ getCollectionVerseCount(collection.id) !== 1 ? 's' : '' }}
+              </div>
+            </div>
+          </div>
+
         <div
           v-for="verse in sortedVerses"
           :key="verse.id"
@@ -1064,7 +1099,7 @@
             </div>
           </div>
 
-          <div v-else-if="sortedVerses.length === 0" class="empty-state mt-8">
+          <div v-else-if="sortedVerses.length === 0 && currentChildCollections.length === 0" class="empty-state mt-8">
             <svg class="w-14 h-14 mx-auto mb-4 text-text-muted opacity-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -1177,7 +1212,7 @@
           data-testid="fab-new-verse"
           @click="openNewVerse"
           class="fab-menu__item bg-surface text-text-primary rounded-lg border border-border-default shadow-lift transition-colors duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          :style="{ '--fab-index': !currentCollectionId && currentView === 'collections' ? 2 : 1 }"
+          :style="{ '--fab-index': currentView === 'collections' && canCreateCollectionInCurrentContext ? 2 : 1 }"
         >
           <div class="w-10 h-10 bg-action rounded-lg flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-action-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -1187,9 +1222,9 @@
           <span class="text-sm font-medium">New Verse</span>
         </button>
 
-        <!-- New Collection Option (only on collections screen) -->
+        <!-- New Collection Option -->
         <button
-          v-if="fabMenuOpen && !currentCollectionId && currentView === 'collections'"
+          v-if="fabMenuOpen && currentView === 'collections' && canCreateCollectionInCurrentContext"
           key="collection"
           data-testid="fab-new-collection"
           @click="openNewCollection"
@@ -1568,6 +1603,26 @@
               class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
           </div>
+
+          <div v-if="availableParentCollections.length > 0">
+            <label for="collection-parent" class="block text-sm font-medium text-text-secondary mb-2">
+              Parent Collection (optional)
+            </label>
+            <select
+              id="collection-parent"
+              v-model="newCollection.parentId"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
+            >
+              <option :value="null">None</option>
+              <option
+                v-for="collection in availableParentCollections"
+                :key="collection.id"
+                :value="collection.id"
+              >
+                {{ collection.name }}
+              </option>
+            </select>
+          </div>
         </form>
 
         <template #footer>
@@ -1618,6 +1673,26 @@
               placeholder="Describe this collection..."
               class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary resize-none"
             ></textarea>
+          </div>
+
+          <div v-if="canEditCollectionParent">
+            <label for="edit-collection-parent" class="block text-sm font-medium text-text-secondary mb-2">
+              Parent Collection (optional)
+            </label>
+            <select
+              id="edit-collection-parent"
+              v-model="editingCollection.parentId"
+              class="w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
+            >
+              <option :value="null">None</option>
+              <option
+                v-for="collection in editableParentCollections"
+                :key="collection.id"
+                :value="collection.id"
+              >
+                {{ collection.name }}
+              </option>
+            </select>
           </div>
         </form>
 
@@ -2010,6 +2085,18 @@ import {
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
 import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
+import {
+  canAssignCollectionParent,
+  canCreateChildCollection,
+  canDeleteCollection as canDeleteCollectionRecord,
+  getChildCollections,
+  getCollectionDueCount as getAggregateCollectionDueCount,
+  getCollectionParentId,
+  getCollectionVerses,
+  getRootCollections,
+  normalizeCollections,
+  VIRTUAL_COLLECTION_IDS,
+} from './utils/collections.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
@@ -2598,10 +2685,8 @@ export default {
       collectionIds: []
     })
 
-    const virtualCollectionIds = new Set(['master-list', 'no-collection', 'to-learn'])
-
     const getAssignableCurrentCollectionId = () => (
-      currentCollectionId.value && !virtualCollectionIds.has(currentCollectionId.value)
+      currentCollectionId.value && !VIRTUAL_COLLECTION_IDS.has(currentCollectionId.value)
         ? currentCollectionId.value
         : null
     )
@@ -2615,7 +2700,8 @@ export default {
 
     const newCollection = ref({
       name: '',
-      description: ''
+      description: '',
+      parentId: null
     })
 
     const STORAGE_KEY = 'rum1n8-verses'
@@ -2784,6 +2870,29 @@ export default {
       }
     }
 
+    const getCollectionUpState = (collectionId = currentCollectionId.value) => {
+      const parentId = collectionId ? getCollectionParentId(collections.value, collectionId) : null
+      return parentId
+        ? { view: 'collection', collectionId: parentId }
+        : { view: 'collections' }
+    }
+
+    const seedCollectionHistory = (collectionId) => {
+      const rootState = { view: 'collections' }
+      const rootUrl = buildNavigationUrl(rootState)
+      window.history.replaceState(rootState, '', rootUrl)
+      currentView.value = 'collections'
+
+      const parentState = getCollectionUpState(collectionId)
+      if (parentState.view === 'collection') {
+        currentCollectionId.value = parentState.collectionId
+        pushNavigationState(parentState)
+      }
+
+      currentCollectionId.value = collectionId
+      pushNavigationState({ view: 'collection', collectionId })
+    }
+
     // Build a URL that reflects the given navigation state, clearing any params not
     // part of it so we don't leak stale collection/verse/mode params across views.
     const buildNavigationUrl = (state) => {
@@ -2855,7 +2964,7 @@ export default {
       importingVerse.value = false
 
       showCollectionForm.value = false
-      newCollection.value = { name: '', description: '' }
+      newCollection.value = { name: '', description: '', parentId: null }
 
       showEditCollectionForm.value = false
       editingCollection.value = null
@@ -3043,14 +3152,9 @@ export default {
       } else if (viewParam === 'collection') {
         const collectionId = urlParams.get('collection')
         if (collectionId) {
-          // Deep-link to a collection. Seed Collections underneath so back always
-          // moves up one level instead of exiting the app.
-          currentView.value = 'collections'
-          const parentState = { view: 'collections' }
-          const parentUrl = buildNavigationUrl(parentState)
-          window.history.replaceState(parentState, '', parentUrl)
-          currentCollectionId.value = collectionId
-          pushNavigationState({ view: 'collection', collectionId })
+          // Deep-link to a collection. Seed its parent chain underneath so back
+          // always moves up one level instead of exiting the app.
+          seedCollectionHistory(collectionId)
           window.addEventListener('popstate', handlePopState)
           return
         }
@@ -3062,19 +3166,14 @@ export default {
         const deepLinkVerseId = urlParams.get('verse')
         const deepLinkCollectionId = urlParams.get('collection')
         const deepLinkMode = urlParams.get('mode')
-        const parentState = deepLinkCollectionId
-          ? { view: 'collection', collectionId: deepLinkCollectionId }
-          : { view: 'collections' }
-
-        // Replace the current (practice) entry with the parent, then defer starting
-        // practice so that startReview/startMemorization pushes the practice entry on top.
         if (deepLinkCollectionId) {
-          currentCollectionId.value = deepLinkCollectionId
+          seedCollectionHistory(deepLinkCollectionId)
         } else {
           currentView.value = 'collections'
+          const parentState = { view: 'collections' }
+          const parentUrl = buildNavigationUrl(parentState)
+          window.history.replaceState(parentState, '', parentUrl)
         }
-        const parentUrl = buildNavigationUrl(parentState)
-        window.history.replaceState(parentState, '', parentUrl)
 
         const deepLinkVerse = deepLinkVerseId ? verses.value.find(v => v.id === deepLinkVerseId) : null
         if (deepLinkVerse) {
@@ -3713,6 +3812,41 @@ export default {
       })
     })
 
+    const sortCollectionsByName = (items) => [...items].sort((a, b) => {
+      const nameComparison = collectionNameCollator.compare(a.name || '', b.name || '')
+      if (nameComparison !== 0) return nameComparison
+
+      return String(a.id || '').localeCompare(String(b.id || ''))
+    })
+
+    const rootSortedCollections = computed(() => sortCollectionsByName(getRootCollections(collections.value)))
+
+    const currentChildCollections = computed(() => (
+      currentCollectionId.value
+        ? sortCollectionsByName(getChildCollections(collections.value, currentCollectionId.value))
+        : []
+    ))
+
+    const canCreateCollectionInCurrentContext = computed(() => (
+      !currentCollectionId.value ||
+      canCreateChildCollection(collections.value, currentCollectionId.value)
+    ))
+
+    const availableParentCollections = computed(() => rootSortedCollections.value)
+
+    const editableParentCollections = computed(() => {
+      if (!editingCollection.value) return availableParentCollections.value
+      return availableParentCollections.value.filter(collection => (
+        collection.id !== editingCollection.value.id &&
+        canAssignCollectionParent(collections.value, editingCollection.value.id, collection.id)
+      ))
+    })
+
+    const canEditCollectionParent = computed(() => {
+      if (!editingCollection.value) return false
+      return !!editingCollection.value.parentId || editableParentCollections.value.length > 0
+    })
+
     // Sort filtered verses by biblical reference
     const sortedVerses = computed(() => {
       const versesToSort = filteredVerses.value
@@ -4053,15 +4187,22 @@ export default {
       if (stored) {
         const loadedCollections = JSON.parse(stored)
         let needsMigration = false
-        // Migrate existing collections to include lastModified
-        collections.value = loadedCollections.map(collection => {
+        // Migrate existing collections to include lastModified and hierarchy fields.
+        collections.value = normalizeCollections(loadedCollections.map(collection => {
           // Add lastModified if missing (use createdAt or current time as fallback)
           if (!collection.hasOwnProperty('lastModified')) {
             collection.lastModified = collection.createdAt || new Date().toISOString()
             needsMigration = true
           }
+          if (!collection.hasOwnProperty('parentId')) {
+            collection.parentId = null
+            needsMigration = true
+          }
           return collection
-        })
+        }))
+        if (JSON.stringify(collections.value) !== JSON.stringify(loadedCollections)) {
+          needsMigration = true
+        }
         // Only save if we actually migrated something (and avoid triggering sync during load)
         if (needsMigration) {
           localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
@@ -4071,6 +4212,7 @@ export default {
 
     // Save collections to local storage
     const saveCollections = () => {
+      collections.value = normalizeCollections(collections.value)
       localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
       // Trigger sync after save
       triggerSync()
@@ -4808,10 +4950,14 @@ export default {
     // Add new collection
     const addCollection = () => {
       if (newCollection.value.name.trim()) {
+        const parentId = canAssignCollectionParent(collections.value, null, newCollection.value.parentId)
+          ? newCollection.value.parentId || null
+          : null
         const collection = {
           id: Date.now().toString(),
           name: newCollection.value.name.trim(),
           description: newCollection.value.description.trim(),
+          parentId,
           createdAt: new Date().toISOString(),
           lastModified: new Date().toISOString() // Track when collection was last modified
         }
@@ -4826,7 +4972,8 @@ export default {
       showCollectionForm.value = false
       newCollection.value = {
         name: '',
-        description: ''
+        description: '',
+        parentId: null
       }
       fabMenuOpen.value = false
       consumeModalState('addCollection')
@@ -4851,6 +4998,13 @@ export default {
     // Open new collection from FAB menu
     const openNewCollection = () => {
       fabMenuOpen.value = false
+      newCollection.value = {
+        name: '',
+        description: '',
+        parentId: canCreateChildCollection(collections.value, currentCollectionId.value)
+          ? currentCollectionId.value
+          : null
+      }
       showCollectionForm.value = true
       pushModalState('addCollection')
     }
@@ -5309,7 +5463,8 @@ export default {
     // Edit collection
     const startEditCollection = (collection) => {
       editingCollection.value = {
-        ...collection
+        ...collection,
+        parentId: collection.parentId || null
       }
       showEditCollectionForm.value = true
       pushModalState('editCollection')
@@ -5320,8 +5475,16 @@ export default {
       if (editingCollection.value && editingCollection.value.name) {
         const collection = collections.value.find(c => c.id === editingCollection.value.id)
         if (collection) {
+          const nextParentId = canAssignCollectionParent(
+            collections.value,
+            editingCollection.value.id,
+            editingCollection.value.parentId
+          )
+            ? editingCollection.value.parentId || null
+            : collection.parentId || null
           collection.name = editingCollection.value.name.trim()
           collection.description = editingCollection.value.description ? editingCollection.value.description.trim() : ''
+          collection.parentId = nextParentId
           collection.lastModified = new Date().toISOString() // Track when collection was last modified
           saveCollections()
           closeEditCollectionForm()
@@ -5345,6 +5508,15 @@ export default {
 
     // Delete collection
     const deleteCollection = async (collectionId) => {
+      if (!canDeleteCollectionRecord(collections.value, collectionId)) {
+        await showAppMessage({
+          title: 'Delete Child Collections First',
+          message: 'This collection has child collections. Delete or move them before deleting this collection.',
+          dataTestid: 'modal-delete-collection-blocked',
+        })
+        return false
+      }
+
       const confirmed = await requestAppConfirmation({
         title: 'Delete Collection?',
         message: 'Are you sure you want to delete this collection? Verses will not be deleted, but will be removed from this collection.',
@@ -5354,6 +5526,8 @@ export default {
       })
 
       if (confirmed) {
+        const fallbackState = getCollectionUpState(collectionId)
+
         // Mark as deleted for sync FIRST (before removing from array)
         markCollectionDeleted(collectionId)
         
@@ -5373,9 +5547,9 @@ export default {
         collections.value = collections.value.filter(c => c.id !== collectionId)
         saveCollections()
         
-        // If viewing this collection, go back to all verses
+        // If viewing this collection, go up one level.
         if (currentCollectionId.value === collectionId) {
-          currentCollectionId.value = null
+          navigateUpToState(fallbackState)
         }
         return true
       }
@@ -5400,7 +5574,7 @@ export default {
         if (currentCollectionId.value === 'to-learn') {
           return verses.value.filter(v => v.memorizationStatus !== 'mastered')
         }
-        return verses.value.filter(v => v.collectionIds && v.collectionIds.includes(currentCollectionId.value))
+        return getCollectionVerses(verses.value, collections.value, currentCollectionId.value, { includeChildren: false })
       }
       // No collection selected: show all verses when on Verses tab with no user collections
       if (currentView.value === 'collections' && collections.value.length === 0) {
@@ -5439,7 +5613,7 @@ export default {
       } else if (collectionId === 'to-learn') {
         collectionVerses = verses.value.filter(v => v.memorizationStatus !== 'mastered')
       } else {
-        collectionVerses = verses.value.filter(v => v.collectionIds && v.collectionIds.includes(collectionId))
+        collectionVerses = getCollectionVerses(verses.value, collections.value, collectionId, { includeChildren: true })
       }
       return sumVerseReferenceCounts(collectionVerses)
     }
@@ -5457,7 +5631,7 @@ export default {
       } else if (collectionId === 'to-learn') {
         collectionVerses = verses.value.filter(v => v.memorizationStatus !== 'mastered')
       } else {
-        collectionVerses = verses.value.filter(v => v.collectionIds && v.collectionIds.includes(collectionId))
+        return getAggregateCollectionDueCount(verses.value, collections.value, collectionId, isDueForReview)
       }
       return collectionVerses.filter(v => isDueForReview(v)).length
     }
@@ -6206,13 +6380,20 @@ export default {
         targetState.view === 'collections' &&
         !targetState.collectionId
 
+      const leavingCollectionForParentCollection =
+        currentState.view === 'collection' &&
+        targetState.view === 'collection' &&
+        !!currentState.collectionId &&
+        !!targetState.collectionId &&
+        getCollectionParentId(collections.value, currentState.collectionId) === targetState.collectionId
+
       const leavingPracticeForParentCollection =
         (currentState.view === 'review' || currentState.view === 'memorization') &&
         !!currentState.collectionId &&
         targetState.view === 'collection' &&
         targetState.collectionId === currentState.collectionId
 
-      return leavingCollectionForCollections || leavingPracticeForParentCollection
+      return leavingCollectionForCollections || leavingCollectionForParentCollection || leavingPracticeForParentCollection
     }
 
     const navigateUpToState = (targetState) => {
@@ -6225,12 +6406,13 @@ export default {
       replaceNavigationState(targetState)
     }
 
-    // View all verses (back from collection view)
+    // Move up one collection level, or back to the collections root.
     const viewAllVerses = () => {
       searchQuery.value = ''
       searchActive.value = false
-      triggerListFloatIn('collections-root')
-      navigateUpToState({ view: 'collections' })
+      const targetState = getCollectionUpState()
+      triggerListFloatIn(targetState.view === 'collection' ? 'collection' : 'collections-root')
+      navigateUpToState(targetState)
     }
 
     // Check if we can switch to a given memorization mode
@@ -7469,7 +7651,7 @@ export default {
               console.log('[App] Verses updated and saved to localStorage')
             }
             if (result.collections) {
-              collections.value = result.collections
+              collections.value = normalizeCollections(result.collections)
               localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
             }
             if (result.appSettings) {
@@ -7844,7 +8026,7 @@ export default {
 
         // Replace data
         verses.value = backupData.verses
-        collections.value = backupData.collections
+        collections.value = normalizeCollections(backupData.collections)
 
         // Restore settings if present
         if (backupData.settings) {
@@ -8181,6 +8363,12 @@ export default {
       isLastInReviewList,
       collections,
       sortedCollections,
+      rootSortedCollections,
+      currentChildCollections,
+      canCreateCollectionInCurrentContext,
+      availableParentCollections,
+      editableParentCollections,
+      canEditCollectionParent,
       currentCollectionId,
       showCollectionForm,
       showEditVerseForm,

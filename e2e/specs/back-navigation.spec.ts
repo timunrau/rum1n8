@@ -83,6 +83,53 @@ test.describe('Collection navigation', () => {
     await page.goBack()
     await expect(page).not.toHaveURL(/collection=col-1/)
   })
+
+  test('nested collection browser and in-app back move up one level at a time', async ({
+    page,
+  }) => {
+    const now = new Date().toISOString()
+    const collections = [
+      { id: 'parent', name: 'Parent Collection', description: '', parentId: null, createdAt: now, lastModified: now },
+      { id: 'child', name: 'Child Collection', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+    ]
+    await seedStorage(page, [masteredVerse({ id: 'nested-v1', collectionIds: ['child'] })], collections)
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByTestId('collection-tile-parent').click()
+    await expect(page).toHaveURL(/\?view=collection&collection=parent/)
+    await page.getByTestId('collection-tile-child').click()
+    await expect(page).toHaveURL(/\?view=collection&collection=child/)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collection&collection=parent/)
+
+    await page.locator('header button').first().click()
+    await expect(page).toHaveURL(/\?view=collections/)
+
+    await page.goBack()
+    await expect(page).not.toHaveURL(/collection=parent/)
+    await expect(page).not.toHaveURL(/collection=child/)
+  })
+
+  test('deep link to a child collection seeds parent and root back states', async ({ page }) => {
+    const now = new Date().toISOString()
+    const collections = [
+      { id: 'parent', name: 'Parent Collection', description: '', parentId: null, createdAt: now, lastModified: now },
+      { id: 'child', name: 'Child Collection', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+    ]
+    await seedStorage(page, [masteredVerse({ id: 'deep-child-v1', collectionIds: ['child'] })], collections)
+    await page.reload()
+
+    await gotoApp(page, '?view=collection&collection=child')
+    await expect(page).toHaveURL(/\?view=collection&collection=child/)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collection&collection=parent/)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collections/)
+  })
 })
 
 test.describe('Review screen back behavior', () => {
@@ -166,6 +213,40 @@ test.describe('Review screen back behavior', () => {
     await page.goBack()
     await expect(page).toHaveURL(/\?view=collections/)
     await expect(page).not.toHaveURL(/collection=col-review/)
+  })
+
+  test('browser back from review inside a child collection returns to child, then parent', async ({
+    page,
+  }) => {
+    const now = new Date().toISOString()
+    const collections = [
+      { id: 'parent-review', name: 'Parent Review', description: '', parentId: null, createdAt: now, lastModified: now },
+      { id: 'child-review', name: 'Child Review', description: '', parentId: 'parent-review', createdAt: now, lastModified: now },
+    ]
+    const verse = masteredVerse({
+      id: 'nested-review-v1',
+      reference: 'Psalm 10:1',
+      content: 'Why Lord',
+      collectionIds: ['child-review'],
+    })
+
+    await seedStorage(page, [verse], collections)
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByTestId('collection-tile-parent-review').click()
+    await page.getByTestId('collection-tile-child-review').click()
+    await expect(page).toHaveURL(/\?view=collection&collection=child-review/)
+
+    await page.getByText('Psalm 10:1').first().click()
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+
+    await page.goBack()
+    await expect(page.locator('#letter-input-review')).not.toBeVisible()
+    await expect(page).toHaveURL(/\?view=collection&collection=child-review/)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collection&collection=parent-review/)
   })
 
   test('browser back from review returns to review list (not to a prior verse)', async ({
