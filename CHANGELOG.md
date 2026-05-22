@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/timunrau/rum1n8/compare/v1.26.1...v1.27.0) (2026-05-22)
+
+
+### Features
+
+* support one-level nested collections ([6c84ae7](https://github.com/timunrau/rum1n8/commit/6c84ae7cd89c68f976371da7cd9fd571ec27a26a))
+
 ## [1.26.1](https://github.com/timunrau/rum1n8/compare/v1.26.0...v1.26.1) (2026-05-22)
 
 
