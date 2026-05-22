@@ -78,3 +78,16 @@ test('app About opens the public page with a back link to the current app view',
   await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute('href', '/app/')
 })
+
+test('dedication links are marked for analytics tracking', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(page.getByRole('link', { name: 'Donate to Church Renewal International' })).toHaveAttribute(
+    'data-marketing-track',
+    'marketing_church_renewal_donate_clicked'
+  )
+  await expect(page.getByRole('link', { name: 'Visit TheWay.app' })).toHaveAttribute(
+    'data-marketing-track',
+    'marketing_theway_clicked'
+  )
+})

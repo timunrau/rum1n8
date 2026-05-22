@@ -1,5 +1,5 @@
 import './marketing.css'
-import { initAnalytics } from './analytics.js'
+import { initAnalytics, trackEvent } from './analytics.js'
 import { getAppSettings } from './app-settings.js'
 import {
   APP_ROOT_PATH,
@@ -54,10 +54,25 @@ function initMarketingPage() {
   updateReturnLink(appTarget || APP_ROOT_PATH)
 }
 
+function initTrackedMarketingLinks() {
+  document.querySelectorAll('[data-marketing-track]').forEach((link) => {
+    link.addEventListener('click', () => {
+      trackEvent(link.getAttribute('data-marketing-track'), {
+        href: link.getAttribute('href') || '',
+        page: window.location.pathname,
+      })
+    })
+  })
+}
+
 initAnalytics({ optOut: getAppSettings().analyticsOptOut })
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initMarketingPage, { once: true })
+  document.addEventListener('DOMContentLoaded', () => {
+    initMarketingPage()
+    initTrackedMarketingLinks()
+  }, { once: true })
 } else {
   initMarketingPage()
+  initTrackedMarketingLinks()
 }

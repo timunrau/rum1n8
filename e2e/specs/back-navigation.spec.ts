@@ -86,6 +86,38 @@ test.describe('Collection navigation', () => {
 })
 
 test.describe('Review screen back behavior', () => {
+  test('Start review CTA on Verses returns to Verses with browser back', async ({ page }) => {
+    const verse = masteredVerse({ id: 'cta-back', reference: 'Psalm 7:1', content: 'O Lord' })
+    await seedStorage(page, [verse], [])
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByTestId('almanac-start-review').click()
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+
+    await page.goBack()
+    await expect(page.locator('#letter-input-review')).not.toBeVisible()
+    await expect(page).toHaveURL(/\?view=collections/)
+    await expect(page.getByTestId('nav-collections')).toHaveClass(/tab-btn--active/)
+  })
+
+  test('Start review CTA on Verses returns to Verses after Done', async ({ page }) => {
+    const verse = masteredVerse({ id: 'cta-done', reference: 'Psalm 8:1', content: 'O Lord' })
+    await seedStorage(page, [verse], [])
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByTestId('almanac-start-review').click()
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+    await page.locator('#letter-input-review').focus()
+    await page.keyboard.type('ol', { delay: 50 })
+
+    await page.getByRole('button', { name: 'Done' }).click()
+    await expect(page.locator('#letter-input-review')).not.toBeVisible()
+    await expect(page).toHaveURL(/\?view=collections/)
+    await expect(page.getByTestId('nav-collections')).toHaveClass(/tab-btn--active/)
+  })
+
   test('after reviewing multiple verses inside a collection, one browser back returns to Collections', async ({
     page,
   }) => {
@@ -192,6 +224,52 @@ test.describe('Review screen back behavior', () => {
 })
 
 test.describe('Memorization screen back behavior', () => {
+  test('Done after mastering a verse from inside a collection returns to that collection', async ({
+    page,
+  }) => {
+    const collection = {
+      id: 'learn-col',
+      name: 'Learn Collection',
+      description: '',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+    }
+    const verse = masteredVerse({
+      id: 'learn-in-col',
+      reference: 'Psalm 9:1',
+      content: 'I will',
+      memorizationStatus: 'unmemorized',
+      nextReviewDate: null,
+      interval: 0,
+      reviewCount: 0,
+      lastReviewed: null,
+      collectionIds: ['learn-col'],
+    })
+    await seedStorage(page, [verse], [collection])
+    await page.reload()
+    await gotoApp(page, '?view=collection&collection=learn-col')
+
+    await page.getByText('Psalm 9:1').first().click()
+    await expect(page.locator('#letter-input-memorize')).toBeAttached()
+    await page.locator('#letter-input-memorize').focus()
+    await page.keyboard.type('iw', { delay: 50 })
+    await page.getByRole('button', { name: /Continue to Memorize/i }).click()
+
+    await expect(page.locator('#letter-input-memorize')).toBeAttached()
+    await page.locator('#letter-input-memorize').focus()
+    await page.keyboard.type('iw', { delay: 50 })
+    await page.getByRole('button', { name: /Continue to Master/i }).click()
+
+    await expect(page.locator('#letter-input-memorize')).toBeAttached()
+    await page.locator('#letter-input-memorize').focus()
+    await page.keyboard.type('iw', { delay: 50 })
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    await expect(page.locator('#letter-input-memorize')).not.toBeVisible()
+    await expect(page).toHaveURL(/\?view=collection&collection=learn-col/)
+    await expect(page.getByText('Learn Collection')).toBeVisible()
+  })
+
   test('browser back from memorization exits to source screen, does not cycle modes', async ({
     page,
   }) => {

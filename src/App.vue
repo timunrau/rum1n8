@@ -65,7 +65,7 @@
                   </svg>
                 </button>
                 <button
-                  @click.stop="copyVerse(result.item)"
+                  @click.stop="shareVerse(result.item)"
                   class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
                   title="Share verse"
                 >
@@ -220,7 +220,7 @@
           </button>
           <!-- Share Button -->
           <button
-            @click="copyVerse(reviewingVerse)"
+            @click="shareVerse(reviewingVerse)"
             class="practice-header-button practice-header-button--plain"
             title="Share verse"
           >
@@ -6017,7 +6017,7 @@ export default {
       isSpeaking.value = false
     }
 
-    // Copy verse to clipboard in the format: content\nreference
+    // Copy verse share text to the clipboard.
     const copyVerse = async (verse) => {
       // Handle Vue refs - if verse is a ref, get its value
       let verseObj = verse
@@ -6031,7 +6031,7 @@ export default {
         return
       }
       
-      const textToCopy = `${verseObj.content}\n${verseObj.reference}`
+      const textToCopy = formatVerseShareText(verseObj)
       
       try {
         await copyTextToClipboard(textToCopy)
@@ -6067,6 +6067,54 @@ export default {
         }
       } finally {
         document.body.removeChild(textArea)
+      }
+    }
+
+    const formatVerseShareReference = (verse) => {
+      const version = typeof verse?.bibleVersion === 'string' ? verse.bibleVersion.trim() : ''
+      return version ? `${verse.reference} (${version.toUpperCase()})` : verse.reference
+    }
+
+    const formatVerseShareText = (verse) => [
+      verse.content,
+      formatVerseShareReference(verse),
+      '',
+      'Shared from rum1n8',
+      getMarketingPageUrl()
+    ].join('\n')
+
+    const shareVerse = async (verse) => {
+      const verseObj = verse?.value || verse
+
+      if (!verseObj?.content || !verseObj?.reference) {
+        console.error('No verse provided to shareVerse', verse, verseObj)
+        showToast('Error: No verse to share', true)
+        return
+      }
+
+      const text = formatVerseShareText(verseObj)
+      const shareData = {
+        title: formatVerseShareReference(verseObj),
+        text
+      }
+
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share(shareData)
+          showToast('Verse shared')
+          return
+        } catch (error) {
+          if (error?.name === 'AbortError') return
+          console.error('Failed to share verse:', error)
+        }
+      }
+
+      try {
+        await copyTextToClipboard(text)
+        showToast('Verse copied to clipboard')
+      } catch (error) {
+        console.error('Failed to copy verse:', error)
+        showToast('Failed to share verse', true)
       }
     }
 
@@ -6204,6 +6252,9 @@ export default {
       }
       setPracticeTransition('mode')
       startMemorization(memorizingVerse.value, mode)
+      nextTick(() => {
+        memorizationPracticeRef.value?.scrollToStart?.()
+      })
     }
 
     const getCurrentSourceState = () => {
@@ -6332,6 +6383,7 @@ export default {
       memorizationMode.value = mode
       reviewMistakes.value = 0
       nextTick(() => {
+        reviewPracticeRef.value?.scrollToStart?.()
         reviewPracticeRef.value?.focusInput?.()
       })
     }
@@ -6436,10 +6488,10 @@ export default {
             view: 'review-list'
           }
         } else {
-          // Coming from collections view — use the full review sorted list so "Next Verse" walks all mastered verses
+          // Coming from the Verses screen — use the full review sorted list so "Next Verse" walks all mastered verses
           reviewSourceList.value = [...reviewSortedVerses.value]
           reviewSourceState.value = {
-            view: 'review-list'
+            view: 'collections'
           }
         }
       }
@@ -8193,6 +8245,7 @@ export default {
       dailyActivityScrollRef,
       setVerseCardRef,
       copyVerse,
+      shareVerse,
       speakVerse,
       stopSpeaking,
       isSpeaking,

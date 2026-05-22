@@ -330,7 +330,19 @@ export default {
       return currentIndex === index
     }
 
+    function scrollToStart(behavior = 'smooth') {
+      const scroller = getRefElement(scrollContainer.value)
+      if (!scroller) return
+      requestAnimationFrame(() => {
+        scroller.scrollTo({
+          top: 0,
+          behavior
+        })
+      })
+    }
+
     function onSwitchMode(mode) {
+      scrollToStart()
       emit('switch-mode', mode)
       nextTick(() => focusInput())
     }
@@ -666,6 +678,7 @@ export default {
       inputRef,
       scrollContainer,
       focusInput,
+      scrollToStart,
       scrollToEnd
     })
 
@@ -682,6 +695,7 @@ export default {
       onInput,
       onKeydown,
       focusInput,
+      scrollToStart,
       onPracticeTouchStart,
       onPracticeTouchMove,
       onPracticeTouchEnd,
