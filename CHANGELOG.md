@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/timunrau/rum1n8/compare/v1.26.0...v1.26.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* preserve practice return paths and share content ([8049f1d](https://github.com/timunrau/rum1n8/commit/8049f1dae339f514eed5659a32805afd6a16bafd))
+
 # [1.26.0](https://github.com/timunrau/rum1n8/compare/v1.25.1...v1.26.0) (2026-05-18)
 
 
