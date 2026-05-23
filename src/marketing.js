@@ -3,7 +3,6 @@ import { initAnalytics, trackEvent } from './analytics.js'
 import { getAppSettings } from './app-settings.js'
 import {
   APP_ROOT_PATH,
-  ABOUT_PATH,
   TIPS_PATH,
   getPreferredAppUrl,
   getUiState,
@@ -44,9 +43,7 @@ function updateReturnLink(target, isVisible) {
 function initMarketingPage() {
   const pathname = window.location.pathname
   document.documentElement.dataset.page =
-    pathname.startsWith(ABOUT_PATH)
-      ? 'about'
-      : (pathname.startsWith(TIPS_PATH) ? 'tips' : 'home')
+    pathname.startsWith(TIPS_PATH) ? 'tips' : 'home'
 
   const uiState = getUiState()
   const explicitReturnTarget = getReturnTarget()
@@ -54,7 +51,7 @@ function initMarketingPage() {
   const isReturning = shouldBypassMarketing() || !!explicitReturnTarget || !!uiState.lastAppUrl
   const appLabel = isReturning ? 'Open app' : 'Start memorizing'
   const shouldShowReturnLink =
-    pathname.startsWith(ABOUT_PATH) || (pathname.startsWith(TIPS_PATH) && isReturning)
+    !!explicitReturnTarget || (pathname.startsWith(TIPS_PATH) && isReturning)
 
   updateAppLinks(appTarget || APP_ROOT_PATH, appLabel)
   updateReturnLink(appTarget || APP_ROOT_PATH, shouldShowReturnLink)

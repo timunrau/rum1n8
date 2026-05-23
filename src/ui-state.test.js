@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   APP_ROOT_PATH,
   UI_STATE_KEY,
-  buildAboutUrl,
+  buildPublicHomeUrl,
   getOnboardingUiState,
   getPreferredAppUrl,
   normalizeAppUrl,
@@ -99,12 +99,12 @@ describe('ui-state', () => {
     expect(shouldBypassMarketing()).toBe(true)
   })
 
-  it('builds about URLs with a normalized return target', () => {
+  it('builds public home URLs with a normalized return target', () => {
     setupBrowserEnv({ url: 'https://example.test/app/?view=stats' })
 
-    expect(buildAboutUrl('/app/?view=review-list')).toBe('/about/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
-    expect(buildAboutUrl('/')).toBe('/about/')
-    expect(buildAboutUrl()).toBe('/about/?returnTo=%2Fapp%2F%3Fview%3Dstats')
+    expect(buildPublicHomeUrl('/app/?view=review-list')).toBe('/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
+    expect(buildPublicHomeUrl('/')).toBe('/')
+    expect(buildPublicHomeUrl()).toBe('/?returnTo=%2Fapp%2F%3Fview%3Dstats')
   })
 
   it('normalizes legacy onboarding state into the current review CTA flow', () => {

@@ -1,6 +1,6 @@
 export const UI_STATE_KEY = 'rum1n8-ui-state'
 export const APP_ROOT_PATH = '/app/'
-export const ABOUT_PATH = '/about/'
+export const PUBLIC_HOME_PATH = '/'
 export const TIPS_PATH = '/tips-for-memorizing-scripture/'
 
 const DEFAULT_UI_STATE = Object.freeze({
@@ -334,8 +334,8 @@ export function shouldBypassMarketing() {
   return state.hasOpenedApp || hasLegacyAppPresence() || isStandaloneAppLaunch()
 }
 
-export function buildAboutUrl(returnTo = getCurrentAppUrl()) {
-  const url = new URL(ABOUT_PATH, getBaseOrigin())
+export function buildPublicHomeUrl(returnTo = getCurrentAppUrl()) {
+  const url = new URL(PUBLIC_HOME_PATH, getBaseOrigin())
   const normalizedReturnTo = normalizeAppUrl(returnTo)
 
   if (normalizedReturnTo) {

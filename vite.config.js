@@ -1,12 +1,53 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const packageJson = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf-8')
 )
+
+const PUBLIC_PAGES = Object.freeze([
+  {
+    page: 'marketing',
+    inputName: 'marketing',
+    inputFile: 'index.html',
+    path: '/',
+    includeJsonLd: true,
+    canonicalPlaceholder: '${RUM1N8_CANONICAL_ROOT_TAGS}',
+  },
+  {
+    page: 'memorizationBenefits',
+    inputName: 'memorizationBenefits',
+    inputFile: 'memorization-is-a-spiritual-life-hack/index.html',
+    path: '/memorization-is-a-spiritual-life-hack/',
+    includeJsonLd: false,
+    canonicalPlaceholder: '${RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS}',
+  },
+  {
+    page: 'scriptureTips',
+    inputName: 'scriptureTips',
+    inputFile: 'tips-for-memorizing-scripture/index.html',
+    path: '/tips-for-memorizing-scripture/',
+    includeJsonLd: false,
+    canonicalPlaceholder: '${RUM1N8_CANONICAL_SCRIPTURE_TIPS_TAGS}',
+  },
+])
+
+const APP_PAGE = Object.freeze({
+  page: 'app',
+  inputName: 'app',
+  inputFile: 'app/index.html',
+  path: '/app/',
+})
+
+const HTML_PAGES = Object.freeze([
+  ...PUBLIC_PAGES,
+  APP_PAGE,
+])
+
+const PUBLIC_PAGE_NAMES = new Set(PUBLIC_PAGES.map(({ page }) => page))
 
 function normalizeSiteUrl(value) {
   if (!value?.trim()) return null
@@ -80,7 +121,6 @@ function buildSiteMetadata(env) {
     siteUrl,
     rootUrl: siteUrl ? `${siteUrl}/` : null,
     appPath: '/app/',
-    aboutPath: '/about/',
     memorizationBenefitsPath: '/memorization-is-a-spiritual-life-hack/',
     scriptureTipsPath: '/tips-for-memorizing-scripture/',
     socialPreviewImagePath: '/marketing/og-card.png',
@@ -134,10 +174,6 @@ function buildSocialImageUrl(siteMetadata) {
     : siteMetadata.socialPreviewImagePath
 }
 
-function buildCanonicalRootTags(siteMetadata) {
-  return buildCanonicalTags(siteMetadata, '/')
-}
-
 function buildCanonicalTags(siteMetadata, path) {
   if (!siteMetadata.siteUrl) return ''
 
@@ -171,30 +207,16 @@ function buildSocialTags(siteMetadata, pageMetadata = {}) {
 
 function detectHtmlPage(ctx) {
   const path = ctx?.path || ''
+  const page = HTML_PAGES.find((candidate) => {
+    const inputPath = `/${candidate.inputFile}`
+    const cleanPathIndex = candidate.path === '/'
+      ? '/index.html'
+      : `${candidate.path}index.html`
 
-  if (path.includes('/app/') || path.endsWith('/app/index.html')) {
-    return 'app'
-  }
+    return path === candidate.path || path === inputPath || path === cleanPathIndex
+  })
 
-  if (path.includes('/about/') || path.endsWith('/about/index.html')) {
-    return 'about'
-  }
-
-  if (
-    path.includes('/memorization-is-a-spiritual-life-hack/') ||
-    path.endsWith('/memorization-is-a-spiritual-life-hack/index.html')
-  ) {
-    return 'memorizationBenefits'
-  }
-
-  if (
-    path.includes('/tips-for-memorizing-scripture/') ||
-    path.endsWith('/tips-for-memorizing-scripture/index.html')
-  ) {
-    return 'scriptureTips'
-  }
-
-  return 'marketing'
+  return page?.page || 'marketing'
 }
 
 function buildHtmlReplacements(siteMetadata, page) {
@@ -217,9 +239,9 @@ function buildHtmlReplacements(siteMetadata, page) {
   }
   const pageTitle = pageMetadata.title
   const pageDescription = pageMetadata.description
-  const robots = ['marketing', 'memorizationBenefits', 'scriptureTips'].includes(page)
+  const robots = PUBLIC_PAGE_NAMES.has(page)
     ? 'index,follow'
-    : (page === 'about' ? 'noindex,follow' : 'noindex,nofollow')
+    : 'noindex,nofollow'
   const canonicalTags = page === 'app' ? '' : buildCanonicalTags(siteMetadata, pageMetadata.canonicalPath)
   const socialTags = page === 'app' ? '' : buildSocialTags(siteMetadata, pageMetadata)
   const jsonLdTag = page === 'marketing'
@@ -280,18 +302,22 @@ function buildRuntimeRobotsTxtTemplate() {
 }
 
 function buildRuntimeSitemapXmlTemplate() {
+  const sitemapUrls = PUBLIC_PAGES.flatMap(({ path }) => {
+    const loc = path === '/'
+      ? '${RUM1N8_ROOT_URL}'
+      : `\${RUM1N8_ROOT_URL}${path.replace(/^\//, '')}`
+
+    return [
+      '  <url>',
+      `    <loc>${loc}</loc>`,
+      '  </url>',
+    ]
+  })
+
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    '  <url>',
-    '    <loc>${RUM1N8_ROOT_URL}</loc>',
-    '  </url>',
-    '  <url>',
-    '    <loc>${RUM1N8_ROOT_URL}memorization-is-a-spiritual-life-hack/</loc>',
-    '  </url>',
-    '  <url>',
-    '    <loc>${RUM1N8_ROOT_URL}tips-for-memorizing-scripture/</loc>',
-    '  </url>',
+    ...sitemapUrls,
     '</urlset>',
     '',
   ].join('\n')
@@ -313,18 +339,16 @@ function buildRobotsTxt(siteMetadata) {
 function buildSitemapXml(siteMetadata) {
   if (!siteMetadata.rootUrl) return null
 
+  const sitemapUrls = PUBLIC_PAGES.flatMap(({ path }) => [
+    '  <url>',
+    `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, path))}</loc>`,
+    '  </url>',
+  ])
+
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    '  <url>',
-    `    <loc>${escapeXml(siteMetadata.rootUrl)}</loc>`,
-    '  </url>',
-    '  <url>',
-    `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, siteMetadata.memorizationBenefitsPath))}</loc>`,
-    '  </url>',
-    '  <url>',
-    `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, siteMetadata.scriptureTipsPath))}</loc>`,
-    '  </url>',
+    ...sitemapUrls,
     '</urlset>',
     '',
   ].join('\n')
@@ -395,13 +419,6 @@ function createSiteMetadataPlugin(siteMetadata, { analyticsEnabled = false } = {
     closeBundle() {
       const outDir = resolve(process.cwd(), 'dist')
 
-      // Vite outputs marketing page to dist/home/index.html (matching the
-      // source path). Copy it to dist/index.html so nginx serves it at /.
-      const homeBuild = resolve(outDir, 'home/index.html')
-      if (existsSync(homeBuild) && !existsSync(resolve(outDir, 'index.html'))) {
-        copyFileSync(homeBuild, resolve(outDir, 'index.html'))
-      }
-
       const privacyPath = resolve(outDir, 'privacy.html')
       if (analyticsEnabled && existsSync(privacyPath)) {
         writeFileSync(
@@ -410,33 +427,16 @@ function createSiteMetadataPlugin(siteMetadata, { analyticsEnabled = false } = {
         )
       }
 
-      const htmlTemplates = [
-        { fileName: 'index.html', includeJsonLd: true },
-        { fileName: 'about/index.html', includeJsonLd: false },
-        {
-          fileName: 'memorization-is-a-spiritual-life-hack/index.html',
-          includeJsonLd: false,
-          canonicalPath: siteMetadata.memorizationBenefitsPath,
-          canonicalPlaceholder: '${RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS}',
-        },
-        {
-          fileName: 'tips-for-memorizing-scripture/index.html',
-          includeJsonLd: false,
-          canonicalPath: siteMetadata.scriptureTipsPath,
-          canonicalPlaceholder: '${RUM1N8_CANONICAL_SCRIPTURE_TIPS_TAGS}',
-        },
-      ]
-
-      htmlTemplates.forEach(({ fileName, includeJsonLd, canonicalPath, canonicalPlaceholder }) => {
-        const filePath = resolve(outDir, fileName)
+      PUBLIC_PAGES.forEach(({ inputFile, includeJsonLd, path, canonicalPlaceholder }) => {
+        const filePath = resolve(outDir, inputFile)
         if (!existsSync(filePath)) return
 
         const finalHtml = readFileSync(filePath, 'utf-8')
         writeFileSync(
-          resolve(outDir, `${fileName}.template`),
+          resolve(outDir, `${inputFile}.template`),
           buildRuntimeHtmlTemplateFromFinal(finalHtml, siteMetadata, {
             includeJsonLd,
-            canonicalPath,
+            canonicalPath: path,
             canonicalPlaceholder,
           }),
         )
@@ -464,30 +464,42 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       rollupOptions: {
-        input: {
-          marketing: resolve(process.cwd(), 'home/index.html'),
-          about: resolve(process.cwd(), 'about/index.html'),
-          memorizationBenefits: resolve(
-            process.cwd(),
-            'memorization-is-a-spiritual-life-hack/index.html'
-          ),
-          scriptureTips: resolve(
-            process.cwd(),
-            'tips-for-memorizing-scripture/index.html'
-          ),
-          app: resolve(process.cwd(), 'app/index.html'),
-        },
+        input: Object.fromEntries(
+          HTML_PAGES.map(({ inputName, inputFile }) => [
+            inputName,
+            resolve(process.cwd(), inputFile),
+          ])
+        ),
       },
     },
     plugins: [
       {
-        name: 'dev-home-rewrite',
+        name: 'dev-static-route-canonicalization',
         configureServer(server) {
-          server.middlewares.use((req, _res, next) => {
+          const redirects = new Map([
+            ['/about', '/'],
+            ['/about/', '/'],
+            ['/about/index.html', '/'],
+            ['/home', '/'],
+            ['/home/', '/'],
+            ['/home/index.html', '/'],
+            ['/index.html', '/'],
+            ['/app/index.html', '/app/'],
+            ['/memorization-is-a-spiritual-life-hack/index.html', '/memorization-is-a-spiritual-life-hack/'],
+            ['/tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
+          ])
+
+          server.middlewares.use((req, res, next) => {
             const [pathname, query] = (req.url || '').split('?')
-            if (pathname === '/' || pathname === '/index.html') {
-              req.url = `/home/index.html${query ? `?${query}` : ''}`
-            } else if (pathname === '/privacy' || pathname === '/privacy/') {
+            const redirectTarget = redirects.get(pathname)
+            if (redirectTarget) {
+              res.statusCode = 301
+              res.setHeader('Location', `${redirectTarget}${query ? `?${query}` : ''}`)
+              res.end()
+              return
+            }
+
+            if (pathname === '/privacy' || pathname === '/privacy/') {
               req.url = `/privacy.html${query ? `?${query}` : ''}`
             }
             next()
@@ -643,7 +655,10 @@ export default defineConfig(({ mode }) => {
           navigateFallback: '/app/index.html',
           navigateFallbackDenylist: [
             /^\/$/,
+            /^\/index\.html$/,
             /^\/about(?:\/.*)?$/,
+            /^\/home(?:\/.*)?$/,
+            /^\/app\/index\.html$/,
             /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?$/,
             /^\/tips-for-memorizing-scripture(?:\/.*)?$/,
             /^\/gdrive-callback\.html/,

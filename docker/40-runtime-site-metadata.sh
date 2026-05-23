@@ -3,7 +3,6 @@ set -eu
 
 HTML_ROOT="/usr/share/nginx/html"
 INDEX_TEMPLATE="${HTML_ROOT}/index.html.template"
-ABOUT_TEMPLATE="${HTML_ROOT}/about/index.html.template"
 MEMORIZATION_BENEFITS_TEMPLATE="${HTML_ROOT}/memorization-is-a-spiritual-life-hack/index.html.template"
 SCRIPTURE_TIPS_TEMPLATE="${HTML_ROOT}/tips-for-memorizing-scripture/index.html.template"
 ROBOTS_TEMPLATE="${HTML_ROOT}/robots.txt.template"
@@ -77,12 +76,6 @@ if [ -f "$INDEX_TEMPLATE" ]; then
   envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_ROOT_TAGS} ${RUM1N8_JSON_LD_URL_FIELDS}' \
     < "$INDEX_TEMPLATE" \
     > "${HTML_ROOT}/index.html"
-fi
-
-if [ -f "$ABOUT_TEMPLATE" ]; then
-  envsubst '${RUM1N8_SOCIAL_IMAGE_URL} ${RUM1N8_CANONICAL_ROOT_TAGS}' \
-    < "$ABOUT_TEMPLATE" \
-    > "${HTML_ROOT}/about/index.html"
 fi
 
 if [ -f "$MEMORIZATION_BENEFITS_TEMPLATE" ]; then

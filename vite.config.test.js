@@ -20,12 +20,12 @@ describe('vite HTML metadata replacements', () => {
     expect(replacements['%HEAD_JSON_LD%']).toContain('SoftwareApplication')
   })
 
-  it('sets noindex metadata for the about page while keeping the root canonical', () => {
-    const replacements = buildHtmlReplacements(siteMetadata, 'about')
+  it('sets indexable metadata for public article pages', () => {
+    const replacements = buildHtmlReplacements(siteMetadata, 'scriptureTips')
 
-    expect(replacements['%META_ROBOTS%']).toBe('noindex,follow')
+    expect(replacements['%META_ROBOTS%']).toBe('index,follow')
     expect(replacements['%HEAD_CANONICAL_TAGS%']).toContain(
-      '<link rel="canonical" href="https://rum1n8.example/" />'
+      '<link rel="canonical" href="https://rum1n8.example/tips-for-memorizing-scripture/" />'
     )
     expect(replacements['%HEAD_SOCIAL_TAGS%']).toContain('twitter:card')
     expect(replacements['%HEAD_JSON_LD%']).toBe('')

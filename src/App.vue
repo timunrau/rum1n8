@@ -2081,7 +2081,7 @@ import { useColorScheme } from './composables/useColorScheme.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
 import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } from './analytics.js'
 import {
-  buildAboutUrl,
+  buildPublicHomeUrl,
   buildTipsUrl,
   dismissOnboarding as dismissOnboardingUiState,
   getInstallReminderState,
@@ -7912,7 +7912,7 @@ export default {
     const openAbout = () => {
       closeSettingsMenu()
       closeDrawer()
-      window.location.assign(buildAboutUrl(getCurrentAppUrl()))
+      window.location.assign(buildPublicHomeUrl(getCurrentAppUrl()))
     }
 
     const openMemorizationTips = () => {

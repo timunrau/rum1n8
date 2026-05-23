@@ -5,7 +5,7 @@ import { gotoApp } from '../helpers/navigation'
 const HERO_HEADING = 'Ruminate: to turn something over in the mind.'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/about/')
+  await page.goto('/')
   await clearAppStorage(page)
   await page.reload()
 })
@@ -32,7 +32,7 @@ test('returning users visiting root are redirected back into the app', async ({ 
   await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
 })
 
-test('about stays public even for returning users', async ({ page }) => {
+test('root return links stay public even for returning users', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('rum1n8-ui-state', JSON.stringify({
       hasOpenedApp: true,
@@ -40,9 +40,20 @@ test('about stays public even for returning users', async ({ page }) => {
     }))
   })
 
-  await page.goto('/about/')
+  await page.goto('/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
 
-  await expect(page).toHaveURL(/\/about\/$/)
+  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F%3Fview%3Dreview-list$/)
+  await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute(
+    'href',
+    '/app/?view=review-list'
+  )
+})
+
+test('deprecated about URL redirects to the canonical root and preserves return target', async ({ page }) => {
+  await page.goto('/about/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
+
+  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F%3Fview%3Dreview-list$/)
   await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute(
     'href',
@@ -74,7 +85,7 @@ test('app About opens the public page with a back link to the current app view',
   await expect(page.getByTestId('settings-about')).toBeVisible()
   await page.getByTestId('settings-about').click()
 
-  await expect(page).toHaveURL(/\/about\/\?returnTo=%2Fapp%2F$/)
+  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F$/)
   await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute('href', '/app/')
 })

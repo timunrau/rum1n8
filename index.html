@@ -50,6 +50,7 @@
             return null
           }
         }
+        const explicitReturnTarget = normalizeTarget(params.get('returnTo'))
 
         const hasLegacyAppData = [
           'rum1n8-verses',
@@ -90,7 +91,7 @@
 
         if (hasLegacyNavigation) {
           redirectTarget = `${APP_PATH}${window.location.search}${window.location.hash}`
-        } else if (isStandalone || hasLegacyAppData || hasOpenedApp) {
+        } else if (!explicitReturnTarget && (isStandalone || hasLegacyAppData || hasOpenedApp)) {
           redirectTarget = preferredTarget || APP_PATH
         }
 

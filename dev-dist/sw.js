@@ -82,12 +82,12 @@ define(['./workbox-ca84f546'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "/app/index.html",
-    "revision": "0.kh0mb6ab4jk"
+    "revision": "0.7a8123uvspc"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/app/index.html"), {
     allowlist: [/^\/$/],
-    denylist: [/^\/$/, /^\/about(?:\/.*)?$/, /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?$/, /^\/tips-for-memorizing-scripture(?:\/.*)?$/, /^\/gdrive-callback\.html/, /^\/privacy/]
+    denylist: [/^\/$/, /^\/index\.html$/, /^\/about(?:\/.*)?$/, /^\/home(?:\/.*)?$/, /^\/app\/index\.html$/, /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?$/, /^\/tips-for-memorizing-scripture(?:\/.*)?$/, /^\/gdrive-callback\.html/, /^\/privacy/]
   }));
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-cache",
