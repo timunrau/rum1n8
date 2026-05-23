@@ -1,3 +1,10 @@
+## [1.28.2](https://github.com/timunrau/rum1n8/compare/v1.28.1...v1.28.2) (2026-05-23)
+
+
+### Bug Fixes
+
+* avoid canonical redirect loops ([bd68b68](https://github.com/timunrau/rum1n8/commit/bd68b68dd47fde3469451f0ee7fb9a2da06d8315))
+
 ## [1.28.1](https://github.com/timunrau/rum1n8/compare/v1.28.0...v1.28.1) (2026-05-23)
 
 
