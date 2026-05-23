@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/timunrau/rum1n8/compare/v1.28.0...v1.28.1) (2026-05-23)
+
+
+### Bug Fixes
+
+* simplify public URL routing ([7c228ed](https://github.com/timunrau/rum1n8/commit/7c228ed1e22418bad8f8fbd9ff247693ee2097c4))
+
 # [1.28.0](https://github.com/timunrau/rum1n8/compare/v1.27.0...v1.28.0) (2026-05-23)
 
 
