@@ -4,6 +4,7 @@ import { getAppSettings } from './app-settings.js'
 import {
   APP_ROOT_PATH,
   ABOUT_PATH,
+  TIPS_PATH,
   getPreferredAppUrl,
   getUiState,
   normalizeAppUrl,
@@ -25,11 +26,11 @@ function updateAppLinks(target, label) {
   })
 }
 
-function updateReturnLink(target) {
+function updateReturnLink(target, isVisible) {
   const banner = document.querySelector('[data-return-banner]')
   if (!banner) return
 
-  if (!window.location.pathname.startsWith(ABOUT_PATH)) {
+  if (!isVisible) {
     banner.hidden = true
     return
   }
@@ -41,17 +42,22 @@ function updateReturnLink(target) {
 }
 
 function initMarketingPage() {
+  const pathname = window.location.pathname
   document.documentElement.dataset.page =
-    window.location.pathname.startsWith(ABOUT_PATH) ? 'about' : 'home'
+    pathname.startsWith(ABOUT_PATH)
+      ? 'about'
+      : (pathname.startsWith(TIPS_PATH) ? 'tips' : 'home')
 
   const uiState = getUiState()
   const explicitReturnTarget = getReturnTarget()
   const appTarget = explicitReturnTarget || getPreferredAppUrl()
   const isReturning = shouldBypassMarketing() || !!explicitReturnTarget || !!uiState.lastAppUrl
   const appLabel = isReturning ? 'Open app' : 'Start memorizing'
+  const shouldShowReturnLink =
+    pathname.startsWith(ABOUT_PATH) || (pathname.startsWith(TIPS_PATH) && isReturning)
 
   updateAppLinks(appTarget || APP_ROOT_PATH, appLabel)
-  updateReturnLink(appTarget || APP_ROOT_PATH)
+  updateReturnLink(appTarget || APP_ROOT_PATH, shouldShowReturnLink)
 }
 
 function initTrackedMarketingLinks() {

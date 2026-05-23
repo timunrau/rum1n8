@@ -65,6 +65,8 @@ function buildSiteMetadata(env) {
   const defaultDescription = 'A simple Bible memory app that gives you control of your data.'
   const memorizationBenefitsTitle = 'Memorization Is A Spiritual Life-Hack'
   const memorizationBenefitsDescription = "A short case for why Scripture memorization unlocks real growth in your walk with God."
+  const scriptureTipsTitle = 'Tips For Memorizing Scripture'
+  const scriptureTipsDescription = 'Practical tips for starting small, building a daily Scripture memorization habit, and reviewing consistently.'
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL)
 
   return {
@@ -73,11 +75,14 @@ function buildSiteMetadata(env) {
     defaultDescription,
     memorizationBenefitsTitle,
     memorizationBenefitsDescription,
+    scriptureTipsTitle,
+    scriptureTipsDescription,
     siteUrl,
     rootUrl: siteUrl ? `${siteUrl}/` : null,
     appPath: '/app/',
     aboutPath: '/about/',
     memorizationBenefitsPath: '/memorization-is-a-spiritual-life-hack/',
+    scriptureTipsPath: '/tips-for-memorizing-scripture/',
     socialPreviewImagePath: '/marketing/og-card.png',
     socialPreviewImageAlt: 'rum1n8 app preview',
     screenshotPaths: [
@@ -182,24 +187,37 @@ function detectHtmlPage(ctx) {
     return 'memorizationBenefits'
   }
 
+  if (
+    path.includes('/tips-for-memorizing-scripture/') ||
+    path.endsWith('/tips-for-memorizing-scripture/index.html')
+  ) {
+    return 'scriptureTips'
+  }
+
   return 'marketing'
 }
 
 function buildHtmlReplacements(siteMetadata, page) {
-  const pageMetadata = page === 'memorizationBenefits'
-    ? {
-        title: siteMetadata.memorizationBenefitsTitle,
-        description: siteMetadata.memorizationBenefitsDescription,
-        canonicalPath: siteMetadata.memorizationBenefitsPath,
-      }
-    : {
-        title: page === 'app' ? `${siteMetadata.productName} App` : siteMetadata.title,
-        description: siteMetadata.defaultDescription,
-        canonicalPath: '/',
-      }
+  const pageMetadataByPage = {
+    memorizationBenefits: {
+      title: siteMetadata.memorizationBenefitsTitle,
+      description: siteMetadata.memorizationBenefitsDescription,
+      canonicalPath: siteMetadata.memorizationBenefitsPath,
+    },
+    scriptureTips: {
+      title: siteMetadata.scriptureTipsTitle,
+      description: siteMetadata.scriptureTipsDescription,
+      canonicalPath: siteMetadata.scriptureTipsPath,
+    },
+  }
+  const pageMetadata = pageMetadataByPage[page] || {
+    title: page === 'app' ? `${siteMetadata.productName} App` : siteMetadata.title,
+    description: siteMetadata.defaultDescription,
+    canonicalPath: '/',
+  }
   const pageTitle = pageMetadata.title
   const pageDescription = pageMetadata.description
-  const robots = page === 'marketing' || page === 'memorizationBenefits'
+  const robots = ['marketing', 'memorizationBenefits', 'scriptureTips'].includes(page)
     ? 'index,follow'
     : (page === 'about' ? 'noindex,follow' : 'noindex,nofollow')
   const canonicalTags = page === 'app' ? '' : buildCanonicalTags(siteMetadata, pageMetadata.canonicalPath)
@@ -271,6 +289,9 @@ function buildRuntimeSitemapXmlTemplate() {
     '  <url>',
     '    <loc>${RUM1N8_ROOT_URL}memorization-is-a-spiritual-life-hack/</loc>',
     '  </url>',
+    '  <url>',
+    '    <loc>${RUM1N8_ROOT_URL}tips-for-memorizing-scripture/</loc>',
+    '  </url>',
     '</urlset>',
     '',
   ].join('\n')
@@ -300,6 +321,9 @@ function buildSitemapXml(siteMetadata) {
     '  </url>',
     '  <url>',
     `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, siteMetadata.memorizationBenefitsPath))}</loc>`,
+    '  </url>',
+    '  <url>',
+    `    <loc>${escapeXml(getAbsoluteSitePath(siteMetadata.siteUrl, siteMetadata.scriptureTipsPath))}</loc>`,
     '  </url>',
     '</urlset>',
     '',
@@ -395,6 +419,12 @@ function createSiteMetadataPlugin(siteMetadata, { analyticsEnabled = false } = {
           canonicalPath: siteMetadata.memorizationBenefitsPath,
           canonicalPlaceholder: '${RUM1N8_CANONICAL_MEMORIZATION_BENEFITS_TAGS}',
         },
+        {
+          fileName: 'tips-for-memorizing-scripture/index.html',
+          includeJsonLd: false,
+          canonicalPath: siteMetadata.scriptureTipsPath,
+          canonicalPlaceholder: '${RUM1N8_CANONICAL_SCRIPTURE_TIPS_TAGS}',
+        },
       ]
 
       htmlTemplates.forEach(({ fileName, includeJsonLd, canonicalPath, canonicalPlaceholder }) => {
@@ -440,6 +470,10 @@ export default defineConfig(({ mode }) => {
           memorizationBenefits: resolve(
             process.cwd(),
             'memorization-is-a-spiritual-life-hack/index.html'
+          ),
+          scriptureTips: resolve(
+            process.cwd(),
+            'tips-for-memorizing-scripture/index.html'
           ),
           app: resolve(process.cwd(), 'app/index.html'),
         },
@@ -610,6 +644,8 @@ export default defineConfig(({ mode }) => {
           navigateFallbackDenylist: [
             /^\/$/,
             /^\/about(?:\/.*)?$/,
+            /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?$/,
+            /^\/tips-for-memorizing-scripture(?:\/.*)?$/,
             /^\/gdrive-callback\.html/,
             /^\/privacy/,
           ],

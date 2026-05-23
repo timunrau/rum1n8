@@ -445,6 +445,18 @@
             Share app
           </button>
           <button
+            data-testid="settings-memorization-tips"
+            @click="openMemorizationTips"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a6 6 0 00-3.6 10.8c.7.52 1.1 1.3 1.1 2.2h5c0-.9.4-1.68 1.1-2.2A6 6 0 0012 3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.5 18h5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 21h3" />
+            </svg>
+            Memorization tips
+          </button>
+          <button
             data-testid="settings-about"
             @click="openAbout"
             class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
@@ -2070,6 +2082,7 @@ import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsR
 import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } from './analytics.js'
 import {
   buildAboutUrl,
+  buildTipsUrl,
   dismissOnboarding as dismissOnboardingUiState,
   getInstallReminderState,
   getCurrentAppUrl,
@@ -7902,6 +7915,12 @@ export default {
       window.location.assign(buildAboutUrl(getCurrentAppUrl()))
     }
 
+    const openMemorizationTips = () => {
+      closeSettingsMenu()
+      closeDrawer()
+      window.location.assign(buildTipsUrl(getCurrentAppUrl()))
+    }
+
     const shareApp = async () => {
       closeSettingsMenu()
       closeDrawer()
@@ -8480,6 +8499,7 @@ export default {
       setUpSyncForIOSInstall,
       continueToIOSInstallSteps,
       openAbout,
+      openMemorizationTips,
       shareApp,
       backupAllData,
       importFromBackup,

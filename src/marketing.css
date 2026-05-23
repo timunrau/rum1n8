@@ -804,6 +804,10 @@ img {
     display: none;
   }
 
+  .site-shell:has([data-return-banner]:not([hidden])) .site-main--essay {
+    padding-top: 5.75rem;
+  }
+
   .hero {
     padding: 1.5rem 0 4rem;
   }

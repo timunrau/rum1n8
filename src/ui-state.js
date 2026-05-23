@@ -1,6 +1,7 @@
 export const UI_STATE_KEY = 'rum1n8-ui-state'
 export const APP_ROOT_PATH = '/app/'
 export const ABOUT_PATH = '/about/'
+export const TIPS_PATH = '/tips-for-memorizing-scripture/'
 
 const DEFAULT_UI_STATE = Object.freeze({
   hasOpenedApp: false,
@@ -335,6 +336,17 @@ export function shouldBypassMarketing() {
 
 export function buildAboutUrl(returnTo = getCurrentAppUrl()) {
   const url = new URL(ABOUT_PATH, getBaseOrigin())
+  const normalizedReturnTo = normalizeAppUrl(returnTo)
+
+  if (normalizedReturnTo) {
+    url.searchParams.set('returnTo', normalizedReturnTo)
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
+export function buildTipsUrl(returnTo = getCurrentAppUrl()) {
+  const url = new URL(TIPS_PATH, getBaseOrigin())
   const normalizedReturnTo = normalizeAppUrl(returnTo)
 
   if (normalizedReturnTo) {
