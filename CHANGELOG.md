@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/timunrau/rum1n8/compare/v1.27.0...v1.28.0) (2026-05-23)
+
+
+### Features
+
+* add scripture memorization tips page ([1d4aa93](https://github.com/timunrau/rum1n8/commit/1d4aa93de1d029154cba2f58b3e382f5575255bf))
+
 # [1.27.0](https://github.com/timunrau/rum1n8/compare/v1.26.1...v1.27.0) (2026-05-22)
 
 
