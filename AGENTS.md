@@ -19,10 +19,12 @@
 
 ## Versioning
 
+- Before starting new work in this repo, run `git pull --ff-only` so local `main` includes any CI/semantic-release commits that landed after the last push.
 - The About modal version comes from `package.json` and is released automatically by semantic-release in CI.
 - Do not manually increment `package.json` for normal work; version bumps are determined from Conventional Commits.
 - Use Conventional Commit titles/messages for release-impacting changes: `feat:` for minor, `fix:`/`perf:` for patch, and `!` or `BREAKING CHANGE:` for major.
 - When Codex creates commits for this repo, always use Conventional Commit messages so semantic-release can determine the next version from commits on `main`.
+- After pushing a release-impacting commit, expect CI/semantic-release to add a new release commit on `main` shortly afterward. Before making another commit or push, pull/rebase onto the updated `origin/main` so your local branch includes the generated release commit.
 
 ## Further Docs
 
