@@ -1,3 +1,10 @@
+## [1.28.4](https://github.com/timunrau/rum1n8/compare/v1.28.3...v1.28.4) (2026-05-24)
+
+
+### Bug Fixes
+
+* replace nginx default html in image ([1cab9c4](https://github.com/timunrau/rum1n8/commit/1cab9c463ebcdc420620d2d3a94374fa5e50b149))
+
 ## [1.28.3](https://github.com/timunrau/rum1n8/compare/v1.28.2...v1.28.3) (2026-05-24)
 
 
