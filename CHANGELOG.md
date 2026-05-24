@@ -1,3 +1,10 @@
+## [1.28.3](https://github.com/timunrau/rum1n8/compare/v1.28.2...v1.28.3) (2026-05-24)
+
+
+### Bug Fixes
+
+* serve canonical index requests ([59570d9](https://github.com/timunrau/rum1n8/commit/59570d9a2bfb6418c3b71052f81d7f246dcd1b22))
+
 ## [1.28.2](https://github.com/timunrau/rum1n8/compare/v1.28.1...v1.28.2) (2026-05-23)
 
 
