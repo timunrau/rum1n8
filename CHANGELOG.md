@@ -1,3 +1,10 @@
+## [1.28.5](https://github.com/timunrau/rum1n8/compare/v1.28.4...v1.28.5) (2026-05-24)
+
+
+### Bug Fixes
+
+* make docker build emit root page ([e8e8784](https://github.com/timunrau/rum1n8/commit/e8e87848bde38c3c4bfd4cee7a3089f9d31ec760))
+
 ## [1.28.4](https://github.com/timunrau/rum1n8/compare/v1.28.3...v1.28.4) (2026-05-24)
 
 
