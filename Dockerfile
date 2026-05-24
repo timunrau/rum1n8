@@ -30,7 +30,10 @@ FROM nginx:alpine
 RUN apk add --no-cache gettext wget
 
 # Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=builder /app/dist/ /usr/share/nginx/html/
+RUN test -f /usr/share/nginx/html/index.html \
+  && ! grep -q "Welcome to nginx" /usr/share/nginx/html/index.html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
