@@ -206,14 +206,31 @@ function buildSocialTags(siteMetadata, pageMetadata = {}) {
 }
 
 function detectHtmlPage(ctx) {
-  const path = ctx?.path || ''
+  const cwd = process.cwd().replaceAll('\\', '/')
+  const contextPaths = [ctx?.filename, ctx?.path]
+    .filter(Boolean)
+    .map((value) => {
+      const normalized = value.replaceAll('\\', '/')
+      const relativePath = normalized.startsWith(`${cwd}/`)
+        ? normalized.slice(cwd.length + 1)
+        : normalized.replace(/^\/+/, '')
+
+      return relativePath.replace(/\/+$/, '')
+    })
+
   const page = HTML_PAGES.find((candidate) => {
     const inputPath = `/${candidate.inputFile}`
     const cleanPathIndex = candidate.path === '/'
       ? '/index.html'
       : `${candidate.path}index.html`
+    const normalizedMatches = [
+      candidate.inputFile,
+      inputPath.replace(/^\/+/, ''),
+      cleanPathIndex.replace(/^\/+/, ''),
+      candidate.path.replace(/^\/+|\/+$/g, ''),
+    ].filter(Boolean)
 
-    return path === candidate.path || path === inputPath || path === cleanPathIndex
+    return contextPaths.some((path) => normalizedMatches.includes(path))
   })
 
   return page?.page || 'marketing'

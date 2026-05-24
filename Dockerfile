@@ -1,7 +1,7 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /workspace
 
 # Copy package files
 COPY package*.json ./
@@ -31,7 +31,7 @@ RUN apk add --no-cache gettext wget
 
 # Copy built files from builder stage
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /app/dist/ /usr/share/nginx/html/
+COPY --from=builder /workspace/dist/ /usr/share/nginx/html/
 RUN test -f /usr/share/nginx/html/index.html \
   && ! grep -q "Welcome to nginx" /usr/share/nginx/html/index.html
 
