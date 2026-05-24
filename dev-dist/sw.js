@@ -82,12 +82,12 @@ define(['./workbox-ca84f546'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "/app/index.html",
-    "revision": "0.v8e3e5p6m94"
+    "revision": "0.48g69l7qesc"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/app/index.html"), {
     allowlist: [/^\/$/],
-    denylist: [/^\/$/, /^\/index\.html$/, /^\/about(?:\/.*)?$/, /^\/home(?:\/.*)?$/, /^\/app\/index\.html$/, /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?$/, /^\/tips-for-memorizing-scripture(?:\/.*)?$/, /^\/gdrive-callback\.html/, /^\/privacy/]
+    denylist: [/^\/(?:\?.*)?$/, /^\/index\.html(?:\?.*)?$/, /^\/about(?:\/.*)?(?:\?.*)?$/, /^\/home(?:\/.*)?(?:\?.*)?$/, /^\/app\/index\.html(?:\?.*)?$/, /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?(?:\?.*)?$/, /^\/tips-for-memorizing-scripture(?:\/.*)?(?:\?.*)?$/, /^\/gdrive-callback\.html(?:\?.*)?$/, /^\/privacy(?:\.html)?(?:\?.*)?$/]
   }));
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-cache",
