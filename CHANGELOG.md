@@ -1,3 +1,10 @@
+## [1.28.6](https://github.com/timunrau/rum1n8/compare/v1.28.5...v1.28.6) (2026-05-24)
+
+
+### Bug Fixes
+
+* keep public return links out of app shell ([4b78206](https://github.com/timunrau/rum1n8/commit/4b7820665502d3fa0b38a81cb478c4f368088b88))
+
 ## [1.28.5](https://github.com/timunrau/rum1n8/compare/v1.28.4...v1.28.5) (2026-05-24)
 
 
