@@ -466,6 +466,20 @@
             </svg>
             About
           </button>
+          <a
+            data-testid="settings-source-code"
+            href="https://github.com/timunrau/rum1n8"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="trackEvent('app_source_code_clicked', { source: 'settings_drawer' }); closeSettingsMenu(); closeDrawer()"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 18l6-6-6-6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6l-6 6 6 6" />
+            </svg>
+            Source code
+          </a>
         </nav>
         <div class="px-6 pb-5 pt-2">
           <button

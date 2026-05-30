@@ -598,9 +598,9 @@ async function captureOgCard(browser, baseUrl) {
                 <h1>${productName}<span>${title}</span></h1>
                 <p>${description}</p>
                 <div class="chips">
-                  <span class="chip">Fast review</span>
-                  <span class="chip">Privacy-first</span>
-                  <span class="chip">Own your data</span>
+                  <span class="chip">Sovereign</span>
+                  <span class="chip">Simple</span>
+                  <span class="chip">Free</span>
                 </div>
               </div>
             </section>

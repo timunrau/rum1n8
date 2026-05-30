@@ -18,7 +18,7 @@ I built rum1n8 to solve the frustrations I had with existing Bible memory apps. 
 - **No bloat.** The app is intentionally simple, focused, and fast. It is built around first-letter typing, active recall, and spaced repetition instead of piling on extra features and options.
 - **Fast review and fast verse entry.** It takes seconds to start reviewing. Adding verses does not take a hundred taps through a bunch of screens. Type a reference or verse range, import the verse text, and start.
 - **Not tied to an app store.** rum1n8 is an installable offline web app, so it is not at the mercy of Apple or Google deciding whether it stays on their platforms.
-- **You can truly own your own copy of the app.** Most apps only give you permission to use them, and if the owner stops supporting them, you can lose access. rum1n8 is self-hostable and released under the [MIT License](LICENSE), so you can copy the whole app, run it yourself, and not depend on me to keep it online forever.
+- **You can truly own your own copy of the app.** Most apps only give you permission to use them, and if the owner stops supporting them, you can lose access. rum1n8 is self-hostable and released under the [MIT-0 License](LICENSE), so you can copy the whole app, run it yourself, and not depend on me to keep it online forever.
 
 ## Features
 
@@ -42,6 +42,12 @@ Church Renewal International first taught me the importance of daily time in the
 ## Recommended devotional resource
 
 I also recommend [TheWay.app](https://theway.app), a devotional and discipleship resource from Church Renewal International.
+
+## Freely given
+
+[<img src="https://freely.giving/badges/fg_standard_pde.png" alt="Freely given: public-domain-equivalent" width="180">](https://freely.giving)
+
+rum1n8 is released under the [MIT-0 License](LICENSE), which means you can use, copy, modify, distribute, and self-host it without attribution requirements.
 
 ## More docs
 
