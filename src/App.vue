@@ -1084,7 +1084,7 @@
               </svg>
             </button>
             <p class="hero-onboarding__eyebrow">rum1n8</p>
-            <h2 class="hero-onboarding__title">Start ruminating.</h2>
+            <h2 class="hero-onboarding__title">Start ruminating</h2>
             <p class="hero-onboarding__subtitle">
               {{ shouldShowIOSInstallFirstPrompt ? 'Use rum1n8 as an app, or keep going in your browser.' : 'Choose a verse to get started.' }}
             </p>
@@ -1257,8 +1257,8 @@
           class="fab-menu__item bg-surface text-text-primary rounded-lg border border-border-default shadow-lift transition-colors duration-200 flex items-center gap-3 px-4 py-3 min-w-[160px] active:bg-surface-active focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           style="--fab-index: 1;"
         >
-          <div class="w-10 h-10 bg-accent-warm rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-accent-warm-contrast" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <div class="w-10 h-10 bg-action rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>

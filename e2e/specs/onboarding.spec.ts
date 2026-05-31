@@ -36,7 +36,7 @@ test('fresh storage shows the first-run hero card', async ({ page }) => {
   await gotoApp(page, '?view=collections')
 
   await expect(page.getByTestId('getting-started-card')).toBeVisible()
-  await expect(page.getByText('Start ruminating.')).toBeVisible()
+  await expect(page.getByText('Start ruminating')).toBeVisible()
   await expect(page.getByText('Choose a verse to get started.')).toBeVisible()
 })
 
