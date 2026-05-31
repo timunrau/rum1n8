@@ -4908,7 +4908,7 @@ export default {
 
         let translationId = null
         for (const variant of versionVariants) {
-          if (collection.has_translation(variant)) {
+          if (collection.bibles.has_resource(variant)) {
             translationId = variant
             break
           }
@@ -4926,14 +4926,14 @@ export default {
         const bookId = parsed.bookId
 
         // Check if book exists in this translation
-        if (!collection.has_book(translationId, bookId)) {
+        if (!collection.bibles.has_book(translationId, bookId)) {
           importError.value = `Could not find book '${parsed.bookName}' in this translation.`
           importingVerse.value = false
           return
         }
 
         // Fetch the book in 'txt' format which supports excluding notes
-        const book = await collection.fetch_book(translationId, bookId, 'txt')
+        const book = await collection.bibles.fetch_book(translationId, bookId, 'txt')
 
         // Extract verses using get_passage for ranges or get_verse for single
         // Use notes: false to exclude footnotes, verse_nums: false to exclude verse numbers

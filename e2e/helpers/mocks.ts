@@ -21,12 +21,56 @@ export async function mockBibleApi(page: Page, verseContent = MOCK_VERSE_CONTENT
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          collections: [
-            {
-              id: 'eng',
-              translations: [{ id: 'eng_bsb' }],
+          bibles: {
+            eng_bsb: {
+              name: {
+                local: 'Berean Standard Bible',
+                local_abbrev: 'BSB',
+                english: 'Berean Standard Bible',
+                english_abbrev: 'BSB',
+              },
+              year: 2020,
+              books_ot: [],
+              books_nt: ['jhn'],
+              copyright: {
+                attribution: 'Mock Bible',
+                attribution_url: 'https://example.com/mock-bible',
+                licenses: [{ license: 'mock-open', url: 'https://example.com/mock-license' }],
+              },
+              direction: 'ltr',
+              tags: ['recommended'],
             },
-          ],
+          },
+          glosses: {},
+          notes: {},
+          languages: {
+            eng: {
+              local: 'English',
+              english: 'English',
+              pop: 400000000,
+              direction: 'ltr',
+            },
+          },
+          language2to3: {
+            en: 'eng',
+          },
+          languages_most_spoken: ['eng'],
+          books_ordered: ['jhn'],
+          book_names_english: {
+            jhn: 'John',
+          },
+          licenses: {
+            'mock-open': {
+              name: 'Mock Open License',
+              restrictions: {
+                forbid_limitless: false,
+                forbid_commercial: false,
+                forbid_derivatives: false,
+                forbid_attributionless: false,
+                forbid_other: false,
+              },
+            },
+          },
         }),
       })
       return
@@ -37,13 +81,36 @@ export async function mockBibleApi(page: Page, verseContent = MOCK_VERSE_CONTENT
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          chapters: {
-            '3': {
-              verses: {
-                '16': verseContent,
-              },
-            },
+          book: 'jhn',
+          name: {
+            normal: 'John',
+            long: 'The Gospel According to John',
+            abbrev: 'John',
           },
+          contents: [
+            [],
+            [],
+            [],
+            [
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [verseContent],
+            ],
+          ],
         }),
       })
       return
