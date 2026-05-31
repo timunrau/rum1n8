@@ -22,6 +22,25 @@ HOST=0.0.0.0 npm run dev
 - If Chromium is missing, run `npx playwright install chromium`
 - In sandboxed environments, e2e may need permission to open a local listening port
 
+## Maintenance
+
+- Dependabot checks npm, GitHub Actions, and Docker dependencies weekly on Monday at 09:00 America/Winnipeg
+- Treat patch/minor dependency PRs as routine maintenance; merge them when CI is green
+- Review semver-major dependency PRs as planned batches, not mixed with unrelated feature work
+- Handle critical/high audit findings within a few days; moderate/low findings can wait for the monthly maintenance pass
+- Avoid routine `npm audit fix --force`; inspect breaking changes first
+
+Monthly maintenance pass:
+
+```bash
+git pull --ff-only
+npm outdated
+npm audit
+npm test
+npm run build
+npm run test:e2e
+```
+
 ## WebDAV development
 
 Use the local proxy when working on WebDAV sync:
