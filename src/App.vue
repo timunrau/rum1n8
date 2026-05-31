@@ -2075,7 +2075,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 <script>
 import { ref, onMounted, onBeforeUnmount, onUpdated, computed, nextTick, watch } from 'vue'
 import Fuse from 'fuse.js'
-import { BibleClient } from '@gracious.tech/fetch-client'
+import { FetchClient } from '@gracious.tech/fetch-client'
 import {
   syncData,
   markVerseDeleted,
@@ -4860,7 +4860,7 @@ export default {
     // Initialize Bible client lazily
     const initBibleClient = async () => {
       if (!bibleClient.value) {
-        bibleClient.value = new BibleClient()
+        bibleClient.value = new FetchClient()
       }
       if (!bibleCollection.value) {
         bibleCollection.value = await bibleClient.value.fetch_collection()

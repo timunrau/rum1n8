@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -523,6 +524,7 @@ export default defineConfig(({ mode }) => {
           })
         },
       },
+      tailwindcss(),
       vue(),
       VitePWA({
         registerType: 'autoUpdate',
