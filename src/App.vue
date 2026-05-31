@@ -2075,7 +2075,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
 <script>
 import { ref, onMounted, onBeforeUnmount, onUpdated, computed, nextTick, watch } from 'vue'
 import Fuse from 'fuse.js'
-import { BibleClient } from '@gracious.tech/fetch-client'
+import { FetchClient } from '@gracious.tech/fetch-client'
 import {
   syncData,
   markVerseDeleted,
@@ -4860,7 +4860,7 @@ export default {
     // Initialize Bible client lazily
     const initBibleClient = async () => {
       if (!bibleClient.value) {
-        bibleClient.value = new BibleClient()
+        bibleClient.value = new FetchClient()
       }
       if (!bibleCollection.value) {
         bibleCollection.value = await bibleClient.value.fetch_collection()
@@ -4908,7 +4908,7 @@ export default {
 
         let translationId = null
         for (const variant of versionVariants) {
-          if (collection.has_translation(variant)) {
+          if (collection.bibles.has_resource(variant)) {
             translationId = variant
             break
           }
@@ -4926,14 +4926,14 @@ export default {
         const bookId = parsed.bookId
 
         // Check if book exists in this translation
-        if (!collection.has_book(translationId, bookId)) {
+        if (!collection.bibles.has_book(translationId, bookId)) {
           importError.value = `Could not find book '${parsed.bookName}' in this translation.`
           importingVerse.value = false
           return
         }
 
         // Fetch the book in 'txt' format which supports excluding notes
-        const book = await collection.fetch_book(translationId, bookId, 'txt')
+        const book = await collection.bibles.fetch_book(translationId, bookId, 'txt')
 
         // Extract verses using get_passage for ranges or get_verse for single
         // Use notes: false to exclude footnotes, verse_nums: false to exclude verse numbers

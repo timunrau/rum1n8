@@ -3,8 +3,8 @@ import type { Page } from '@playwright/test'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { clearAppStorage, seedStorage } from '../helpers/storage'
-import { mockBibleApi } from '../helpers/mocks'
+import { clearAppStorage, getStoredVerses, seedStorage } from '../helpers/storage'
+import { MOCK_VERSE_CONTENT, mockBibleApi } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -141,7 +141,7 @@ test('add verse reference input: normalizes on blur and waits until save to warn
   await expect(page.getByText('Use a reference like "John 3:16" or "John 3:16-17".')).toBeVisible()
 })
 
-test.skip('add verse with Bible import: mock API -> enter reference + version -> Import Content', async ({
+test('add verse with Bible import: BSB shorthand imports content through the fetch-client v2 API', async ({
   page,
 }) => {
   await mockBibleApi(page)
@@ -153,9 +153,24 @@ test.skip('add verse with Bible import: mock API -> enter reference + version ->
   await page.getByLabel(/Bible Version|Version/i).fill('BSB')
   await page.getByRole('button', { name: /Import Content/i }).click()
 
-  await page.waitForTimeout(3000)
-  const contentArea = page.locator('#content')
-  await expect(contentArea).not.toHaveValue('')
+  await expect(page.getByLabel(/Verse Content|Content/i)).toHaveValue(MOCK_VERSE_CONTENT)
+  await expect(page.getByText(/Failed to import verse/i)).toHaveCount(0)
+
+  await page.getByRole('button', { name: /Save Verse/i }).click()
+  await expect(page.getByTestId('modal-add-verse')).not.toBeVisible()
+  await expect(page.getByText('John 3:16')).toBeVisible()
+
+  const storedVerses = await getStoredVerses(page) as Array<{
+    reference: string
+    bibleVersion: string
+    content: string
+  }>
+  expect(storedVerses).toHaveLength(1)
+  expect(storedVerses[0]).toMatchObject({
+    reference: 'John 3:16',
+    bibleVersion: 'BSB',
+    content: MOCK_VERSE_CONTENT,
+  })
 })
 
 test('edit verse: search on Verses tab -> edit -> change content -> save', async ({ page }) => {
