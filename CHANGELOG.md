@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/timunrau/rum1n8/compare/v1.29.0...v1.29.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* polish marketing headings and fab icon ([1e1197f](https://github.com/timunrau/rum1n8/commit/1e1197f81b9c034da237179f5966cffbd78e2c0b))
+
 # [1.29.0](https://github.com/timunrau/rum1n8/compare/v1.28.6...v1.29.0) (2026-05-31)
 
 
