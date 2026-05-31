@@ -1,3 +1,16 @@
+# [1.29.0](https://github.com/timunrau/rum1n8/compare/v1.28.6...v1.29.0) (2026-05-31)
+
+
+### Bug Fixes
+
+* added freely given badge ([210ca4f](https://github.com/timunrau/rum1n8/commit/210ca4f587f9a605796bf971e2021c979e78260a))
+* restore canonical MIT-0 license text ([b4e4be1](https://github.com/timunrau/rum1n8/commit/b4e4be144de4b921fd0a89e64e27cc070a3d7384))
+
+
+### Features
+
+* align app with freely given source posture ([4f66a5b](https://github.com/timunrau/rum1n8/commit/4f66a5b7f2f31763b2afde79c19ba7aec4c891d0))
+
 ## [1.28.6](https://github.com/timunrau/rum1n8/compare/v1.28.5...v1.28.6) (2026-05-24)
 
 
