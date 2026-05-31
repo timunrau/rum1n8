@@ -7,15 +7,22 @@ updates:
       day: monday
       time: "09:00"
       timezone: America/Winnipeg
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+      semver-major-days: 30
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
     groups:
       npm-patch-minor:
+        patterns:
+          - "*"
         update-types:
           - patch
           - minor
       npm-major:
+        patterns:
+          - "*"
         update-types:
           - major
 
@@ -26,13 +33,23 @@ updates:
       day: monday
       time: "09:00"
       timezone: America/Winnipeg
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
     groups:
-      github-actions:
+      github-actions-patch-minor:
         patterns:
           - "*"
+        update-types:
+          - patch
+          - minor
+      github-actions-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
 
   - package-ecosystem: docker
     directory: /
@@ -41,10 +58,20 @@ updates:
       day: monday
       time: "09:00"
       timezone: America/Winnipeg
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
     groups:
-      docker:
+      docker-patch-minor:
         patterns:
           - "*"
+        update-types:
+          - patch
+          - minor
+      docker-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
