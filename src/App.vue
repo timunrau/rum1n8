@@ -707,7 +707,6 @@
             v-if="shouldShowBackupNudge"
             class="mb-3"
             @sync="handleNudgeSync"
-            @backup="handleNudgeBackup"
             @close="snoozeBackupNudge"
           />
           <CollectionsAlmanac
