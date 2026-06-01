@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/timunrau/rum1n8/compare/v1.30.0...v1.30.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* remove stale backup nudge listener ([87748c5](https://github.com/timunrau/rum1n8/commit/87748c5b41aafa1ea35fa7f00b775cea9dd65714))
+
 # [1.30.0](https://github.com/timunrau/rum1n8/compare/v1.29.1...v1.30.0) (2026-06-01)
 
 
