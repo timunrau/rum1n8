@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/timunrau/rum1n8/compare/v1.29.1...v1.30.0) (2026-06-01)
+
+
+### Features
+
+* split profile analytics and track share/read-aloud usage ([b56f7ea](https://github.com/timunrau/rum1n8/commit/b56f7ea64f94f60fbf06270daae265747f865a77))
+
 ## [1.29.1](https://github.com/timunrau/rum1n8/compare/v1.29.0...v1.29.1) (2026-05-31)
 
 
