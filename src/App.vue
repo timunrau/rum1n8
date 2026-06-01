@@ -65,7 +65,7 @@
                   </svg>
                 </button>
                 <button
-                  @click.stop="shareVerse(result.item)"
+                  @click.stop="shareVerse(result.item, 'search')"
                   class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
                   title="Share verse"
                 >
@@ -117,7 +117,7 @@
         <div class="flex items-center gap-1 ml-1 relative">
           <!-- Read Aloud / Stop Button -->
           <button
-            @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse)"
+            @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse, 'practice')"
             class="practice-header-button practice-header-button--plain"
             :class="isSpeaking ? 'text-accent' : ''"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
@@ -206,7 +206,7 @@
         <div class="flex items-center gap-1 ml-1">
           <!-- Read Aloud / Stop Button -->
           <button
-            @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse)"
+            @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse, 'practice')"
             class="practice-header-button practice-header-button--plain"
             :class="isSpeaking ? 'text-accent' : ''"
             :title="isSpeaking ? 'Stop reading' : 'Read aloud'"
@@ -220,7 +220,7 @@
           </button>
           <!-- Share Button -->
           <button
-            @click="shareVerse(reviewingVerse)"
+            @click="shareVerse(reviewingVerse, 'practice')"
             class="practice-header-button practice-header-button--plain"
             title="Share verse"
           >
@@ -436,7 +436,7 @@
           </button>
           <button
             data-testid="settings-share"
-            @click="shareApp"
+            @click="shareApp('hamburger')"
             class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +471,7 @@
             href="https://github.com/timunrau/rum1n8"
             target="_blank"
             rel="noopener noreferrer"
-            @click="trackEvent('app_source_code_clicked', { source: 'settings_drawer' }); closeSettingsMenu(); closeDrawer()"
+            @click="handleSourceCodeClick"
             class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3993,15 +3993,75 @@ export default {
       return id || 'unknown'
     }
 
+    const getSyncProviderProfileValue = () => {
+      syncConfigVersion.value
+      if (!isSyncConfigured()) return 'none'
+
+      const id = getActiveProviderId()
+      if (id === 'gdrive') return 'google'
+      if (id === 'webdav') return 'webdav'
+      return 'none'
+    }
+
     const getAppProfileAnalyticsData = () => ({
       sync_provider: getSyncProviderAnalyticsValue(),
       color_scheme: isDark.value ? 'dark' : 'light',
       practice_references: appSettings.value.requireReferenceTyping ? 'enabled' : 'disabled'
     })
 
-    const trackAppProfile = () => {
+    const getColorSchemeProfileValue = () => (isDark.value ? 'dark' : 'light')
+
+    const getPracticeReferencesProfileValue = () => (
+      appSettings.value.requireReferenceTyping ? 'enabled' : 'disabled'
+    )
+
+    // TODO: Remove legacy dual-write after dashboards fully migrate to profile_* events.
+    const emitLegacyAppProfileEvent = true
+
+    const trackLegacyAppProfile = () => {
+      if (!emitLegacyAppProfileEvent) return
       if (!appProfileAnalyticsReady.value) return
       trackEvent('app_profile', getAppProfileAnalyticsData())
+    }
+
+    const trackSyncProviderProfile = () => {
+      if (!appProfileAnalyticsReady.value) return
+      trackEvent('profile_sync_provider', {
+        value: getSyncProviderProfileValue()
+      })
+    }
+
+    const trackColorSchemeProfile = () => {
+      if (!appProfileAnalyticsReady.value) return
+      trackEvent('profile_color_scheme', {
+        value: getColorSchemeProfileValue()
+      })
+    }
+
+    const trackPracticeReferencesProfile = () => {
+      if (!appProfileAnalyticsReady.value) return
+      trackEvent('profile_practice_references', {
+        value: getPracticeReferencesProfileValue()
+      })
+    }
+
+    const trackShareClicked = (surface) => {
+      trackEvent('share_clicked', { surface })
+    }
+
+    const trackReadAloudUsed = (surface) => {
+      trackEvent('read_aloud_used', {
+        action: 'start',
+        surface
+      })
+    }
+
+    const handleSourceCodeClick = () => {
+      trackEvent('source_code_clicked', { surface: 'settings_drawer' })
+      // Temporary dual-write while dashboards migrate.
+      trackEvent('app_source_code_clicked', { source: 'settings_drawer' })
+      closeSettingsMenu()
+      closeDrawer()
     }
 
     const syncStatus = computed(() => {
@@ -6202,7 +6262,7 @@ export default {
       return div.innerHTML
     }
 
-    const speakVerse = (verse) => {
+    const speakVerse = (verse, surface = 'practice') => {
       window.speechSynthesis.cancel()
       const verseObj = verse?.value || verse
       if (!verseObj?.content || !verseObj?.reference) return
@@ -6210,6 +6270,7 @@ export default {
       utterance.onend = () => { isSpeaking.value = false }
       utterance.onerror = () => { isSpeaking.value = false }
       isSpeaking.value = true
+      trackReadAloudUsed(surface)
       window.speechSynthesis.speak(utterance)
     }
 
@@ -6284,7 +6345,7 @@ export default {
       getMarketingPageUrl()
     ].join('\n')
 
-    const shareVerse = async (verse) => {
+    const shareVerse = async (verse, surface = 'practice') => {
       const verseObj = verse?.value || verse
 
       if (!verseObj?.content || !verseObj?.reference) {
@@ -6292,6 +6353,8 @@ export default {
         showToast('Error: No verse to share', true)
         return
       }
+
+      trackShareClicked(surface)
 
       const text = formatVerseShareText(verseObj)
       const shareData = {
@@ -7751,7 +7814,8 @@ export default {
         ...appSettings.value,
         requireReferenceTyping: enabled
       })
-      trackAppProfile()
+      trackPracticeReferencesProfile()
+      trackLegacyAppProfile()
     }
 
     const updateAnalyticsOptOut = (optOut) => {
@@ -7768,7 +7832,8 @@ export default {
     const analyticsAvailable = isAnalyticsConfigured()
 
     watch(isDark, () => {
-      trackAppProfile()
+      trackColorSchemeProfile()
+      trackLegacyAppProfile()
     })
 
     // Close settings modal
@@ -7784,7 +7849,8 @@ export default {
       continueInstallAfterSyncSetup.value = false
       // Bump reactive trigger so hasSyncConfigured recomputes
       syncConfigVersion.value++
-      trackAppProfile()
+      trackSyncProviderProfile()
+      trackLegacyAppProfile()
       // Trigger sync after saving settings
       setTimeout(async () => {
         await triggerSync(false)
@@ -7935,7 +8001,8 @@ export default {
       window.location.assign(buildTipsUrl(getCurrentAppUrl()))
     }
 
-    const shareApp = async () => {
+    const shareApp = async (surface = 'hamburger') => {
+      trackShareClicked(surface)
       closeSettingsMenu()
       closeDrawer()
       const appUrl = getMarketingPageUrl()
@@ -8265,7 +8332,10 @@ export default {
         installed: isPWAInstalled(),
         verse_count: verses.value.length
       })
-      trackEvent('app_profile', appProfileAnalyticsData)
+      trackSyncProviderProfile()
+      trackColorSchemeProfile()
+      trackPracticeReferencesProfile()
+      trackLegacyAppProfile()
 
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
       window.addEventListener('online', handleConnectivityChange)
@@ -8498,6 +8568,7 @@ export default {
       closeSettings,
       toggleSettingsMenu,
       closeSettingsMenu,
+      handleSourceCodeClick,
       skipGuidedOnboarding,
       dismissStartReviewCallout,
       dismissPracticeModesHint,
