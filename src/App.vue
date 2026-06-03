@@ -3084,7 +3084,13 @@ export default {
       } else if (state.view === 'review' && state.verseId) {
         const verse = verses.value.find(v => v.id === state.verseId)
         if (verse) {
-          startReview(verse)
+          const sourceState = state.sourceView
+            ? {
+                view: state.sourceView,
+                collectionId: state.sourceCollectionId || null
+              }
+            : null
+          startReview(verse, sourceState ? { sourceState } : {})
         }
       } else {
         // Exit memorization/review if we're going back
@@ -3134,10 +3140,14 @@ export default {
         memorizationSourceState.value = null
         memorizationSourceList.value = null
         reviewingVerse.value = null
+        reviewSourceList.value = null
+        reviewSourceState.value = null
         reviewWords.value = []
         typedLetter.value = ''
         reviewMistakes.value = 0
         currentReviewSaved.value = false
+        firstAttemptGrade.value = null
+        firstAttemptMistakes.value = null
       }
       
       // Use nextTick to ensure DOM updates before resetting flag
@@ -3873,26 +3883,29 @@ export default {
       return !!editingCollection.value.parentId || editableParentCollections.value.length > 0
     })
 
-    // Sort filtered verses by biblical reference
-    const sortedVerses = computed(() => {
-      const versesToSort = filteredVerses.value
-      return [...versesToSort].sort((a, b) => {
+    const sortVersesByReference = (items) => {
+      return [...items].sort((a, b) => {
         const aParsed = parseReference(a.reference)
         const bParsed = parseReference(b.reference)
-        
+
         // Sort by book
         if (aParsed.book !== bParsed.book) {
           return aParsed.book - bParsed.book
         }
-        
+
         // Then by chapter
         if (aParsed.chapter !== bParsed.chapter) {
           return aParsed.chapter - bParsed.chapter
         }
-        
+
         // Then by verse
         return aParsed.verse - bParsed.verse
       })
+    }
+
+    // Sort filtered verses by biblical reference
+    const sortedVerses = computed(() => {
+      return sortVersesByReference(filteredVerses.value)
     })
 
     // Initialize Fuse.js for fuzzy search
@@ -6559,6 +6572,49 @@ export default {
       return [...sortedVerses.value]
     }
 
+    const getCollectionReviewSourceList = (collectionId) => {
+      if (collectionId === 'master-list') {
+        return sortVersesByReference(verses.value)
+      }
+
+      if (collectionId === 'no-collection') {
+        return sortVersesByReference(verses.value.filter(v => {
+          const ids = v.collectionIds
+          return !ids || (Array.isArray(ids) && ids.length === 0)
+        }))
+      }
+
+      if (collectionId === 'to-learn') {
+        return sortVersesByReference(verses.value.filter(v => v.memorizationStatus !== 'mastered'))
+      }
+
+      return sortVersesByReference(getCollectionVerses(verses.value, collections.value, collectionId, { includeChildren: false }))
+    }
+
+    const getReviewSourceContext = (sourceState = getCurrentSourceState()) => {
+      if (sourceState?.collectionId) {
+        return {
+          list: getCollectionReviewSourceList(sourceState.collectionId),
+          state: {
+            view: 'collection',
+            collectionId: sourceState.collectionId
+          }
+        }
+      }
+
+      if (sourceState?.view === 'review-list') {
+        return {
+          list: [...reviewSortedVerses.value],
+          state: { view: 'review-list' }
+        }
+      }
+
+      return {
+        list: [...reviewSortedVerses.value],
+        state: { view: 'collections' }
+      }
+    }
+
     const getMemorizationSourceVerses = () => {
       return memorizationSourceList.value?.length
         ? memorizationSourceList.value
@@ -6660,7 +6716,10 @@ export default {
     }
 
     // Start reviewing a verse (only for mastered verses)
-    const startReview = (verse) => {
+    const startReview = (verse, options = {}) => {
+      const preserveSource = options.preserveSource === true
+      const sourceStateOverride = options.sourceState || null
+
       if (
         (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
         verse.id === guidedOnboardingVerseId.value
@@ -6740,38 +6799,21 @@ export default {
       firstAttemptGrade.value = null // Reset first-attempt tracking for new review
       firstAttemptMistakes.value = null
       
-      // Store the source list and state for navigation (only if not already set, to preserve it during sequential navigation)
-      const isSequentialNavigation = !!reviewSourceList.value
-      
-      if (!reviewSourceList.value) {
-        // Store the original source state
-        if (currentCollectionId.value) {
-          // Coming from a collection - store sorted collection verses (what user sees)
-          reviewSourceList.value = [...sortedVerses.value]
-          reviewSourceState.value = {
-            view: 'collection',
-            collectionId: currentCollectionId.value
-          }
-        } else if (currentView.value === 'review-list') {
-          // Coming from review list - store review list verses (what user sees)
-          reviewSourceList.value = [...reviewSortedVerses.value]
-          reviewSourceState.value = {
-            view: 'review-list'
-          }
-        } else {
-          // Coming from the Verses screen — use the full review sorted list so "Next Verse" walks all mastered verses
-          reviewSourceList.value = [...reviewSortedVerses.value]
-          reviewSourceState.value = {
-            view: 'collections'
-          }
-        }
+      const isSequentialNavigation = preserveSource && !!reviewSourceList.value
+
+      if (!isSequentialNavigation) {
+        const sourceContext = getReviewSourceContext(sourceStateOverride || getCurrentSourceState())
+        reviewSourceList.value = sourceContext.list
+        reviewSourceState.value = sourceContext.state
       }
       
       // Push or replace navigation state
       const navigationState = {
         view: 'review',
         verseId: verse.id,
-        collectionId: currentCollectionId.value
+        collectionId: currentCollectionId.value,
+        sourceView: reviewSourceState.value?.view || null,
+        sourceCollectionId: reviewSourceState.value?.collectionId || null
       }
       
       if (isSequentialNavigation) {
@@ -6987,7 +7029,7 @@ export default {
 
         reviewSourceList.value = sourceVerses.length ? [...sourceVerses] : null
         reviewSourceState.value = sourceState
-        startReview(targetVerse)
+        startReview(targetVerse, { preserveSource: true })
         return
       }
 
@@ -7003,7 +7045,7 @@ export default {
       const previousSourceVerse = getPreviousReviewSourceVerse()
       if (previousSourceVerse) {
         setPracticeTransition('previous')
-        startReview(previousSourceVerse)
+        startReview(previousSourceVerse, { preserveSource: true })
       }
     }
 
@@ -7146,7 +7188,7 @@ export default {
         const nextSourceVerse = getNextReviewSourceVerse()
         if (nextSourceVerse) {
           setPracticeTransition('next')
-          startReview(nextSourceVerse)
+          startReview(nextSourceVerse, { preserveSource: true })
         } else {
           // Reached the end of the source list — exit back to the origin screen
           // instead of wrapping around to the first verse.

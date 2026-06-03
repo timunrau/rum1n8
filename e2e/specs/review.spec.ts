@@ -237,6 +237,49 @@ test('start review CTA: click starts review of first (most-due) verse', async ({
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
+test('Start Review on main Verses screen uses the same order as Review screen', async ({ page }) => {
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date().toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  const verses = [
+    {
+      ...base,
+      id: 'verses-start-biblical-first',
+      reference: 'Psalm 1:1',
+      content: 'Blessed',
+      nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    },
+    {
+      ...base,
+      id: 'verses-start-most-due',
+      reference: 'Psalm 10:1',
+      content: 'Why',
+      nextReviewDate: new Date(Date.now() - 2 * 86400000).toISOString(),
+    },
+  ]
+  await seedStorage(page, verses, [])
+  await page.reload()
+
+  await gotoApp(page, '?view=review-list')
+  await page.getByTestId('start-review-cta').click()
+  await expect(page.locator('h1')).toContainText('Psalm 10:1')
+
+  await page.goBack()
+  await expect(page).toHaveURL(/\?view=review-list/)
+  await page.getByTestId('nav-collections').click()
+  await page.getByTestId('almanac-start-review').click()
+  await expect(page.locator('h1')).toContainText('Psalm 10:1')
+})
+
 test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does not overwrite local', async ({
   page,
 }) => {
@@ -537,6 +580,98 @@ test('collection review follows collection order and Done returns to the collect
   await expect(page.locator('#letter-input-review')).toHaveCount(0)
   await expect(page).toHaveURL(/\?view=collection&collection=collection-done-seq/)
   await expect(page.getByText('Done Collection')).toBeVisible()
+})
+
+test('collection review ignores stale Review-tab session order after browser back', async ({
+  page,
+}) => {
+  const older = new Date(Date.now() - 4 * 86400000).toISOString()
+  const middle = new Date(Date.now() - 3 * 86400000).toISOString()
+  const outsideDue = new Date(Date.now() - 2 * 86400000).toISOString()
+  const newer = new Date(Date.now() - 86400000).toISOString()
+  const now = new Date().toISOString()
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: now,
+    lastModified: now,
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date(Date.now() - 10 * 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+  }
+  const verses = [
+    {
+      ...base,
+      id: 'stale-review-psalm-2',
+      reference: 'Psalm 2:1',
+      content: 'Beta',
+      nextReviewDate: older,
+      collectionIds: ['stale-review-collection'],
+    },
+    {
+      ...base,
+      id: 'stale-review-psalm-1',
+      reference: 'Psalm 1:1',
+      content: 'Alpha',
+      nextReviewDate: middle,
+      collectionIds: ['stale-review-collection'],
+    },
+    {
+      ...base,
+      id: 'stale-review-outside',
+      reference: 'Matthew 1:1',
+      content: 'Gamma',
+      nextReviewDate: outsideDue,
+      collectionIds: [],
+    },
+    {
+      ...base,
+      id: 'stale-review-psalm-3',
+      reference: 'Psalm 3:1',
+      content: 'Delta',
+      nextReviewDate: newer,
+      collectionIds: ['stale-review-collection'],
+    },
+  ]
+  const collections = [
+    {
+      id: 'stale-review-collection',
+      name: 'Stale Review Collection',
+      description: '',
+      createdAt: now,
+      lastModified: now,
+    },
+  ]
+
+  await seedStorage(page, verses, collections)
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  await page.getByText('Psalm 2:1').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('b', { delay: 50 })
+  await page.getByRole('button', { name: 'Next Verse' }).click()
+  await expect(page.locator('h1')).toContainText('Psalm 1:1')
+
+  await page.goBack()
+  await expect(page.locator('#letter-input-review')).not.toBeVisible()
+  await expect(page).toHaveURL(/\?view=review-list/)
+
+  await page.getByTestId('nav-collections').click()
+  await page.getByText('Stale Review Collection').click()
+  await expect(page).toHaveURL(/\?view=collection&collection=stale-review-collection/)
+
+  await page.getByText('Psalm 1:1').click()
+  await expect(page.locator('#letter-input-review')).toBeAttached()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('a', { delay: 50 })
+  await page.getByRole('button', { name: 'Next Verse' }).click()
+
+  await expect(page.locator('h1')).toContainText('Psalm 2:1')
+  await expect(page.locator('h1')).not.toContainText('Matthew 1:1')
 })
 
 test('review: last verse in list shows Done button and exits to review list', async ({ page }) => {
