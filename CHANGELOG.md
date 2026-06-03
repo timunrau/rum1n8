@@ -1,3 +1,10 @@
+## [1.30.2](https://github.com/timunrau/rum1n8/compare/v1.30.1...v1.30.2) (2026-06-03)
+
+
+### Bug Fixes
+
+* preserve review order by source screen ([891325c](https://github.com/timunrau/rum1n8/commit/891325c8f7bfe2ab9571edb759f2fe18960e6b05))
+
 ## [1.30.1](https://github.com/timunrau/rum1n8/compare/v1.30.0...v1.30.1) (2026-06-01)
 
 
