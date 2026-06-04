@@ -1,3 +1,11 @@
+# [1.31.0](https://github.com/timunrau/rum1n8/compare/v1.30.2...v1.31.0) (2026-06-04)
+
+
+### Features
+
+* add BibleMemory exporter bookmarklet ([496b07e](https://github.com/timunrau/rum1n8/commit/496b07e099ecdd8420ae7f53251f906ad7b6c0e6))
+* support BibleMemory CSV collection imports ([a94ec59](https://github.com/timunrau/rum1n8/commit/a94ec593b3e44be8d1ec35e2ec6193cb6f4f052f))
+
 ## [1.30.2](https://github.com/timunrau/rum1n8/compare/v1.30.1...v1.30.2) (2026-06-03)
 
 
