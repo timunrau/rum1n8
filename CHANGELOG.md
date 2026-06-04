@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/timunrau/rum1n8/compare/v1.32.0...v1.33.0) (2026-06-04)
+
+
+### Features
+
+* add automated sync settings screenshot to tips and import pages ([fb239e5](https://github.com/timunrau/rum1n8/commit/fb239e54bb9e01040a4f33756fcefd2ef4cda394))
+
 # [1.32.0](https://github.com/timunrau/rum1n8/compare/v1.31.0...v1.32.0) (2026-06-04)
 
 
