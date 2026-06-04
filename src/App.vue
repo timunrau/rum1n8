@@ -3247,6 +3247,14 @@ export default {
         shouldNormalizeUrl = !!viewParam
       }
 
+      // Check for import parameter to open the import modal on load
+      const importParam = urlParams.get('import')
+      if (importParam === 'csv') {
+        nextTick(() => {
+          openImportCSV()
+        })
+      }
+
       const initialState = getNavigationState()
       if (shouldNormalizeUrl) {
         replaceNavigationState(initialState)
