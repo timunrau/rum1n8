@@ -407,6 +407,26 @@ async function captureMemorizeState(browser, baseUrl, colorScheme = 'light') {
   }
 }
 
+async function captureSyncState(browser, baseUrl, colorScheme = 'light') {
+  const { context, page } = await createMobilePage(browser, buildStorageState(), colorScheme)
+
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
+  try {
+    await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
+    await page.getByTestId('hamburger-button').waitFor()
+    await page.getByTestId('hamburger-button').click()
+    await page.getByTestId('drawer-sync-setup').waitFor()
+    await page.getByTestId('drawer-sync-setup').click()
+    await page.getByTestId('modal-sync-settings').waitFor()
+    await page.waitForTimeout(400)
+    await page.screenshot({
+      path: path.join(marketingDir, `screenshot-sync${suffix}.png`),
+    })
+  } finally {
+    await context.close()
+  }
+}
+
 async function captureOgCard(browser, baseUrl) {
   const context = await browser.newContext({
     viewport: { width: 1200, height: 630 },
@@ -660,6 +680,7 @@ try {
       await captureReviewState(browser, baseUrl, colorScheme)
       await captureAddVerseState(browser, baseUrl, colorScheme)
       await captureMemorizeState(browser, baseUrl, colorScheme)
+      await captureSyncState(browser, baseUrl, colorScheme)
     }
     await captureOgCard(browser, baseUrl)
   } finally {
