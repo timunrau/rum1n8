@@ -13,7 +13,7 @@
 I built rum1n8 to solve the frustrations I had with existing Bible memory apps. They were slow and bloated with too many features, had artificial paywalls and limits, and made it difficult or impossible to export my data. Here's how rum1n8 differs:
 
 - **No accounts.** Open the app and use it. No signup, no login, no account required.
-- **You own your data.** Other memory apps do not make it easy to export what you have put into them. rum1n8 keeps your data on your device by default, lets you back it up to a file you can read, and you can sync it with your own Google Drive or WebDAV server.
+- **You own your data.** Other memory apps do not make it easy to export what you have put into them. rum1n8 keeps your data on your device by default, lets you back it up to a file you can read, and you can sync it with your own Google Drive or WebDAV server. It even includes a dedicated [migration guide](/import/biblememory/) for BibleMemory.com users.
 - **Free.** No artificial usage limits. No subscriptions. No paywalls.
 - **No bloat.** The app is intentionally simple, focused, and fast. It is built around first-letter typing, active recall, and spaced repetition instead of piling on extra features and options.
 - **Fast review and fast verse entry.** It takes seconds to start reviewing. Adding verses does not take a hundred taps through a bunch of screens. Type a reference or verse range, import the verse text, and start.
@@ -26,6 +26,7 @@ I built rum1n8 to solve the frustrations I had with existing Bible memory apps. 
 - **Spaced repetition:** Mastered verses come back for review before they fade from your memory.
 - **First-letter typing:** Practice quickly by typing the first letter of each word.
 - **Quick verse entry:** Add a verse by typing a reference or range like `Joshua 1:8-9`, then import the verse text.
+- **Import from BibleMemory.com:** Quickly bring your verses and progress over using the [built-in migration guide](/import/biblememory/).
 - **A clean verse library:** Organize verses into collections, search quickly, and track progress with stats.
 - **Portable data:** Backup and restore your library, import by CSV, or sync across devices with Google Drive or your own WebDAV server.
 
