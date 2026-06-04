@@ -95,6 +95,13 @@ export async function getStoredVerses(page: Page): Promise<unknown[]> {
   })
 }
 
+export async function getStoredCollections(page: Page): Promise<unknown[]> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('rum1n8-collections')
+    return raw ? JSON.parse(raw) : []
+  })
+}
+
 /** WebDAV settings shape expected by the app */
 export interface WebDAVSettings {
   url: string

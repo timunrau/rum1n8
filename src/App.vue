@@ -1754,15 +1754,15 @@
       <ModalSheet :show="showImportCSV" title="Import Verses from CSV" data-testid="modal-import-csv" @close="closeImportCSV">
         <div class="space-y-4">
           <p class="text-sm text-text-secondary">
-            Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
+            Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>Collection</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
           </p>
           <div class="bg-status-info-bg border border-status-info-border rounded-lg p-4">
             <p class="text-xs text-status-info-text mb-2"><strong>CSV Format:</strong></p>
-            <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,DaysUntilNextReview,Interval
-John 3:16,"For God so loved the world...",NIV,45,60
-Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
+            <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,Collection,DaysUntilNextReview,Interval
+John 3:16,"For God so loved the world...",NIV,Salvation,45,60
+Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
             <p class="text-xs text-status-info-text mt-2">
-              <strong>Optional columns:</strong> Version, DaysUntilNextReview (days until next review), Interval (review interval in days).
+              <strong>Optional columns:</strong> Version, Collection, DaysUntilNextReview (days until next review), Interval (review interval in days).
               When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
             </p>
           </div>
@@ -1825,6 +1825,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                       <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Reference</th>
                       <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Content</th>
                       <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
+                      <th v-if="csvPreview.some(r => r.collection)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Collection</th>
                       <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Days Until Review</th>
                       <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Interval</th>
                     </tr>
@@ -1834,6 +1835,7 @@ Romans 8:28,"And we know that in all things...",ESV,30,60</pre>
                       <td class="px-3 py-2 text-text-primary">{{ row.reference || '' }}</td>
                       <td class="px-3 py-2 text-text-primary">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
                       <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-text-primary">{{ row.version || '' }}</td>
+                      <td v-if="csvPreview.some(r => r.collection)" class="px-3 py-2 text-text-primary">{{ row.collection || '' }}</td>
                       <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-text-primary">{{ row.daysUntilNextReview || '' }}</td>
                       <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-text-primary">{{ row.interval || '' }}</td>
                     </tr>
@@ -5135,18 +5137,18 @@ export default {
 
     // Parse CSV file
     const parseCSV = (text) => {
-      const lines = text.split('\n').filter(line => line.trim())
-      if (lines.length === 0) return []
-      
-      // Parse header row
-      const headerLine = lines[0]
-      const headers = parseCSVLine(headerLine)
+      const records = parseCSVRecords(text)
+        .filter(record => record.some(value => String(value).trim()))
+      if (records.length === 0) return []
+
+      const headers = records[0]
       
       // Normalize header names (case-insensitive, trim whitespace)
       const normalizedHeaders = headers.map(h => h.trim().toLowerCase())
       const referenceIndex = normalizedHeaders.findIndex(h => h === 'reference')
       const contentIndex = normalizedHeaders.findIndex(h => h === 'content')
       const versionIndex = normalizedHeaders.findIndex(h => h === 'version')
+      const collectionIndex = normalizedHeaders.findIndex(h => h === 'collection' || h === 'collections')
       const daysUntilNextReviewIndex = normalizedHeaders.findIndex(h => 
         h === 'daysuntilnextreview' || h === 'daysuntilreview' || h === 'days_until_next_review' || h === 'days_until_review'
       )
@@ -5158,14 +5160,15 @@ export default {
       
       // Parse data rows
       const rows = []
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i])
+      for (let i = 1; i < records.length; i++) {
+        const values = records[i]
         if (values.length === 0) continue
         
         const row = {
           reference: values[referenceIndex]?.trim() || '',
           content: values[contentIndex]?.trim() || '',
           version: versionIndex !== -1 ? (values[versionIndex]?.trim() || '') : '',
+          collection: collectionIndex !== -1 ? (values[collectionIndex]?.trim() || '') : '',
           daysUntilNextReview: daysUntilNextReviewIndex !== -1 ? (values[daysUntilNextReviewIndex]?.trim() || '') : '',
           interval: intervalIndex !== -1 ? (values[intervalIndex]?.trim() || '') : ''
         }
@@ -5179,63 +5182,61 @@ export default {
       return rows
     }
 
-    // Parse a single CSV line, handling quoted fields
-    const parseCSVLine = (line) => {
-      const result = []
-      let current = ''
+    // Parse RFC-style CSV records, including quoted commas, quotes, and newlines.
+    const parseCSVRecords = (text) => {
+      const records = []
+      let record = []
+      let field = ''
       let inQuotes = false
+      let fieldWasQuoted = false
       
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i]
-        const nextChar = line[i + 1]
-        
-        if (char === '\\' && inQuotes) {
-          // Handle backslash escape sequences within quoted fields
-          if (nextChar === '"') {
-            // Escaped quote: \"
-            current += '"'
-            i++ // Skip the quote
-          } else if (nextChar === '\\') {
-            // Escaped backslash: \\
-            current += '\\'
-            i++ // Skip the next backslash
-          } else if (nextChar === 'n') {
-            // Escaped newline: \n
-            current += '\n'
-            i++ // Skip the 'n'
-          } else if (nextChar === 't') {
-            // Escaped tab: \t
-            current += '\t'
-            i++ // Skip the 't'
-          } else if (nextChar === 'r') {
-            // Escaped carriage return: \r
-            current += '\r'
-            i++ // Skip the 'r'
-          } else {
-            // Unknown escape sequence, keep the backslash
-            current += char
-          }
-        } else if (char === '"') {
+      const pushField = () => {
+        record.push(field)
+        field = ''
+        fieldWasQuoted = false
+      }
+
+      const pushRecord = () => {
+        pushField()
+        records.push(record)
+        record = []
+      }
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i]
+        const nextChar = text[i + 1]
+
+        if (char === '"') {
           if (inQuotes && nextChar === '"') {
-            // Standard CSV escaped quote (e.g., "")
-            current += '"'
-            i++ // Skip next quote
+            field += '"'
+            i++
+          } else if (inQuotes) {
+            inQuotes = false
+          } else if (field === '' && !fieldWasQuoted) {
+            inQuotes = true
+            fieldWasQuoted = true
           } else {
-            // Toggle quote state
-            inQuotes = !inQuotes
+            field += char
           }
         } else if (char === ',' && !inQuotes) {
-          // Field separator
-          result.push(current)
-          current = ''
+          pushField()
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') i++
+          pushRecord()
         } else {
-          current += char
+          field += char
         }
       }
-      
-      // Add last field
-      result.push(current)
-      return result
+
+      if (inQuotes) {
+        throw new Error('CSV has an unclosed quoted field')
+      }
+
+      if (field !== '' || fieldWasQuoted || record.length > 0) {
+        pushRecord()
+      }
+
+      return records
     }
 
     // Handle CSV file selection
@@ -5362,15 +5363,73 @@ export default {
         let importedWithProgressCount = 0
         let updatedWithProgressCount = 0
         
-        // Determine collection IDs to add verses to
-        let collectionIds = []
+        // Determine manually selected collection IDs to add verses to.
+        let selectedCollectionIds = []
         if (csvImportFromCollectionsScreen.value) {
-          collectionIds = [...(csvImportTargetCollectionIds.value || [])]
+          selectedCollectionIds = [...(csvImportTargetCollectionIds.value || [])]
         } else if (currentCollectionId.value && currentCollectionId.value !== 'master-list') {
-          collectionIds = [currentCollectionId.value]
+          selectedCollectionIds = [currentCollectionId.value]
         }
-        
+
+        const normalizeVerseKeyPart = (value) => String(value || '').trim().toLowerCase()
+        const getVerseKey = (row) => [
+          normalizeVerseKeyPart(row.reference),
+          normalizeVerseKeyPart(row.version),
+          String(row.content || '').trim()
+        ].join('\u001f')
+
+        const normalizeCollectionName = (name) => String(name || '').trim().toLowerCase()
+        const collectionIdByName = new Map(
+          collections.value
+            .filter(collection => collection?.name)
+            .map(collection => [normalizeCollectionName(collection.name), collection.id])
+        )
+        let createdCollectionCount = 0
+
+        const getOrCreateImportCollectionId = (name) => {
+          const normalizedName = normalizeCollectionName(name)
+          if (!normalizedName) return null
+
+          const existingId = collectionIdByName.get(normalizedName)
+          if (existingId) return existingId
+
+          const collection = {
+            id: Date.now().toString() + '-csv-' + Math.random().toString(36).substr(2, 9),
+            name: String(name).trim(),
+            description: '',
+            parentId: null,
+            createdAt: now,
+            lastModified: now
+          }
+          collections.value.push(collection)
+          collectionIdByName.set(normalizedName, collection.id)
+          createdCollectionCount++
+          return collection.id
+        }
+
+        const groupedRows = new Map()
         csvPreview.value.forEach(row => {
+          const key = getVerseKey(row)
+          const group = groupedRows.get(key) || {
+            ...row,
+            collectionIds: new Set(selectedCollectionIds)
+          }
+
+          const csvCollectionId = getOrCreateImportCollectionId(row.collection)
+          if (csvCollectionId) {
+            group.collectionIds.add(csvCollectionId)
+          }
+          if (!group.daysUntilNextReview && row.daysUntilNextReview) {
+            group.daysUntilNextReview = row.daysUntilNextReview
+          }
+          if (!group.interval && row.interval) {
+            group.interval = row.interval
+          }
+
+          groupedRows.set(key, group)
+        })
+
+        groupedRows.forEach(row => {
           // Parse and validate interval and days until review
           let interval = null
           let daysUntilNextReview = null
@@ -5382,9 +5441,15 @@ export default {
             throw new Error(`Error in row "${row.reference}": ${error.message}`)
           }
           
-          // Check if verse already exists (by reference)
+          const rowReference = row.reference.trim()
+          const rowContent = row.content.trim()
+          const rowVersion = row.version ? row.version.trim().toUpperCase() : ''
+
+          // Check if verse already exists by reference, version, and exact imported content.
           const existingVerse = verses.value.find(v => 
-            v.reference.toLowerCase().trim() === row.reference.toLowerCase().trim()
+            normalizeVerseKeyPart(v.reference) === normalizeVerseKeyPart(rowReference) &&
+            normalizeVerseKeyPart(v.bibleVersion) === normalizeVerseKeyPart(rowVersion) &&
+            String(v.content || '').trim() === rowContent
           )
           
           if (existingVerse) {
@@ -5392,9 +5457,9 @@ export default {
             let hasProgressUpdate = false
             let hasAnyUpdate = false
             
-            // Update version if provided
-            if (row.version && row.version.trim()) {
-              existingVerse.bibleVersion = row.version.trim().toUpperCase()
+            // Update version if provided and missing on an older matching record.
+            if (rowVersion && !existingVerse.bibleVersion) {
+              existingVerse.bibleVersion = rowVersion
               hasAnyUpdate = true
             }
             
@@ -5441,10 +5506,7 @@ export default {
             }
             
             // If importing into collection(s), add to those collections if not already there
-            const targetCollectionIds = csvImportFromCollectionsScreen.value
-              ? (csvImportTargetCollectionIds.value || [])
-              : (currentCollectionId.value && currentCollectionId.value !== 'master-list' ? [currentCollectionId.value] : [])
-            for (const cid of targetCollectionIds) {
+            for (const cid of row.collectionIds) {
               if (!existingVerse.collectionIds) {
                 existingVerse.collectionIds = []
               }
@@ -5499,9 +5561,9 @@ export default {
           
           const verse = {
             id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
-            reference: row.reference.trim(),
-            content: row.content.trim(),
-            bibleVersion: row.version ? row.version.trim().toUpperCase() : '',
+            reference: rowReference,
+            content: rowContent,
+            bibleVersion: rowVersion,
             createdAt: now,
             lastModified: now, // Track when verse was last modified
             memorizationStatus: memorizationStatus,
@@ -5511,7 +5573,7 @@ export default {
             easeFactor: 2.5,
             interval: verseInterval,
             reviewHistory: [],
-            collectionIds: collectionIds
+            collectionIds: [...row.collectionIds]
           }
           
           verses.value.unshift(verse)
@@ -5521,6 +5583,9 @@ export default {
           }
         })
         
+        if (createdCollectionCount > 0) {
+          saveCollections()
+        }
         saveVerses()
         
         // Build status message
@@ -5533,6 +5598,9 @@ export default {
           if (updatedWithProgressCount > 0) {
             statusMessage += ` (${updatedWithProgressCount} with memorization progress)`
           }
+        }
+        if (createdCollectionCount > 0) {
+          statusMessage += `. Created ${createdCollectionCount} collection${createdCollectionCount !== 1 ? 's' : ''}`
         }
         
         csvImportStatus.value = {
