@@ -1,3 +1,14 @@
+# [1.32.0](https://github.com/timunrau/rum1n8/compare/v1.31.0...v1.32.0) (2026-06-04)
+
+
+### Features
+
+* add copy button and finalize BibleMemory.com import guide ([9106c91](https://github.com/timunrau/rum1n8/commit/9106c91f0cb250a0fdc1c950b30e094910783878))
+* add sync tip to tips and import pages ([987c547](https://github.com/timunrau/rum1n8/commit/987c547e81e26a0820629ec0c68029c85c7a561b))
+* embed BibleMemory.com import guide video ([ca9ec6c](https://github.com/timunrau/rum1n8/commit/ca9ec6cec2ca544e16f7e1f9da76c988f36f095e))
+* trigger CSV import modal via URL parameter ([6ebf0c9](https://github.com/timunrau/rum1n8/commit/6ebf0c91ff43b6e6964c0008b466949e80ae7512))
+* unify footers across static marketing pages ([c617e35](https://github.com/timunrau/rum1n8/commit/c617e35336c2cb020fecd99cb13285899cf25027))
+
 # [1.31.0](https://github.com/timunrau/rum1n8/compare/v1.30.2...v1.31.0) (2026-06-04)
 
 
