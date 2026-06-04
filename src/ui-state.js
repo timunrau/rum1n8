@@ -2,6 +2,7 @@ export const UI_STATE_KEY = 'rum1n8-ui-state'
 export const APP_ROOT_PATH = '/app/'
 export const PUBLIC_HOME_PATH = '/'
 export const TIPS_PATH = '/tips-for-memorizing-scripture/'
+export const BIBLEMEMORY_IMPORT_PATH = '/import/biblememory/'
 
 const DEFAULT_UI_STATE = Object.freeze({
   hasOpenedApp: false,
@@ -347,6 +348,17 @@ export function buildPublicHomeUrl(returnTo = getCurrentAppUrl()) {
 
 export function buildTipsUrl(returnTo = getCurrentAppUrl()) {
   const url = new URL(TIPS_PATH, getBaseOrigin())
+  const normalizedReturnTo = normalizeAppUrl(returnTo)
+
+  if (normalizedReturnTo) {
+    url.searchParams.set('returnTo', normalizedReturnTo)
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
+export function buildBibleMemoryImportUrl(returnTo = getCurrentAppUrl()) {
+  const url = new URL(BIBLEMEMORY_IMPORT_PATH, getBaseOrigin())
   const normalizedReturnTo = normalizeAppUrl(returnTo)
 
   if (normalizedReturnTo) {

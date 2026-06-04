@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fbf7ef" />
+    <meta name="robots" content="%META_ROBOTS%" />
+    <meta name="description" content="%PAGE_DESCRIPTION%" />
+    %HEAD_CANONICAL_TAGS%
+    %HEAD_SOCIAL_TAGS%
+    %HEAD_JSON_LD%
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,500;1,7..72,600&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+    />
+    <title>%PAGE_TITLE%</title>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        html {
+          background: #08101b;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <div class="app-return" data-return-banner hidden>
+        <a class="app-return__link" data-return-link href="/app/">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to app
+        </a>
+      </div>
+
+      <header class="site-header site-header--essay">
+        <div class="site-header__inner">
+          <a class="brand" href="/" aria-label="rum1n8 home">
+            <span class="brand__mark">r</span>
+            <span class="brand__name">rum1n8</span>
+          </a>
+        </div>
+      </header>
+
+      <main class="site-main site-main--essay">
+        <article class="essay">
+          <header class="essay__hero">
+            <h1>Import from BibleMemory.com</h1>
+            <div class="essay__lede">
+              <p>Use this guide to export your BibleMemory.com verses into a CSV file, then bring that CSV into Ruminate.</p>
+              <p>The exporter runs inside your signed-in BibleMemory browser session. Ruminate does not receive your BibleMemory credentials or verse data until you choose to import the downloaded CSV.</p>
+            </div>
+          </header>
+
+          <div class="essay__body">
+            <section class="essay-section bookmarklet-install" id="install-exporter">
+              <p class="essay-section__number">01</p>
+              <h2>Install the exporter</h2>
+              <p>Drag this button to your browser bookmarks bar. It creates a bookmarklet you can run from BibleMemory.com.</p>
+              <p class="essay__action">
+                <a
+                  class="button button--primary bookmarklet-button"
+                  data-biblememory-bookmarklet
+                  href="#bookmarklet-not-loaded"
+                  draggable="true"
+                >Export to Ruminate</a>
+              </p>
+              <div class="bookmarklet-fallback">
+                <h3>If dragging does not work</h3>
+                <ol>
+                  <li>Create a new bookmark named <strong>Export to Ruminate</strong>.</li>
+                  <li>Copy the code below.</li>
+                  <li>Paste it into the bookmark's URL or Address field.</li>
+                </ol>
+                <div class="bookmarklet-code-wrapper">
+                  <pre class="bookmarklet-code" data-biblememory-bookmarklet-code>Loading bookmarklet...</pre>
+                  <button class="bookmarklet-code-copy" data-copy-bookmarklet aria-label="Copy code">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="essay-section" id="sign-in">
+              <p class="essay-section__number">02</p>
+              <h2>Sign in to BibleMemory.com</h2>
+              <p>Open <a class="text-link text-link--inline" href="https://biblememory.com" target="_blank" rel="noopener noreferrer">BibleMemory.com</a> in the same browser and sign in. The exporter can only read the verses that your browser session can already access.</p>
+            </section>
+
+            <section class="essay-section" id="run-exporter">
+              <p class="essay-section__number">03</p>
+              <h2>Run it from My Verses</h2>
+              <p>Go to My Verses in BibleMemory.com, then click your <strong>Export to Ruminate</strong> bookmark. A Ruminate export panel should appear on the page while it gathers your verses and collections.</p>
+            </section>
+
+            <section class="essay-section" id="download-csv">
+              <p class="essay-section__number">04</p>
+              <h2>Download the CSV</h2>
+              <p>When the export finishes, click <strong>Download CSV</strong>. Keep the file somewhere easy to find, such as Downloads or your desktop.</p>
+              <p>Review timing is imported as closely as BibleMemory exposes it. Some review progress may be approximate because BibleMemory does not expose every detail of its scheduler.</p>
+            </section>
+
+            <section class="essay-section" id="import-into-ruminate">
+              <p class="essay-section__number">05</p>
+              <h2>Import into Ruminate</h2>
+              <p>Open Ruminate, go to Collections, tap <strong>+</strong>, choose <strong>Import CSV</strong>, and select the file you downloaded.</p>
+              <p class="essay__action">
+                <a class="button button--primary" href="/app/?view=collections">Open CSV Import</a>
+              </p>
+            </section>
+
+            </section>
+          </div>
+        </article>
+
+        <footer class="site-footer site-footer--simple">
+          <a class="brand" href="/" aria-label="rum1n8 home">
+            <span class="brand__mark">r</span>
+            <span class="brand__name">rum1n8</span>
+          </a>
+          <div class="footer-meta">
+            <a href="/">Home</a>
+            <a href="/privacy">Privacy</a>
+            <a href="https://github.com/timunrau/rum1n8" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <script>if(window.matchMedia('(prefers-color-scheme: dark)').matches)document.querySelector('meta[name="theme-color"]').content='#08101b'</script>
+    <script type="module" src="/src/marketing.js"></script>
+  </body>
+</html>

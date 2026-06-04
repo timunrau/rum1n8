@@ -423,6 +423,18 @@
             Backup & Restore
           </button>
           <button
+            data-testid="settings-biblememory-import"
+            @click="openBibleMemoryImportGuide"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v11m0 0l-4-4m4 4l4-4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h5" />
+            </svg>
+            Import from BibleMemory.com
+          </button>
+          <button
             v-if="showInstallMenuAction"
             data-testid="settings-install-app"
             @click="openInstallFromDrawer"
@@ -2096,6 +2108,7 @@ import { useColorScheme } from './composables/useColorScheme.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
 import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } from './analytics.js'
 import {
+  buildBibleMemoryImportUrl,
   buildPublicHomeUrl,
   buildTipsUrl,
   dismissOnboarding as dismissOnboardingUiState,
@@ -8110,6 +8123,12 @@ export default {
       window.location.assign(buildTipsUrl(getCurrentAppUrl()))
     }
 
+    const openBibleMemoryImportGuide = () => {
+      closeSettingsMenu()
+      closeDrawer()
+      window.location.assign(buildBibleMemoryImportUrl(getCurrentAppUrl()))
+    }
+
     const shareApp = async (surface = 'hamburger') => {
       trackShareClicked(surface)
       closeSettingsMenu()
@@ -8685,6 +8704,7 @@ export default {
       openSyncSettings,
       onSyncSettingsSaved,
       openBackupImport,
+      openBibleMemoryImportGuide,
       closeBackupImport,
       openInstallFromDrawer,
       openInstallFromHeader,

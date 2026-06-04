@@ -34,6 +34,14 @@ const PUBLIC_PAGES = Object.freeze([
     includeJsonLd: false,
     canonicalPlaceholder: '${RUM1N8_CANONICAL_SCRIPTURE_TIPS_TAGS}',
   },
+  {
+    page: 'bibleMemoryImport',
+    inputName: 'bibleMemoryImport',
+    inputFile: 'import/biblememory/index.html',
+    path: '/import/biblememory/',
+    includeJsonLd: false,
+    canonicalPlaceholder: '${RUM1N8_CANONICAL_BIBLEMEMORY_IMPORT_TAGS}',
+  },
 ])
 
 const APP_PAGE = Object.freeze({
@@ -109,6 +117,8 @@ function buildSiteMetadata(env) {
   const memorizationBenefitsDescription = "A short case for why Scripture memorization unlocks real growth in your walk with God."
   const scriptureTipsTitle = 'Tips For Memorizing Scripture'
   const scriptureTipsDescription = 'Practical tips for starting small, building a daily Scripture memorization habit, and reviewing consistently.'
+  const bibleMemoryImportTitle = 'Import from BibleMemory.com'
+  const bibleMemoryImportDescription = 'Export your BibleMemory.com verses with a local bookmarklet, download a CSV, and import it into Ruminate.'
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL)
 
   return {
@@ -119,11 +129,14 @@ function buildSiteMetadata(env) {
     memorizationBenefitsDescription,
     scriptureTipsTitle,
     scriptureTipsDescription,
+    bibleMemoryImportTitle,
+    bibleMemoryImportDescription,
     siteUrl,
     rootUrl: siteUrl ? `${siteUrl}/` : null,
     appPath: '/app/',
     memorizationBenefitsPath: '/memorization-is-a-spiritual-life-hack/',
     scriptureTipsPath: '/tips-for-memorizing-scripture/',
+    bibleMemoryImportPath: '/import/biblememory/',
     socialPreviewImagePath: '/marketing/og-card.png',
     socialPreviewImageAlt: 'rum1n8 app preview',
     screenshotPaths: [
@@ -248,6 +261,11 @@ function buildHtmlReplacements(siteMetadata, page) {
       title: siteMetadata.scriptureTipsTitle,
       description: siteMetadata.scriptureTipsDescription,
       canonicalPath: siteMetadata.scriptureTipsPath,
+    },
+    bibleMemoryImport: {
+      title: siteMetadata.bibleMemoryImportTitle,
+      description: siteMetadata.bibleMemoryImportDescription,
+      canonicalPath: siteMetadata.bibleMemoryImportPath,
     },
   }
   const pageMetadata = pageMetadataByPage[page] || {
@@ -505,6 +523,8 @@ export default defineConfig(({ mode }) => {
             ['/app/index.html', '/app/'],
             ['/memorization-is-a-spiritual-life-hack/index.html', '/memorization-is-a-spiritual-life-hack/'],
             ['/tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
+            ['/import/biblememory', '/import/biblememory/'],
+            ['/import/biblememory/index.html', '/import/biblememory/'],
           ])
 
           server.middlewares.use((req, res, next) => {
@@ -680,6 +700,7 @@ export default defineConfig(({ mode }) => {
             /^\/app\/index\.html(?:\?.*)?$/,
             /^\/memorization-is-a-spiritual-life-hack(?:\/.*)?(?:\?.*)?$/,
             /^\/tips-for-memorizing-scripture(?:\/.*)?(?:\?.*)?$/,
+            /^\/import\/biblememory(?:\/.*)?(?:\?.*)?$/,
             /^\/gdrive-callback\.html(?:\?.*)?$/,
             /^\/privacy(?:\.html)?(?:\?.*)?$/,
           ],
