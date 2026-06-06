@@ -1,3 +1,10 @@
+## [1.34.1](https://github.com/timunrau/rum1n8/compare/v1.34.0...v1.34.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* polish passage review feedback ([8127a3b](https://github.com/timunrau/rum1n8/commit/8127a3b757cfe828002b3a943b80552ae7c62ffd))
+
 # [1.34.0](https://github.com/timunrau/rum1n8/compare/v1.33.0...v1.34.0) (2026-06-06)
 
 
