@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/timunrau/rum1n8/compare/v1.33.0...v1.34.0) (2026-06-06)
+
+
+### Features
+
+* add combined passage review ([a419fb9](https://github.com/timunrau/rum1n8/commit/a419fb98ada8b91034e766c67a6069493c9d50c4))
+
 # [1.33.0](https://github.com/timunrau/rum1n8/compare/v1.32.0...v1.33.0) (2026-06-04)
 
 
