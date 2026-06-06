@@ -138,7 +138,7 @@ test('add verse reference input: normalizes on blur and waits until save to warn
   await page.getByRole('button', { name: /Save Verse/i }).click()
 
   await expect(page.getByTestId('modal-add-verse')).toBeVisible()
-  await expect(page.getByText('Use a reference like "John 3:16" or "John 3:16-17".')).toBeVisible()
+  await expect(page.getByText('Use a reference like "John 3:16", "John 3:16-17", or "John 3:36-4:2".')).toBeVisible()
 })
 
 test('add verse with Bible import: BSB shorthand imports content through the fetch-client v2 API', async ({

@@ -237,6 +237,96 @@ test('start review CTA: click starts review of first (most-due) verse', async ({
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
+test('collection passage review scores records separately and retries a failed segment', async ({ page }) => {
+  const timestamp = new Date().toISOString()
+  const secondSegmentWords = Array.from({ length: 220 }, () => 'Beta').join(' ')
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: timestamp,
+    lastModified: timestamp,
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date(Date.now() - 172800000).toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: ['passage'],
+  }
+  const verses = [
+    { ...base, id: 'john-3-36', reference: 'John 3:36', content: 'Alpha' },
+    { ...base, id: 'john-4-1', reference: 'John 4:1', content: secondSegmentWords },
+  ]
+  await seedStorage(page, verses, [
+    { id: 'passage', name: 'Passage', description: '', createdAt: timestamp, lastModified: timestamp },
+  ])
+  await page.reload()
+  await gotoApp(page, '?view=collection&collection=passage')
+
+  await page.getByText('John 3:36').click()
+  await expect(page.getByTestId('modal-passage-review-offer')).toBeVisible()
+  await expect(page.getByTestId('modal-passage-review-offer')).toContainText('John 3:36-4:1')
+  await page.getByTestId('passage-review-start').click()
+
+  await expect(page.locator('h1')).toContainText('John 3:36-4:1')
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('a')
+  await expect(page.getByTestId('passage-segment-feedback')).toContainText('John 3:36 · 100% accuracy')
+
+  await page.keyboard.type('x'.repeat(55))
+  await page.keyboard.type('b'.repeat(165))
+  await expect(page.getByTestId('passage-segment-feedback')).toContainText('John 4:1 · 75% accuracy')
+  await expect(page.getByTestId('passage-segment-retry')).toBeVisible()
+  await expect(page.getByTestId('passage-segment-retry')).toHaveText('Retry')
+
+  const scroller = page.locator('.practice-swipe-panel--active .practice-card')
+  await expect.poll(
+    async () => scroller.evaluate((element) => element.scrollTop),
+    { message: 'practice text scrolled near the end of the failed segment' },
+  ).toBeGreaterThan(0)
+  const scrollTopBeforeRetry = await scroller.evaluate((element) => element.scrollTop)
+
+  const storedAfterFirstAttempt = (await getStoredVerses(page)) as Array<{ id: string; lastAccuracy?: string }>
+  expect(storedAfterFirstAttempt.find((verse) => verse.id === 'john-3-36')?.lastAccuracy).toBe('100.0')
+  expect(storedAfterFirstAttempt.find((verse) => verse.id === 'john-4-1')?.lastAccuracy).toBe('75.0')
+
+  await page.getByTestId('passage-segment-retry').click()
+  await expect.poll(
+    async () => scroller.evaluate((element) => element.scrollTop),
+    { message: 'retry scrolls back to the beginning of the failed segment' },
+  ).toBeLessThan(scrollTopBeforeRetry)
+
+  await page.keyboard.type('b'.repeat(220))
+  await expect(page.getByTestId('passage-segment-feedback')).toContainText('John 4:1 · 100% accuracy')
+})
+
+test('review tab does not offer combined passage review', async ({ page }) => {
+  const timestamp = new Date().toISOString()
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: timestamp,
+    lastModified: timestamp,
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date(Date.now() - 172800000).toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: [],
+  }
+  await seedStorage(page, [
+    { ...base, id: 'review-john-3-36', reference: 'John 3:36', content: 'Alpha' },
+    { ...base, id: 'review-john-4-1', reference: 'John 4:1', content: 'Beta' },
+  ], [])
+  await page.reload()
+  await gotoApp(page, '?view=review-list')
+
+  await page.getByText('John 3:36').click()
+  await expect(page.getByTestId('modal-passage-review-offer')).toHaveCount(0)
+  await expect(page.locator('h1')).toContainText('John 3:36')
+})
+
 test('Start Review on main Verses screen uses the same order as Review screen', async ({ page }) => {
   const base = {
     bibleVersion: 'BSB',

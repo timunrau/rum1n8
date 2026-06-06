@@ -1,3 +1,5 @@
+import { parseVerseSpanReference } from './bible-reference.js'
+
 /**
  * Count the number of individual verses in a reference string.
  * Handles ranges like "Psalm 1:1-3" (= 3 verses) and comma-separated
@@ -5,6 +7,9 @@
  */
 export function countVersesInReference(reference) {
   if (!reference) return 0
+
+  const parsedReference = parseVerseSpanReference(reference)
+  if (parsedReference) return parsedReference.totalVerses
 
   let totalCount = 0
 

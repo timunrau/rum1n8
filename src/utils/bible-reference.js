@@ -1,3 +1,5 @@
+import { PassageReference } from '@gracious.tech/bible-references'
+
 export const BIBLE_BOOKS = [
   { id: 'gen', name: 'Genesis', aliases: ['gen', 'ge', 'gn'] },
   { id: 'exo', name: 'Exodus', aliases: ['exod', 'exo', 'ex'] },
@@ -68,6 +70,7 @@ export const BIBLE_BOOKS = [
 ]
 
 const BOOKS_BY_ID = new Map(BIBLE_BOOKS.map((book) => [book.id, book]))
+const BOOK_NAMES_BY_ID = Object.fromEntries(BIBLE_BOOKS.map((book) => [book.id, book.name]))
 const ALIASES_BY_NORMALIZED_NAME = BIBLE_BOOKS.reduce((aliases, book) => {
   const names = [book.name, ...book.aliases]
   names.forEach((name) => {
@@ -176,20 +179,113 @@ export function parseSimpleVerseReference(reference = '') {
 }
 
 export function normalizeVerseReference(reference = '') {
-  return parseSimpleVerseReference(reference)?.canonicalReference || ''
+  return parseVerseSpanReference(reference)?.canonicalReference || ''
+}
+
+export function parseVerseSpanReference(reference = '') {
+  const trimmed = reference.trim().replace(/\s+/g, ' ')
+  if (!trimmed || trimmed.includes(',')) return null
+
+  const match = trimmed.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)(?:\s*-\s*(?:(\d+)\s*:\s*)?(\d+))?$/)
+  if (!match) return null
+
+  const book = getBibleBook(match[1])
+  const startChapter = parseInt(match[2], 10)
+  const startVerse = parseInt(match[3], 10)
+  const endChapter = match[4] ? parseInt(match[4], 10) : startChapter
+  const endVerse = match[5] ? parseInt(match[5], 10) : startVerse
+
+  if (!book || startChapter < 1 || startVerse < 1 || endChapter < 1 || endVerse < 1) {
+    return null
+  }
+
+  const passage = new PassageReference({
+    book: book.id,
+    start_chapter: startChapter,
+    start_verse: startVerse,
+    end_chapter: endChapter,
+    end_verse: endVerse
+  })
+
+  if (!passage.args_valid || !['verse', 'range_verses', 'range_multi'].includes(passage.type)) {
+    return null
+  }
+
+  const canonicalReference = passage.toString(BOOK_NAMES_BY_ID)
+  const normalizedVerses = passage.get_verses_string()
+
+  return {
+    bookName: book.name,
+    bookId: book.id,
+    chapter: passage.start_chapter,
+    verseStart: passage.start_verse,
+    verseEnd: passage.end_verse,
+    startChapter: passage.start_chapter,
+    startVerse: passage.start_verse,
+    endChapter: passage.end_chapter,
+    endVerse: passage.end_verse,
+    canonicalReference,
+    normalized: `${book.id} ${normalizedVerses}`,
+    totalVerses: passage.total_verses(),
+    passage
+  }
+}
+
+export function areVerseSpansContiguous(referenceA, referenceB) {
+  const parsedA = typeof referenceA === 'string' ? parseVerseSpanReference(referenceA) : referenceA
+  const parsedB = typeof referenceB === 'string' ? parseVerseSpanReference(referenceB) : referenceB
+  if (!parsedA || !parsedB || parsedA.bookId !== parsedB.bookId) return false
+
+  const nextVerse = parsedA.passage.get_next_verse(true)
+  return !!(
+    nextVerse &&
+    nextVerse.start_chapter === parsedB.startChapter &&
+    nextVerse.start_verse === parsedB.startVerse
+  )
+}
+
+export function combineVerseSpans(references = []) {
+  const parsedReferences = references
+    .map((reference) => (typeof reference === 'string' ? parseVerseSpanReference(reference) : reference))
+    .filter(Boolean)
+
+  if (!parsedReferences.length) return null
+
+  const first = parsedReferences[0]
+  const last = parsedReferences[parsedReferences.length - 1]
+  if (parsedReferences.some((reference) => reference.bookId !== first.bookId)) return null
+
+  const passage = PassageReference.from_refs(first.passage, last.passage)
+  const book = BOOKS_BY_ID.get(first.bookId)
+  if (!book) return null
+
+  return {
+    bookName: book.name,
+    bookId: book.id,
+    chapter: passage.start_chapter,
+    verseStart: passage.start_verse,
+    verseEnd: passage.end_verse,
+    startChapter: passage.start_chapter,
+    startVerse: passage.start_verse,
+    endChapter: passage.end_chapter,
+    endVerse: passage.end_verse,
+    canonicalReference: passage.toString(BOOK_NAMES_BY_ID),
+    normalized: `${book.id} ${passage.get_verses_string()}`,
+    totalVerses: passage.total_verses(),
+    passage
+  }
 }
 
 function referencesOverlap(referenceA, referenceB) {
   return (
     referenceA.bookId === referenceB.bookId &&
-    referenceA.chapter === referenceB.chapter &&
-    referenceA.verseStart <= referenceB.verseEnd &&
-    referenceB.verseStart <= referenceA.verseEnd
+    !referenceA.passage.is_before(referenceB.startChapter, referenceB.startVerse) &&
+    !referenceA.passage.is_after(referenceB.endChapter, referenceB.endVerse)
   )
 }
 
 export function findReferenceMatches(reference = '', verses = [], options = {}) {
-  const parsedReference = parseSimpleVerseReference(reference)
+  const parsedReference = parseVerseSpanReference(reference)
   if (!parsedReference) return []
 
   const excludeVerseId = options.excludeVerseId || null
@@ -198,7 +294,7 @@ export function findReferenceMatches(reference = '', verses = [], options = {}) 
     .map((verse) => {
       if (!verse || (excludeVerseId && verse.id === excludeVerseId)) return null
 
-      const parsedExisting = parseSimpleVerseReference(verse.reference || '')
+      const parsedExisting = parseVerseSpanReference(verse.reference || '')
       if (!parsedExisting) return null
 
       const exact = parsedReference.normalized === parsedExisting.normalized

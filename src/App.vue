@@ -253,6 +253,7 @@
         :previous-verse-words="previousReviewVerseWords"
         :next-verse="nextReviewVerse"
         :next-verse-words="nextReviewVerseWords"
+        :passage-segment-feedback="passageSegmentFeedback"
         input-id="letter-input-review"
         :show-tray="allWordsRevealed && !!reviewingVerse"
         :show-practice-modes-hint="shouldShowPracticeModesHint"
@@ -261,6 +262,7 @@
         @switch-mode="switchReviewMode"
         @dismiss-practice-modes-hint="dismissPracticeModesHint"
         @swipe-verse="handlePracticeVerseSwipe"
+        @retry-passage-segment="retryPassageSegment"
       />
     </div>
 
@@ -269,7 +271,7 @@
     <CompletionTray
       v-if="allWordsRevealed && reviewingVerse"
       context="review"
-      :meets-accuracy-requirement="meetsAccuracyRequirement"
+      :meets-accuracy-requirement="reviewCompletionMeetsAccuracyRequirement"
       :accuracy="accuracy"
       :review-mistakes="reviewMistakes"
       :review-words-length="totalPracticeUnitCount"
@@ -1968,6 +1970,43 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
         </template>
       </ModalSheet>
 
+      <ModalSheet
+        :show="!!passageReviewOffer"
+        title="Review passage?"
+        data-testid="modal-passage-review-offer"
+        max-width="sm:max-w-md"
+        compact
+        @close="closePassageReviewOffer"
+      >
+        <div v-if="passageReviewOffer" class="space-y-2">
+          <p class="text-base font-semibold text-text-primary">{{ passageReviewOffer.passageVerse.reference }}</p>
+          <p class="text-sm text-text-secondary">
+            {{ passageReviewOffer.sequence.length }} saved verse{{ passageReviewOffer.sequence.length !== 1 ? 's' : '' }} can be reviewed together as one passage.
+          </p>
+        </div>
+
+        <template #footer>
+          <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              class="btn-secondary"
+              data-testid="passage-review-just-this"
+              @click="startOfferedSingleVerseReview"
+            >
+              Just {{ passageReviewOffer?.anchorVerse?.reference || 'this verse' }}
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              data-testid="passage-review-start"
+              @click="startOfferedPassageReview"
+            >
+              Review passage
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
       <!-- Sync Settings Modal -->
       <SyncSettingsModal :show="showSettings" :is-online="isOnline" @close="closeSettings" @saved="onSyncSettingsSaved" />
 
@@ -2124,8 +2163,13 @@ import {
   snoozeInstallPrompt
 } from './ui-state.js'
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
-import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference } from './utils/bible-reference.js'
+import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference, parseVerseSpanReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
+import {
+  buildPassageReviewVerse,
+  calculatePassageSegmentAccuracy,
+  getPassageReviewSequence
+} from './utils/passage-review.js'
 import {
   canAssignCollectionParent,
   canCreateChildCollection,
@@ -2438,6 +2482,12 @@ export default {
     const reviewingVerse = ref(null)
     const reviewSourceList = ref(null) // Track the source list when starting a review
     const reviewSourceState = ref(null) // Track the original source navigation state
+    const passageReviewOffer = ref(null)
+    const combinedPassageReview = ref(null)
+    const passageSegmentMistakes = ref({})
+    const passageSegmentResults = ref({})
+    const passageSegmentSaved = ref({})
+    const passageSegmentFeedback = ref(null)
     const memorizingVerse = ref(null)
     const memorizationMode = ref(null) // 'learn', 'memorize', 'master'
     const memorizationSourceState = ref(null) // Track the original source navigation state for memorization
@@ -2608,7 +2658,7 @@ export default {
     const bibleCollection = ref(null)
     const newVerseReferenceTouched = ref(false)
     const editedVerseReferenceTouched = ref(false)
-    const invalidReferenceMessage = 'Use a reference like "John 3:16" or "John 3:16-17".'
+    const invalidReferenceMessage = 'Use a reference like "John 3:16", "John 3:16-17", or "John 3:36-4:2".'
 
     // YouVersion numeric IDs for common translations
     const youVersionIds = {
@@ -2649,7 +2699,7 @@ export default {
     const getReferenceValidationWarning = (verseDraft, shouldShow) => {
       const reference = getVerseDraftField(verseDraft, 'reference')
       if (!reference || !shouldShow) return ''
-      return parseSimpleVerseReference(reference) ? '' : invalidReferenceMessage
+      return parseVerseSpanReference(reference) ? '' : invalidReferenceMessage
     }
 
     const resetImportState = () => {
@@ -2671,11 +2721,12 @@ export default {
       if (!ref || !version) return null
       const versionId = youVersionIds[version]
       if (!versionId) return null
-      const parsed = parseSimpleVerseReference(ref)
+      const parsed = parseVerseSpanReference(ref)
       if (!parsed) return null
+      if (parsed.startChapter !== parsed.endChapter) return null
       const usfmBook = parsed.bookId.toUpperCase()
-      const verseRef = parsed.verseEnd > parsed.verseStart ? `${parsed.verseStart}-${parsed.verseEnd}` : `${parsed.verseStart}`
-      return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.chapter}.${verseRef}.${version}`
+      const verseRef = parsed.endVerse > parsed.startVerse ? `${parsed.startVerse}-${parsed.endVerse}` : `${parsed.startVerse}`
+      return `https://www.bible.com/bible/${versionId}/${usfmBook}.${parsed.startChapter}.${verseRef}.${version}`
     }
 
     const hasEditedReferenceChanged = computed(() => {
@@ -3029,6 +3080,7 @@ export default {
       continueInstallAfterSyncSetup.value = false
       showPracticeSettings.value = false
       fabMenuOpen.value = false
+      passageReviewOffer.value = null
     }
 
     // Restore app state from navigation state
@@ -3330,6 +3382,10 @@ export default {
       return accuracy.value >= 90
     })
 
+    const reviewCompletionMeetsAccuracyRequirement = computed(() => (
+      combinedPassageReview.value ? allWordsRevealed.value : meetsAccuracyRequirement.value
+    ))
+
     const reviewingVerseNextReviewLabel = computed(() => {
       if (!reviewingVerse.value) return null
       const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
@@ -3388,6 +3444,7 @@ export default {
     // reflects the honest first-attempt performance, not a polished retry.
     watch(allWordsRevealed, (revealed) => {
       if (!revealed || !reviewingVerse.value || memorizationMode.value !== 'master') return
+      if (combinedPassageReview.value) return
       if (firstAttemptGrade.value !== null) return // Already captured
 
       const totalWords = totalPracticeUnitCount.value
@@ -3834,18 +3891,10 @@ export default {
 
     // Parse verse reference into sortable components
     const parseReference = (reference) => {
-      if (!reference) return { book: 999, chapter: 0, verse: 0 }
-      
-      // Match patterns like "Matthew 24:1" or "1 John 3:16" or "Psalm 119:105"
-      const match = reference.match(/^((?:\d\s)?[a-z]+)\s+(\d+):(\d+)/i)
-      
-      if (match) {
-        const bookName = match[1].toLowerCase().trim()
-        const chapter = parseInt(match[2], 10)
-        const verse = parseInt(match[3], 10)
-        const bookNum = bookOrder[bookName] || 999
-        
-        return { book: bookNum, chapter, verse }
+      const parsed = parseVerseSpanReference(reference)
+      if (parsed) {
+        const bookNum = bookOrder[parsed.bookName.toLowerCase()] || bookOrder[parsed.bookId] || 999
+        return { book: bookNum, chapter: parsed.startChapter, verse: parsed.startVerse }
       }
       
       // If no match, return high numbers to sort to the end
@@ -4538,7 +4587,7 @@ export default {
       return result
     }
 
-    const buildContentPracticeWords = (content, mode, retryOffset = 0) => {
+    const buildContentPracticeWords = (content, mode, retryOffset = 0, options = {}) => {
       const wordEntries = getVerseWords(content)
       return wordEntries.map((entry, index) => {
         const word = entry.text
@@ -4565,7 +4614,8 @@ export default {
           separators,
           index,
           incorrect: false,
-          incorrectLetterIndices: []
+          incorrectLetterIndices: [],
+          ...(typeof options.getMetadata === 'function' ? options.getMetadata(entry, index) : {})
         }
       })
     }
@@ -4583,6 +4633,45 @@ export default {
         ...word,
         index
       }))
+    }
+
+    const buildCombinedPassagePracticeWords = (records, passageVerse, mode, retryOffset = 0) => {
+      const segments = []
+      const contentWords = []
+
+      for (const record of records) {
+        const startIndex = contentWords.length
+        const recordWords = buildContentPracticeWords(record.content, mode, retryOffset, {
+          getMetadata: () => ({
+            passageSegmentId: record.id,
+            passageSegmentReference: record.reference
+          })
+        })
+        contentWords.push(...recordWords)
+        segments.push({
+          id: record.id,
+          reference: record.reference,
+          startIndex,
+          endIndex: contentWords.length,
+          totalUnits: recordWords.length
+        })
+      }
+
+      const referenceWords = shouldRequireReferenceTyping(passageVerse)
+        ? buildReferencePracticeUnits(passageVerse.reference).map((unit) => ({
+            ...unit,
+            visible: mode === 'learn',
+            isCombinedPassageReferenceUnit: true
+          }))
+        : []
+
+      return {
+        words: [...contentWords, ...referenceWords].map((word, index) => ({
+          ...word,
+          index
+        })),
+        segments
+      }
     }
 
     const resetPracticeSequence = (verse, mode, retryOffset = 0) => {
@@ -4759,6 +4848,65 @@ export default {
       return progression[status] || null
     }
 
+    const openPassageReviewOffer = (anchorVerse, sequence) => {
+      const passageVerse = buildPassageReviewVerse(sequence)
+      if (!passageVerse) return false
+
+      passageReviewOffer.value = {
+        anchorVerse,
+        sequence,
+        passageVerse,
+        sourceState: getCurrentSourceState()
+      }
+      pushModalState('passageReviewOffer')
+      return true
+    }
+
+    const closePassageReviewOffer = () => {
+      passageReviewOffer.value = null
+      consumeModalState('passageReviewOffer')
+    }
+
+    const consumePassageReviewOfferForAction = (sourceState) => {
+      if (window.history.state?.modal !== 'passageReviewOffer') return
+      const rawState = sourceState || getCurrentSourceState()
+      const targetState = {
+        view: rawState.view,
+        ...(rawState.collectionId ? { collectionId: rawState.collectionId } : {})
+      }
+      const url = buildNavigationUrl(targetState)
+      window.history.replaceState(targetState, '', url)
+      rememberAppUrl(`${url.pathname}${url.search}${url.hash}`)
+    }
+
+    const startOfferedPassageReview = () => {
+      const offer = passageReviewOffer.value
+      if (!offer) return
+
+      passageReviewOffer.value = null
+      consumePassageReviewOfferForAction(offer.sourceState)
+      setPracticeTransition('mode')
+      startReview(offer.passageVerse, {
+        sourceState: offer.sourceState,
+        sourceList: [offer.passageVerse],
+        passageRecords: offer.sequence
+      })
+    }
+
+    const startOfferedSingleVerseReview = () => {
+      const offer = passageReviewOffer.value
+      if (!offer) return
+
+      const verse = offer.anchorVerse
+      passageReviewOffer.value = null
+      consumePassageReviewOfferForAction(offer.sourceState)
+      setPracticeTransition('mode')
+      startReview(verse, {
+        sourceState: offer.sourceState,
+        sourceList: [verse]
+      })
+    }
+
     // Handle verse click - route to memorization or review
     const handleVerseClick = (verse) => {
       collapseVerseListItems()
@@ -4771,6 +4919,12 @@ export default {
         }
       } else {
         // Mastered - start review
+        if (currentCollectionId.value) {
+          const passageSequence = getPassageReviewSequence(verse, sortedVerses.value)
+          if (passageSequence.length > 1 && openPassageReviewOffer(verse, passageSequence)) {
+            return
+          }
+        }
         setPracticeTransition('mode')
         startReview(verse)
       }
@@ -4982,9 +5136,9 @@ export default {
         return
       }
 
-      const parsed = parseSimpleVerseReference(reference)
+      const parsed = parseVerseSpanReference(reference)
       if (!parsed) {
-        importError.value = "Could not parse verse reference. Please use format like 'John 3:16' or 'John 3:16-17'."
+        importError.value = "Could not parse verse reference. Please use format like 'John 3:16', 'John 3:16-17', or 'John 3:36-4:2'."
         return
       }
 
@@ -5030,19 +5184,26 @@ export default {
         // Fetch the book in 'txt' format which supports excluding notes
         const book = await collection.bibles.fetch_book(translationId, bookId, 'txt')
 
-        // Extract verses using get_passage for ranges or get_verse for single
-        // Use notes: false to exclude footnotes, verse_nums: false to exclude verse numbers
+        // Extract verses one-by-one so same-chapter and cross-chapter ranges share one path.
+        // Use notes: false to exclude footnotes, verse_nums: false to exclude verse numbers.
         const options = { attribute: false, notes: false, verse_nums: false, headings: false }
-        let verseText
-        if (parsed.verseStart === parsed.verseEnd) {
-          verseText = book.get_verse(parsed.chapter, parsed.verseStart, options)
-        } else {
-          verseText = book.get_passage(
-            parsed.chapter, parsed.verseStart,
-            parsed.chapter, parsed.verseEnd,
-            options
-          )
+        const verseTexts = []
+        const endVerse = parsed.passage.get_end()
+        let currentVerse = parsed.passage.get_start()
+
+        while (currentVerse) {
+          const text = book.get_verse(currentVerse.start_chapter, currentVerse.start_verse, options)
+          if (!text) {
+            verseTexts.length = 0
+            break
+          }
+
+          verseTexts.push(text)
+          if (currentVerse.equals(endVerse)) break
+          currentVerse = currentVerse.get_next_verse()
         }
+
+        let verseText = verseTexts.join(' ')
 
         if (!verseText) {
           importError.value = 'Verse(s) not found. Please check the chapter and verse numbers.'
@@ -6731,9 +6892,136 @@ export default {
       reviewingVerse.value = null
       reviewSourceList.value = null
       reviewSourceState.value = null
+      clearCombinedPassageReviewState()
       currentReviewSaved.value = false
       firstAttemptGrade.value = null
       firstAttemptMistakes.value = null
+    }
+
+    const clearCombinedPassageReviewState = () => {
+      combinedPassageReview.value = null
+      passageSegmentMistakes.value = {}
+      passageSegmentResults.value = {}
+      passageSegmentSaved.value = {}
+      passageSegmentFeedback.value = null
+    }
+
+    const getPassageSegment = (segmentId) => (
+      combinedPassageReview.value?.segments?.find((segment) => segment.id === segmentId) || null
+    )
+
+    const savePassageSegmentReview = (segmentId) => {
+      if (memorizationMode.value !== 'master') return
+      const segment = getPassageSegment(segmentId)
+      if (!segment || segment.totalUnits <= 0) return
+
+      const mistakes = passageSegmentMistakes.value[segmentId] || 0
+      const accuracyValue = calculatePassageSegmentAccuracy(segment.totalUnits, mistakes)
+      const accuracyLabel = `${accuracyValue.toFixed(0)}% accuracy`
+      const belowThreshold = accuracyValue < 90
+      const result = {
+        segmentId,
+        reference: segment.reference,
+        accuracy: accuracyValue,
+        accuracyLabel,
+        belowThreshold
+      }
+
+      passageSegmentResults.value = {
+        ...passageSegmentResults.value,
+        [segmentId]: result
+      }
+      passageSegmentFeedback.value = result
+
+      if (passageSegmentSaved.value[segmentId]) return
+
+      const verse = verses.value.find((candidate) => candidate.id === segmentId)
+      if (!verse) return
+
+      const grade = calculateGrade(segment.totalUnits, mistakes)
+      const wasAlreadyReviewedToday = wasReviewedToday(verse)
+      if (!wasAlreadyReviewedToday) {
+        const reviewData = calculateNextReviewDate(verse, grade, true)
+        verse.reviewCount = (verse.reviewCount || 0) + 1
+        verse.nextReviewDate = reviewData.nextReviewDate
+        verse.easeFactor = reviewData.easeFactor
+        verse.interval = reviewData.interval
+      }
+
+      verse.lastReviewed = new Date().toISOString()
+      verse.lastGrade = grade
+      verse.lastAccuracy = accuracyValue.toFixed(1)
+      verse.lastModified = new Date().toISOString()
+      if (!verse.reviewHistory) verse.reviewHistory = []
+      verse.reviewHistory.push({
+        date: new Date().toISOString(),
+        grade,
+        accuracy: parseFloat(accuracyValue.toFixed(1)),
+        mistakes
+      })
+
+      passageSegmentSaved.value = {
+        ...passageSegmentSaved.value,
+        [segmentId]: true
+      }
+      saveVerses()
+      trackEvent('verse_reviewed', { grade })
+    }
+
+    const maybeCompletePassageSegment = (segmentId) => {
+      const segment = getPassageSegment(segmentId)
+      if (!segment) return
+
+      const segmentWords = reviewWords.value.slice(segment.startIndex, segment.endIndex)
+      if (!segmentWords.length || segmentWords.some((word) => !word.revealed)) return
+
+      savePassageSegmentReview(segmentId)
+    }
+
+    const resetPracticeWordForMode = (word, index, mode, retryOffset = 0) => {
+      const visible = word.isReferenceUnit
+        ? mode === 'learn'
+        : mode === 'learn' || (mode === 'memorize' && (index + retryOffset) % 2 === 0)
+
+      return {
+        ...word,
+        revealed: false,
+        visible,
+        typedLettersIndex: 0,
+        incorrect: false,
+        incorrectLetterIndices: []
+      }
+    }
+
+    const retryPassageSegment = (segmentId) => {
+      const segment = getPassageSegment(segmentId)
+      if (!segment) return
+
+      const mode = memorizationMode.value || 'master'
+      reviewWords.value = reviewWords.value.map((word, index) => (
+        index >= segment.startIndex
+          ? resetPracticeWordForMode(word, index, mode, reviewMemorizeRetryCount.value)
+          : word
+      ))
+
+      const laterSegmentIds = new Set(
+        combinedPassageReview.value.segments
+          .filter((candidate) => candidate.startIndex >= segment.startIndex)
+          .map((candidate) => candidate.id)
+      )
+      passageSegmentMistakes.value = Object.fromEntries(
+        Object.entries(passageSegmentMistakes.value).filter(([id]) => !laterSegmentIds.has(id))
+      )
+      passageSegmentResults.value = Object.fromEntries(
+        Object.entries(passageSegmentResults.value).filter(([id]) => !laterSegmentIds.has(id))
+      )
+      passageSegmentFeedback.value = null
+      typedLetter.value = ''
+
+      nextTick(() => {
+        reviewPracticeRef.value?.scrollToWordIndex?.(segment.startIndex, 'auto')
+        reviewPracticeRef.value?.focusInput?.()
+      })
     }
 
     // Start memorizing a verse
@@ -6795,8 +7083,24 @@ export default {
       setPracticeTransition('mode')
       if (mode === 'memorize') reviewMemorizeRetryCount.value += 1
       const verse = reviewingVerse.value
-      resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
       memorizationMode.value = mode
+      if (combinedPassageReview.value?.records?.length) {
+        const records = combinedPassageReview.value.records
+          .map((record) => verses.value.find((candidate) => candidate.id === record.id))
+          .filter(Boolean)
+        const passagePractice = buildCombinedPassagePracticeWords(records, verse, mode, reviewMemorizeRetryCount.value)
+        combinedPassageReview.value = {
+          ...combinedPassageReview.value,
+          segments: passagePractice.segments
+        }
+        passageSegmentMistakes.value = {}
+        passageSegmentResults.value = {}
+        passageSegmentFeedback.value = null
+        reviewWords.value = passagePractice.words
+        typedLetter.value = ''
+      } else {
+        resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
+      }
       reviewMistakes.value = 0
       nextTick(() => {
         reviewPracticeRef.value?.scrollToStart?.()
@@ -6808,6 +7112,8 @@ export default {
     const startReview = (verse, options = {}) => {
       const preserveSource = options.preserveSource === true
       const sourceStateOverride = options.sourceState || null
+      const sourceListOverride = options.sourceList || null
+      const passageRecords = options.passageRecords || null
 
       if (
         (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
@@ -6840,7 +7146,7 @@ export default {
       
       // IMPORTANT: Before starting a new review, ensure any previous review was saved (only counts when in master mode)
       // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
-      if (reviewingVerse.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+      if (reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
         console.log('[startReview] Saving previous review before starting new one (fallback)')
         const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
         if (prevVerse) {
@@ -6887,13 +7193,21 @@ export default {
       currentReviewSaved.value = false // Reset saved flag for new review
       firstAttemptGrade.value = null // Reset first-attempt tracking for new review
       firstAttemptMistakes.value = null
+      if (!passageRecords) {
+        clearCombinedPassageReviewState()
+      }
       
       const isSequentialNavigation = preserveSource && !!reviewSourceList.value
 
       if (!isSequentialNavigation) {
-        const sourceContext = getReviewSourceContext(sourceStateOverride || getCurrentSourceState())
-        reviewSourceList.value = sourceContext.list
-        reviewSourceState.value = sourceContext.state
+        if (sourceListOverride) {
+          reviewSourceList.value = sourceListOverride
+          reviewSourceState.value = sourceStateOverride || getCurrentSourceState()
+        } else {
+          const sourceContext = getReviewSourceContext(sourceStateOverride || getCurrentSourceState())
+          reviewSourceList.value = sourceContext.list
+          reviewSourceState.value = sourceContext.state
+        }
       }
       
       // Push or replace navigation state
@@ -6914,7 +7228,25 @@ export default {
       }
       // Review always starts in master mode; build words with visible/index like startMemorization
       memorizationMode.value = 'master'
-      resetPracticeSequence(verse, 'master')
+      if (passageRecords?.length) {
+        const passagePractice = buildCombinedPassagePracticeWords(passageRecords, verse, 'master')
+        combinedPassageReview.value = {
+          verse,
+          records: passageRecords.map((record) => ({
+            id: record.id,
+            reference: record.reference
+          })),
+          segments: passagePractice.segments
+        }
+        passageSegmentMistakes.value = {}
+        passageSegmentResults.value = {}
+        passageSegmentSaved.value = {}
+        passageSegmentFeedback.value = null
+        reviewWords.value = passagePractice.words
+        typedLetter.value = ''
+      } else {
+        resetPracticeSequence(verse, 'master')
+      }
       // VersePracticeView is keyed by verse id (+ reviewInstanceKey on retry), so it remounts
       // and onMounted runs the 100ms focus — that's what shows the keyboard on Android PWA.
     }
@@ -7088,6 +7420,27 @@ export default {
     const retryReview = () => {
       if (reviewingVerse.value) {
         setPracticeTransition('mode')
+        if (combinedPassageReview.value?.records?.length) {
+          const records = combinedPassageReview.value.records
+            .map((record) => verses.value.find((verse) => verse.id === record.id))
+            .filter(Boolean)
+          const passagePractice = buildCombinedPassagePracticeWords(records, reviewingVerse.value, memorizationMode.value || 'master')
+          combinedPassageReview.value = {
+            ...combinedPassageReview.value,
+            segments: passagePractice.segments
+          }
+          passageSegmentMistakes.value = {}
+          passageSegmentResults.value = {}
+          passageSegmentFeedback.value = null
+          reviewWords.value = passagePractice.words
+          reviewMistakes.value = 0
+          typedLetter.value = ''
+          nextTick(() => {
+            reviewPracticeRef.value?.scrollToStart?.()
+            reviewPracticeRef.value?.focusInput?.()
+          })
+          return
+        }
         reviewInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows (same as Next Verse)
         // Re-initialize current mode (so user stays in Learn/Memorize if they were in that mode)
         const mode = memorizationMode.value || 'master'
@@ -7401,6 +7754,7 @@ export default {
       typedLetter.value = ''
       reviewMistakes.value = 0
       currentReviewSaved.value = false
+      clearCombinedPassageReviewState()
       
       const targetState = resolveSourceNavigationState(sourceState, 'review-list')
       if (targetState.view === 'collection') {
@@ -7510,7 +7864,7 @@ export default {
         event.key === 'Enter' &&
         reviewingVerse.value &&
         allWordsRevealed.value &&
-        meetsAccuracyRequirement.value
+        reviewCompletionMeetsAccuracyRequirement.value
       ) {
         event.preventDefault()
         if (isLastInReviewList.value) {
@@ -7533,6 +7887,21 @@ export default {
         typedLetter.value = letter
         checkLetter()
       }
+    }
+
+    const recordPassageSegmentMistake = (word) => {
+      if (memorizationMode.value !== 'master') return
+      if (!word?.passageSegmentId || !combinedPassageReview.value) return
+
+      passageSegmentMistakes.value = {
+        ...passageSegmentMistakes.value,
+        [word.passageSegmentId]: (passageSegmentMistakes.value[word.passageSegmentId] || 0) + 1
+      }
+    }
+
+    const handlePracticeWordRevealed = (word) => {
+      if (!word?.passageSegmentId || !combinedPassageReview.value) return
+      maybeCompletePassageSegment(word.passageSegmentId)
     }
 
     // Check if typed letter matches next word's first letter
@@ -7597,6 +7966,7 @@ export default {
           if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
             nextWord.visible = true
           }
+          handlePracticeWordRevealed(nextWord)
           typedLetter.value = ''
           nextTick(() => {
             scrollToCurrentWord()
@@ -7612,6 +7982,7 @@ export default {
           // Fallback: mark word as revealed if we can't determine required letter
           nextWord.revealed = true
           nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
+          handlePracticeWordRevealed(nextWord)
           typedLetter.value = ''
           return
         }
@@ -7630,6 +8001,7 @@ export default {
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true // Make it visible in learn/memorize modes
             }
+            handlePracticeWordRevealed(nextWord)
             typedLetter.value = ''
             
             // Auto-scroll to next word and focus input
@@ -7648,6 +8020,7 @@ export default {
             })
           }
         } else {
+          recordPassageSegmentMistake(nextWord)
           // Reference units advance one character at a time even on mistakes,
           // so a wrong digit does not consume an entire multi-digit token.
           if (nextWord.isReferenceUnit) {
@@ -7659,6 +8032,7 @@ export default {
             }
             if (nextWord.typedLettersIndex >= requiredLetters.length) {
               nextWord.revealed = true
+              handlePracticeWordRevealed(nextWord)
             }
           } else {
             // Wrong letter (not correct and not adjacent) - reveal the word but mark it as incorrect
@@ -7667,6 +8041,7 @@ export default {
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true // Make it visible in learn/memorize modes
             }
+            handlePracticeWordRevealed(nextWord)
           }
           reviewMistakes.value++
           typedLetter.value = ''
@@ -8587,6 +8962,13 @@ export default {
       isPartiallyTyped,
       accuracy,
       meetsAccuracyRequirement,
+      reviewCompletionMeetsAccuracyRequirement,
+      passageReviewOffer,
+      closePassageReviewOffer,
+      startOfferedPassageReview,
+      startOfferedSingleVerseReview,
+      passageSegmentFeedback,
+      retryPassageSegment,
       previousMemorizationVerse,
       nextMemorizationVerse,
       previousMemorizationVerseWords,

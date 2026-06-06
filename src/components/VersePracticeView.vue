@@ -163,6 +163,26 @@
       </div>
     </div>
 
+      <div
+        v-if="panel.isCurrent && passageSegmentFeedback"
+        class="passage-segment-feedback"
+        :class="{ 'passage-segment-feedback--retry': passageSegmentFeedback.belowThreshold }"
+        data-testid="passage-segment-feedback"
+      >
+        <span class="passage-segment-feedback__copy">
+          {{ passageSegmentFeedback.reference }} · {{ passageSegmentFeedback.accuracyLabel }}
+        </span>
+        <button
+          v-if="passageSegmentFeedback.belowThreshold"
+          type="button"
+          class="passage-segment-feedback__action"
+          data-testid="passage-segment-retry"
+          @click="$emit('retry-passage-segment', passageSegmentFeedback.segmentId)"
+        >
+          Retry
+        </button>
+      </div>
+
     <!-- Mode buttons: Learn | Memorize | Master -->
     <div v-if="!showTray && (panel.isCurrent || isPracticeSwipeActive)" class="practice-stage-shell flex-shrink-0">
       <div class="practice-stage-rail">
@@ -249,9 +269,10 @@ export default {
     previousVerse: { type: Object, default: null },
     previousVerseWords: { type: Array, default: () => [] },
     nextVerse: { type: Object, default: null },
-    nextVerseWords: { type: Array, default: () => [] }
+    nextVerseWords: { type: Array, default: () => [] },
+    passageSegmentFeedback: { type: Object, default: null }
   },
-  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint', 'swipe-verse'],
+  emits: ['update:typedLetter', 'keydown', 'input', 'switch-mode', 'dismiss-practice-modes-hint', 'swipe-verse', 'retry-passage-segment'],
   setup(props, { emit, expose }) {
     const inputRef = ref(null)
     const scrollContainer = ref(null)
@@ -674,12 +695,28 @@ export default {
       })
     }
 
+    function scrollToWordIndex(index, behavior = 'smooth') {
+      const scroller = getRefElement(scrollContainer.value)
+      if (!scroller) return
+      requestAnimationFrame(() => {
+        const wordEl = scroller.querySelector(`#practice-word-${index}`)
+        if (!wordEl) return
+        const containerRect = scroller.getBoundingClientRect()
+        const wordRect = wordEl.getBoundingClientRect()
+        scroller.scrollTo({
+          top: Math.max(0, wordRect.top - containerRect.top + scroller.scrollTop - 24),
+          behavior
+        })
+      })
+    }
+
     expose({
       inputRef,
       scrollContainer,
       focusInput,
       scrollToStart,
-      scrollToEnd
+      scrollToEnd,
+      scrollToWordIndex
     })
 
     return {
@@ -754,6 +791,35 @@ export default {
 
 .practice-stage-shell {
   padding: 0.3rem 1rem 0.95rem;
+}
+
+.passage-segment-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  width: min(100%, 42rem);
+  margin: 0 auto 0.45rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.passage-segment-feedback--retry {
+  color: var(--color-status-amber-text);
+}
+
+.passage-segment-feedback__copy {
+  font-weight: 600;
+}
+
+.passage-segment-feedback__action {
+  color: var(--color-accent-warm-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .practice-stage-rail {
