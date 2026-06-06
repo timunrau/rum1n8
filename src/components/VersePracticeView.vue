@@ -25,7 +25,10 @@
       <!-- Scrollable verse text -->
       <div
         class="practice-scroll flex-1 min-h-0"
-        :class="{ 'practice-scroll--completion': panel.isCurrent && showTray }"
+        :class="{
+          'practice-scroll--completion': panel.isCurrent && showTray,
+          'practice-scroll--passage-feedback': panel.isCurrent && passageSegmentFeedback && !showTray
+        }"
       >
         <article
           :ref="panel.isCurrent ? 'scrollContainer' : null"
@@ -163,25 +166,27 @@
       </div>
     </div>
 
-      <div
-        v-if="panel.isCurrent && passageSegmentFeedback"
-        class="passage-segment-feedback"
-        :class="{ 'passage-segment-feedback--retry': passageSegmentFeedback.belowThreshold }"
-        data-testid="passage-segment-feedback"
-      >
-        <span class="passage-segment-feedback__copy">
-          {{ passageSegmentFeedback.reference }} · {{ passageSegmentFeedback.accuracyLabel }}
-        </span>
-        <button
-          v-if="passageSegmentFeedback.belowThreshold"
-          type="button"
-          class="passage-segment-feedback__action"
-          data-testid="passage-segment-retry"
-          @click="$emit('retry-passage-segment', passageSegmentFeedback.segmentId)"
+      <Transition name="passage-feedback">
+        <div
+          v-if="panel.isCurrent && passageSegmentFeedback"
+          class="passage-segment-feedback"
+          :class="{ 'passage-segment-feedback--retry': passageSegmentFeedback.belowThreshold }"
+          data-testid="passage-segment-feedback"
         >
-          Retry
-        </button>
-      </div>
+          <span class="passage-segment-feedback__copy">
+            {{ passageSegmentFeedback.reference }} · {{ passageSegmentFeedback.accuracyLabel }}
+          </span>
+          <button
+            v-if="passageSegmentFeedback.belowThreshold"
+            type="button"
+            class="passage-segment-feedback__action"
+            data-testid="passage-segment-retry"
+            @click="$emit('retry-passage-segment', passageSegmentFeedback.segmentId)"
+          >
+            Retry
+          </button>
+        </div>
+      </Transition>
 
     <!-- Mode buttons: Learn | Memorize | Master -->
     <div v-if="!showTray && (panel.isCurrent || isPracticeSwipeActive)" class="practice-stage-shell flex-shrink-0">
@@ -753,10 +758,18 @@ export default {
 .practice-scroll {
   display: flex;
   padding: 0.75rem 1rem 0.5rem;
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.78, 0.2, 1),
+    padding-bottom 260ms cubic-bezier(0.2, 0.78, 0.2, 1);
+  will-change: transform;
 }
 
 .practice-scroll--completion {
   padding-bottom: 1.25rem;
+}
+
+.practice-scroll--passage-feedback {
+  transform: translateY(-0.2rem);
 }
 
 .practice-card {
@@ -800,11 +813,30 @@ export default {
   flex-wrap: wrap;
   gap: 0.35rem 0.65rem;
   width: min(100%, 42rem);
+  max-height: 3rem;
   margin: 0 auto 0.45rem;
+  overflow: hidden;
   color: var(--color-text-secondary);
   font-size: 0.8rem;
   line-height: 1.35;
   text-align: center;
+}
+
+.passage-feedback-enter-active,
+.passage-feedback-leave-active {
+  transition:
+    max-height 260ms cubic-bezier(0.2, 0.78, 0.2, 1),
+    margin-bottom 260ms cubic-bezier(0.2, 0.78, 0.2, 1),
+    opacity 180ms ease,
+    transform 260ms cubic-bezier(0.2, 0.78, 0.2, 1);
+}
+
+.passage-feedback-enter-from,
+.passage-feedback-leave-to {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(0.35rem);
 }
 
 .passage-segment-feedback--retry {
@@ -914,6 +946,16 @@ export default {
 @media (prefers-reduced-motion: reduce) {
   .practice-swipe-track {
     transition-duration: 0ms !important;
+  }
+
+  .practice-scroll,
+  .passage-feedback-enter-active,
+  .passage-feedback-leave-active {
+    transition-duration: 0ms !important;
+  }
+
+  .practice-scroll--passage-feedback {
+    transform: none;
   }
 }
 </style>

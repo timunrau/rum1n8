@@ -285,12 +285,12 @@ test('collection passage review scores records separately and retries a failed s
     { message: 'practice text scrolled near the end of the failed segment' },
   ).toBeGreaterThan(0)
   const scrollTopBeforeRetry = await scroller.evaluate((element) => element.scrollTop)
+  await page.getByTestId('passage-segment-retry').click()
 
   const storedAfterFirstAttempt = (await getStoredVerses(page)) as Array<{ id: string; lastAccuracy?: string }>
   expect(storedAfterFirstAttempt.find((verse) => verse.id === 'john-3-36')?.lastAccuracy).toBe('100.0')
   expect(storedAfterFirstAttempt.find((verse) => verse.id === 'john-4-1')?.lastAccuracy).toBe('75.0')
 
-  await page.getByTestId('passage-segment-retry').click()
   await expect.poll(
     async () => scroller.evaluate((element) => element.scrollTop),
     { message: 'retry scrolls back to the beginning of the failed segment' },
@@ -298,6 +298,7 @@ test('collection passage review scores records separately and retries a failed s
 
   await page.keyboard.type('b'.repeat(220))
   await expect(page.getByTestId('passage-segment-feedback')).toContainText('John 4:1 · 100% accuracy')
+  await expect(page.getByTestId('passage-segment-feedback')).not.toBeVisible({ timeout: 5000 })
 })
 
 test('review tab does not offer combined passage review', async ({ page }) => {

@@ -2580,6 +2580,7 @@ export default {
     const expandedVerseIds = ref({})
     const toastState = ref({ show: false, message: '', isError: false, action: null })
     let toastTimeoutId = null
+    let passageSegmentFeedbackTimeoutId = null
     let drawerHideTimeoutId = null
     let syncTickIntervalId = null
     let syncRequestedWhileSyncing = false
@@ -3385,6 +3386,21 @@ export default {
     const reviewCompletionMeetsAccuracyRequirement = computed(() => (
       combinedPassageReview.value ? allWordsRevealed.value : meetsAccuracyRequirement.value
     ))
+
+    watch(passageSegmentFeedback, (feedback) => {
+      if (passageSegmentFeedbackTimeoutId) {
+        clearTimeout(passageSegmentFeedbackTimeoutId)
+        passageSegmentFeedbackTimeoutId = null
+      }
+      if (!feedback) return
+
+      passageSegmentFeedbackTimeoutId = setTimeout(() => {
+        if (passageSegmentFeedback.value === feedback) {
+          passageSegmentFeedback.value = null
+        }
+        passageSegmentFeedbackTimeoutId = null
+      }, 3000)
+    })
 
     const reviewingVerseNextReviewLabel = computed(() => {
       if (!reviewingVerse.value) return null
@@ -4867,29 +4883,18 @@ export default {
       consumeModalState('passageReviewOffer')
     }
 
-    const consumePassageReviewOfferForAction = (sourceState) => {
-      if (window.history.state?.modal !== 'passageReviewOffer') return
-      const rawState = sourceState || getCurrentSourceState()
-      const targetState = {
-        view: rawState.view,
-        ...(rawState.collectionId ? { collectionId: rawState.collectionId } : {})
-      }
-      const url = buildNavigationUrl(targetState)
-      window.history.replaceState(targetState, '', url)
-      rememberAppUrl(`${url.pathname}${url.search}${url.hash}`)
-    }
-
     const startOfferedPassageReview = () => {
       const offer = passageReviewOffer.value
       if (!offer) return
 
+      const replaceHistory = window.history.state?.modal === 'passageReviewOffer'
       passageReviewOffer.value = null
-      consumePassageReviewOfferForAction(offer.sourceState)
       setPracticeTransition('mode')
       startReview(offer.passageVerse, {
         sourceState: offer.sourceState,
         sourceList: [offer.passageVerse],
-        passageRecords: offer.sequence
+        passageRecords: offer.sequence,
+        replaceHistory
       })
     }
 
@@ -4898,12 +4903,13 @@ export default {
       if (!offer) return
 
       const verse = offer.anchorVerse
+      const replaceHistory = window.history.state?.modal === 'passageReviewOffer'
       passageReviewOffer.value = null
-      consumePassageReviewOfferForAction(offer.sourceState)
       setPracticeTransition('mode')
       startReview(verse, {
         sourceState: offer.sourceState,
-        sourceList: [verse]
+        sourceList: [verse],
+        replaceHistory
       })
     }
 
@@ -7111,6 +7117,7 @@ export default {
     // Start reviewing a verse (only for mastered verses)
     const startReview = (verse, options = {}) => {
       const preserveSource = options.preserveSource === true
+      const replaceHistory = options.replaceHistory === true
       const sourceStateOverride = options.sourceState || null
       const sourceListOverride = options.sourceList || null
       const passageRecords = options.passageRecords || null
@@ -7221,6 +7228,8 @@ export default {
       
       if (isSequentialNavigation) {
         // Replace state when navigating sequentially (from nextVerse)
+        replaceNavigationState(navigationState)
+      } else if (replaceHistory) {
         replaceNavigationState(navigationState)
       } else {
         // Push state when starting a new review session
@@ -8868,6 +8877,9 @@ export default {
       window.removeEventListener('offline', handleConnectivityChange)
       if (toastTimeoutId) {
         clearTimeout(toastTimeoutId)
+      }
+      if (passageSegmentFeedbackTimeoutId) {
+        clearTimeout(passageSegmentFeedbackTimeoutId)
       }
       if (drawerHideTimeoutId) {
         clearTimeout(drawerHideTimeoutId)

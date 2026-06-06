@@ -215,6 +215,56 @@ test.describe('Review screen back behavior', () => {
     await expect(page).not.toHaveURL(/collection=col-review/)
   })
 
+  test('browser back from offered passage review exits through collection without reopening offer', async ({
+    page,
+  }) => {
+    const now = new Date().toISOString()
+    const collection = {
+      id: 'passage-col',
+      name: 'Passage Collection',
+      description: '',
+      parentId: null,
+      createdAt: now,
+      lastModified: now,
+    }
+    const verses = [
+      masteredVerse({
+        id: 'passage-1',
+        reference: 'Psalm 1:1',
+        content: 'Blessed is',
+        collectionIds: ['passage-col'],
+      }),
+      masteredVerse({
+        id: 'passage-2',
+        reference: 'Psalm 1:2',
+        content: 'the man',
+        collectionIds: ['passage-col'],
+      }),
+    ]
+
+    await seedStorage(page, verses, [collection])
+    await page.reload()
+    await gotoApp(page, '?view=collections')
+
+    await page.getByTestId('collection-tile-passage-col').click()
+    await expect(page).toHaveURL(/\?view=collection&collection=passage-col/)
+
+    await page.getByText('Psalm 1:1').first().click()
+    await expect(page.getByTestId('modal-passage-review-offer')).toBeVisible()
+
+    await page.getByTestId('passage-review-start').click()
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+
+    await page.goBack()
+    await expect(page.locator('#letter-input-review')).not.toBeVisible()
+    await expect(page.getByTestId('modal-passage-review-offer')).not.toBeVisible()
+    await expect(page).toHaveURL(/\?view=collection&collection=passage-col/)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\?view=collections/)
+    await expect(page).not.toHaveURL(/collection=passage-col/)
+  })
+
   test('browser back from review inside a child collection returns to child, then parent', async ({
     page,
   }) => {
