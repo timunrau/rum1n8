@@ -1,3 +1,10 @@
+## [1.34.2](https://github.com/timunrau/rum1n8/compare/v1.34.1...v1.34.2) (2026-06-10)
+
+
+### Bug Fixes
+
+* remove sync tip from memorization tips ([65e3dab](https://github.com/timunrau/rum1n8/commit/65e3dab801c529b2cc1f43ca792c5d9176063b22))
+
 ## [1.34.1](https://github.com/timunrau/rum1n8/compare/v1.34.0...v1.34.1) (2026-06-06)
 
 
