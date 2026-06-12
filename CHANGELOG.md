@@ -1,3 +1,10 @@
+## [1.34.4](https://github.com/timunrau/rum1n8/compare/v1.34.3...v1.34.4) (2026-06-12)
+
+
+### Bug Fixes
+
+* **proxy:** upgrade http-proxy-middleware to 4.0.0 ([#123](https://github.com/timunrau/rum1n8/issues/123)) ([131806d](https://github.com/timunrau/rum1n8/commit/131806db705b0c14360c21dfe38a0214e114de66))
+
 ## [1.34.3](https://github.com/timunrau/rum1n8/compare/v1.34.2...v1.34.3) (2026-06-12)
 
 
