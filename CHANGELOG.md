@@ -1,3 +1,11 @@
+## [1.34.3](https://github.com/timunrau/rum1n8/compare/v1.34.2...v1.34.3) (2026-06-12)
+
+
+### Bug Fixes
+
+* **docker:** move production builds to Node 24 LTS ([#126](https://github.com/timunrau/rum1n8/issues/126)) ([9d43065](https://github.com/timunrau/rum1n8/commit/9d43065f18434fe6719ce4594dcca20c8b6c8b37))
+* **release:** pin semantic-release to 25.0.3 ([#127](https://github.com/timunrau/rum1n8/issues/127)) ([2115ab0](https://github.com/timunrau/rum1n8/commit/2115ab02a0c00d5ac5f1a3dcc736be0f792cda3f))
+
 ## [1.34.2](https://github.com/timunrau/rum1n8/compare/v1.34.1...v1.34.2) (2026-06-10)
 
 
