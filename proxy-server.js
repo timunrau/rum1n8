@@ -104,33 +104,35 @@ app.use((req, res, next) => {
     proxyTimeout: 60000,
     // Increase body size limit for file uploads
     limit: '50mb',
-    onProxyReq: (proxyReq, req) => {
-      // Remove internal header so Nextcloud doesn't see it
-      proxyReq.removeHeader('x-webdav-target')
+    on: {
+      proxyReq: (proxyReq, req) => {
+        // Remove internal header so Nextcloud doesn't see it
+        proxyReq.removeHeader('x-webdav-target')
 
-      // Set longer timeout on the proxy request
-      proxyReq.setTimeout(60000)
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      // Log non-2xx responses for debugging
-      if (proxyRes.statusCode >= 400) {
-        console.log(`[Proxy] Response ${proxyRes.statusCode} for ${req.method} ${req.path}`)
-        console.log(`[Proxy] Response headers:`, JSON.stringify(proxyRes.headers, null, 2))
-      }
-      // Add CORS headers to response
-      proxyRes.headers['access-control-allow-origin'] = '*'
-      proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK'
-      proxyRes.headers['access-control-allow-headers'] = '*'
-      proxyRes.headers['access-control-allow-credentials'] = 'true'
-      proxyRes.headers['access-control-expose-headers'] = 'ETag, etag, OC-ETag, Content-Type, Content-Length'
-    },
-    onError: (err, req, res) => {
-      console.error('[Proxy] Error:', err.message)
-      if (!res.headersSent) {
-        if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
-          res.status(504).json({ error: 'Gateway timeout: The request took too long. Try again.' })
-        } else {
-          res.status(500).json({ error: 'Proxy error: ' + err.message })
+        // Set longer timeout on the proxy request
+        proxyReq.setTimeout(60000)
+      },
+      proxyRes: (proxyRes, req, res) => {
+        // Log non-2xx responses for debugging
+        if (proxyRes.statusCode >= 400) {
+          console.log(`[Proxy] Response ${proxyRes.statusCode} for ${req.method} ${req.path}`)
+          console.log(`[Proxy] Response headers:`, JSON.stringify(proxyRes.headers, null, 2))
+        }
+        // Add CORS headers to response
+        proxyRes.headers['access-control-allow-origin'] = '*'
+        proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK'
+        proxyRes.headers['access-control-allow-headers'] = '*'
+        proxyRes.headers['access-control-allow-credentials'] = 'true'
+        proxyRes.headers['access-control-expose-headers'] = 'ETag, etag, OC-ETag, Content-Type, Content-Length'
+      },
+      error: (err, req, res) => {
+        console.error('[Proxy] Error:', err.message)
+        if (!res.headersSent) {
+          if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
+            res.status(504).json({ error: 'Gateway timeout: The request took too long. Try again.' })
+          } else {
+            res.status(500).json({ error: 'Proxy error: ' + err.message })
+          }
         }
       }
     }
