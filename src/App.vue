@@ -143,6 +143,7 @@
         :verse="memorizingVerse"
         :memorization-mode="memorizationMode"
         :review-words="reviewWords"
+        :current-word-index="currentPracticeWordIndex"
         context="memorization"
         v-model:typed-letter="typedLetter"
         :get-memorization-status="getMemorizationStatus"
@@ -242,6 +243,7 @@
         :verse="reviewingVerse"
         :memorization-mode="memorizationMode"
         :review-words="reviewWords"
+        :current-word-index="currentPracticeWordIndex"
         context="review"
         v-model:typed-letter="typedLetter"
         :get-memorization-status="getMemorizationStatus"
@@ -2493,6 +2495,7 @@ export default {
     const memorizationSourceState = ref(null) // Track the original source navigation state for memorization
     const memorizationSourceList = ref(null) // Track the source list for swipe navigation in memorization
     const reviewWords = ref([])
+    const currentPracticeWordIndex = ref(-1)
     const typedLetter = ref('')
     const reviewInput = ref(null)
     const reviewTextContainer = ref(null)
@@ -3210,7 +3213,7 @@ export default {
         reviewingVerse.value = null
         reviewSourceList.value = null
         reviewSourceState.value = null
-        reviewWords.value = []
+        setPracticeWords([])
         typedLetter.value = ''
         reviewMistakes.value = 0
         currentReviewSaved.value = false
@@ -3368,8 +3371,7 @@ export default {
     })
 
     const allWordsRevealed = computed(() => {
-      if (reviewWords.value.length === 0) return false
-      return reviewWords.value.every(w => w.revealed)
+      return reviewWords.value.length > 0 && currentPracticeWordIndex.value === -1
     })
 
     // Calculate accuracy percentage
@@ -4690,8 +4692,25 @@ export default {
       }
     }
 
+    const setPracticeWords = (words, startIndex = 0) => {
+      reviewWords.value = words
+      let nextIndex = Math.max(0, startIndex)
+      while (nextIndex < words.length && words[nextIndex].revealed) {
+        nextIndex++
+      }
+      currentPracticeWordIndex.value = nextIndex < words.length ? nextIndex : -1
+    }
+
+    const advancePracticeWordCursor = (completedIndex) => {
+      let nextIndex = completedIndex + 1
+      while (nextIndex < reviewWords.value.length && reviewWords.value[nextIndex].revealed) {
+        nextIndex++
+      }
+      currentPracticeWordIndex.value = nextIndex < reviewWords.value.length ? nextIndex : -1
+    }
+
     const resetPracticeSequence = (verse, mode, retryOffset = 0) => {
-      reviewWords.value = buildPracticeWords(verse, mode, retryOffset)
+      setPracticeWords(buildPracticeWords(verse, mode, retryOffset))
       typedLetter.value = ''
     }
 
@@ -6974,12 +6993,9 @@ export default {
       trackEvent('verse_reviewed', { grade })
     }
 
-    const maybeCompletePassageSegment = (segmentId) => {
+    const maybeCompletePassageSegment = (segmentId, wordIndex) => {
       const segment = getPassageSegment(segmentId)
-      if (!segment) return
-
-      const segmentWords = reviewWords.value.slice(segment.startIndex, segment.endIndex)
-      if (!segmentWords.length || segmentWords.some((word) => !word.revealed)) return
+      if (!segment || wordIndex !== segment.endIndex - 1) return
 
       savePassageSegmentReview(segmentId)
     }
@@ -7004,11 +7020,12 @@ export default {
       if (!segment) return
 
       const mode = memorizationMode.value || 'master'
-      reviewWords.value = reviewWords.value.map((word, index) => (
+      const resetWords = reviewWords.value.map((word, index) => (
         index >= segment.startIndex
           ? resetPracticeWordForMode(word, index, mode, reviewMemorizeRetryCount.value)
           : word
       ))
+      setPracticeWords(resetWords, segment.startIndex)
 
       const laterSegmentIds = new Set(
         combinedPassageReview.value.segments
@@ -7102,7 +7119,7 @@ export default {
         passageSegmentMistakes.value = {}
         passageSegmentResults.value = {}
         passageSegmentFeedback.value = null
-        reviewWords.value = passagePractice.words
+        setPracticeWords(passagePractice.words)
         typedLetter.value = ''
       } else {
         resetPracticeSequence(verse, mode, reviewMemorizeRetryCount.value)
@@ -7251,7 +7268,7 @@ export default {
         passageSegmentResults.value = {}
         passageSegmentSaved.value = {}
         passageSegmentFeedback.value = null
-        reviewWords.value = passagePractice.words
+        setPracticeWords(passagePractice.words)
         typedLetter.value = ''
       } else {
         resetPracticeSequence(verse, 'master')
@@ -7396,7 +7413,7 @@ export default {
       // Reset memorization state
       memorizingVerse.value = null
       memorizationMode.value = null
-      reviewWords.value = []
+      setPracticeWords([])
       typedLetter.value = ''
       reviewMistakes.value = 0
       
@@ -7441,7 +7458,7 @@ export default {
           passageSegmentMistakes.value = {}
           passageSegmentResults.value = {}
           passageSegmentFeedback.value = null
-          reviewWords.value = passagePractice.words
+          setPracticeWords(passagePractice.words)
           reviewMistakes.value = 0
           typedLetter.value = ''
           nextTick(() => {
@@ -7472,7 +7489,7 @@ export default {
 
         memorizingVerse.value = null
         memorizationMode.value = null
-        reviewWords.value = []
+        setPracticeWords([])
         typedLetter.value = ''
         reviewMistakes.value = 0
         memorizationSourceState.value = null
@@ -7759,7 +7776,7 @@ export default {
       // Reset review state
       reviewingVerse.value = null
       memorizationMode.value = null
-      reviewWords.value = []
+      setPracticeWords([])
       typedLetter.value = ''
       reviewMistakes.value = 0
       currentReviewSaved.value = false
@@ -7783,86 +7800,11 @@ export default {
       }
     }
 
-    const getPracticeScrollContainer = (practiceRef) => {
-      const rawContainer = practiceRef?.scrollContainer?.value ?? practiceRef?.scrollContainer
-      return Array.isArray(rawContainer) ? rawContainer[0] : rawContainer
-    }
-
     // Scroll when the user reaches the first word of the last visible line.
     // Scrolls just enough to keep a couple of already-typed lines at the top.
     const scrollToCurrentWord = () => {
-      const nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-      if (nextWordIndex === -1) return
-
       const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
-      const container = getPracticeScrollContainer(practiceRef)
-      if (!container || typeof container.querySelectorAll !== 'function') return
-
-      nextTick(() => {
-        requestAnimationFrame(() => {
-          const allWords = container.querySelectorAll('[id^="practice-word-"]')
-          if (!allWords.length || nextWordIndex >= allWords.length) return
-
-          const wordEl = allWords[nextWordIndex]
-          const containerRect = container.getBoundingClientRect()
-          const wordRect = wordEl.getBoundingClientRect()
-
-          // Group visible words into lines by their vertical position
-          const lineTopThreshold = 4 // px tolerance for same-line grouping
-          const lines = []
-          let currentLineTop = null
-          let currentLine = []
-
-          for (const el of allWords) {
-            const rect = el.getBoundingClientRect()
-            if (currentLineTop === null || Math.abs(rect.top - currentLineTop) > lineTopThreshold) {
-              if (currentLine.length) lines.push(currentLine)
-              currentLine = [el]
-              currentLineTop = rect.top
-            } else {
-              currentLine.push(el)
-            }
-          }
-          if (currentLine.length) lines.push(currentLine)
-
-          // Find the last line whose top is within the visible container area
-          const visibleBottom = containerRect.bottom
-          let lastVisibleLineIndex = -1
-          for (let i = 0; i < lines.length; i++) {
-            const lineTop = lines[i][0].getBoundingClientRect().top
-            if (lineTop < visibleBottom) {
-              lastVisibleLineIndex = i
-            }
-          }
-
-          if (lastVisibleLineIndex < 0) return
-
-          // Check if the current word is on the last visible line (or beyond)
-          const lastVisibleLine = lines[lastVisibleLineIndex]
-          const wordIsOnLastLine = lastVisibleLine.includes(wordEl)
-          const wordIsBeyondView = wordRect.top >= visibleBottom
-
-          if (!wordIsOnLastLine && !wordIsBeyondView) return
-
-          // Only trigger on the first word of that line (or if beyond view)
-          if (wordIsOnLastLine && lastVisibleLine[0] !== wordEl) return
-
-          // Scroll so that 2 already-typed lines remain visible at the top.
-          // Find the line the current word is on, then go back 2 lines.
-          let currentWordLineIndex = lines.findIndex(line => line.includes(wordEl))
-          if (currentWordLineIndex < 0) currentWordLineIndex = lines.length - 1
-
-          const keepLines = 2
-          const targetLineIndex = Math.max(0, currentWordLineIndex - keepLines)
-          const targetEl = lines[targetLineIndex][0]
-          const targetTop = targetEl.getBoundingClientRect().top - containerRect.top + container.scrollTop
-
-          container.scrollTo({
-            top: Math.max(0, targetTop),
-            behavior: 'smooth'
-          })
-        })
-      })
+      practiceRef?.keepWordVisible?.(currentPracticeWordIndex.value)
     }
 
     // Handle key press events
@@ -7910,7 +7852,7 @@ export default {
 
     const handlePracticeWordRevealed = (word) => {
       if (!word?.passageSegmentId || !combinedPassageReview.value) return
-      maybeCompletePassageSegment(word.passageSegmentId)
+      maybeCompletePassageSegment(word.passageSegmentId, word.index)
     }
 
     // Check if typed letter matches next word's first letter
@@ -7919,26 +7861,7 @@ export default {
 
       const letter = typedLetter.value.toLowerCase()
       
-      // For memorization modes, find the next word that should be revealed
-      // For review mode, find the first unrevealed word
-      let nextWordIndex = -1
-      
-      if (memorizationMode.value) {
-        // In memorization modes, find next word that needs to be revealed
-        if (memorizationMode.value === 'learn') {
-          // In learn mode, reveal words in order (all are visible but not revealed)
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-        } else if (memorizationMode.value === 'memorize') {
-          // In memorize mode, type all words in order (both visible and hidden)
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-        } else if (memorizationMode.value === 'master') {
-          // In master mode, reveal all words in order
-          nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-        }
-      } else {
-        // Review mode: find first unrevealed word
-        nextWordIndex = reviewWords.value.findIndex(w => !w.revealed)
-      }
+      const nextWordIndex = currentPracticeWordIndex.value
       
       if (nextWordIndex !== -1) {
         const nextWord = reviewWords.value[nextWordIndex]
@@ -7975,12 +7898,10 @@ export default {
           if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
             nextWord.visible = true
           }
+          advancePracticeWordCursor(nextWordIndex)
           handlePracticeWordRevealed(nextWord)
           typedLetter.value = ''
-          nextTick(() => {
-            scrollToCurrentWord()
-            focusInput()
-          })
+          scrollToCurrentWord()
           return
         }
         
@@ -7991,8 +7912,10 @@ export default {
           // Fallback: mark word as revealed if we can't determine required letter
           nextWord.revealed = true
           nextWord.incorrect = nextWord.isReferenceUnit ? nextWord.incorrectLetterIndices.length > 0 : false
+          advancePracticeWordCursor(nextWordIndex)
           handlePracticeWordRevealed(nextWord)
           typedLetter.value = ''
+          scrollToCurrentWord()
           return
         }
         
@@ -8010,23 +7933,14 @@ export default {
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true // Make it visible in learn/memorize modes
             }
+            advancePracticeWordCursor(nextWordIndex)
             handlePracticeWordRevealed(nextWord)
             typedLetter.value = ''
-            
-            // Auto-scroll to next word and focus input
-            nextTick(() => {
-              scrollToCurrentWord()
-              focusInput()
-            })
+            scrollToCurrentWord()
           } else {
             // More letters needed - clear input and wait for next letter
             typedLetter.value = ''
-            
-            // Auto-scroll to current word and focus input
-            nextTick(() => {
-              scrollToCurrentWord()
-              focusInput()
-            })
+            scrollToCurrentWord()
           }
         } else {
           recordPassageSegmentMistake(nextWord)
@@ -8041,6 +7955,7 @@ export default {
             }
             if (nextWord.typedLettersIndex >= requiredLetters.length) {
               nextWord.revealed = true
+              advancePracticeWordCursor(nextWordIndex)
               handlePracticeWordRevealed(nextWord)
             }
           } else {
@@ -8050,6 +7965,7 @@ export default {
             if (memorizationMode.value === 'learn' || memorizationMode.value === 'memorize') {
               nextWord.visible = true // Make it visible in learn/memorize modes
             }
+            advancePracticeWordCursor(nextWordIndex)
             handlePracticeWordRevealed(nextWord)
           }
           reviewMistakes.value++
@@ -8058,11 +7974,7 @@ export default {
           // Vibrate on wrong keypress
           vibrate(50)
 
-          // Auto-scroll to next word and focus input
-          nextTick(() => {
-            scrollToCurrentWord()
-            focusInput()
-          })
+          scrollToCurrentWord()
         }
         return
       }
@@ -8912,6 +8824,7 @@ export default {
       closeForm,
       reviewingVerse,
       reviewWords,
+      currentPracticeWordIndex,
       typedLetter,
       reviewInput,
       revealedCount,

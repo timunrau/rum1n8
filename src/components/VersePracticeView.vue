@@ -39,10 +39,20 @@
           <span
             v-for="(word, index) in panel.words"
             :key="index"
+            v-memo="[
+              panel.mode,
+              panel.isCurrent,
+              word.revealed,
+              word.visible,
+              word.typedLettersIndex,
+              word.incorrect,
+              word.incorrectLetterIndices?.length || 0,
+              panel.isCurrent && currentWordIndex === index
+            ]"
             :id="panel.isCurrent ? `practice-word-${index}` : null"
             :class="[
               word.separatorAfter ? 'practice-word inline-block' : 'practice-word inline-block mr-2',
-              panel.isCurrent && isCurrentPracticeWord(panel.words, index) ? 'practice-word--current' : ''
+              panel.isCurrent && currentWordIndex === index ? 'practice-word--current' : ''
             ]"
           >
             <span v-if="panel.mode === 'learn'">
@@ -261,6 +271,7 @@ export default {
     verse: { type: Object, default: null },
     memorizationMode: { type: String, default: null },
     reviewWords: { type: Array, default: () => [] },
+    currentWordIndex: { type: Number, default: -1 },
     context: { type: String, validator: (v) => ['memorization', 'review'].includes(v) },
     typedLetter: { type: String, default: '' },
     getMemorizationStatus: { type: Function, required: true },
@@ -303,6 +314,7 @@ export default {
     const settlingPracticePanels = ref(null)
     let practiceSwipeResetTimer = null
     let practiceSwipeAnimationFrame = null
+    let practiceScrollAnimationFrame = null
     const practiceModeHint = computed(() => {
       if (props.memorizationMode === 'learn') {
         return {
@@ -349,11 +361,6 @@ export default {
     function canSwitch(mode) {
       if (props.context === 'review') return true
       return props.canSwitchToMode(mode)
-    }
-
-    function isCurrentPracticeWord(words, index) {
-      const currentIndex = words.findIndex((word) => !word.revealed)
-      return currentIndex === index
     }
 
     function scrollToStart(behavior = 'smooth') {
@@ -465,6 +472,13 @@ export default {
         cancelAnimationFrame(practiceSwipeAnimationFrame)
       }
       practiceSwipeAnimationFrame = null
+    }
+
+    function clearPracticeScrollAnimationFrame() {
+      if (practiceScrollAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(practiceScrollAnimationFrame)
+      }
+      practiceScrollAnimationFrame = null
     }
 
     function resetPracticeSwipe() {
@@ -687,7 +701,39 @@ export default {
     onBeforeUnmount(() => {
       clearPracticeSwipeResetTimer()
       clearPracticeSwipeAnimationFrame()
+      clearPracticeScrollAnimationFrame()
     })
+
+    function keepWordVisible(index) {
+      clearPracticeScrollAnimationFrame()
+      if (index < 0) return
+
+      nextTick(() => {
+        clearPracticeScrollAnimationFrame()
+        practiceScrollAnimationFrame = requestAnimationFrame(() => {
+          practiceScrollAnimationFrame = null
+          const scroller = getRefElement(scrollContainer.value)
+          const wordEl = scroller?.querySelector?.(`#practice-word-${index}`)
+          if (!scroller || !wordEl) return
+
+          const containerRect = scroller.getBoundingClientRect()
+          const wordRect = wordEl.getBoundingClientRect()
+          const previousWordRect = wordEl.previousElementSibling?.getBoundingClientRect?.()
+          const isFirstWordOnLine = !previousWordRect || Math.abs(previousWordRect.top - wordRect.top) > 4
+          const lineHeight = Math.max(wordRect.height, 1)
+          const isBeyondView = wordRect.top >= containerRect.bottom
+          const isOnLastVisibleLine = wordRect.top >= containerRect.bottom - lineHeight - 4
+
+          if (!isBeyondView && (!isFirstWordOnLine || !isOnLastVisibleLine)) return
+
+          const wordTop = wordRect.top - containerRect.top + scroller.scrollTop
+          scroller.scrollTo({
+            top: Math.max(0, wordTop - lineHeight * 2),
+            behavior: 'smooth'
+          })
+        })
+      })
+    }
 
     function scrollToEnd() {
       const scroller = getRefElement(scrollContainer.value)
@@ -721,7 +767,8 @@ export default {
       focusInput,
       scrollToStart,
       scrollToEnd,
-      scrollToWordIndex
+      scrollToWordIndex,
+      keepWordVisible
     })
 
     return {
@@ -732,7 +779,6 @@ export default {
       scrollContainer,
       isStageComplete,
       canSwitch,
-      isCurrentPracticeWord,
       onSwitchMode,
       onInput,
       onKeydown,
