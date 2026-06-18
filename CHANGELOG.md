@@ -1,3 +1,10 @@
+## [1.34.5](https://github.com/timunrau/rum1n8/compare/v1.34.4...v1.34.5) (2026-06-18)
+
+
+### Performance Improvements
+
+* make large passage practice responsive ([4aaa245](https://github.com/timunrau/rum1n8/commit/4aaa245faa5beaa7437079e0d53ea9b04349f866))
+
 ## [1.34.4](https://github.com/timunrau/rum1n8/compare/v1.34.3...v1.34.4) (2026-06-12)
 
 
