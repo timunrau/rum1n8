@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/timunrau/rum1n8/compare/v1.36.0...v1.36.1) (2026-06-20)
+
+
+### Bug Fixes
+
+* stabilize verse select mode layout ([8f0f046](https://github.com/timunrau/rum1n8/commit/8f0f046e029efd4b04380add03d14a56036309f7))
+
 # [1.36.0](https://github.com/timunrau/rum1n8/compare/v1.35.0...v1.36.0) (2026-06-20)
 
 
