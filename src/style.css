@@ -600,6 +600,10 @@
     transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
     cursor: pointer;
     box-shadow: var(--shadow-soft);
+    min-height: 3.5rem;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .verse-card:active {
@@ -665,13 +669,6 @@
 
   .verse-select-check svg {
     position: absolute;
-  }
-
-  .verse-card-action-spacer {
-    display: inline-flex;
-    width: 2rem;
-    height: 2rem;
-    flex-shrink: 0;
   }
 
   .selection-bar {
@@ -814,6 +811,10 @@
     color: var(--color-text-muted);
     text-transform: lowercase;
     font-style: italic;
+  }
+
+  .verse-card__actions {
+    min-height: 2rem;
   }
 
   .verse-card__meta {

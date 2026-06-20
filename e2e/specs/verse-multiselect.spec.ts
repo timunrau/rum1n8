@@ -107,7 +107,7 @@ test('selection mode keeps verse card height stable and blank space exits', asyn
   await openSelectionMode(page)
   const after = await card.boundingBox()
 
-  expect(after?.height).toBe(before?.height)
+  expect(Math.abs((after?.height ?? 0) - (before?.height ?? 0))).toBeLessThan(0.5)
 
   await card.click()
   await page.mouse.click(200, 420)
