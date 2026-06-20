@@ -151,6 +151,14 @@ export function markVerseDeleted(verseId) {
   }
 }
 
+export function unmarkVersesDeleted(verseIds = []) {
+  const ids = new Set(verseIds.map(String))
+  if (ids.size === 0) return
+
+  const entries = getDeletedVerseEntries().filter(entry => !ids.has(String(entry.id)))
+  localStorage.setItem(DELETED_VERSES_KEY, JSON.stringify(entries))
+}
+
 export function markCollectionDeleted(collectionId) {
   const entries = getDeletedCollectionEntries()
   if (!entries.some(e => e.id === collectionId)) {

@@ -622,6 +622,191 @@
     box-shadow: var(--shadow-soft);
   }
 
+  .verse-card--selecting {
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .verse-card--selected {
+    border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border-default));
+    background-color: color-mix(in srgb, var(--color-action-bg) 10%, var(--color-bg-chrome));
+  }
+
+  .verse-leading-control {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    margin: 0.125rem 0 0 -0.25rem;
+  }
+
+  .verse-select-check::before {
+    content: '';
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-border-input) 78%, transparent);
+    background-color: color-mix(in srgb, var(--color-bg-surface) 76%, transparent);
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+
+  .verse-select-check--checked {
+    position: relative;
+    color: var(--color-action-text);
+  }
+
+  .verse-select-check--checked::before {
+    border-color: var(--color-action-border);
+    background-color: var(--color-action-bg);
+  }
+
+  .verse-select-check svg {
+    position: absolute;
+  }
+
+  .verse-card-action-spacer {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+
+  .selection-bar {
+    pointer-events: none;
+  }
+
+  .selection-bar__inner {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-chrome);
+    box-shadow: var(--shadow-lift);
+    padding: 0.55rem;
+  }
+
+  .selection-bar__count {
+    flex: 0 0 auto;
+    min-width: 4.9rem;
+    padding: 0 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .selection-bar__actions {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+
+  .selection-action {
+    display: inline-flex;
+    min-width: 4.2rem;
+    min-height: 3rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    border-radius: var(--radius-control);
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1.05;
+    transition: background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+  }
+
+  .selection-action__label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.02rem;
+    white-space: nowrap;
+  }
+
+  .selection-action:hover:not(:disabled) {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .selection-action:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  .selection-action--danger {
+    color: var(--color-status-error-text);
+  }
+
+  .bulk-target-option {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-control);
+    background-color: transparent;
+    padding: 0.75rem 0.9rem;
+    color: var(--color-text-primary);
+    text-align: left;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .bulk-target-option:hover,
+  .bulk-target-option--selected {
+    border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border-default));
+    background-color: var(--color-bg-hover);
+  }
+
+  .bulk-schedule-option {
+    min-height: 2.75rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-control);
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .bulk-schedule-option:hover {
+    border-color: color-mix(in srgb, var(--color-accent-warm) 46%, var(--color-border-default));
+    background-color: var(--color-bg-hover);
+  }
+
+  @media (max-width: 430px) {
+    .selection-bar__inner {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .selection-bar__count {
+      width: 100%;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .selection-bar__actions {
+      justify-content: center;
+    }
+
+    .selection-action {
+      min-width: 0;
+      flex: 1 1 0;
+    }
+  }
+
   .verse-card__version {
     font-family: var(--font-mono);
     font-size: 0.7rem;

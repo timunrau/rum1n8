@@ -624,9 +624,23 @@
 
               <!-- Right side actions -->
               <div class="flex items-center gap-1 flex-shrink-0">
+                <button
+                  v-if="canUseVerseSelection && !isVerseSelectionMode"
+                  type="button"
+                  data-testid="verse-select-mode"
+                  @click.stop="enterVerseSelectionMode()"
+                  class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+                  title="Select verses"
+                  aria-label="Select verses"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="4.25" y="4.25" width="15.5" height="15.5" rx="3" stroke-width="1.8" stroke-dasharray="2.4 2.4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M8.2 12.35l2.45 2.45 5.15-5.6" />
+                  </svg>
+                </button>
                 <!-- Install app button (top-level verses screen only, when actionable) -->
                 <button
-                  v-if="showInstallHeaderAction"
+                  v-if="showInstallHeaderAction && !isVerseSelectionMode"
                   data-testid="install-app-header"
                   @click="openInstallFromHeader"
                   class="btn-primary btn--sm"
@@ -635,7 +649,7 @@
                 </button>
                 <!-- Expand/collapse all verses (collection view only) -->
                 <button
-                  v-if="currentCollectionId && sortedVerses.length > 0"
+                  v-if="currentCollectionId && sortedVerses.length > 0 && !isVerseSelectionMode"
                   @click="toggleAllCollectionVersesExpanded"
                   class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
                   :title="allCollectionVersesExpanded ? 'Collapse all' : 'Expand all'"
@@ -932,6 +946,7 @@
               ? `min-h-0 flex-1 overflow-y-auto pb-36${totalVerseCount > 0 ? ' pt-0' : ''}`
               : 'overflow-y-auto max-h-[calc(100vh-4rem)] pb-36'
           ]"
+          @click.self="handleVerseListBlankClick"
         >
           <div
             v-if="currentChildCollections.length > 0"
@@ -1012,7 +1027,11 @@
 
           <div
             :ref="(el) => setVerseCardRef(verse.id, el)"
-            @click="handleVerseClick(verse)"
+            @pointerdown="startVerseLongPress(verse, $event)"
+            @pointerup="clearVerseLongPress"
+            @pointercancel="clearVerseLongPress"
+            @pointerleave="clearVerseLongPress"
+            @click="handleVerseCardClick(verse)"
             class="verse-card"
             :class="[
               {
@@ -1020,22 +1039,38 @@
                 'verse-card--expanded': isVerseExpanded(verse),
                 'verse-card--learning': verse.memorizationStatus !== 'mastered',
                 'verse-card--onboarding': shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId,
+                'verse-card--selecting': isVerseSelectionMode,
+                'verse-card--selected': isVerseSelected(verse),
               },
               shouldShowVerseOnboardingCallout && verse.id === guidedOnboardingVerseId
                 ? 'z-40'
                 : ''
             ]"
+            :aria-selected="isVerseSelectionMode ? isVerseSelected(verse) : null"
           >
           <div class="flex gap-2 items-start">
             <button
+              v-if="!isVerseSelectionMode"
               type="button"
               @click="toggleVerseExpanded(verse, $event)"
-              class="shrink-0 mt-0.5 p-1 -ml-1 rounded-full text-text-muted hover:bg-surface-hover hover:text-accent transition-all duration-200"
+              class="verse-leading-control shrink-0 rounded-full text-text-muted hover:bg-surface-hover hover:text-accent transition-all duration-200"
               :class="{ 'rotate-90': isVerseExpanded(verse) }"
               :aria-label="isVerseExpanded(verse) ? 'Collapse verse' : 'Expand verse'"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <button
+              v-else
+              type="button"
+              @click.stop="toggleVerseSelected(verse)"
+              class="verse-leading-control verse-select-check"
+              :class="{ 'verse-select-check--checked': isVerseSelected(verse) }"
+              :aria-label="isVerseSelected(verse) ? 'Deselect verse' : 'Select verse'"
+            >
+              <svg v-if="isVerseSelected(verse)" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7" />
               </svg>
             </button>
             <div class="flex-1 min-w-0">
@@ -1052,6 +1087,7 @@
                   />
                   <span v-else class="verse-card__meta">{{ getTimeUntilReview(verse) }}</span>
                   <button
+                    v-if="!isVerseSelectionMode"
                     @click.stop="startEditVerse(verse)"
                     class="text-text-muted hover:text-accent hover:bg-surface-hover p-1.5 rounded-full shrink-0 transition-colors"
                     title="Edit verse"
@@ -1060,6 +1096,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
+                  <span v-else class="verse-card-action-spacer" aria-hidden="true"></span>
                 </div>
               </div>
               <Transition
@@ -1232,9 +1269,101 @@
       </div>
     </nav>
 
+    <!-- Bulk Verse Selection Bar -->
+    <div
+      v-if="isVerseSelectionMode"
+      data-testid="verse-selection-bar"
+      class="selection-bar fixed left-4 right-4 z-40 mx-auto max-w-4xl"
+      :style="!currentCollectionId
+        ? 'bottom: calc(5rem + env(safe-area-inset-bottom))'
+        : 'bottom: calc(1rem + env(safe-area-inset-bottom))'"
+    >
+      <div class="selection-bar__inner">
+        <div class="selection-bar__count" data-testid="verse-selection-count">
+          {{ selectedVerseCount }} selected
+        </div>
+        <div class="selection-bar__actions">
+          <button
+            type="button"
+            class="selection-action"
+            data-testid="bulk-add-collection"
+            :disabled="selectedVerseCount === 0 || sortedCollections.length === 0"
+            title="Add collection"
+            @click="openBulkCollectionAction('add')"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M12 5v14m7-7H5" />
+            </svg>
+            <span class="selection-action__label">
+              <span>Add</span>
+              <span>collection</span>
+            </span>
+          </button>
+          <button
+            v-if="isRealCurrentCollection"
+            type="button"
+            class="selection-action"
+            data-testid="bulk-move-collection"
+            :disabled="selectedVerseCount === 0 || bulkMoveTargetCollections.length === 0"
+            title="Move collection"
+            @click="openBulkCollectionAction('move')"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M7 7h10m0 0l-3-3m3 3l-3 3M17 17H7m0 0l3 3m-3-3l3-3" />
+            </svg>
+            <span class="selection-action__label">
+              <span>Move</span>
+              <span>collection</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="selection-action"
+            data-testid="bulk-schedule"
+            :disabled="selectedMasteredVerseCount === 0"
+            title="Review frequency"
+            @click="openBulkScheduleAction"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M8 7V4m8 3V4M5 11h14M7 20h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 002 2z" />
+            </svg>
+            <span class="selection-action__label">
+              <span>Review</span>
+              <span>frequency</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="selection-action selection-action--danger"
+            data-testid="bulk-delete"
+            :disabled="selectedVerseCount === 0"
+            title="Delete selected verses"
+            @click="deleteSelectedVerses"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M6 7h12m-9 0V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 4v6m4-6v6m-7-10l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12" />
+            </svg>
+            <span>Delete</span>
+          </button>
+          <button
+            type="button"
+            class="selection-action"
+            data-testid="bulk-cancel"
+            title="Cancel selection"
+            @click="clearVerseSelection"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Action Button with Menu -->
     <div
-      v-if="!memorizingVerse && !reviewingVerse && currentView !== 'review-list' && currentView !== 'stats'"
+      v-if="!memorizingVerse && !reviewingVerse && !isVerseSelectionMode && currentView !== 'review-list' && currentView !== 'stats'"
       class="fixed right-6 z-30"
       :style="!currentCollectionId
         ? 'bottom: calc(5rem + env(safe-area-inset-bottom))'
@@ -1611,6 +1740,99 @@
                 Save
               </button>
             </div>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Bulk Collection Action Modal -->
+      <ModalSheet
+        :show="showBulkCollectionModal"
+        :title="bulkCollectionModalTitle"
+        data-testid="modal-bulk-collection"
+        max-width="sm:max-w-lg"
+        compact
+        @close="closeBulkCollectionModal"
+      >
+        <div class="space-y-4">
+          <p class="text-sm text-text-secondary">
+            {{ bulkCollectionMode === 'move'
+              ? `Choose where to move ${selectedVerseCount} selected verse${selectedVerseCount === 1 ? '' : 's'}.`
+              : `Choose collections for ${selectedVerseCount} selected verse${selectedVerseCount === 1 ? '' : 's'}.`
+            }}
+          </p>
+
+          <CollectionPicker
+            v-if="bulkCollectionMode === 'add'"
+            :collections="sortedCollections"
+            v-model="bulkCollectionTargetIds"
+            label="Add to"
+          />
+
+          <div v-else class="space-y-2">
+            <p class="block text-sm font-medium text-text-secondary">Move to</p>
+            <button
+              v-for="collection in bulkMoveTargetCollections"
+              :key="collection.id"
+              type="button"
+              class="bulk-target-option"
+              :class="{ 'bulk-target-option--selected': bulkCollectionTargetIds[0] === collection.id }"
+              @click="bulkCollectionTargetIds = [collection.id]"
+            >
+              <span>{{ collection.parentId ? `${getCollectionName(collection.parentId)} / ${collection.name}` : collection.name }}</span>
+              <svg v-if="bulkCollectionTargetIds[0] === collection.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <p v-if="bulkMoveTargetCollections.length === 0" class="text-sm text-text-muted">
+              Create another collection before moving verses.
+            </p>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <button type="button" class="btn-secondary" @click="closeBulkCollectionModal">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              :disabled="bulkCollectionTargetIds.length === 0"
+              @click="applyBulkCollectionAction"
+            >
+              {{ bulkCollectionMode === 'move' ? 'Move' : 'Add' }}
+            </button>
+          </div>
+        </template>
+      </ModalSheet>
+
+      <!-- Bulk Review Schedule Modal -->
+      <ModalSheet
+        :show="showBulkScheduleModal"
+        title="Review Frequency"
+        data-testid="modal-bulk-schedule"
+        max-width="sm:max-w-lg"
+        compact
+        @close="closeBulkScheduleModal"
+      >
+        <div class="space-y-4">
+          <p class="text-sm text-text-secondary">
+            Set the next review date for {{ selectedMasteredVerseCount }} mastered selected verse{{ selectedMasteredVerseCount === 1 ? '' : 's' }}.
+          </p>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(0)">Now</button>
+            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(1)">+1d</button>
+            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(3)">+3d</button>
+            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(7)">+1w</button>
+            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(30)">+1mo</button>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <button type="button" class="btn-secondary" @click="closeBulkScheduleModal">
+              Cancel
+            </button>
           </div>
         </template>
       </ModalSheet>
@@ -2148,6 +2370,7 @@ import { FetchClient } from '@gracious.tech/fetch-client'
 import {
   syncData,
   markVerseDeleted,
+  unmarkVersesDeleted,
   markCollectionDeleted,
   getDeletedCollections,
   isSyncConfigured,
@@ -2530,6 +2753,14 @@ export default {
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
     const isScrolled = ref(false)
+    const isVerseSelectionMode = ref(false)
+    const selectedVerseIds = ref([])
+    const showBulkCollectionModal = ref(false)
+    const bulkCollectionMode = ref('add')
+    const bulkCollectionTargetIds = ref([])
+    const showBulkScheduleModal = ref(false)
+    let verseLongPressTimer = null
+    let suppressNextVerseClick = false
 
     const closeAppDialog = () => {
       appDialog.value = {
@@ -3100,6 +3331,10 @@ export default {
       showPracticeSettings.value = false
       fabMenuOpen.value = false
       passageReviewOffer.value = null
+      showBulkCollectionModal.value = false
+      bulkCollectionMode.value = 'add'
+      bulkCollectionTargetIds.value = []
+      showBulkScheduleModal.value = false
     }
 
     // Restore app state from navigation state
@@ -4012,6 +4247,38 @@ export default {
     const sortedVerses = computed(() => {
       return sortVersesByReference(filteredVerses.value)
     })
+
+    const visibleVerseIds = computed(() => sortedVerses.value.map(verse => verse.id))
+
+    const canUseVerseSelection = computed(() => (
+      currentView.value === 'collections' &&
+      !searchActive.value &&
+      sortedVerses.value.length > 0 &&
+      (!!currentCollectionId.value || collections.value.length === 0)
+    ))
+
+    const isRealCurrentCollection = computed(() => (
+      !!currentCollectionId.value && !VIRTUAL_COLLECTION_IDS.has(currentCollectionId.value)
+    ))
+
+    const selectedVerseCount = computed(() => selectedVerseIds.value.length)
+
+    const selectedVerses = computed(() => {
+      const selectedIds = new Set(selectedVerseIds.value)
+      return verses.value.filter(verse => selectedIds.has(verse.id))
+    })
+
+    const selectedMasteredVerseCount = computed(() => (
+      selectedVerses.value.filter(verse => verse.memorizationStatus === 'mastered').length
+    ))
+
+    const bulkCollectionModalTitle = computed(() => (
+      bulkCollectionMode.value === 'move' ? 'Move Verses' : 'Add to Collections'
+    ))
+
+    const bulkMoveTargetCollections = computed(() => (
+      sortedCollections.value.filter(collection => collection.id !== currentCollectionId.value)
+    ))
 
     // Initialize Fuse.js for fuzzy search
     const fuseOptions = {
@@ -6025,6 +6292,245 @@ export default {
       return collectionVerses.filter(v => isDueForReview(v)).length
     }
 
+    const cloneVerseSnapshot = (verse, index = -1) => ({
+      index,
+      verse: JSON.parse(JSON.stringify(verse))
+    })
+
+    const getSelectedVerseSnapshots = () => {
+      const selectedIds = new Set(selectedVerseIds.value)
+      return verses.value
+        .map((verse, index) => selectedIds.has(verse.id) ? cloneVerseSnapshot(verse, index) : null)
+        .filter(Boolean)
+    }
+
+    const restoreVerseSnapshots = (snapshots) => {
+      const now = new Date().toISOString()
+      const restoredIds = new Set(snapshots.map(snapshot => snapshot.verse.id))
+      verses.value = verses.value.filter(verse => !restoredIds.has(verse.id))
+
+      for (const snapshot of [...snapshots].sort((a, b) => a.index - b.index)) {
+        const restoredVerse = {
+          ...JSON.parse(JSON.stringify(snapshot.verse)),
+          lastModified: now
+        }
+        const targetIndex = Math.min(Math.max(snapshot.index, 0), verses.value.length)
+        verses.value.splice(targetIndex, 0, restoredVerse)
+      }
+
+      saveVerses()
+    }
+
+    const clearVerseLongPress = () => {
+      if (verseLongPressTimer) {
+        clearTimeout(verseLongPressTimer)
+        verseLongPressTimer = null
+      }
+    }
+
+    const clearVerseSelection = () => {
+      clearVerseLongPress()
+      isVerseSelectionMode.value = false
+      selectedVerseIds.value = []
+      fabMenuOpen.value = false
+    }
+
+    const enterVerseSelectionMode = (initialVerse = null) => {
+      if (!canUseVerseSelection.value) return
+      isVerseSelectionMode.value = true
+      fabMenuOpen.value = false
+      if (initialVerse) {
+        selectedVerseIds.value = [initialVerse.id]
+      }
+    }
+
+    const isVerseSelected = (verse) => selectedVerseIds.value.includes(verse.id)
+
+    const toggleVerseSelected = (verse) => {
+      if (!isVerseSelectionMode.value) return
+      const selected = new Set(selectedVerseIds.value)
+      if (selected.has(verse.id)) {
+        selected.delete(verse.id)
+      } else {
+        selected.add(verse.id)
+      }
+      selectedVerseIds.value = [...selected].filter(id => visibleVerseIds.value.includes(id))
+    }
+
+    const startVerseLongPress = (verse, event) => {
+      if (!canUseVerseSelection.value || event?.target?.closest?.('button')) return
+      clearVerseLongPress()
+      suppressNextVerseClick = false
+      verseLongPressTimer = setTimeout(() => {
+        verseLongPressTimer = null
+        suppressNextVerseClick = true
+        enterVerseSelectionMode(verse)
+        setTimeout(() => {
+          suppressNextVerseClick = false
+        }, 350)
+      }, 500)
+    }
+
+    const handleVerseCardClick = (verse) => {
+      clearVerseLongPress()
+      if (suppressNextVerseClick) {
+        suppressNextVerseClick = false
+        return
+      }
+      if (isVerseSelectionMode.value) {
+        toggleVerseSelected(verse)
+        return
+      }
+      handleVerseClick(verse)
+    }
+
+    const handleVerseListBlankClick = () => {
+      if (isVerseSelectionMode.value) {
+        clearVerseSelection()
+      }
+    }
+
+    const handleSelectionDocumentClick = (event) => {
+      if (!isVerseSelectionMode.value) return
+      const target = event.target
+      if (!target?.closest) return
+      if (target.closest('.verse-card, .selection-bar, .modal-sheet-panel, .app-view-header, .collection-tile')) return
+      clearVerseSelection()
+    }
+
+    const openBulkCollectionAction = (mode) => {
+      if (selectedVerseCount.value === 0) return
+      if (mode === 'move' && !isRealCurrentCollection.value) return
+      bulkCollectionMode.value = mode
+      bulkCollectionTargetIds.value = []
+      showBulkCollectionModal.value = true
+      pushModalState('bulkCollection')
+    }
+
+    const closeBulkCollectionModal = () => {
+      showBulkCollectionModal.value = false
+      bulkCollectionTargetIds.value = []
+      consumeModalState('bulkCollection')
+    }
+
+    const openBulkScheduleAction = () => {
+      if (selectedMasteredVerseCount.value === 0) return
+      showBulkScheduleModal.value = true
+      pushModalState('bulkSchedule')
+    }
+
+    const closeBulkScheduleModal = () => {
+      showBulkScheduleModal.value = false
+      consumeModalState('bulkSchedule')
+    }
+
+    const formatVerseCount = (count) => `${count} verse${count === 1 ? '' : 's'}`
+
+    const applyBulkCollectionAction = () => {
+      const selectedTargets = [...new Set(bulkCollectionTargetIds.value)].filter(Boolean)
+      if (selectedTargets.length === 0 || selectedVerseCount.value === 0) return
+
+      const targetIds = bulkCollectionMode.value === 'move'
+        ? selectedTargets.slice(0, 1)
+        : selectedTargets
+      const snapshots = getSelectedVerseSnapshots()
+      const selectedIds = new Set(selectedVerseIds.value)
+      const now = new Date().toISOString()
+      let changedCount = 0
+
+      verses.value.forEach(verse => {
+        if (!selectedIds.has(verse.id)) return
+        const existingIds = Array.isArray(verse.collectionIds) ? verse.collectionIds.map(String) : []
+        const nextIds = new Set(existingIds)
+
+        if (bulkCollectionMode.value === 'move' && isRealCurrentCollection.value) {
+          nextIds.delete(String(currentCollectionId.value))
+        }
+        targetIds.forEach(id => nextIds.add(String(id)))
+
+        const normalizedNextIds = [...nextIds]
+        if (JSON.stringify(existingIds) === JSON.stringify(normalizedNextIds)) return
+
+        verse.collectionIds = normalizedNextIds
+        verse.lastModified = now
+        changedCount++
+      })
+
+      closeBulkCollectionModal()
+      if (changedCount === 0) {
+        showToast('No collection changes needed')
+        return
+      }
+
+      saveVerses()
+      const mode = bulkCollectionMode.value
+      clearVerseSelection()
+      showToast(`${mode === 'move' ? 'Moved' : 'Updated'} ${formatVerseCount(changedCount)}`, false, {
+        label: 'Undo',
+        handler: () => restoreVerseSnapshots(snapshots),
+      })
+    }
+
+    const applyBulkScheduleAction = (daysFromNow) => {
+      if (selectedMasteredVerseCount.value === 0) return
+      const snapshots = getSelectedVerseSnapshots()
+      const selectedIds = new Set(selectedVerseIds.value)
+      const now = new Date()
+      const target = new Date(now)
+      if (daysFromNow > 0) {
+        target.setDate(target.getDate() + daysFromNow)
+      }
+      let changedCount = 0
+
+      verses.value.forEach(verse => {
+        if (!selectedIds.has(verse.id) || verse.memorizationStatus !== 'mastered') return
+        verse.nextReviewDate = target.toISOString()
+        verse.lastModified = now.toISOString()
+        changedCount++
+      })
+
+      closeBulkScheduleModal()
+      if (changedCount === 0) {
+        showToast('No mastered verses selected')
+        return
+      }
+
+      saveVerses()
+      clearVerseSelection()
+      const label = daysFromNow === 0 ? 'Review now' : `Review in ${daysFromNow}d`
+      showToast(`${label} for ${formatVerseCount(changedCount)}`, false, {
+        label: 'Undo',
+        handler: () => restoreVerseSnapshots(snapshots),
+      })
+    }
+
+    const deleteSelectedVerses = async () => {
+      if (selectedVerseCount.value === 0) return
+      const snapshots = getSelectedVerseSnapshots()
+      const ids = snapshots.map(snapshot => snapshot.verse.id)
+      const confirmed = await requestAppConfirmation({
+        title: `Delete ${formatVerseCount(ids.length)}?`,
+        message: `Are you sure you want to delete ${formatVerseCount(ids.length)}?`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        dataTestid: 'modal-delete-selected-verses-confirm',
+      })
+      if (!confirmed) return
+
+      ids.forEach(id => markVerseDeleted(id))
+      const idsToDelete = new Set(ids)
+      verses.value = verses.value.filter(verse => !idsToDelete.has(verse.id))
+      saveVerses()
+      clearVerseSelection()
+      showToast(`Deleted ${formatVerseCount(ids.length)}`, false, {
+        label: 'Undo',
+        handler: () => {
+          unmarkVersesDeleted(ids)
+          restoreVerseSnapshots(snapshots)
+        },
+      })
+    }
+
     // Edit verse
     const startEditVerse = (verse) => {
       resetImportState()
@@ -6278,6 +6784,22 @@ export default {
     watch(currentCollectionId, (collectionId, previousCollectionId) => {
       if (previousCollectionId && previousCollectionId !== collectionId) {
         collapseVerseListItems()
+      }
+      if (collectionId !== previousCollectionId) {
+        clearVerseSelection()
+      }
+    })
+
+    watch(currentView, () => {
+      clearVerseSelection()
+    })
+
+    watch(visibleVerseIds, (ids) => {
+      if (!isVerseSelectionMode.value) return
+      const visibleIds = new Set(ids)
+      selectedVerseIds.value = selectedVerseIds.value.filter(id => visibleIds.has(id))
+      if (!canUseVerseSelection.value) {
+        clearVerseSelection()
       }
     })
 
@@ -8792,6 +9314,7 @@ export default {
       trackLegacyAppProfile()
 
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
+      document.addEventListener('click', handleSelectionDocumentClick)
       window.addEventListener('online', handleConnectivityChange)
       window.addEventListener('offline', handleConnectivityChange)
       handleConnectivityChange()
@@ -8807,6 +9330,7 @@ export default {
     onBeforeUnmount(() => {
       window.removeEventListener('popstate', handlePopState)
       document.removeEventListener('scroll', handleWindowScroll, { capture: true })
+      document.removeEventListener('click', handleSelectionDocumentClick)
       window.removeEventListener('online', handleConnectivityChange)
       window.removeEventListener('offline', handleConnectivityChange)
       if (toastTimeoutId) {
@@ -8836,6 +9360,7 @@ export default {
       if (syncTickIntervalId) {
         clearInterval(syncTickIntervalId)
       }
+      clearVerseLongPress()
     })
 
     return {
@@ -8861,6 +9386,32 @@ export default {
       startReviewCalloutTitle,
       startReviewCalloutBody,
       sortedVerses,
+      canUseVerseSelection,
+      isVerseSelectionMode,
+      selectedVerseCount,
+      selectedMasteredVerseCount,
+      isRealCurrentCollection,
+      bulkMoveTargetCollections,
+      bulkCollectionModalTitle,
+      showBulkCollectionModal,
+      showBulkScheduleModal,
+      bulkCollectionMode,
+      bulkCollectionTargetIds,
+      enterVerseSelectionMode,
+      clearVerseSelection,
+      startVerseLongPress,
+      clearVerseLongPress,
+      handleVerseCardClick,
+      handleVerseListBlankClick,
+      isVerseSelected,
+      toggleVerseSelected,
+      openBulkCollectionAction,
+      closeBulkCollectionModal,
+      applyBulkCollectionAction,
+      openBulkScheduleAction,
+      closeBulkScheduleModal,
+      applyBulkScheduleAction,
+      deleteSelectedVerses,
       dueVersesCount,
       totalVerseCount,
       hasNoCollectionVerses,
