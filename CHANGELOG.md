@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/timunrau/rum1n8/compare/v1.34.5...v1.35.0) (2026-06-20)
+
+
+### Features
+
+* add default translation setting ([6e88c56](https://github.com/timunrau/rum1n8/commit/6e88c56c50d257231e0d021a5a37f3846a17eee1))
+
 ## [1.34.5](https://github.com/timunrau/rum1n8/compare/v1.34.4...v1.34.5) (2026-06-18)
 
 
