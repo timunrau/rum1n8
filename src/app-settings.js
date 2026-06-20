@@ -2,15 +2,21 @@ const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 
 export const DEFAULT_APP_SETTINGS = Object.freeze({
   requireReferenceTyping: false,
-  analyticsOptOut: false
+  analyticsOptOut: false,
+  defaultBibleVersion: ''
 })
 
 export function normalizeAppSettings(settings = {}) {
+  const defaultBibleVersion = typeof settings.defaultBibleVersion === 'string'
+    ? settings.defaultBibleVersion.trim().toUpperCase()
+    : ''
+
   return {
     ...DEFAULT_APP_SETTINGS,
     ...settings,
     requireReferenceTyping: !!settings.requireReferenceTyping,
-    analyticsOptOut: !!settings.analyticsOptOut
+    analyticsOptOut: !!settings.analyticsOptOut,
+    defaultBibleVersion
   }
 }
 

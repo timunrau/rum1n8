@@ -25,6 +25,13 @@ async function openAddVerseModal(page: Page) {
   await expect(page.getByTestId('modal-add-verse')).toBeVisible()
 }
 
+async function openPracticeSettings(page: Page) {
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await expect(page.getByTestId('settings-practice')).toBeVisible()
+  await page.getByTestId('settings-practice').click()
+  await expect(page.getByTestId('modal-practice-settings')).toBeVisible()
+}
+
 test('add verse: FAB -> New Verse -> reference + content (manual) -> add -> appears in list', async ({
   page,
 }) => {
@@ -36,6 +43,53 @@ test('add verse: FAB -> New Verse -> reference + content (manual) -> add -> appe
 
   await expect(page.getByTestId('modal-add-verse')).not.toBeVisible()
   await expect(page.getByText('John 3:16')).toBeVisible()
+})
+
+test('add verse: default translation prefills new verses but not existing edits', async ({ page }) => {
+  await openPracticeSettings(page)
+
+  const defaultTranslation = page.getByLabel(/Default translation/i)
+  await defaultTranslation.fill('bsb')
+  await expect(defaultTranslation).toHaveValue('BSB')
+  await page.getByRole('button', { name: 'Done' }).click()
+
+  await openAddVerseModal(page)
+  await expect(page.getByLabel(/Bible Version|Version/i)).toHaveValue('BSB')
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByTestId('modal-add-verse')).not.toBeVisible()
+
+  await seedStorage(page, [
+    {
+      id: 'existing-verse',
+      reference: 'John 3:16',
+      content: 'For God so loved the world.',
+      bibleVersion: 'NIV',
+      createdAt: '2026-06-20T12:00:00.000Z',
+      lastModified: '2026-06-20T12:00:00.000Z',
+      memorizationStatus: 'unmemorized',
+      reviewCount: 0,
+      lastReviewed: null,
+      nextReviewDate: null,
+      easeFactor: 2.5,
+      interval: 0,
+      reviewHistory: [],
+      collectionIds: [],
+    },
+  ], [])
+  await gotoApp(page, '?view=collections')
+  await expect(page.getByText('John 3:16')).toBeVisible()
+  await page.getByRole('button', { name: 'Edit verse' }).first().click()
+  await expect(page.getByTestId('modal-edit-verse')).toBeVisible()
+  await expect(page.getByLabel(/Bible Version|Version/i)).toHaveValue('NIV')
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByTestId('modal-edit-verse')).not.toBeVisible()
+
+  await openPracticeSettings(page)
+  await page.getByLabel(/Default translation/i).fill('')
+  await page.getByRole('button', { name: 'Done' }).click()
+
+  await openAddVerseModal(page)
+  await expect(page.getByLabel(/Bible Version|Version/i)).toHaveValue('')
 })
 
 test('add verse: normalized and overlapping saved references show a subtle warning', async ({ page }) => {

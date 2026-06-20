@@ -1909,6 +1909,21 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
       <ModalSheet :show="showPracticeSettings" title="Settings" data-testid="modal-practice-settings" max-width="sm:max-w-lg" @close="closePracticeSettings">
         <div class="space-y-4">
           <div class="rounded-xl bg-sunken p-4">
+            <label for="default-bible-version" class="block text-base font-semibold text-text-primary">
+              Default translation
+            </label>
+            <input
+              id="default-bible-version"
+              :value="appSettings.defaultBibleVersion"
+              type="text"
+              placeholder="e.g., BSB, NIV, ESV"
+              maxlength="10"
+              class="mt-3 w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary uppercase tracking-wider"
+              style="text-transform: uppercase;"
+              @input="updateDefaultBibleVersion($event.target.value)"
+            />
+          </div>
+          <div class="rounded-xl bg-sunken p-4">
             <label class="flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
                 <p class="text-base font-semibold text-text-primary">Require typing the reference after the verse</p>
@@ -2790,7 +2805,7 @@ export default {
     const createEmptyVerseDraft = (collectionIds = []) => ({
       reference: '',
       content: '',
-      bibleVersion: '',
+      bibleVersion: appSettings.value.defaultBibleVersion || '',
       collectionIds: [...collectionIds]
     })
 
@@ -3053,7 +3068,7 @@ export default {
     // restoreNavigationState when we're popping back to a non-modal entry.
     const closeAllModalUi = () => {
       showForm.value = false
-      newVerse.value = { reference: '', content: '', bibleVersion: '', collectionIds: [] }
+      newVerse.value = createEmptyVerseDraft()
       newVerseReferenceTouched.value = false
       importError.value = null
       importErrorShowLink.value = false
@@ -8244,6 +8259,13 @@ export default {
       trackLegacyAppProfile()
     }
 
+    const updateDefaultBibleVersion = (value) => {
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        defaultBibleVersion: value
+      })
+    }
+
     const updateAnalyticsOptOut = (optOut) => {
       saveAppSettingsLocally({
         ...appSettings.value,
@@ -9043,6 +9065,7 @@ export default {
       manualSync,
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
+      updateDefaultBibleVersion,
       updateAnalyticsOptOut,
       analyticsAvailable,
       syncing,
