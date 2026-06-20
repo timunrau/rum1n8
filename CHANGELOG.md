@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/timunrau/rum1n8/compare/v1.35.0...v1.36.0) (2026-06-20)
+
+
+### Features
+
+* add verse multi-select actions ([5edaa7b](https://github.com/timunrau/rum1n8/commit/5edaa7b15ea6cc8dc4c0ad5eeab971f1953c8484))
+
 # [1.35.0](https://github.com/timunrau/rum1n8/compare/v1.34.5...v1.35.0) (2026-06-20)
 
 
