@@ -1,3 +1,10 @@
+## [1.36.2](https://github.com/timunrau/rum1n8/compare/v1.36.1...v1.36.2) (2026-06-25)
+
+
+### Bug Fixes
+
+* continue separate passage reviews ([0e5919b](https://github.com/timunrau/rum1n8/commit/0e5919bd4f3e1082afb205e0d803da82bdaacd3d))
+
 ## [1.36.1](https://github.com/timunrau/rum1n8/compare/v1.36.0...v1.36.1) (2026-06-20)
 
 
