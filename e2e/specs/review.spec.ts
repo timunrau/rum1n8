@@ -301,6 +301,51 @@ test('collection passage review scores records separately and retries a failed s
   await expect(page.getByTestId('passage-segment-feedback')).not.toBeVisible({ timeout: 5000 })
 })
 
+test('collection passage offer can review verses separately from the selected verse onward', async ({ page }) => {
+  const timestamp = new Date().toISOString()
+  const base = {
+    bibleVersion: 'BSB',
+    createdAt: timestamp,
+    lastModified: timestamp,
+    memorizationStatus: 'mastered' as const,
+    reviewCount: 1,
+    lastReviewed: new Date(Date.now() - 172800000).toISOString(),
+    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+    easeFactor: 2.5,
+    interval: 1,
+    reviewHistory: [],
+    collectionIds: ['separate-passage'],
+  }
+  const verses = [
+    { ...base, id: 'separate-john-3-16', reference: 'John 3:16', content: 'Alpha' },
+    { ...base, id: 'separate-john-3-17', reference: 'John 3:17', content: 'Beta' },
+    { ...base, id: 'separate-john-3-18', reference: 'John 3:18', content: 'Gamma' },
+  ]
+
+  await seedStorage(page, verses, [
+    { id: 'separate-passage', name: 'Separate Passage', description: '', createdAt: timestamp, lastModified: timestamp },
+  ])
+  await page.reload()
+  await gotoApp(page, '?view=collection&collection=separate-passage')
+
+  await page.getByText('John 3:17').click()
+  await expect(page.getByTestId('modal-passage-review-offer')).toBeVisible()
+  await expect(page.getByTestId('modal-passage-review-offer')).toContainText('John 3:17-18')
+  await expect(page.getByTestId('passage-review-just-this')).toHaveText('Review separately')
+  await page.getByTestId('passage-review-just-this').click()
+
+  await expect(page.locator('h1')).toContainText('John 3:17')
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('b')
+
+  const nextButton = page.getByRole('button', { name: 'Next Verse' })
+  await expect(nextButton).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('button', { name: 'Done' })).toHaveCount(0)
+  await nextButton.click()
+
+  await expect(page.locator('h1')).toContainText('John 3:18')
+})
+
 test('review tab does not offer combined passage review', async ({ page }) => {
   const timestamp = new Date().toISOString()
   const base = {

@@ -2229,9 +2229,9 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
               type="button"
               class="btn-secondary"
               data-testid="passage-review-just-this"
-              @click="startOfferedSingleVerseReview"
+              @click="startOfferedSeparateReview"
             >
-              Just {{ passageReviewOffer?.anchorVerse?.reference || 'this verse' }}
+              Review separately
             </button>
             <button
               type="button"
@@ -5198,7 +5198,7 @@ export default {
       })
     }
 
-    const startOfferedSingleVerseReview = () => {
+    const startOfferedSeparateReview = () => {
       const offer = passageReviewOffer.value
       if (!offer) return
 
@@ -5208,7 +5208,6 @@ export default {
       setPracticeTransition('mode')
       startReview(verse, {
         sourceState: offer.sourceState,
-        sourceList: [verse],
         replaceHistory
       })
     }
@@ -9463,7 +9462,7 @@ export default {
       passageReviewOffer,
       closePassageReviewOffer,
       startOfferedPassageReview,
-      startOfferedSingleVerseReview,
+      startOfferedSeparateReview,
       passageSegmentFeedback,
       retryPassageSegment,
       previousMemorizationVerse,
