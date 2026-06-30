@@ -22,8 +22,11 @@
 - Before starting new work in this repo, run `git pull --ff-only` so local `main` includes any CI/semantic-release commits that landed after the last push.
 - The About modal version comes from `package.json` and is released automatically by semantic-release in CI.
 - Do not manually increment `package.json` for normal work; version bumps are determined from Conventional Commits.
-- Use Conventional Commit titles/messages for release-impacting changes: `feat:` for minor, `fix:`/`perf:` for patch, and `!` or `BREAKING CHANGE:` for major.
-- When Codex creates commits for this repo, always use Conventional Commit messages so semantic-release can determine the next version from commits on `main`.
+- When Codex creates commits for this repo, including from the built-in commit/push UI, always use a valid Conventional Commit subject so semantic-release can determine the next version from commits on `main`.
+- Use `fix:` for bug fixes, `perf:` for performance improvements, `feat:` for user-facing features, `docs:` for documentation-only changes, `test:` for test-only changes, `refactor:` for behavior-preserving code changes, `chore:` for tooling/maintenance, and `build:` or `ci:` for build or workflow changes.
+- For release-impacting commits, use `feat:` for minor releases, `fix:`/`perf:` for patch releases, and `!` or a `BREAKING CHANGE:` footer for major releases.
+- Keep the subject concise and imperative, for example `fix: avoid duplicate startup sync`, `docs: record review freeze investigation`, or `test: cover failed review scheduling`.
+- Do not use vague subjects such as `update files`, `misc changes`, `fix stuff`, or `codex changes`.
 - After pushing a release-impacting commit, expect CI/semantic-release to add a new release commit on `main` shortly afterward. Before making another commit or push, pull/rebase onto the updated `origin/main` so your local branch includes the generated release commit.
 
 ## Further Docs
