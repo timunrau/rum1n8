@@ -1,3 +1,10 @@
+## [1.36.3](https://github.com/timunrau/rum1n8/compare/v1.36.2...v1.36.3) (2026-06-30)
+
+
+### Bug Fixes
+
+* trigger release for verse migration persistence ([0b5ee36](https://github.com/timunrau/rum1n8/commit/0b5ee36081c1f0e313d611162de85e80a014b3fb))
+
 ## [1.36.2](https://github.com/timunrau/rum1n8/compare/v1.36.1...v1.36.2) (2026-06-25)
 
 
