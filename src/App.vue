@@ -4693,6 +4693,7 @@ export default {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const loadedVerses = JSON.parse(stored)
+        let needsMigration = false
         // Migrate existing verses to include review fields
         verses.value = loadedVerses.map(verse => {
           if (!verse.hasOwnProperty('reviewCount')) {
@@ -4702,30 +4703,45 @@ export default {
             verse.easeFactor = 2.5 // Default ease factor
             verse.interval = 0
             verse.reviewHistory = []
+            needsMigration = true
           }
           // Ensure all new fields exist
-          if (!verse.hasOwnProperty('easeFactor')) verse.easeFactor = 2.5
-          if (!verse.hasOwnProperty('interval')) verse.interval = 0
-          if (!verse.hasOwnProperty('reviewHistory')) verse.reviewHistory = []
+          if (!verse.hasOwnProperty('easeFactor')) {
+            verse.easeFactor = 2.5
+            needsMigration = true
+          }
+          if (!verse.hasOwnProperty('interval')) {
+            verse.interval = 0
+            needsMigration = true
+          }
+          if (!verse.hasOwnProperty('reviewHistory')) {
+            verse.reviewHistory = []
+            needsMigration = true
+          }
           // Set memorization status - if it has reviews, it's mastered, otherwise unmemorized
           if (!verse.hasOwnProperty('memorizationStatus')) {
             verse.memorizationStatus = (verse.reviewCount > 0) ? 'mastered' : 'unmemorized'
+            needsMigration = true
           }
           // If unmemorized, clear nextReviewDate
-          if (verse.memorizationStatus === 'unmemorized') {
+          if (verse.memorizationStatus === 'unmemorized' && verse.nextReviewDate !== null) {
             verse.nextReviewDate = null
+            needsMigration = true
           }
           // Add collectionIds if missing
           if (!verse.hasOwnProperty('collectionIds')) {
             verse.collectionIds = []
+            needsMigration = true
           }
           // Add bibleVersion if missing
           if (!verse.hasOwnProperty('bibleVersion')) {
             verse.bibleVersion = ''
+            needsMigration = true
           }
           // Add lastModified if missing (use createdAt or current time as fallback)
           if (!verse.hasOwnProperty('lastModified')) {
             verse.lastModified = verse.lastReviewed || verse.createdAt || new Date().toISOString()
+            needsMigration = true
           }
           // Add masteredAt if missing
           if (!verse.hasOwnProperty('masteredAt')) {
@@ -4734,10 +4750,14 @@ export default {
             } else {
               verse.masteredAt = null
             }
+            needsMigration = true
           }
           return verse
         })
-        saveVerses() // Save migrated data
+        // Persist migrations without starting sync; onMounted triggers the single startup sync.
+        if (needsMigration) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
+        }
       }
     }
 
