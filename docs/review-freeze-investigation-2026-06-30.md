@@ -89,3 +89,16 @@ During investigation, two speculative changes were considered and then rejected:
 The app still does not appear to block review interaction while the initial startup sync is running. If a user opens the app and immediately starts reviewing before startup sync completes, they may briefly act on local data before remote changes are merged.
 
 If cross-device freshness needs to be stricter, consider gating the Review start action until initial sync completes or times out.
+
+## Follow-Up Finding - 2026-07-01
+
+A related review navigation bug was reproduced:
+
+- Start a Review session.
+- Switch the active review practice mode from Master to Learn or Memorize.
+- Swipe to the next verse.
+- The review session could advance the header/reference while the practice view state was inconsistent with the selected mode, leaving the user unable to continue typing reliably.
+
+Root cause: sequential review navigation reused `startReview()` without passing the active practice mode. `startReview()` always reset `memorizationMode` to `master`, even when the user had intentionally switched the current review session to Learn or Memorize. That made swipe navigation internally inconsistent because adjacent swipe panels were built from the current practice mode, but the target review was rebuilt as Master.
+
+Fix direction implemented: fresh review starts still default to Master, but `nextVerse()` and `previousVerse()` preserve the active review mode when navigating within the same review source list. Regression coverage now checks that after swiping from Learn and Memorize, the header, verse content, active mode chip, focused input, and completion flow all remain live and in sync.

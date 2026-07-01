@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import {
   clearAppStorage,
   seedStorage,
@@ -7,6 +7,42 @@ import {
 } from '../helpers/storage'
 import { mockWebDAVWithStaleRemoteWithFutureTimestamp } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
+
+async function swipePracticeVerse(page: Page, direction: 'next' | 'previous') {
+  const frame = page.locator('.practice-swipe-frame').first()
+  await frame.evaluate((element, swipeDirection) => {
+    const rect = element.getBoundingClientRect()
+    const y = rect.top + rect.height / 2
+    const startX = swipeDirection === 'next'
+      ? rect.left + rect.width * 0.82
+      : rect.left + rect.width * 0.18
+    const endX = swipeDirection === 'next'
+      ? rect.left + rect.width * 0.18
+      : rect.left + rect.width * 0.82
+
+    const touch = (clientX: number) => ({
+      identifier: 1,
+      target: element,
+      clientX,
+      clientY: y,
+      screenX: clientX,
+      screenY: y,
+      pageX: clientX,
+      pageY: y,
+    })
+
+    const dispatchTouch = (type: string, touches: Array<ReturnType<typeof touch>>, changedTouches = touches) => {
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'touches', { value: touches })
+      Object.defineProperty(event, 'changedTouches', { value: changedTouches })
+      element.dispatchEvent(event)
+    }
+
+    dispatchTouch('touchstart', [touch(startX)])
+    dispatchTouch('touchmove', [touch(endX)], [touch(endX)])
+    dispatchTouch('touchend', [], [touch(endX)])
+  }, direction)
+}
 
 test.beforeEach(async ({ page }) => {
   await gotoApp(page)
@@ -572,6 +608,65 @@ test('review: input focused after Next Verse', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeAttached()
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
+
+for (const modeName of ['Learn', 'Memorize'] as const) {
+  test(`review swipe after switching to ${modeName} keeps verse content and input live`, async ({ page }) => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString()
+    const twoVerses = [
+      {
+        id: `swipe-mode-${modeName.toLowerCase()}-v1`,
+        reference: 'Psalm 1:1',
+        content: 'Alpha first',
+        bibleVersion: 'BSB',
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
+        memorizationStatus: 'mastered',
+        reviewCount: 1,
+        lastReviewed: yesterday,
+        nextReviewDate: yesterday,
+        easeFactor: 2.5,
+        interval: 1,
+        reviewHistory: [],
+        collectionIds: [],
+      },
+      {
+        id: `swipe-mode-${modeName.toLowerCase()}-v2`,
+        reference: 'Psalm 2:1',
+        content: 'Beta second',
+        bibleVersion: 'BSB',
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
+        memorizationStatus: 'mastered',
+        reviewCount: 1,
+        lastReviewed: yesterday,
+        nextReviewDate: yesterday,
+        easeFactor: 2.5,
+        interval: 1,
+        reviewHistory: [],
+        collectionIds: [],
+      },
+    ]
+    await seedStorage(page, twoVerses, [])
+    await page.reload()
+    await gotoApp(page, '?view=review-list')
+    await page.getByText('Psalm 1:1').click()
+
+    await expect(page.locator('#letter-input-review')).toBeAttached()
+    await page.locator('.practice-swipe-panel--active .mode-chip').filter({ hasText: modeName }).click()
+    await expect(page.locator('.practice-swipe-panel--active .practice-card')).toContainText('Alpha')
+
+    await swipePracticeVerse(page, 'next')
+
+    await expect(page.locator('h1')).toContainText('Psalm 2:1')
+    await expect(page.locator('.practice-swipe-panel--active .practice-card')).toContainText('Beta')
+    await expect(page.locator('.practice-swipe-panel--active .practice-card')).not.toContainText('Alpha')
+    await expect(page.locator('.practice-swipe-panel--active .mode-chip[aria-current="step"]')).toContainText(modeName)
+    await expect(page.locator('#letter-input-review')).toBeFocused()
+
+    await page.keyboard.type('bs')
+    await expect(page.getByRole('button', { name: 'Done' })).toBeVisible({ timeout: 5000 })
+  })
+}
 
 test('collection review handoff to an unmastered next verse shows the memorization header', async ({
   page,

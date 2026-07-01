@@ -7693,6 +7693,7 @@ export default {
       const sourceStateOverride = options.sourceState || null
       const sourceListOverride = options.sourceList || null
       const passageRecords = options.passageRecords || null
+      const requestedMode = options.mode || null
 
       if (
         (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
@@ -7807,10 +7808,12 @@ export default {
         // Push state when starting a new review session
         pushNavigationState(navigationState)
       }
-      // Review always starts in master mode; build words with visible/index like startMemorization
-      memorizationMode.value = 'master'
+      // Fresh reviews start in master mode. Sequential review navigation preserves
+      // Learn/Memorize when the user selected a practice mode inside the session.
+      const reviewMode = requestedMode || 'master'
+      memorizationMode.value = reviewMode
       if (passageRecords?.length) {
-        const passagePractice = buildCombinedPassagePracticeWords(passageRecords, verse, 'master')
+        const passagePractice = buildCombinedPassagePracticeWords(passageRecords, verse, reviewMode)
         combinedPassageReview.value = {
           verse,
           records: passageRecords.map((record) => ({
@@ -7826,7 +7829,7 @@ export default {
         setPracticeWords(passagePractice.words)
         typedLetter.value = ''
       } else {
-        resetPracticeSequence(verse, 'master')
+        resetPracticeSequence(verse, reviewMode, reviewMemorizeRetryCount.value)
       }
       // VersePracticeView is keyed by verse id (+ reviewInstanceKey on retry), so it remounts
       // and onMounted runs the 100ms focus — that's what shows the keyboard on Android PWA.
@@ -8068,7 +8071,7 @@ export default {
       const previousSourceVerse = getPreviousReviewSourceVerse()
       if (previousSourceVerse) {
         setPracticeTransition('previous')
-        startReview(previousSourceVerse, { preserveSource: true })
+        startReview(previousSourceVerse, { preserveSource: true, mode: memorizationMode.value || 'master' })
       }
     }
 
@@ -8211,7 +8214,7 @@ export default {
         const nextSourceVerse = getNextReviewSourceVerse()
         if (nextSourceVerse) {
           setPracticeTransition('next')
-          startReview(nextSourceVerse, { preserveSource: true })
+          startReview(nextSourceVerse, { preserveSource: true, mode: memorizationMode.value || 'master' })
         } else {
           // Reached the end of the source list — exit back to the origin screen
           // instead of wrapping around to the first verse.
