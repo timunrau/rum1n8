@@ -44,6 +44,53 @@ async function swipePracticeVerse(page: Page, direction: 'next' | 'previous') {
   }, direction)
 }
 
+async function dragPracticeVerseWithTouch(page: Page, direction: 'next' | 'previous') {
+  const client = await page.context().newCDPSession(page)
+
+  try {
+    const frame = page.locator('.practice-swipe-frame').first()
+    const rect = await frame.evaluate((element) => {
+      const r = element.getBoundingClientRect()
+      return {
+        left: r.left,
+        top: r.top,
+        width: r.width,
+        height: r.height,
+      }
+    })
+    const y = rect.top + rect.height / 2
+    const startX = direction === 'next'
+      ? rect.left + rect.width * 0.86
+      : rect.left + rect.width * 0.14
+    const endX = direction === 'next'
+      ? rect.left + rect.width * 0.12
+      : rect.left + rect.width * 0.88
+    const steps = 8
+
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: startX, y, radiusX: 2, radiusY: 2, force: 1 }],
+    })
+
+    for (let i = 1; i <= steps; i += 1) {
+      const x = startX + ((endX - startX) * i) / steps
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x, y, radiusX: 2, radiusY: 2, force: 1 }],
+      })
+      await page.waitForTimeout(16)
+    }
+
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    })
+    await page.waitForTimeout(280)
+  } finally {
+    await client.detach()
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await gotoApp(page)
   await clearAppStorage(page)
@@ -667,6 +714,100 @@ for (const modeName of ['Learn', 'Memorize'] as const) {
     await expect(page.getByRole('button', { name: 'Done' })).toBeVisible({ timeout: 5000 })
   })
 }
+
+test.describe('mobile review swipe mode transitions', () => {
+  test.use({
+    viewport: { width: 393, height: 851 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 2,
+  })
+
+  for (const modeName of ['Learn', 'Memorize'] as const) {
+    test(`review swipe after master swipe then switching to ${modeName} keeps content live`, async ({ page }) => {
+      const pageErrors: string[] = []
+      page.on('pageerror', (error) => pageErrors.push(error.message))
+
+      const yesterday = new Date(Date.now() - 86400000).toISOString()
+      const threeVerses = [
+        {
+          id: `swipe-after-master-${modeName.toLowerCase()}-v1`,
+          reference: 'Psalm 1:1',
+          content: 'Alpha first words',
+          bibleVersion: 'BSB',
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          memorizationStatus: 'mastered',
+          reviewCount: 1,
+          lastReviewed: yesterday,
+          nextReviewDate: yesterday,
+          easeFactor: 2.5,
+          interval: 1,
+          reviewHistory: [],
+          collectionIds: [],
+        },
+        {
+          id: `swipe-after-master-${modeName.toLowerCase()}-v2`,
+          reference: 'Psalm 2:1',
+          content: 'Beta second words',
+          bibleVersion: 'BSB',
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          memorizationStatus: 'mastered',
+          reviewCount: 1,
+          lastReviewed: yesterday,
+          nextReviewDate: yesterday,
+          easeFactor: 2.5,
+          interval: 1,
+          reviewHistory: [],
+          collectionIds: [],
+        },
+        {
+          id: `swipe-after-master-${modeName.toLowerCase()}-v3`,
+          reference: 'Psalm 3:1',
+          content: 'Gamma third words',
+          bibleVersion: 'BSB',
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          memorizationStatus: 'mastered',
+          reviewCount: 1,
+          lastReviewed: yesterday,
+          nextReviewDate: yesterday,
+          easeFactor: 2.5,
+          interval: 1,
+          reviewHistory: [],
+          collectionIds: [],
+        },
+      ]
+
+      await seedStorage(page, threeVerses, [])
+      await page.reload()
+      await gotoApp(page, '?view=review-list')
+      await page.getByText('Psalm 1:1').click()
+
+      await expect(page.locator('#letter-input-review')).toBeAttached()
+      await dragPracticeVerseWithTouch(page, 'next')
+      await expect(page.locator('h1')).toContainText('Psalm 2:1')
+      await expect(page.locator('.practice-swipe-panel--active .practice-card')).toContainText('Beta')
+      await expect(page.locator('.practice-swipe-panel--active .mode-chip[aria-current="step"]')).toContainText('Master')
+
+      await page.locator('.practice-swipe-panel--active .mode-chip').filter({ hasText: modeName }).click()
+      await expect(page.locator('.practice-swipe-panel--active .mode-chip[aria-current="step"]')).toContainText(modeName)
+
+      await dragPracticeVerseWithTouch(page, 'next')
+
+      await expect(page.locator('h1')).toContainText('Psalm 3:1')
+      await expect(page.locator('.practice-swipe-panel--active .practice-card')).toContainText('Gamma')
+      await expect(page.locator('.practice-swipe-panel--active .practice-card')).not.toContainText('Beta')
+      await expect(page.locator('.practice-swipe-panel--active .mode-chip[aria-current="step"]')).toContainText(modeName)
+      await expect(page.locator('#letter-input-review')).toBeFocused()
+      expect(pageErrors).toEqual([])
+
+      await page.keyboard.type('gtw')
+      await expect(page.getByRole('button', { name: 'Done' })).toBeVisible({ timeout: 5000 })
+    })
+  }
+})
 
 test('collection review handoff to an unmastered next verse shows the memorization header', async ({
   page,

@@ -102,3 +102,18 @@ A related review navigation bug was reproduced:
 Root cause: sequential review navigation reused `startReview()` without passing the active practice mode. `startReview()` always reset `memorizationMode` to `master`, even when the user had intentionally switched the current review session to Learn or Memorize. That made swipe navigation internally inconsistent because adjacent swipe panels were built from the current practice mode, but the target review was rebuilt as Master.
 
 Fix direction implemented: fresh review starts still default to Master, but `nextVerse()` and `previousVerse()` preserve the active review mode when navigating within the same review source list. Regression coverage now checks that after swiping from Learn and Memorize, the header, verse content, active mode chip, focused input, and completion flow all remain live and in sync.
+
+## Follow-Up Finding - 2026-07-01, second reproduction
+
+The mode-preservation fix was incomplete. The reliably failing sequence was:
+
+- Start a Review session in Master mode.
+- Swipe to the next verse while still in Master mode.
+- Switch the active review practice mode to Learn or Memorize.
+- Swipe to the next verse again.
+
+This reproduced the user-visible frozen state: the header/reference advanced, but the visible verse content stayed on the previous verse. Playwright also captured Vue runtime patch errors such as `Cannot read properties of null (reading 'insertBefore')` and `Cannot set properties of null (setting '__vnode')`.
+
+Root cause: `VersePracticeView` used word-level `v-memo` inside the swipe panels. The memo dependency list tracked display state but not the word identity/text. After a prior swipe remount followed by a mode switch, Vue could reuse stale memoized word DOM while the parent review state advanced, corrupting the component patch and leaving the page partially updated.
+
+Fix direction implemented: remove the word-level `v-memo` optimization from `VersePracticeView` so practice words always patch from the current panel data. Regression coverage now exercises the full sequence above on a mobile-sized touch context for both Learn and Memorize, asserting no page errors, matching reference/content, preserved mode, focused input, and a live completion flow.

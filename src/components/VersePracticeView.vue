@@ -39,16 +39,6 @@
           <span
             v-for="(word, index) in panel.words"
             :key="index"
-            v-memo="[
-              panel.mode,
-              panel.isCurrent,
-              word.revealed,
-              word.visible,
-              word.typedLettersIndex,
-              word.incorrect,
-              word.incorrectLetterIndices?.length || 0,
-              panel.isCurrent && currentWordIndex === index
-            ]"
             :id="panel.isCurrent ? `practice-word-${index}` : null"
             :class="[
               word.separatorAfter ? 'practice-word inline-block' : 'practice-word inline-block mr-2',
