@@ -1,3 +1,10 @@
+## [1.36.5](https://github.com/timunrau/rum1n8/compare/v1.36.4...v1.36.5) (2026-07-01)
+
+
+### Bug Fixes
+
+* keep review swipe content in sync ([0daf957](https://github.com/timunrau/rum1n8/commit/0daf957229ae90d69749ded506395b3bee97f07a))
+
 ## [1.36.4](https://github.com/timunrau/rum1n8/compare/v1.36.3...v1.36.4) (2026-07-01)
 
 
