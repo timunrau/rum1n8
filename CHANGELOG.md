@@ -1,3 +1,10 @@
+## [1.36.4](https://github.com/timunrau/rum1n8/compare/v1.36.3...v1.36.4) (2026-07-01)
+
+
+### Bug Fixes
+
+* preserve review mode when swiping verses ([22b27ef](https://github.com/timunrau/rum1n8/commit/22b27ef4e2aa94b5936d3ed6391a3c0b87537680))
+
 ## [1.36.3](https://github.com/timunrau/rum1n8/compare/v1.36.2...v1.36.3) (2026-06-30)
 
 
