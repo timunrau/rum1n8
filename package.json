@@ -18,31 +18,31 @@
   },
   "dependencies": {
     "@gracious.tech/bible-references": "^1.2.1",
-    "@gracious.tech/fetch-client": "^2.0.0",
+    "@gracious.tech/fetch-client": "^2.2.0",
     "chart.js": "^4.5.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "fuse.js": "^7.4.2",
-    "http-proxy-middleware": "^4.0.0",
-    "vue": "^3.5.35",
+    "http-proxy-middleware": "^4.1.1",
+    "vue": "^3.5.39",
     "vue-chartjs": "^5.3.3",
     "webdav": "^5.8.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.61.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^12.0.8",
+    "@semantic-release/github": "^12.0.9",
     "@semantic-release/npm": "^13.1.5",
     "@semantic-release/release-notes-generator": "^14.1.1",
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "concurrently": "^9.2.1",
-    "semantic-release": "25.0.3",
+    "semantic-release": "25.0.5",
     "tailwindcss": "^4.3.0",
-    "vite": "^8.0.16",
+    "vite": "^8.1.3",
     "vite-plugin-pwa": "^1.3.0",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   }
 }
