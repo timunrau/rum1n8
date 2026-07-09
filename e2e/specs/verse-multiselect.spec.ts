@@ -170,6 +170,8 @@ test('bulk review frequency changes only mastered selected verses', async ({ pag
   const stored = await getStoredVerses(page) as Array<{
     id: string
     nextReviewDate: string | null
+    interval: number
+    reviewScheduleCustomized?: boolean
   }>
   expect(stored.find((item) => item.id === 'new')?.nextReviewDate).toBeNull()
 
@@ -177,6 +179,8 @@ test('bulk review frequency changes only mastered selected verses', async ({ pag
   const diffDays = Math.round((new Date(masteredDate || '').getTime() - Date.now()) / 86_400_000)
   expect(diffDays).toBeGreaterThanOrEqual(6)
   expect(diffDays).toBeLessThanOrEqual(7)
+  expect(stored.find((item) => item.id === 'mastered')?.interval).toBe(7)
+  expect(stored.find((item) => item.id === 'mastered')?.reviewScheduleCustomized).toBe(true)
 })
 
 test('bulk delete confirms and undo restores verses plus deletion markers', async ({ page }) => {

@@ -65,10 +65,11 @@ export function calculateNextReviewDate(verse, grade, isNewReview = false) {
     newEF = Math.max(1.3, newEF * 0.8)
   } else {
     // Graduated phase: use ease factor to calculate interval
-    // When verse already has an established interval (>4 days), use it—don't reset based on
-    // reviewCount. This handles imported/synced verses where reviewCount and interval can be out of sync.
+    // When a verse already has an established or manually customized interval, use it—don't
+    // reset based on reviewCount. This also handles imported/synced verses where those fields
+    // can be out of sync.
     const previousInterval = verse.interval || 0
-    const hasEstablishedInterval = previousInterval > 4
+    const hasEstablishedInterval = previousInterval > 4 || verse.reviewScheduleCustomized === true
 
     if (hasEstablishedInterval) {
       // Subsequent reviews: previous interval * ease factor (don't reset)

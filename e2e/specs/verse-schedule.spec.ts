@@ -88,12 +88,18 @@ test('change popover updates nextReviewDate and shows undo toast', async ({ page
   await expect(page.getByTestId('toast-action')).toBeVisible()
 
   // Verse data was updated to ~7 days out
-  const verses = (await getStoredVerses(page)) as Array<{ nextReviewDate: string }>
+  const verses = (await getStoredVerses(page)) as Array<{
+    nextReviewDate: string
+    interval: number
+    reviewScheduleCustomized: boolean
+  }>
   const diffDays = Math.round(
     (new Date(verses[0].nextReviewDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   )
   expect(diffDays).toBeGreaterThanOrEqual(6)
   expect(diffDays).toBeLessThanOrEqual(7)
+  expect(verses[0].interval).toBe(7)
+  expect(verses[0].reviewScheduleCustomized).toBe(true)
 
   // Modal still open and the row reflects the new interval (~7d)
   await expect(page.getByTestId('verse-schedule-row')).toContainText(/6d|7d/)
@@ -113,7 +119,25 @@ test('clicking outside the change popover closes it', async ({ page }) => {
   await expect(page.getByTestId('verse-schedule-popover')).toHaveCount(0)
 })
 
-test('undo restores the prior nextReviewDate', async ({ page }) => {
+test('review now preserves the adaptive interval baseline', async ({ page }) => {
+  await seedVerses(page, [{ ...masteredVerse, reviewScheduleCustomized: true }])
+  await gotoApp(page, '?view=collections')
+  await page.getByRole('button', { name: 'Edit verse' }).first().click()
+
+  await page.getByTestId('verse-schedule-change').click()
+  await page.getByTestId('verse-schedule-popover').getByRole('button', { name: 'Now' }).click()
+
+  const verses = (await getStoredVerses(page)) as Array<{
+    nextReviewDate: string
+    interval: number
+    reviewScheduleCustomized: boolean
+  }>
+  expect(Math.abs(new Date(verses[0].nextReviewDate).getTime() - Date.now())).toBeLessThan(5_000)
+  expect(verses[0].interval).toBe(masteredVerse.interval)
+  expect(verses[0].reviewScheduleCustomized).toBe(true)
+})
+
+test('undo restores the prior review schedule', async ({ page }) => {
   await seedVerses(page, [masteredVerse])
   await gotoApp(page, '?view=collections')
   await page.getByRole('button', { name: 'Edit verse' }).first().click()
@@ -126,17 +150,23 @@ test('undo restores the prior nextReviewDate', async ({ page }) => {
 
   await page.getByTestId('toast-action').click()
 
-  const verses = (await getStoredVerses(page)) as Array<{ nextReviewDate: string }>
+  const verses = (await getStoredVerses(page)) as Array<{
+    nextReviewDate: string
+    interval: number
+    reviewScheduleCustomized?: boolean
+  }>
   const diffDays = Math.round(
     (new Date(verses[0].nextReviewDate).getTime() -
       new Date(masteredVerse.nextReviewDate).getTime()) /
       (1000 * 60 * 60 * 24)
   )
   expect(diffDays).toBe(0)
+  expect(verses[0].interval).toBe(masteredVerse.interval)
+  expect(verses[0].reviewScheduleCustomized).toBeUndefined()
 })
 
 test('reset clears progress, closes modal, and shows undo toast', async ({ page }) => {
-  await seedVerses(page, [masteredVerse])
+  await seedVerses(page, [{ ...masteredVerse, reviewScheduleCustomized: true }])
   await gotoApp(page, '?view=collections')
   await page.getByRole('button', { name: 'Edit verse' }).first().click()
 
@@ -151,16 +181,18 @@ test('reset clears progress, closes modal, and shows undo toast', async ({ page 
     interval: number
     reviewCount: number
     masteredAt: string | null
+    reviewScheduleCustomized: boolean
   }>
   expect(verses[0].memorizationStatus).toBe('unmemorized')
   expect(verses[0].nextReviewDate).toBeNull()
   expect(verses[0].interval).toBe(0)
   expect(verses[0].reviewCount).toBe(0)
   expect(verses[0].masteredAt).toBeNull()
+  expect(verses[0].reviewScheduleCustomized).toBe(false)
 })
 
 test('undo after reset restores mastered state', async ({ page }) => {
-  await seedVerses(page, [masteredVerse])
+  await seedVerses(page, [{ ...masteredVerse, reviewScheduleCustomized: true }])
   await gotoApp(page, '?view=collections')
   await page.getByRole('button', { name: 'Edit verse' }).first().click()
 
@@ -173,10 +205,12 @@ test('undo after reset restores mastered state', async ({ page }) => {
     interval: number
     reviewCount: number
     masteredAt: string | null
+    reviewScheduleCustomized: boolean
   }>
   expect(verses[0].memorizationStatus).toBe('mastered')
   expect(verses[0].nextReviewDate).toBe(masteredVerse.nextReviewDate)
   expect(verses[0].interval).toBe(masteredVerse.interval)
   expect(verses[0].reviewCount).toBe(masteredVerse.reviewCount)
   expect(verses[0].masteredAt).toBe(masteredVerse.masteredAt)
+  expect(verses[0].reviewScheduleCustomized).toBe(true)
 })

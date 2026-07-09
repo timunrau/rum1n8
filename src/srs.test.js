@@ -132,6 +132,30 @@ describe('calculateNextReviewDate', () => {
       expect(result.easeFactor).toBeCloseTo(2.6)
     })
 
+    it('custom short interval bypasses the early review ladder', () => {
+      const verse = {
+        ...baseVerse,
+        reviewCount: 0,
+        interval: 3,
+        reviewScheduleCustomized: true,
+      }
+      const result = calculateNextReviewDate(verse, 5, true)
+
+      expect(result.interval).toBeCloseTo(3 * 2.6)
+    })
+
+    it('custom interval remains capped at 90 days', () => {
+      const verse = {
+        ...baseVerse,
+        reviewCount: 0,
+        interval: 90,
+        reviewScheduleCustomized: true,
+      }
+      const result = calculateNextReviewDate(verse, 5, true)
+
+      expect(result.interval).toBe(90)
+    })
+
     it('caps interval at 90 days', () => {
       const verse = { ...baseVerse, reviewCount: 10, interval: 80, easeFactor: 2.5 }
       const result = calculateNextReviewDate(verse, 5, true)

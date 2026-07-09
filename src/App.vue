@@ -1706,10 +1706,13 @@
               data-testid="verse-schedule-popover"
             >
               <button type="button" @click="overrideNextReview(0)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">Now</button>
-              <button type="button" @click="overrideNextReview(1)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1d</button>
-              <button type="button" @click="overrideNextReview(3)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+3d</button>
-              <button type="button" @click="overrideNextReview(7)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1w</button>
-              <button type="button" @click="overrideNextReview(30)" class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors">+1mo</button>
+              <button
+                v-for="option in reviewFrequencyOptions"
+                :key="option.days"
+                type="button"
+                @click="overrideNextReview(option.days)"
+                class="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-primary hover:bg-accent-warm hover:text-accent-warm-contrast transition-colors"
+              >{{ option.label }}</button>
             </div>
           </div>
         </form>
@@ -1818,12 +1821,15 @@
           <p class="text-sm text-text-secondary">
             Set the next review date for {{ selectedMasteredVerseCount }} mastered selected verse{{ selectedMasteredVerseCount === 1 ? '' : 's' }}.
           </p>
-          <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(0)">Now</button>
-            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(1)">+1d</button>
-            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(3)">+3d</button>
-            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(7)">+1w</button>
-            <button type="button" class="bulk-schedule-option" @click="applyBulkScheduleAction(30)">+1mo</button>
+            <button
+              v-for="option in reviewFrequencyOptions"
+              :key="option.days"
+              type="button"
+              class="bulk-schedule-option"
+              @click="applyBulkScheduleAction(option.days)"
+            >{{ option.label }}</button>
           </div>
         </div>
 
@@ -2422,6 +2428,7 @@ import {
   VIRTUAL_COLLECTION_IDS,
 } from './utils/collections.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
+import { applyReviewFrequencyOverride, REVIEW_FREQUENCY_OPTIONS } from './review-schedule.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -6494,16 +6501,11 @@ export default {
       const snapshots = getSelectedVerseSnapshots()
       const selectedIds = new Set(selectedVerseIds.value)
       const now = new Date()
-      const target = new Date(now)
-      if (daysFromNow > 0) {
-        target.setDate(target.getDate() + daysFromNow)
-      }
       let changedCount = 0
 
       verses.value.forEach(verse => {
         if (!selectedIds.has(verse.id) || verse.memorizationStatus !== 'mastered') return
-        verse.nextReviewDate = target.toISOString()
-        verse.lastModified = now.toISOString()
+        applyReviewFrequencyOverride(verse, daysFromNow, now)
         changedCount++
       })
 
@@ -6636,15 +6638,13 @@ export default {
       const snapshot = {
         nextReviewDate: verse.nextReviewDate,
         interval: verse.interval,
+        reviewScheduleCustomized: verse.reviewScheduleCustomized,
       }
-      const target = new Date()
-      if (daysFromNow > 0) {
-        target.setDate(target.getDate() + daysFromNow)
-      }
-      verse.nextReviewDate = target.toISOString()
-      verse.lastModified = new Date().toISOString()
+      applyReviewFrequencyOverride(verse, daysFromNow)
       saveVerses()
       editingVerse.value.nextReviewDate = verse.nextReviewDate
+      editingVerse.value.interval = verse.interval
+      editingVerse.value.reviewScheduleCustomized = verse.reviewScheduleCustomized
       scheduleActionsOpen.value = false
       const label = daysFromNow === 0 ? 'Review now' : `Review in ${daysFromNow}d`
       showToast(label, false, {
@@ -6654,6 +6654,7 @@ export default {
           if (!v) return
           v.nextReviewDate = snapshot.nextReviewDate
           v.interval = snapshot.interval
+          v.reviewScheduleCustomized = snapshot.reviewScheduleCustomized
           v.lastModified = new Date().toISOString()
           saveVerses()
           if (editingVerse.value && editingVerse.value.id === v.id) {
@@ -6676,6 +6677,7 @@ export default {
         reviewCount: verse.reviewCount,
         easeFactor: verse.easeFactor,
         reviewHistory: verse.reviewHistory ? [...verse.reviewHistory] : [],
+        reviewScheduleCustomized: verse.reviewScheduleCustomized,
       }
       verse.memorizationStatus = 'unmemorized'
       verse.nextReviewDate = null
@@ -6684,6 +6686,7 @@ export default {
       verse.reviewCount = 0
       verse.easeFactor = 2.5
       verse.reviewHistory = []
+      verse.reviewScheduleCustomized = false
       verse.lastModified = new Date().toISOString()
       saveVerses()
       closeEditVerseForm()
@@ -6699,6 +6702,7 @@ export default {
           v.reviewCount = snapshot.reviewCount
           v.easeFactor = snapshot.easeFactor
           v.reviewHistory = snapshot.reviewHistory
+          v.reviewScheduleCustomized = snapshot.reviewScheduleCustomized
           v.lastModified = new Date().toISOString()
           saveVerses()
         },
@@ -9432,6 +9436,7 @@ export default {
       openBulkScheduleAction,
       closeBulkScheduleModal,
       applyBulkScheduleAction,
+      reviewFrequencyOptions: REVIEW_FREQUENCY_OPTIONS,
       deleteSelectedVerses,
       dueVersesCount,
       totalVerseCount,
