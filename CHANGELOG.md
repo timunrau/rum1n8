@@ -1,3 +1,10 @@
+## [1.36.6](https://github.com/timunrau/rum1n8/compare/v1.36.5...v1.36.6) (2026-07-09)
+
+
+### Bug Fixes
+
+* apply review frequency overrides to future intervals ([1e35c80](https://github.com/timunrau/rum1n8/commit/1e35c802ec990f1b5d3a709bc0f84e6ffeff59b7))
+
 ## [1.36.5](https://github.com/timunrau/rum1n8/compare/v1.36.4...v1.36.5) (2026-07-01)
 
 
