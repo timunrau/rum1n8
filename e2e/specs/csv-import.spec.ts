@@ -50,7 +50,7 @@ test('file upload: use input with sample-import.csv', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Import 2 verses/i })).toBeVisible()
 })
 
-test('select collections -> import -> verses appear in selected collections', async ({ page }) => {
+test('select one destination -> import -> verses appear directly in it', async ({ page }) => {
   await page.getByTestId('nav-collections').click()
   await page.getByTestId('fab-trigger').click()
   await page.getByTestId('fab-new-collection').click()
@@ -64,11 +64,61 @@ test('select collections -> import -> verses appear in selected collections', as
 John 3:16,"For God so loved the world",BSB`
   await page.getByPlaceholder(/Paste your CSV/i).fill(csvContent)
   await page.waitForTimeout(500)
-  await page.getByRole('button', { name: 'Import Target' }).click()
+  await page.getByLabel('Import into').selectOption({ label: 'Import Target' })
   await page.getByRole('button', { name: /Import 1 verse/i }).click()
   await page.getByRole('button', { name: 'Done' }).click()
   await page.getByRole('heading', { name: 'Import Target' }).click()
   await expect(page.getByText('John 3:16')).toBeVisible()
+})
+
+test('CollectionPath creates nested collections beneath the import destination', async ({ page }) => {
+  const now = new Date().toISOString()
+  const target = {
+    id: 'work',
+    name: 'Work',
+    description: '',
+    parentId: null,
+    createdAt: now,
+    lastModified: now,
+  }
+  await seedStorage(page, [], [target])
+  await gotoApp(page, '?view=collections')
+  await page.getByTestId('collection-tile-work').click()
+  await page.getByTestId('fab-trigger').click()
+  await page.getByTestId('fab-import-csv').click()
+
+  await expect(page.getByLabel('Import into')).toHaveValue('work')
+  const csvContent = `Reference,Content,Version,CollectionPath
+John 15:5,"Apart from me you can do nothing",NIV,Core Values/Abide in Christ
+Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility`
+  await page.getByPlaceholder(/Paste your CSV/i).fill(csvContent)
+  await page.getByRole('button', { name: /Import 2 verses/i }).click()
+  await expect(page.getByText(/Created 3 collections/i)).toBeVisible()
+
+  const collections = await getStoredCollections(page) as Array<{
+    id: string
+    name: string
+    parentId: string | null
+  }>
+  const coreValues = collections.find(collection => collection.name === 'Core Values')
+  const abide = collections.find(collection => collection.name === 'Abide in Christ')
+  const humility = collections.find(collection => collection.name === 'Humility')
+  expect(coreValues?.parentId).toBe('work')
+  expect(abide?.parentId).toBe(coreValues?.id)
+  expect(humility?.parentId).toBe(coreValues?.id)
+})
+
+test('invalid CSV rows leave verses and planned nested collections unchanged', async ({ page }) => {
+  const csvContent = `Reference,Content,CollectionPath,Interval
+John 15:5,"Apart from me you can do nothing",Core Values/Abide in Christ,30
+Philippians 2:3,"Value others above yourselves",Core Values/Humility,not-a-number`
+
+  await openCSVImport(page)
+  await page.getByPlaceholder(/Paste your CSV/i).fill(csvContent)
+  await page.getByRole('button', { name: /Import 2 verses/i }).click()
+  await expect(page.getByText(/not a number/i)).toBeVisible()
+  expect(await getStoredCollections(page)).toEqual([])
+  expect(await getStoredVerses(page)).toEqual([])
 })
 
 test('cancel: close modal without importing', async ({ page }) => {

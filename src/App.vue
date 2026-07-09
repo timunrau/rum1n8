@@ -1780,7 +1780,7 @@
               :class="{ 'bulk-target-option--selected': bulkCollectionTargetIds[0] === collection.id }"
               @click="bulkCollectionTargetIds = [collection.id]"
             >
-              <span>{{ collection.parentId ? `${getCollectionName(collection.parentId)} / ${collection.name}` : collection.name }}</span>
+              <span>{{ getCollectionPathLabel(collection.id) }}</span>
               <svg v-if="bulkCollectionTargetIds[0] === collection.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7" />
               </svg>
@@ -1887,10 +1887,13 @@
                 :key="collection.id"
                 :value="collection.id"
               >
-                {{ collection.name }}
+                {{ collection.displayName }}
               </option>
             </select>
           </div>
+          <p v-if="collectionFormError" class="text-sm text-status-error-text" role="alert">
+            {{ collectionFormError }}
+          </p>
         </form>
 
         <template #footer>
@@ -1958,10 +1961,13 @@
                 :key="collection.id"
                 :value="collection.id"
               >
-                {{ collection.name }}
+                {{ collection.displayName }}
               </option>
             </select>
           </div>
+          <p v-if="editCollectionFormError" class="text-sm text-status-error-text" role="alert">
+            {{ editCollectionFormError }}
+          </p>
         </form>
 
         <template #footer>
@@ -1997,15 +2003,15 @@
       <ModalSheet :show="showImportCSV" title="Import Verses from CSV" data-testid="modal-import-csv" @close="closeImportCSV">
         <div class="space-y-4">
           <p class="text-sm text-text-secondary">
-            Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>Collection</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
+            Upload a CSV file with columns: <strong>Reference</strong> (required), <strong>Content</strong> (required), and optional fields: <strong>Version</strong>, <strong>Collection</strong>, <strong>CollectionPath</strong>, <strong>DaysUntilNextReview</strong>, <strong>Interval</strong>.
           </p>
           <div class="bg-status-info-bg border border-status-info-border rounded-lg p-4">
             <p class="text-xs text-status-info-text mb-2"><strong>CSV Format:</strong></p>
-            <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,Collection,DaysUntilNextReview,Interval
-John 3:16,"For God so loved the world...",NIV,Salvation,45,60
-Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
+            <pre class="text-xs text-status-info-text bg-status-info-bg p-2 rounded overflow-x-auto">Reference,Content,Version,CollectionPath,DaysUntilNextReview,Interval
+John 15:5,"Apart from me you can do nothing",NIV,Core Values/Abide in Christ,45,60
+Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</pre>
             <p class="text-xs text-status-info-text mt-2">
-              <strong>Optional columns:</strong> Version, Collection, DaysUntilNextReview (days until next review), Interval (review interval in days).
+              <strong>Collection</strong> creates or reuses one child of the import destination. <strong>CollectionPath</strong> supports nested collections separated by “/”. Use one or the other.
               When Interval and DaysUntilNextReview are provided, verses will be imported with memorization progress.
             </p>
           </div>
@@ -2069,6 +2075,7 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
                       <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Content</th>
                       <th v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
                       <th v-if="csvPreview.some(r => r.collection)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Collection</th>
+                      <th v-if="csvPreview.some(r => r.collectionPath)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Collection Path</th>
                       <th v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Days Until Review</th>
                       <th v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Interval</th>
                     </tr>
@@ -2079,6 +2086,7 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
                       <td class="px-3 py-2 text-text-primary">{{ (row.content || '').substring(0, 50) }}{{ (row.content || '').length > 50 ? '...' : '' }}</td>
                       <td v-if="csvPreview.some(r => r.version)" class="px-3 py-2 text-text-primary">{{ row.version || '' }}</td>
                       <td v-if="csvPreview.some(r => r.collection)" class="px-3 py-2 text-text-primary">{{ row.collection || '' }}</td>
+                      <td v-if="csvPreview.some(r => r.collectionPath)" class="px-3 py-2 text-text-primary">{{ row.collectionPath || '' }}</td>
                       <td v-if="csvPreview.some(r => r.daysUntilNextReview)" class="px-3 py-2 text-text-primary">{{ row.daysUntilNextReview || '' }}</td>
                       <td v-if="csvPreview.some(r => r.interval)" class="px-3 py-2 text-text-primary">{{ row.interval || '' }}</td>
                     </tr>
@@ -2089,14 +2097,28 @@ Romans 8:28,"And we know that in all things...",ESV,Encouragement,30,60</pre>
             <p class="text-xs text-text-muted mt-2">Total rows: {{ csvPreview.length }}</p>
           </div>
 
-          <!-- Collections selector (only when opening from collections screen) -->
-          <CollectionPicker
-            v-if="csvImportFromCollectionsScreen && collections.length > 0"
-            :collections="sortedCollections"
-            v-model="csvImportTargetCollectionIds"
-            label="Add to collections"
-          />
-          <p v-if="csvImportFromCollectionsScreen && collections.length > 0" class="text-xs text-text-muted -mt-2">Select which collections to add imported verses to. Leave empty for master list only.</p>
+          <div>
+            <label for="csv-import-destination" class="block text-sm font-medium text-text-secondary mb-2">
+              Import into
+            </label>
+            <select
+              id="csv-import-destination"
+              v-model="csvImportDestinationId"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary"
+            >
+              <option :value="null">Top level</option>
+              <option
+                v-for="collection in availableParentCollections"
+                :key="collection.id"
+                :value="collection.id"
+              >
+                {{ collection.displayName }}
+              </option>
+            </select>
+            <p class="text-xs text-text-muted mt-2">
+              CSV collections and collection paths will be created beneath this destination.
+            </p>
+          </div>
         </div>
 
         <template #footer>
@@ -2420,11 +2442,17 @@ import {
   canCreateChildCollection,
   canDeleteCollection as canDeleteCollectionRecord,
   getChildCollections,
+  getCollectionAncestors,
   getCollectionDueCount as getAggregateCollectionDueCount,
+  getCollectionPath,
   getCollectionParentId,
   getCollectionVerses,
   getRootCollections,
+  getSiblingNameConflict,
+  normalizeCollectionName,
   normalizeCollections,
+  normalizeVerseCollectionIds,
+  repairCollections,
   VIRTUAL_COLLECTION_IDS,
 } from './utils/collections.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
@@ -2472,8 +2500,10 @@ export default {
     const collections = ref([])
     const showForm = ref(false)
     const showCollectionForm = ref(false)
+    const collectionFormError = ref('')
     const showEditVerseForm = ref(false)
     const showEditCollectionForm = ref(false)
+    const editCollectionFormError = ref('')
     const showPracticeSettings = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
@@ -2827,8 +2857,7 @@ export default {
     const csvTextarea = ref(null)
     const csvPastedText = ref('')
     const backupFileInput = ref(null)
-    const csvImportFromCollectionsScreen = ref(false)
-    const csvImportTargetCollectionIds = ref([])
+    const csvImportDestinationId = ref(null)
     const csvPreview = ref([])
     const csvImportStatus = ref(null)
     const importingCSV = ref(false)
@@ -3231,10 +3260,9 @@ export default {
       window.history.replaceState(rootState, '', rootUrl)
       currentView.value = 'collections'
 
-      const parentState = getCollectionUpState(collectionId)
-      if (parentState.view === 'collection') {
-        currentCollectionId.value = parentState.collectionId
-        pushNavigationState(parentState)
+      for (const ancestor of getCollectionAncestors(collections.value, collectionId)) {
+        currentCollectionId.value = ancestor.id
+        pushNavigationState({ view: 'collection', collectionId: ancestor.id })
       }
 
       currentCollectionId.value = collectionId
@@ -3313,9 +3341,11 @@ export default {
 
       showCollectionForm.value = false
       newCollection.value = { name: '', description: '', parentId: null }
+      collectionFormError.value = ''
 
       showEditCollectionForm.value = false
       editingCollection.value = null
+      editCollectionFormError.value = ''
 
       showEditVerseForm.value = false
       editingVerse.value = null
@@ -3326,7 +3356,7 @@ export default {
       csvPreview.value = []
       csvImportStatus.value = null
       csvPastedText.value = ''
-      csvImportTargetCollectionIds.value = []
+      csvImportDestinationId.value = null
       if (csvFileInput.value) csvFileInput.value.value = ''
 
       showSettings.value = false
@@ -4209,12 +4239,25 @@ export default {
         : []
     ))
 
+    const getCollectionPathLabel = (collectionId) => (
+      getCollectionPath(collections.value, collectionId) || getCollectionName(collectionId)
+    )
+
     const canCreateCollectionInCurrentContext = computed(() => (
       !currentCollectionId.value ||
       canCreateChildCollection(collections.value, currentCollectionId.value)
     ))
 
-    const availableParentCollections = computed(() => rootSortedCollections.value)
+    const availableParentCollections = computed(() => collections.value
+      .map(collection => ({
+        ...collection,
+        displayName: getCollectionPath(collections.value, collection.id),
+      }))
+      .sort((a, b) => {
+        const nameComparison = collectionNameCollator.compare(a.displayName || '', b.displayName || '')
+        if (nameComparison !== 0) return nameComparison
+        return String(a.id || '').localeCompare(String(b.id || ''))
+      }))
 
     const editableParentCollections = computed(() => {
       if (!editingCollection.value) return availableParentCollections.value
@@ -4759,6 +4802,11 @@ export default {
             }
             needsMigration = true
           }
+          const normalizedCollectionIds = normalizeVerseCollectionIds(collections.value, verse.collectionIds)
+          if (JSON.stringify(normalizedCollectionIds) !== JSON.stringify(verse.collectionIds)) {
+            verse.collectionIds = normalizedCollectionIds
+            needsMigration = true
+          }
           return verse
         })
         // Persist migrations without starting sync; onMounted triggers the single startup sync.
@@ -4809,6 +4857,20 @@ export default {
       
       // Trigger sync after save
       triggerSync()
+    }
+
+    const normalizeAllVerseCollectionMemberships = () => {
+      let changed = false
+      const now = new Date().toISOString()
+      verses.value.forEach(verse => {
+        const currentIds = Array.isArray(verse.collectionIds) ? verse.collectionIds.map(String) : []
+        const normalizedIds = normalizeVerseCollectionIds(collections.value, currentIds)
+        if (JSON.stringify(currentIds) === JSON.stringify(normalizedIds)) return
+        verse.collectionIds = normalizedIds
+        verse.lastModified = now
+        changed = true
+      })
+      return changed
     }
 
     // Get adjacent keys on QWERTY keyboard for fuzzy typing
@@ -5397,7 +5459,7 @@ export default {
       if (newVerse.value.reference && newVerse.value.content) {
         const now = new Date().toISOString()
         const collectionIds = Array.isArray(newVerse.value.collectionIds)
-          ? [...newVerse.value.collectionIds]
+          ? normalizeVerseCollectionIds(collections.value, newVerse.value.collectionIds)
           : []
         
         const verse = {
@@ -5565,9 +5627,15 @@ export default {
     // Add new collection
     const addCollection = () => {
       if (newCollection.value.name.trim()) {
-        const parentId = canAssignCollectionParent(collections.value, null, newCollection.value.parentId)
-          ? newCollection.value.parentId || null
-          : null
+        const parentId = newCollection.value.parentId || null
+        if (!canAssignCollectionParent(collections.value, null, parentId)) {
+          collectionFormError.value = 'Choose a valid parent collection.'
+          return
+        }
+        if (getSiblingNameConflict(collections.value, { name: newCollection.value.name, parentId })) {
+          collectionFormError.value = `A collection named “${newCollection.value.name.trim()}” already exists here.`
+          return
+        }
         const collection = {
           id: Date.now().toString(),
           name: newCollection.value.name.trim(),
@@ -5585,6 +5653,7 @@ export default {
     // Close collection form
     const closeCollectionForm = () => {
       showCollectionForm.value = false
+      collectionFormError.value = ''
       newCollection.value = {
         name: '',
         description: '',
@@ -5613,6 +5682,7 @@ export default {
     // Open new collection from FAB menu
     const openNewCollection = () => {
       fabMenuOpen.value = false
+      collectionFormError.value = ''
       newCollection.value = {
         name: '',
         description: '',
@@ -5627,8 +5697,10 @@ export default {
     // Open CSV import modal
     const openImportCSV = () => {
       fabMenuOpen.value = false
-      csvImportFromCollectionsScreen.value = !currentCollectionId.value && currentView.value === 'collections'
-      csvImportTargetCollectionIds.value = csvImportFromCollectionsScreen.value ? [] : []
+      csvImportDestinationId.value = currentCollectionId.value &&
+        !VIRTUAL_COLLECTION_IDS.has(currentCollectionId.value)
+        ? currentCollectionId.value
+        : null
       showImportCSV.value = true
       csvPreview.value = []
       csvImportStatus.value = null
@@ -5642,7 +5714,7 @@ export default {
       csvPreview.value = []
       csvImportStatus.value = null
       csvPastedText.value = ''
-      csvImportTargetCollectionIds.value = []
+      csvImportDestinationId.value = null
       if (csvFileInput.value) {
         csvFileInput.value.value = ''
       }
@@ -5663,6 +5735,9 @@ export default {
       const contentIndex = normalizedHeaders.findIndex(h => h === 'content')
       const versionIndex = normalizedHeaders.findIndex(h => h === 'version')
       const collectionIndex = normalizedHeaders.findIndex(h => h === 'collection' || h === 'collections')
+      const collectionPathIndex = normalizedHeaders.findIndex(h => (
+        h === 'collectionpath' || h === 'collection_path' || h === 'collection path'
+      ))
       const daysUntilNextReviewIndex = normalizedHeaders.findIndex(h => 
         h === 'daysuntilnextreview' || h === 'daysuntilreview' || h === 'days_until_next_review' || h === 'days_until_review'
       )
@@ -5670,6 +5745,9 @@ export default {
       
       if (referenceIndex === -1 || contentIndex === -1) {
         throw new Error('CSV must have "Reference" and "Content" columns')
+      }
+      if (collectionIndex !== -1 && collectionPathIndex !== -1) {
+        throw new Error('CSV must use either "Collection" or "CollectionPath", not both')
       }
       
       // Parse data rows
@@ -5683,6 +5761,7 @@ export default {
           content: values[contentIndex]?.trim() || '',
           version: versionIndex !== -1 ? (values[versionIndex]?.trim() || '') : '',
           collection: collectionIndex !== -1 ? (values[collectionIndex]?.trim() || '') : '',
+          collectionPath: collectionPathIndex !== -1 ? (values[collectionPathIndex]?.trim() || '') : '',
           daysUntilNextReview: daysUntilNextReviewIndex !== -1 ? (values[daysUntilNextReviewIndex]?.trim() || '') : '',
           interval: intervalIndex !== -1 ? (values[intervalIndex]?.trim() || '') : ''
         }
@@ -5866,24 +5945,31 @@ export default {
     // Import verses from CSV
     const importCSVVerses = () => {
       if (csvPreview.value.length === 0) return
-      
+
       importingCSV.value = true
       csvImportStatus.value = null
-      
+
       try {
         const now = new Date().toISOString()
+        const destinationId = csvImportDestinationId.value
+          ? String(csvImportDestinationId.value)
+          : null
+        if (destinationId && !collections.value.some(collection => String(collection.id) === destinationId)) {
+          throw new Error('Choose a valid import destination')
+        }
+
+        const plannedCollections = collections.value.map(collection => ({ ...collection }))
+        const plannedVerses = verses.value.map(verse => ({
+          ...verse,
+          collectionIds: Array.isArray(verse.collectionIds) ? [...verse.collectionIds] : [],
+          reviewHistory: Array.isArray(verse.reviewHistory) ? [...verse.reviewHistory] : [],
+        }))
         let importedCount = 0
         let updatedCount = 0
         let importedWithProgressCount = 0
         let updatedWithProgressCount = 0
-        
-        // Determine manually selected collection IDs to add verses to.
-        let selectedCollectionIds = []
-        if (csvImportFromCollectionsScreen.value) {
-          selectedCollectionIds = [...(csvImportTargetCollectionIds.value || [])]
-        } else if (currentCollectionId.value && currentCollectionId.value !== 'master-list') {
-          selectedCollectionIds = [currentCollectionId.value]
-        }
+        let createdCollectionCount = 0
+        let collectionSequence = 0
 
         const normalizeVerseKeyPart = (value) => String(value || '').trim().toLowerCase()
         const getVerseKey = (row) => [
@@ -5892,178 +5978,169 @@ export default {
           String(row.content || '').trim()
         ].join('\u001f')
 
-        const normalizeCollectionName = (name) => String(name || '').trim().toLowerCase()
-        const collectionIdByName = new Map(
-          collections.value
-            .filter(collection => collection?.name)
-            .map(collection => [normalizeCollectionName(collection.name), collection.id])
-        )
-        let createdCollectionCount = 0
-
-        const getOrCreateImportCollectionId = (name) => {
-          const normalizedName = normalizeCollectionName(name)
-          if (!normalizedName) return null
-
-          const existingId = collectionIdByName.get(normalizedName)
-          if (existingId) return existingId
-
-          const collection = {
-            id: Date.now().toString() + '-csv-' + Math.random().toString(36).substr(2, 9),
-            name: String(name).trim(),
-            description: '',
-            parentId: null,
-            createdAt: now,
-            lastModified: now
+        const getCollectionPathSegments = (row) => {
+          if (row.collection && row.collectionPath) {
+            throw new Error(`Row “${row.reference}” uses both Collection and CollectionPath`)
           }
-          collections.value.push(collection)
-          collectionIdByName.set(normalizedName, collection.id)
-          createdCollectionCount++
-          return collection.id
+          if (row.collectionPath) {
+            const segments = String(row.collectionPath).split('/').map(segment => segment.trim())
+            if (segments.some(segment => !segment)) {
+              throw new Error(`Invalid CollectionPath for “${row.reference}”: path segments cannot be empty`)
+            }
+            return segments
+          }
+          return row.collection ? [String(row.collection).trim()] : []
+        }
+
+        const getOrCreateImportPathId = (segments) => {
+          let parentId = destinationId
+          for (const name of segments) {
+            const normalizedName = normalizeCollectionName(name)
+            let collection = plannedCollections.find(item => (
+              (item.parentId ? String(item.parentId) : null) === parentId &&
+              normalizeCollectionName(item.name) === normalizedName
+            ))
+            if (!collection) {
+              collectionSequence++
+              collection = {
+                id: `${Date.now()}-csv-${collectionSequence}-${Math.random().toString(36).slice(2, 8)}`,
+                name,
+                description: '',
+                parentId,
+                createdAt: now,
+                lastModified: now,
+              }
+              plannedCollections.push(collection)
+              createdCollectionCount++
+            }
+            parentId = String(collection.id)
+          }
+          return parentId
         }
 
         const groupedRows = new Map()
         csvPreview.value.forEach(row => {
+          let interval = null
+          let daysUntilNextReview = null
+          try {
+            interval = parseNumericField(row.interval, 'Interval', 0, 365)
+            daysUntilNextReview = parseNumericField(row.daysUntilNextReview, 'DaysUntilNextReview', 0, 365)
+          } catch (error) {
+            throw new Error(`Error in row “${row.reference}”: ${error.message}`)
+          }
+
           const key = getVerseKey(row)
           const group = groupedRows.get(key) || {
             ...row,
-            collectionIds: new Set(selectedCollectionIds)
+            interval,
+            daysUntilNextReview,
+            collectionIds: new Set(),
           }
 
-          const csvCollectionId = getOrCreateImportCollectionId(row.collection)
-          if (csvCollectionId) {
-            group.collectionIds.add(csvCollectionId)
+          const segments = getCollectionPathSegments(row)
+          const targetId = segments.length > 0
+            ? getOrCreateImportPathId(segments)
+            : destinationId
+          if (targetId) group.collectionIds.add(targetId)
+          if (group.daysUntilNextReview === null && daysUntilNextReview !== null) {
+            group.daysUntilNextReview = daysUntilNextReview
           }
-          if (!group.daysUntilNextReview && row.daysUntilNextReview) {
-            group.daysUntilNextReview = row.daysUntilNextReview
-          }
-          if (!group.interval && row.interval) {
-            group.interval = row.interval
+          if (group.interval === null && interval !== null) {
+            group.interval = interval
           }
 
           groupedRows.set(key, group)
         })
 
         groupedRows.forEach(row => {
-          // Parse and validate interval and days until review
-          let interval = null
-          let daysUntilNextReview = null
-          
-          try {
-            interval = parseNumericField(row.interval, 'Interval', 0, 365)
-            daysUntilNextReview = parseNumericField(row.daysUntilNextReview, 'DaysUntilNextReview', 0, 365)
-          } catch (error) {
-            throw new Error(`Error in row "${row.reference}": ${error.message}`)
-          }
-          
+          const interval = row.interval
+          const daysUntilNextReview = row.daysUntilNextReview
           const rowReference = row.reference.trim()
           const rowContent = row.content.trim()
           const rowVersion = row.version ? row.version.trim().toUpperCase() : ''
 
-          // Check if verse already exists by reference, version, and exact imported content.
-          const existingVerse = verses.value.find(v => 
+          const existingVerse = plannedVerses.find(v =>
             normalizeVerseKeyPart(v.reference) === normalizeVerseKeyPart(rowReference) &&
             normalizeVerseKeyPart(v.bibleVersion) === normalizeVerseKeyPart(rowVersion) &&
             String(v.content || '').trim() === rowContent
           )
-          
+
           if (existingVerse) {
-            // Update existing verse with memorization data
             let hasProgressUpdate = false
             let hasAnyUpdate = false
-            
-            // Update version if provided and missing on an older matching record.
+
             if (rowVersion && !existingVerse.bibleVersion) {
               existingVerse.bibleVersion = rowVersion
               hasAnyUpdate = true
             }
-            
-            // Update memorization fields if provided
+
             if (interval !== null && interval > 0) {
               existingVerse.memorizationStatus = 'mastered'
               existingVerse.interval = interval
-              
-              // Estimate review count if not already set or if interval suggests more reviews
               const estimatedCount = estimateReviewCount(interval)
               if (!existingVerse.reviewCount || existingVerse.reviewCount < estimatedCount) {
                 existingVerse.reviewCount = estimatedCount
               }
-              
               hasProgressUpdate = true
               hasAnyUpdate = true
             }
-            
-            // Update next review date
+
             if (daysUntilNextReview !== null) {
               const nextDate = new Date()
               nextDate.setDate(nextDate.getDate() + daysUntilNextReview)
               existingVerse.nextReviewDate = nextDate.toISOString()
-              
-              // If we have a next review date and interval, set last reviewed date
               if (interval !== null && interval > 0 && !existingVerse.lastReviewed) {
                 const lastReviewDate = new Date(nextDate)
                 lastReviewDate.setDate(lastReviewDate.getDate() - interval)
                 existingVerse.lastReviewed = lastReviewDate.toISOString()
               }
-              
               hasProgressUpdate = true
               hasAnyUpdate = true
             } else if (interval !== null && interval > 0 && !existingVerse.nextReviewDate) {
-              // If interval provided but no days until review, set next review to now (due immediately)
               existingVerse.nextReviewDate = now
               hasAnyUpdate = true
             }
-            
-            // Update ease factor if we're setting up a mastered verse
+
             if (interval !== null && interval > 0 && existingVerse.easeFactor === 2.5) {
-              // Keep default ease factor for now, or could calculate based on interval
               existingVerse.easeFactor = 2.5
             }
-            
-            // If importing into collection(s), add to those collections if not already there
-            for (const cid of row.collectionIds) {
-              if (!existingVerse.collectionIds) {
-                existingVerse.collectionIds = []
-              }
-              if (!existingVerse.collectionIds.includes(cid)) {
-                existingVerse.collectionIds.push(cid)
-                hasAnyUpdate = true
-              }
+
+            const nextCollectionIds = normalizeVerseCollectionIds(
+              plannedCollections,
+              [...(existingVerse.collectionIds || []), ...row.collectionIds]
+            )
+            if (JSON.stringify(nextCollectionIds) !== JSON.stringify(existingVerse.collectionIds || [])) {
+              existingVerse.collectionIds = nextCollectionIds
+              hasAnyUpdate = true
             }
-            
-            // Update lastModified timestamp whenever verse is modified
+
             if (hasAnyUpdate) {
               existingVerse.lastModified = now
             }
-            
             if (hasProgressUpdate) {
               updatedWithProgressCount++
             }
             updatedCount++
             return
           }
-          
-          // Create new verse
+
           let memorizationStatus = 'unmemorized'
           let reviewCount = 0
           let nextReviewDate = null
           let lastReviewed = null
           let verseInterval = 0
           let hasProgress = false
-          
-          // Set up memorization data if provided
+
           if (interval !== null && interval > 0) {
             memorizationStatus = 'mastered'
             verseInterval = interval
             reviewCount = estimateReviewCount(interval)
             hasProgress = true
-            
-            // Set next review date
+
             if (daysUntilNextReview !== null) {
               const nextDate = new Date()
               nextDate.setDate(nextDate.getDate() + daysUntilNextReview)
               nextReviewDate = nextDate.toISOString()
-              
-              // Estimate last reviewed date
               const lastReviewDate = new Date(nextDate)
               lastReviewDate.setDate(lastReviewDate.getDate() - interval)
               lastReviewed = lastReviewDate.toISOString()
@@ -6072,7 +6149,7 @@ export default {
               nextReviewDate = now
             }
           }
-          
+
           const verse = {
             id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
             reference: rowReference,
@@ -6087,21 +6164,23 @@ export default {
             easeFactor: 2.5,
             interval: verseInterval,
             reviewHistory: [],
-            collectionIds: [...row.collectionIds]
+            collectionIds: normalizeVerseCollectionIds(plannedCollections, [...row.collectionIds])
           }
-          
-          verses.value.unshift(verse)
+
+          plannedVerses.unshift(verse)
           importedCount++
           if (hasProgress) {
             importedWithProgressCount++
           }
         })
-        
+
+        collections.value = normalizeCollections(plannedCollections)
+        verses.value = plannedVerses
         if (createdCollectionCount > 0) {
           saveCollections()
         }
         saveVerses()
-        
+
         // Build status message
         let statusMessage = `Successfully imported ${importedCount} verse${importedCount !== 1 ? 's' : ''}`
         if (importedWithProgressCount > 0) {
@@ -6116,12 +6195,12 @@ export default {
         if (createdCollectionCount > 0) {
           statusMessage += `. Created ${createdCollectionCount} collection${createdCollectionCount !== 1 ? 's' : ''}`
         }
-        
+
         csvImportStatus.value = {
           type: 'success',
           message: statusMessage
         }
-        
+
         // Clear preview after successful import
         setTimeout(() => {
           csvPreview.value = []
@@ -6143,6 +6222,7 @@ export default {
 
     // Edit collection
     const startEditCollection = (collection) => {
+      editCollectionFormError.value = ''
       editingCollection.value = {
         ...collection,
         parentId: collection.parentId || null
@@ -6156,18 +6236,25 @@ export default {
       if (editingCollection.value && editingCollection.value.name) {
         const collection = collections.value.find(c => c.id === editingCollection.value.id)
         if (collection) {
-          const nextParentId = canAssignCollectionParent(
-            collections.value,
-            editingCollection.value.id,
-            editingCollection.value.parentId
-          )
-            ? editingCollection.value.parentId || null
-            : collection.parentId || null
+          const nextParentId = editingCollection.value.parentId || null
+          if (!canAssignCollectionParent(collections.value, editingCollection.value.id, nextParentId)) {
+            editCollectionFormError.value = 'A collection cannot be moved into itself or one of its descendants.'
+            return
+          }
+          if (getSiblingNameConflict(collections.value, {
+            name: editingCollection.value.name,
+            parentId: nextParentId,
+            excludeId: editingCollection.value.id,
+          })) {
+            editCollectionFormError.value = `A collection named “${editingCollection.value.name.trim()}” already exists there.`
+            return
+          }
           collection.name = editingCollection.value.name.trim()
           collection.description = editingCollection.value.description ? editingCollection.value.description.trim() : ''
           collection.parentId = nextParentId
           collection.lastModified = new Date().toISOString() // Track when collection was last modified
           saveCollections()
+          if (normalizeAllVerseCollectionMemberships()) saveVerses()
           closeEditCollectionForm()
         }
       }
@@ -6177,6 +6264,7 @@ export default {
     const closeEditCollectionForm = () => {
       showEditCollectionForm.value = false
       editingCollection.value = null
+      editCollectionFormError.value = ''
       consumeModalState('editCollection')
     }
 
@@ -6473,7 +6561,7 @@ export default {
         }
         targetIds.forEach(id => nextIds.add(String(id)))
 
-        const normalizedNextIds = [...nextIds]
+        const normalizedNextIds = normalizeVerseCollectionIds(collections.value, [...nextIds])
         if (JSON.stringify(existingIds) === JSON.stringify(normalizedNextIds)) return
 
         verse.collectionIds = normalizedNextIds
@@ -6576,7 +6664,10 @@ export default {
           verse.reference = editingVerse.value.reference.trim()
           verse.content = editingVerse.value.content.trim()
           verse.bibleVersion = editingVerse.value.bibleVersion ? editingVerse.value.bibleVersion.trim().toUpperCase() : ''
-          verse.collectionIds = editingVerse.value.collectionIds || []
+          verse.collectionIds = normalizeVerseCollectionIds(
+            collections.value,
+            editingVerse.value.collectionIds || []
+          )
           verse.lastModified = new Date().toISOString() // Track when verse was last modified
           saveVerses()
           closeEditVerseForm()
@@ -8730,13 +8821,20 @@ export default {
             }
             if (result.collections) {
               collections.value = normalizeCollections(result.collections)
+              normalizeAllVerseCollectionMemberships()
               localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections.value))
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
             }
             if (result.appSettings) {
               appSettings.value = { ...result.appSettings }
             }
             
-            if (shouldShowFeedback) {
+            const repairedCollectionConflicts = (result.collectionRepairs || []).length > 0
+            if (repairedCollectionConflicts) {
+              showToast('Some collection conflicts were resolved')
+            }
+
+            if (shouldShowFeedback && !repairedCollectionConflicts) {
               if (syncRequestedWhileSyncing) {
                 syncFeedbackRequested = true
               } else {
@@ -9126,8 +9224,12 @@ export default {
         }
 
         // Replace data
-        verses.value = backupData.verses
-        collections.value = normalizeCollections(backupData.collections)
+        const collectionRepair = repairCollections(backupData.collections)
+        collections.value = collectionRepair.collections
+        verses.value = backupData.verses.map(verse => ({
+          ...verse,
+          collectionIds: normalizeVerseCollectionIds(collections.value, verse.collectionIds || []),
+        }))
 
         // Restore settings if present
         if (backupData.settings) {
@@ -9180,7 +9282,9 @@ export default {
 
         await showAppMessage({
           title: 'Backup Restored',
-          message: 'Data imported successfully!',
+          message: collectionRepair.repairs.length > 0
+            ? 'Data imported successfully. Some collection conflicts were resolved.'
+            : 'Data imported successfully!',
           dataTestid: 'modal-restore-backup-success',
         })
       } catch (error) {
@@ -9516,6 +9620,7 @@ export default {
       canEditCollectionParent,
       currentCollectionId,
       showCollectionForm,
+      collectionFormError,
       showEditVerseForm,
       editingVerse,
       newCollection,
@@ -9535,6 +9640,8 @@ export default {
       handleDeleteCollectionFromModal,
       showEditCollectionForm,
       editingCollection,
+      editCollectionFormError,
+      getCollectionPathLabel,
       getCollectionName,
       getCollectionVerseCount,
       getCollectionDueCount,
@@ -9653,8 +9760,7 @@ export default {
       csvFileInput,
       csvPreview,
       csvImportStatus,
-      csvImportFromCollectionsScreen,
-      csvImportTargetCollectionIds,
+      csvImportDestinationId,
       importingCSV,
       handleCSVFileSelect,
       handleCSVPaste,

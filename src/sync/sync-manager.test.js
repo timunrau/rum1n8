@@ -83,4 +83,36 @@ describe('sync deletion tracking', () => {
       }
     ])
   })
+
+  it('repairs synced hierarchy cycles and duplicate siblings without dropping data', async () => {
+    const { mergeData } = await import('./sync-manager.js')
+
+    const result = mergeData([], [
+      {
+        id: 'a', name: 'Humility', description: '', parentId: 'b',
+        createdAt: '2026-04-08T00:00:00.000Z', lastModified: '2026-04-08T00:00:00.000Z'
+      },
+      {
+        id: 'b', name: 'Work', description: '', parentId: 'a',
+        createdAt: '2026-04-09T00:00:00.000Z', lastModified: '2026-04-09T00:00:00.000Z'
+      },
+      {
+        id: 'duplicate', name: 'humility', description: '', parentId: null,
+        createdAt: '2026-04-10T00:00:00.000Z', lastModified: '2026-04-10T00:00:00.000Z'
+      },
+    ], {
+      verses: [],
+      collections: [],
+      deletedVerses: [],
+      deletedCollections: [],
+    })
+
+    expect(result.collections).toHaveLength(3)
+    expect(result.collections.find(collection => collection.id === 'a').parentId).toBeNull()
+    expect(result.collections.find(collection => collection.id === 'b').parentId).toBe('a')
+    expect(result.collections.find(collection => collection.id === 'duplicate').name).toBe('humility (2)')
+    expect(result.collectionRepairs.map(repair => repair.type)).toEqual(
+      expect.arrayContaining(['cycle', 'duplicate-name'])
+    )
+  })
 })

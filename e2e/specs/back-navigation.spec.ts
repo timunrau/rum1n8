@@ -112,16 +112,20 @@ test.describe('Collection navigation', () => {
     await expect(page).not.toHaveURL(/collection=child/)
   })
 
-  test('deep link to a child collection seeds parent and root back states', async ({ page }) => {
+  test('deep link to a deeply nested collection seeds every ancestor back state', async ({ page }) => {
     const now = new Date().toISOString()
     const collections = [
       { id: 'parent', name: 'Parent Collection', description: '', parentId: null, createdAt: now, lastModified: now },
       { id: 'child', name: 'Child Collection', description: '', parentId: 'parent', createdAt: now, lastModified: now },
+      { id: 'grandchild', name: 'Grandchild Collection', description: '', parentId: 'child', createdAt: now, lastModified: now },
     ]
-    await seedStorage(page, [masteredVerse({ id: 'deep-child-v1', collectionIds: ['child'] })], collections)
+    await seedStorage(page, [masteredVerse({ id: 'deep-child-v1', collectionIds: ['grandchild'] })], collections)
     await page.reload()
 
-    await gotoApp(page, '?view=collection&collection=child')
+    await gotoApp(page, '?view=collection&collection=grandchild')
+    await expect(page).toHaveURL(/\?view=collection&collection=grandchild/)
+
+    await page.goBack()
     await expect(page).toHaveURL(/\?view=collection&collection=child/)
 
     await page.goBack()

@@ -22,6 +22,13 @@
 </template>
 
 <script>
+import {
+  getCollectionAncestors,
+  getCollectionPath,
+  getDescendantCollections,
+  normalizeVerseCollectionIds,
+} from '../utils/collections.js'
+
 export default {
   name: 'CollectionPicker',
   props: {
@@ -44,7 +51,6 @@ export default {
       return this.normalizeSelection(this.modelValue)
     },
     displayCollections() {
-      const byId = new Map(this.collections.map((collection) => [collection.id, collection]))
       const collator = new Intl.Collator(undefined, {
         numeric: true,
         sensitivity: 'base',
@@ -52,14 +58,9 @@ export default {
 
       return this.collections
         .map((collection) => {
-          const parent = collection.parentId ? byId.get(collection.parentId) : null
-          const displayName = parent
-            ? `${parent.name} / ${collection.name}`
-            : collection.name
-
           return {
             ...collection,
-            displayName,
+            displayName: getCollectionPath(this.collections, collection.id),
           }
         })
         .sort((a, b) => {
@@ -75,51 +76,18 @@ export default {
       return this.selectedCollectionIds.includes(id)
     },
     normalizeSelection(collectionIds) {
-      const parentByChild = new Map(
-        this.collections
-          .filter((item) => item.parentId)
-          .map((item) => [item.id, item.parentId])
-      )
-      const childrenByParent = new Map()
-
-      for (const collection of this.collections) {
-        if (!collection.parentId) continue
-        const children = childrenByParent.get(collection.parentId) || []
-        children.push(collection.id)
-        childrenByParent.set(collection.parentId, children)
-      }
-
-      return (collectionIds || []).reduce((selected, id) => {
-        const parentId = parentByChild.get(id)
-        const childIds = childrenByParent.get(id) || []
-        let next = selected.filter((value) => value !== id)
-
-        if (parentId) {
-          next = next.filter((value) => value !== parentId)
-        } else if (childIds.length > 0) {
-          next = next.filter((value) => !childIds.includes(value))
-        }
-
-        return [...next, id]
-      }, [])
+      return normalizeVerseCollectionIds(this.collections, collectionIds)
     },
     toggle(id) {
-      const childIds = new Set(
-        this.collections
-          .filter((item) => item.parentId === id)
-          .map((item) => item.id)
-      )
-
       let updated = this.selectedCollectionIds.filter((value) => value !== id)
 
       if (!this.isSelected(id)) {
-        const collection = this.collections.find((item) => item.id === id)
-        if (collection?.parentId) {
-          updated = updated.filter((value) => value !== collection.parentId)
-        } else if (childIds.size > 0) {
-          updated = updated.filter((value) => !childIds.has(value))
-        }
-        updated = [...updated, id]
+        const conflictingIds = new Set([
+          ...getCollectionAncestors(this.collections, id).map(collection => String(collection.id)),
+          ...getDescendantCollections(this.collections, id).map(collection => String(collection.id)),
+        ])
+        updated = updated.filter(value => !conflictingIds.has(String(value)))
+        updated = this.normalizeSelection([...updated, id])
       }
 
       this.$emit('update:modelValue', updated)
