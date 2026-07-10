@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/timunrau/rum1n8/compare/v1.37.0...v1.38.0) (2026-07-10)
+
+
+### Features
+
+* add collection CSV export ([a22da50](https://github.com/timunrau/rum1n8/commit/a22da50c92c84d151663e4ccc09576c10864b7b1))
+
 # [1.37.0](https://github.com/timunrau/rum1n8/compare/v1.36.6...v1.37.0) (2026-07-10)
 
 
