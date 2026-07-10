@@ -111,7 +111,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
+        <h1
+          class="practice-session-title practice-session-title--fading flex-1 flex items-center min-w-0"
+          :style="{ opacity: practiceReferenceHeaderOpacity }"
+        >
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
@@ -201,7 +204,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
+        <h1
+          class="practice-session-title practice-session-title--fading flex-1 flex items-center min-w-0"
+          :style="{ opacity: practiceReferenceHeaderOpacity }"
+        >
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
@@ -5004,6 +5010,21 @@ export default {
       return !!(appSettings.value.requireReferenceTyping && normalizeReferenceForTyping(verse?.reference))
     }
 
+    const isPracticeUnitVisible = (mode, index, retryOffset = 0) => {
+      return mode === 'learn' || (mode === 'memorize' && (index + retryOffset) % 2 === 0)
+    }
+
+    const practiceReferenceHeaderOpacity = computed(() => {
+      const verse = memorizingVerse.value || reviewingVerse.value
+      if (!verse || !shouldRequireReferenceTyping(verse)) return 1
+
+      const contentWords = reviewWords.value.filter(word => !word.isReferenceUnit)
+      if (contentWords.length === 0) return 1
+
+      const completedContentWords = contentWords.filter(word => word.revealed).length
+      return Math.max(0, 1 - completedContentWords / contentWords.length)
+    })
+
     // Expand verse content into words, splitting dash-joined phrases into separate entries.
     // "God—created" stays visually tight, while "God — created" keeps the authored spacing.
     const getVerseWords = (content) => {
@@ -5036,12 +5057,8 @@ export default {
         const firstLetter = requiredLetters[0]
         const { parts, separators } = splitWordParts(word)
 
-        let visible = false
-        if (mode === 'learn') {
-          visible = true
-        } else if (mode === 'memorize') {
-          visible = (index + retryOffset) % 2 === 0
-        }
+        const visibilityIndex = index + (options.visibilityIndexOffset || 0)
+        const visible = isPracticeUnitVisible(mode, visibilityIndex, retryOffset)
 
         return {
           text: word,
@@ -5065,9 +5082,9 @@ export default {
       if (!verse || !mode) return []
       const contentWords = buildContentPracticeWords(verse.content, mode, retryOffset)
       const referenceWords = shouldRequireReferenceTyping(verse)
-        ? buildReferencePracticeUnits(verse.reference).map((unit) => ({
+        ? buildReferencePracticeUnits(verse.reference).map((unit, referenceIndex) => ({
             ...unit,
-            visible: mode === 'learn'
+            visible: isPracticeUnitVisible(mode, contentWords.length + referenceIndex, retryOffset)
           }))
         : []
       return [...contentWords, ...referenceWords].map((word, index) => ({
@@ -5083,6 +5100,7 @@ export default {
       for (const record of records) {
         const startIndex = contentWords.length
         const recordWords = buildContentPracticeWords(record.content, mode, retryOffset, {
+          visibilityIndexOffset: startIndex,
           getMetadata: () => ({
             passageSegmentId: record.id,
             passageSegmentReference: record.reference
@@ -5099,9 +5117,9 @@ export default {
       }
 
       const referenceWords = shouldRequireReferenceTyping(passageVerse)
-        ? buildReferencePracticeUnits(passageVerse.reference).map((unit) => ({
+        ? buildReferencePracticeUnits(passageVerse.reference).map((unit, referenceIndex) => ({
             ...unit,
-            visible: mode === 'learn',
+            visible: isPracticeUnitVisible(mode, contentWords.length + referenceIndex, retryOffset),
             isCombinedPassageReferenceUnit: true
           }))
         : []
@@ -7748,9 +7766,7 @@ export default {
     }
 
     const resetPracticeWordForMode = (word, index, mode, retryOffset = 0) => {
-      const visible = word.isReferenceUnit
-        ? mode === 'learn'
-        : mode === 'learn' || (mode === 'memorize' && (index + retryOffset) % 2 === 0)
+      const visible = isPracticeUnitVisible(mode, index, retryOffset)
 
       return {
         ...word,
@@ -9597,6 +9613,7 @@ export default {
       closeForm,
       reviewingVerse,
       reviewWords,
+      practiceReferenceHeaderOpacity,
       currentPracticeWordIndex,
       typedLetter,
       reviewInput,
@@ -9933,6 +9950,10 @@ export default {
   letter-spacing: 0;
   margin: 0;
   color: var(--color-text-primary);
+}
+
+.practice-session-title--fading {
+  transition: opacity 180ms linear;
 }
 
 .practice-session-title > span {

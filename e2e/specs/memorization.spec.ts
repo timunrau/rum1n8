@@ -332,7 +332,7 @@ test('memorize mode: alternates hidden words on initial entry', async ({ page })
   await expect(page.locator('#practice-word-3 .text-transparent')).not.toBeAttached()
 })
 
-test('reference typing shows full reference and requires shorthand to complete', async ({ page }) => {
+test('reference typing fades the header through the verse and keeps it hidden on completion', async ({ page }) => {
   const verse = [
     {
       ...sampleVerses[0],
@@ -355,13 +355,57 @@ test('reference typing shows full reference and requires shorthand to complete',
   await expect(page.locator('#practice-word-3')).toContainText('3:')
   await expect(page.locator('#practice-word-4')).toContainText('16')
 
+  const header = page.locator('.practice-session-header .practice-session-title')
+  const headerOpacity = async () => Number(await header.evaluate((element) => getComputedStyle(element).opacity))
+  await expect.poll(headerOpacity).toBeCloseTo(1, 2)
+
   await page.locator('#letter-input-memorize').focus()
-  await page.keyboard.type('ot', { delay: 50 })
-  await page.waitForTimeout(150)
+  await page.keyboard.type('o', { delay: 50 })
+  await expect.poll(headerOpacity).toBeCloseTo(0.5, 2)
+
+  await page.keyboard.type('t', { delay: 50 })
+  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
   await expect(page.getByText('Learned')).toHaveCount(0)
 
   await page.keyboard.type('j316', { delay: 50 })
   await expect(page.getByText('Learned').first()).toBeVisible({ timeout: 3000 })
+  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
+})
+
+test('memorize mode continues alternating through reference chunks while keeping the colon visible', async ({ page }) => {
+  const verse = [
+    {
+      ...sampleVerses[0],
+      id: 'alternating-reference-tail',
+      reference: '1 Corinthians 12:13',
+      content: 'One Two Three Four',
+      memorizationStatus: 'learned',
+    },
+  ]
+  const collections = [{ id: 'c1', name: 'Test', description: '', createdAt: new Date().toISOString(), lastModified: new Date().toISOString() }]
+  await seedStorage(page, verse, collections)
+  await seedAppSettings(page, { requireReferenceTyping: true })
+  await page.reload()
+  await gotoApp(page, '?view=collections')
+  await page.getByText('All Verses').click()
+  await page.waitForTimeout(500)
+  await page.getByText('1 Corinthians 12:13').first().click()
+
+  // The verse starts hidden/visible and the reference continues the same sequence.
+  await expect(page.locator('#practice-word-4 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-5 .text-transparent')).not.toBeAttached()
+  await expect(page.locator('#practice-word-6 .text-transparent')).toBeAttached()
+  await expect(page.locator('#practice-word-6 .text-word-unrevealed')).toHaveText(':')
+  await expect(page.locator('#practice-word-7 .text-transparent')).not.toBeAttached()
+
+  const header = page.locator('.practice-session-header .practice-session-title')
+  const headerOpacity = async () => Number(await header.evaluate((element) => getComputedStyle(element).opacity))
+  await page.locator('#letter-input-memorize').focus()
+  await page.keyboard.type('ottf', { delay: 50 })
+  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
+
+  await page.keyboard.type('1c1213', { delay: 50 })
+  await expect(page.getByText('Memorized').first()).toBeVisible({ timeout: 3000 })
 })
 
 test('reference typing keeps an incorrect earlier digit red after a later digit is correct', async ({ page }) => {
