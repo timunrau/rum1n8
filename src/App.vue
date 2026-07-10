@@ -623,7 +623,7 @@
               </h1>
 
               <!-- Right side actions -->
-              <div class="flex items-center gap-1 flex-shrink-0">
+              <div class="relative flex items-center gap-1 flex-shrink-0">
                 <button
                   v-if="canUseVerseSelection && !isVerseSelectionMode"
                   type="button"
@@ -665,6 +665,57 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 15l-7 7-7-7" />
                   </svg>
                 </button>
+
+                <!-- Collection actions (user-created collections only) -->
+                <button
+                  v-if="isRealCurrentCollection && !isVerseSelectionMode"
+                  type="button"
+                  data-testid="collection-actions-trigger"
+                  class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
+                  title="Collection actions"
+                  aria-label="Collection actions"
+                  :aria-expanded="collectionActionsOpen"
+                  aria-haspopup="menu"
+                  @click.stop="collectionActionsOpen = !collectionActionsOpen"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="5" r="1.75" />
+                    <circle cx="12" cy="12" r="1.75" />
+                    <circle cx="12" cy="19" r="1.75" />
+                  </svg>
+                </button>
+
+                <div
+                  v-if="collectionActionsOpen"
+                  v-click-outside="closeCollectionActions"
+                  data-testid="collection-actions-menu"
+                  class="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-border-default bg-chrome p-1.5 shadow-soft"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary hover:bg-surface-hover active:bg-surface-active"
+                    role="menuitem"
+                    @click="editCurrentCollection"
+                  >
+                    <svg class="h-4 w-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Edit collection</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="collection-export-csv"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary hover:bg-surface-hover active:bg-surface-active"
+                    role="menuitem"
+                    @click="exportCurrentCollectionCSV"
+                  >
+                    <svg class="h-4 w-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M12 3v12m0 0l-4-4m4 4l4-4M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
+                    </svg>
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
             </div>
           </header>
@@ -2456,6 +2507,7 @@ import {
   VIRTUAL_COLLECTION_IDS,
 } from './utils/collections.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
+import { buildCollectionCSV } from './utils/collection-csv.js'
 import { applyReviewFrequencyOverride, REVIEW_FREQUENCY_OPTIONS } from './review-schedule.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
@@ -2788,6 +2840,7 @@ export default {
     const syncError = ref(null)
     const shareSuccess = ref(false)
     const fabMenuOpen = ref(false)
+    const collectionActionsOpen = ref(false)
     const isScrolled = ref(false)
     const isVerseSelectionMode = ref(false)
     const selectedVerseIds = ref([])
@@ -6220,6 +6273,49 @@ export default {
       }
     }
 
+    const closeCollectionActions = () => {
+      collectionActionsOpen.value = false
+    }
+
+    const getCurrentCollection = () => collections.value.find(collection => (
+      String(collection.id) === String(currentCollectionId.value)
+    )) || null
+
+    const editCurrentCollection = () => {
+      const collection = getCurrentCollection()
+      closeCollectionActions()
+      if (collection) startEditCollection(collection)
+    }
+
+    const exportCurrentCollectionCSV = () => {
+      const collectionId = currentCollectionId.value
+      closeCollectionActions()
+
+      try {
+        const exported = buildCollectionCSV(collections.value, verses.value, collectionId)
+        if (exported.verseCount === 0) {
+          showToast('This collection has no verses to export.', true)
+          return
+        }
+
+        const blob = new Blob([exported.csv], { type: 'text/csv;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = exported.filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+
+        const collectionLabel = exported.collectionCount === 1 ? 'collection' : 'collections'
+        showToast(`Exported ${exported.verseCount} verse${exported.verseCount === 1 ? '' : 's'} from ${exported.collectionCount} ${collectionLabel}`)
+      } catch (error) {
+        console.error('Error exporting collection CSV:', error)
+        showToast('Failed to export this collection.', true)
+      }
+    }
+
     // Edit collection
     const startEditCollection = (collection) => {
       editCollectionFormError.value = ''
@@ -6900,6 +6996,7 @@ export default {
       }
       if (collectionId !== previousCollectionId) {
         clearVerseSelection()
+        closeCollectionActions()
       }
     })
 
@@ -9619,6 +9716,11 @@ export default {
       editableParentCollections,
       canEditCollectionParent,
       currentCollectionId,
+      isRealCurrentCollection,
+      collectionActionsOpen,
+      closeCollectionActions,
+      editCurrentCollection,
+      exportCurrentCollectionCSV,
       showCollectionForm,
       collectionFormError,
       showEditVerseForm,
