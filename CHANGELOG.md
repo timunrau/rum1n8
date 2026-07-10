@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/timunrau/rum1n8/compare/v1.36.6...v1.37.0) (2026-07-10)
+
+
+### Features
+
+* support arbitrary-depth collections ([7909447](https://github.com/timunrau/rum1n8/commit/7909447492e7bf809ff31d8877dcd9614c034e9b))
+
 ## [1.36.6](https://github.com/timunrau/rum1n8/compare/v1.36.5...v1.36.6) (2026-07-09)
 
 
