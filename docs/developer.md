@@ -69,3 +69,4 @@ When using the dev proxy, set the proxy URL in the app to `http://localhost:3001
 
 - [User overview](../README.md)
 - [Hosting notes](hosting.md)
+- [Standalone Android implementation plan](android-standalone-plan.md)
