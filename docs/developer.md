@@ -62,7 +62,8 @@ When using the dev proxy, set the proxy URL in the app to `http://localhost:3001
 - The About modal version comes from `package.json`
 - Do not manually bump `package.json` for normal work
 - semantic-release handles releases from commits on `main`
-- Use Conventional Commits: `feat:` for minor, `fix:` or `perf:` for patch, and `!` or `BREAKING CHANGE:` for major
+- Use Conventional Commits: `feat:` for minor; `fix:`, `perf:`, `refactor:`, `build:`, or `chore(deps):` for patch; and `!` or `BREAKING CHANGE:` for major
+- Documentation, tests, CI-only changes, and chores outside the `deps` scope do not publish a release
 
 ## Related docs
 
