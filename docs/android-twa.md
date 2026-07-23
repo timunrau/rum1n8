@@ -56,7 +56,7 @@ npm run twa:install:debug
 
 The Gradle wrapper reuses the JDK and SDK paths recorded by Bubblewrap. The debug APK is written to `android-twa/app/build/outputs/apk/debug/app-debug.apk`. It should open a Custom Tab until its signing certificate is associated with the production origin.
 
-Pull-request and `main` CI runs compile and verify a debug APK to catch broken Android packaging, but do not retain or publish the artifact. Distribution builds are created locally so the upload key stays off GitHub. A debug APK can still be uploaded directly through Play Console's Internal App Sharing for quick testing. Google re-signs Internal App Sharing uploads, so use the SHA-256 fingerprint of Play's Internal App Sharing certificate in `assetlinks.json` when testing the trusted, full-screen presentation; a missing association intentionally falls back to a Custom Tab.
+CI verifies the web build and TWA launch metadata, but does not regenerate Android source or build APK/AAB artifacts. Android distribution builds are created locally so the upload key stays off GitHub. A debug APK can still be uploaded directly through Play Console's Internal App Sharing for quick testing. Google re-signs Internal App Sharing uploads, so use the SHA-256 fingerprint of Play's Internal App Sharing certificate in `assetlinks.json` when testing the trusted, full-screen presentation; a missing association intentionally falls back to a Custom Tab.
 
 For unsigned release artifacts:
 
