@@ -496,7 +496,7 @@ export default defineConfig(({ mode }) => {
       host: process.env.HOST === 'true' ? true : (process.env.HOST || '127.0.0.1'),
     },
     test: {
-      exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', '.claude/**'],
+      exclude: ['e2e/**', '**/e2e/**', 'node_modules/**', 'android-twa/**', '.claude/**'],
     },
     build: {
       rollupOptions: {

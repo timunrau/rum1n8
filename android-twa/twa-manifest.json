@@ -1,0 +1,70 @@
+{
+  "packageId": "xyz.unrau.rum1n8",
+  "host": "rum1n8.unrau.xyz",
+  "name": "rum1n8",
+  "launcherName": "rum1n8",
+  "display": "standalone",
+  "themeColor": "#F1EEE8",
+  "themeColorDark": "#121411",
+  "navigationColor": "#FBF8F2",
+  "navigationColorDark": "#181B17",
+  "navigationDividerColor": "#E7DED0",
+  "navigationDividerColorDark": "#30362E",
+  "backgroundColor": "#F1EEE8",
+  "enableNotifications": false,
+  "startUrl": "/app/",
+  "iconUrl": "https://rum1n8.unrau.xyz/icons/icon-512x512.png",
+  "maskableIconUrl": "https://rum1n8.unrau.xyz/icons/icon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "../../rum1n8-upload.keystore",
+    "alias": "rum1n8-upload"
+  },
+  "appVersionName": "1.39.1",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Collections",
+      "shortName": "Collections",
+      "url": "https://rum1n8.unrau.xyz/app/?view=collections",
+      "chosenIconUrl": "https://rum1n8.unrau.xyz/icons/icon-192x192.png"
+    },
+    {
+      "name": "Review",
+      "shortName": "Review",
+      "url": "https://rum1n8.unrau.xyz/app/?view=review-list",
+      "chosenIconUrl": "https://rum1n8.unrau.xyz/icons/icon-192x192.png"
+    },
+    {
+      "name": "Stats",
+      "shortName": "Stats",
+      "url": "https://rum1n8.unrau.xyz/app/?view=stats",
+      "chosenIconUrl": "https://rum1n8.unrau.xyz/icons/icon-192x192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://rum1n8.unrau.xyz/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://rum1n8.unrau.xyz/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "appVersion": "1.39.1"
+}

@@ -10,6 +10,11 @@ README.md
 .DS_Store
 .vscode
 .idea
+android-twa/node_modules
+android-twa/.gradle
+android-twa/**/build
+android-twa/*.apk
+android-twa/*.aab
 coverage
 *.swp
 *.swo

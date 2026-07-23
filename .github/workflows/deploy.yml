@@ -11,8 +11,11 @@ jobs:
   e2e-tests:
     uses: ./.github/workflows/e2e.yml
 
+  android-twa:
+    uses: ./.github/workflows/android-twa.yml
+
   release:
-    needs: [unit-tests, e2e-tests]
+    needs: [unit-tests, e2e-tests, android-twa]
     runs-on: ubuntu-latest
     permissions:
       contents: write

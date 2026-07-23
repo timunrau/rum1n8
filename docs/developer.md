@@ -57,6 +57,10 @@ NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:all
 
 When using the dev proxy, set the proxy URL in the app to `http://localhost:3001`.
 
+## Android Trusted Web Activity
+
+The hosted Android wrapper lives in `android-twa/`. See [Android TWA development](android-twa.md) for setup, regeneration, signing, and device-test commands. `npm run build` verifies that the web manifest and generated Android launch metadata still point directly to `/app/`.
+
 ## Releases
 
 - The About modal version comes from `package.json`
@@ -69,4 +73,6 @@ When using the dev proxy, set the proxy URL in the app to `http://localhost:3001
 
 - [User overview](../README.md)
 - [Hosting notes](hosting.md)
+- [Android TWA development](android-twa.md)
+- [Android TWA implementation plan](android-twa-plan.md)
 - [Standalone Android implementation plan](android-standalone-plan.md)

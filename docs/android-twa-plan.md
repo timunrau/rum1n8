@@ -1,6 +1,6 @@
 # Android Trusted Web Activity Implementation Plan
 
-Status: future work; no TWA Android implementation has been started.
+Status: Repository work for Stage 1 and a Stage 2 unsigned Bubblewrap prototype is implemented. Deployment, signing, Digital Asset Links publication, physical-device acceptance, and Play delivery remain gated work.
 
 This document is a handoff for an agent implementing a Trusted Web Activity (TWA) edition of rum1n8 in this repository. It is deliberately separate from `docs/android-standalone-plan.md`. The two plans describe alternative Android architectures and must remain independently reviewable. Do not edit, merge, or replace the standalone plan while following this one.
 

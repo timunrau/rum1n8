@@ -1,0 +1,20 @@
+{
+  "name": "rum1n8-android-twa",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "bubblewrap build",
+    "build:unsigned": "bubblewrap build --skipSigning",
+    "doctor": "bubblewrap doctor",
+    "fingerprint": "bubblewrap fingerprint",
+    "install:debug": "bubblewrap install --apkFile=app/build/outputs/apk/debug/app-debug.apk",
+    "update": "bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json",
+    "validate": "bubblewrap validate --url=https://rum1n8.unrau.xyz/app/"
+  },
+  "devDependencies": {
+    "@bubblewrap/cli": "1.24.1"
+  },
+  "overrides": {
+    "tar": "7.5.21"
+  }
+}

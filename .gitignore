@@ -31,3 +31,17 @@ dist-ssr
 # Playwright
 playwright-report/
 test-results/
+
+# Android Trusted Web Activity local state, secrets, and build outputs
+android-twa/.gradle/
+android-twa/.idea/
+android-twa/local.properties
+android-twa/**/build/
+android-twa/*.apk
+android-twa/*.aab
+android-twa/app-release-*
+android-twa/node_modules/
+android-twa/service-account*.json
+.bubblewrap-config.json
+*.keystore
+*.jks
