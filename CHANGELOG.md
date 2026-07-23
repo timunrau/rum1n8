@@ -1,3 +1,15 @@
+# [1.40.0](https://github.com/timunrau/rum1n8/compare/v1.39.1...v1.40.0) (2026-07-23)
+
+
+### Bug Fixes
+
+* configure Play TWA association ([3b68c5f](https://github.com/timunrau/rum1n8/commit/3b68c5fa68243e8d5c44fd04538d7da319a20a8d))
+
+
+### Features
+
+* add Trusted Web Activity packaging ([05319bf](https://github.com/timunrau/rum1n8/commit/05319bf9873fd283ea56d2e1c5503216b5bf2cfb))
+
 ## [1.39.1](https://github.com/timunrau/rum1n8/compare/v1.39.0...v1.39.1) (2026-07-22)
 
 # [1.39.0](https://github.com/timunrau/rum1n8/compare/v1.38.0...v1.39.0) (2026-07-10)
