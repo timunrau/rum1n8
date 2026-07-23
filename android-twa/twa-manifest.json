@@ -55,7 +55,12 @@
   "fullScopeUrl": "https://rum1n8.unrau.xyz/",
   "minSdkVersion": 21,
   "orientation": "portrait",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "name": "play-app-signing",
+      "value": "73:95:BB:58:5B:D3:B5:D8:36:B5:79:05:65:D2:3D:18:13:93:EE:D7:3E:7C:9E:4A:33:D3:13:08:A3:42:EE:AA"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "protocolHandlers": [],

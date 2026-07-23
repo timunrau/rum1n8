@@ -46,11 +46,3 @@ jobs:
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose android-twa/app/build/outputs/apk/debug/app-debug.apk
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging android-twa/app/build/outputs/apk/debug/app-debug.apk | sed -n '1,4p'
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: rum1n8-twa-debug-${{ github.sha }}
-          path: android-twa/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
