@@ -1,3 +1,10 @@
+## [1.52.1](https://github.com/timunrau/rum1n8/compare/v1.52.0...v1.52.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* unify desktop content widths ([16ce8a5](https://github.com/timunrau/rum1n8/commit/16ce8a5fb6a014d8d8445d0a2e6ebc869e94fda5))
+
 # [1.52.0](https://github.com/timunrau/rum1n8/compare/v1.51.0...v1.52.0) (2026-09-07)
 
 
