@@ -1,3 +1,10 @@
+# [1.52.0](https://github.com/timunrau/rum1n8/compare/v1.51.0...v1.52.0) (2026-09-07)
+
+
+### Features
+
+* add alphabetical verse sorting ([937a6d3](https://github.com/timunrau/rum1n8/commit/937a6d3b39361e89e4f4f3e5966ea160237eeaf2))
+
 # [1.51.0](https://github.com/timunrau/rum1n8/compare/v1.50.4...v1.51.0) (2026-09-07)
 
 
