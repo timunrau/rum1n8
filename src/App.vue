@@ -641,7 +641,7 @@
                 </button>
                 <!-- Collection actions -->
                 <button
-                  v-if="currentCollectionId && !isVerseSelectionMode"
+                  v-if="showCollectionActions"
                   type="button"
                   data-testid="collection-actions-trigger"
                   class="p-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
@@ -665,6 +665,19 @@
                   class="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-border-default bg-chrome p-1.5 shadow-soft"
                   role="menu"
                 >
+                  <button
+                    v-if="canSortCurrentVerseList"
+                    type="button"
+                    data-testid="collection-sort-action"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary hover:bg-surface-hover active:bg-surface-active"
+                    role="menuitem"
+                    @click.stop="openVerseSort"
+                  >
+                    <svg class="h-4 w-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M8 7h8M6 12h12M10 17h4" />
+                    </svg>
+                    <span>Sort verses</span>
+                  </button>
                   <button
                     v-if="canUseVerseSelection"
                     type="button"
@@ -2137,6 +2150,78 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
       </ModalSheet>
 
       <ModalSheet
+        :show="showVerseSort"
+        title="Sort verses"
+        data-testid="modal-verse-sort"
+        max-width="sm:max-w-md"
+        compact
+        @close="closeVerseSort"
+      >
+        <div class="space-y-5 pb-4">
+          <div class="space-y-1" role="radiogroup" aria-label="Sort verses by">
+            <button
+              v-for="option in verseSortOptions"
+              :key="option.id"
+              type="button"
+              :data-testid="`verse-sort-option-${option.id}`"
+              :disabled="!option.available"
+              :aria-checked="currentVerseSortPreference.criterion === option.id"
+              class="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-3 text-left transition-colors"
+              :class="option.available
+                ? 'text-text-primary hover:bg-surface-hover active:bg-surface-active'
+                : 'cursor-not-allowed text-text-muted opacity-55'"
+              role="radio"
+              @click="applyVerseSortCriterion(option.id)"
+            >
+              <span class="min-w-0">
+                <span class="block text-sm font-medium">{{ option.label }}</span>
+                <span v-if="!option.available" class="mt-0.5 block text-xs">{{ option.unavailableLabel }}</span>
+              </span>
+              <svg
+                v-if="currentVerseSortPreference.criterion === option.id"
+                class="h-4 w-4 shrink-0 text-accent"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="border-t border-border-default pt-4">
+            <p class="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Order</p>
+            <div class="space-y-1" role="radiogroup" aria-label="Sort direction">
+              <button
+                v-for="option in verseSortDirectionOptions"
+                :key="option.direction"
+                type="button"
+                :aria-checked="currentVerseSortPreference.direction === option.direction"
+                class="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover active:bg-surface-active"
+                role="radio"
+                @click="applyVerseSortDirection(option.direction)"
+              >
+                <span>{{ option.label }}</span>
+                <span
+                  class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border"
+                  :class="currentVerseSortPreference.direction === option.direction
+                    ? 'border-accent-strong'
+                    : 'border-border-input'"
+                  aria-hidden="true"
+                >
+                  <span
+                    v-if="currentVerseSortPreference.direction === option.direction"
+                    class="h-2 w-2 rounded-full bg-accent-strong"
+                  />
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalSheet>
+
+      <ModalSheet
         :show="!!passageReviewOffer"
         title="Review passage?"
         data-testid="modal-passage-review-offer"
@@ -2367,6 +2452,18 @@ import {
   buildMasteredOverTimeData,
   calculateCurrentStreak,
 } from './utils/activity-stats.js'
+import {
+  getDefaultVerseSortDirection,
+  hasVerseSortValues,
+  normalizeVerseSortPreference,
+  sortVerses,
+  VERSE_SORT_CRITERIA,
+} from './utils/verse-sort.js'
+import {
+  createPracticeSequence,
+  movePracticeSequence,
+  normalizePracticeSequence,
+} from './utils/practice-sequence.js'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -2416,6 +2513,7 @@ export default {
     const showEditCollectionForm = ref(false)
     const editCollectionFormError = ref('')
     const showPracticeSettings = ref(false)
+    const showVerseSort = ref(false)
     const showSettings = ref(false)
     const showSettingsMenu = ref(false)
     const appVersion = __APP_VERSION__
@@ -2667,8 +2765,7 @@ export default {
     const searchActive = ref(false)
     const searchInputRef = ref(null)
     const reviewingVerse = ref(null)
-    const reviewSourceList = ref(null) // Track the source list when starting a review
-    const reviewSourceState = ref(null) // Track the original source navigation state
+    const practiceSequence = ref(null) // Frozen verse ids, cursor, and original source state
     const passageReviewOffer = ref(null)
     const combinedPassageReview = ref(null)
     const passageSegmentMistakes = ref({})
@@ -2677,8 +2774,6 @@ export default {
     const passageSegmentFeedback = ref(null)
     const memorizingVerse = ref(null)
     const memorizationMode = ref(null) // 'learn', 'memorize', 'master'
-    const memorizationSourceState = ref(null) // Track the original source navigation state for memorization
-    const memorizationSourceList = ref(null) // Track the source list for swipe navigation in memorization
     const reviewWords = ref([])
     const currentPracticeWordIndex = ref(-1)
     const typedLetter = ref('')
@@ -3237,13 +3332,17 @@ export default {
           view: 'memorization',
           verseId: memorizingVerse.value.id,
           mode: memorizationMode.value,
-          collectionId: currentCollectionId.value
+          collectionId: currentCollectionId.value,
+          practiceSequence: normalizePracticeSequence(practiceSequence.value),
         }
       } else if (reviewingVerse.value) {
         return {
           view: 'review',
           verseId: reviewingVerse.value.id,
-          collectionId: currentCollectionId.value
+          collectionId: currentCollectionId.value,
+          sourceView: practiceSequence.value?.sourceState?.view || null,
+          sourceCollectionId: practiceSequence.value?.sourceState?.collectionId || null,
+          practiceSequence: normalizePracticeSequence(practiceSequence.value),
         }
       } else if (currentCollectionId.value) {
         return {
@@ -3270,13 +3369,21 @@ export default {
       window.history.replaceState(rootState, '', rootUrl)
       currentView.value = 'collections'
 
-      for (const ancestor of getCollectionAncestors(collections.value, collectionId)) {
+      const normalizedCollectionId = String(collectionId || '')
+      const collectionExists = VIRTUAL_COLLECTION_IDS.has(normalizedCollectionId) ||
+        collections.value.some(collection => String(collection.id) === normalizedCollectionId)
+      if (!collectionExists) {
+        currentCollectionId.value = null
+        return
+      }
+
+      for (const ancestor of getCollectionAncestors(collections.value, normalizedCollectionId)) {
         currentCollectionId.value = ancestor.id
         pushNavigationState({ view: 'collection', collectionId: ancestor.id })
       }
 
-      currentCollectionId.value = collectionId
-      pushNavigationState({ view: 'collection', collectionId })
+      currentCollectionId.value = normalizedCollectionId
+      pushNavigationState({ view: 'collection', collectionId: normalizedCollectionId })
     }
 
     // Build a URL that reflects the given navigation state, clearing any params not
@@ -3376,6 +3483,7 @@ export default {
       iosInstallBackupDownloaded.value = false
       continueInstallAfterSyncSetup.value = false
       showPracticeSettings.value = false
+      showVerseSort.value = false
       fabMenuOpen.value = false
       passageReviewOffer.value = null
       showBulkCollectionModal.value = false
@@ -3447,7 +3555,9 @@ export default {
       if (state.view === 'memorization' && state.verseId) {
         const verse = verses.value.find(v => v.id === state.verseId)
         if (verse && state.mode) {
-          startMemorization(verse, state.mode)
+          startMemorization(verse, state.mode, {
+            sourceSequence: normalizePracticeSequence(state.practiceSequence),
+          })
         }
       } else if (state.view === 'review' && state.verseId) {
         const verse = verses.value.find(v => v.id === state.verseId)
@@ -3458,7 +3568,10 @@ export default {
                 collectionId: state.sourceCollectionId || null
               }
             : null
-          startReview(verse, sourceState ? { sourceState } : {})
+          startReview(verse, {
+            ...(sourceState ? { sourceState } : {}),
+            sourceSequence: normalizePracticeSequence(state.practiceSequence),
+          })
         }
       } else {
         // Exit memorization/review if we're going back
@@ -3505,11 +3618,8 @@ export default {
         
         memorizingVerse.value = null
         memorizationMode.value = null
-        memorizationSourceState.value = null
-        memorizationSourceList.value = null
         reviewingVerse.value = null
-        reviewSourceList.value = null
-        reviewSourceState.value = null
+        practiceSequence.value = null
         setPracticeWords([])
         typedLetter.value = ''
         reviewMistakes.value = 0
@@ -3540,6 +3650,7 @@ export default {
       // Read URL params to restore view state
       const urlParams = new URLSearchParams(window.location.search)
       const viewParam = urlParams.get('view')
+      const existingHistoryState = window.history.state
       let shouldNormalizeUrl = false
 
       if (viewParam === 'review-list' || viewParam === 'collections' || viewParam === 'stats') {
@@ -3570,6 +3681,9 @@ export default {
         const deepLinkVerseId = urlParams.get('verse')
         const deepLinkCollectionId = urlParams.get('collection')
         const deepLinkMode = urlParams.get('mode')
+        const restoredSequence = existingHistoryState?.view === viewParam && existingHistoryState?.verseId === deepLinkVerseId
+          ? normalizePracticeSequence(existingHistoryState.practiceSequence)
+          : null
         if (deepLinkCollectionId) {
           seedCollectionHistory(deepLinkCollectionId)
         } else {
@@ -3583,9 +3697,9 @@ export default {
         if (deepLinkVerse) {
           nextTick(() => {
             if (viewParam === 'review') {
-              startReview(deepLinkVerse)
+              startReview(deepLinkVerse, { sourceSequence: restoredSequence })
             } else {
-              startMemorization(deepLinkVerse, deepLinkMode || 'learn')
+              startMemorization(deepLinkVerse, deepLinkMode || 'learn', { sourceSequence: restoredSequence })
             }
           })
         } else if (deepLinkVerseId) {
@@ -3708,22 +3822,20 @@ export default {
       return getTimeUntilReview(verse)
     })
 
-    const getReviewSourceVerses = () => {
-      return reviewSourceList.value?.length
-        ? reviewSourceList.value
-        : verses.value.filter(v => isDueForReview(v))
+    const peekPracticeSequenceMove = (offset) => (
+      movePracticeSequence(practiceSequence.value, verses.value, offset)
+    )
+
+    const movePracticeSequenceCursor = (offset) => {
+      const moved = peekPracticeSequenceMove(offset)
+      if (!moved) return null
+      practiceSequence.value = moved.sequence
+      return moved.verse
     }
 
     const getAdjacentReviewSourceVerse = (offset) => {
       if (!reviewingVerse.value) return null
-
-      const sourceVerses = getReviewSourceVerses()
-      if (!sourceVerses.length) return null
-
-      const currentIndex = sourceVerses.findIndex(v => v.id === reviewingVerse.value.id)
-      if (currentIndex === -1) return null
-
-      return sourceVerses[currentIndex + offset] || null
+      return peekPracticeSequenceMove(offset)?.verse || null
     }
 
     const getNextReviewSourceVerse = () => getAdjacentReviewSourceVerse(1)
@@ -4026,93 +4138,63 @@ export default {
     )
     onUpdated(scrollDailyActivityToLatest)
 
-    // Biblical book order for sorting
-    const bookOrder = {
-      // Old Testament
-      'genesis': 1, 'gen': 1,
-      'exodus': 2, 'ex': 2, 'exo': 2,
-      'leviticus': 3, 'lev': 3,
-      'numbers': 4, 'num': 4,
-      'deuteronomy': 5, 'deut': 5,
-      'joshua': 6, 'josh': 6,
-      'judges': 7, 'judg': 7,
-      'ruth': 8,
-      '1 samuel': 9, '1sam': 9, '1 sam': 9,
-      '2 samuel': 10, '2sam': 10, '2 sam': 10,
-      '1 kings': 11, '1kings': 11, '1 ki': 11,
-      '2 kings': 12, '2kings': 12, '2 ki': 12,
-      '1 chronicles': 13, '1chron': 13, '1 chron': 13,
-      '2 chronicles': 14, '2chron': 14, '2 chron': 14,
-      'ezra': 15,
-      'nehemiah': 16, 'neh': 16,
-      'esther': 17, 'est': 17,
-      'job': 18,
-      'psalms': 19, 'psalm': 19, 'ps': 19,
-      'proverbs': 20, 'prov': 20,
-      'ecclesiastes': 21, 'eccl': 21,
-      'song of solomon': 22, 'song': 22,
-      'isaiah': 23, 'isa': 23,
-      'jeremiah': 24, 'jer': 24,
-      'lamentations': 25, 'lam': 25,
-      'ezekiel': 26, 'ezek': 26,
-      'daniel': 27, 'dan': 27,
-      'hosea': 28, 'hos': 28,
-      'joel': 29,
-      'amos': 30,
-      'obadiah': 31, 'obad': 31,
-      'jonah': 32,
-      'micah': 33, 'mic': 33,
-      'nahum': 34, 'nah': 34,
-      'habakkuk': 35, 'hab': 35,
-      'zephaniah': 36, 'zeph': 36,
-      'haggai': 37, 'hag': 37,
-      'zechariah': 38, 'zech': 38,
-      'malachi': 39, 'mal': 39,
-      // New Testament
-      'matthew': 40, 'matt': 40, 'mat': 40, 'mt': 40,
-      'mark': 41, 'mk': 41,
-      'luke': 42, 'lk': 42,
-      'john': 43, 'jn': 43,
-      'acts': 44,
-      'romans': 45, 'rom': 45,
-      '1 corinthians': 46, '1cor': 46, '1 cor': 46,
-      '2 corinthians': 47, '2cor': 47, '2 cor': 47,
-      'galatians': 48, 'gal': 48,
-      'ephesians': 49, 'eph': 49,
-      'philippians': 50, 'phil': 50,
-      'colossians': 51, 'col': 51,
-      '1 thessalonians': 52, '1thess': 52, '1 thess': 52,
-      '2 thessalonians': 53, '2thess': 53, '2 thess': 53,
-      '1 timothy': 54, '1tim': 54, '1 tim': 54,
-      '2 timothy': 55, '2tim': 55, '2 tim': 55,
-      'titus': 56,
-      'philemon': 57, 'phlm': 57,
-      'hebrews': 58, 'heb': 58,
-      'james': 59, 'jas': 59,
-      '1 peter': 60, '1pet': 60, '1 pet': 60,
-      '2 peter': 61, '2pet': 61, '2 pet': 61,
-      '1 john': 62, '1jn': 62, '1 jn': 62,
-      '2 john': 63, '2jn': 63, '2 jn': 63,
-      '3 john': 64, '3jn': 64, '3 jn': 64,
-      'jude': 65,
-      'revelation': 66, 'rev': 66
-    }
-
-    // Parse verse reference into sortable components
-    const parseReference = (reference) => {
-      const parsed = parseVerseSpanReference(reference)
-      if (parsed) {
-        const bookNum = bookOrder[parsed.bookName.toLowerCase()] || bookOrder[parsed.bookId] || 999
-        return { book: bookNum, chapter: parsed.startChapter, verse: parsed.startVerse }
-      }
-      
-      // If no match, return high numbers to sort to the end
-      return { book: 999, chapter: 0, verse: 0 }
-    }
-
     // Filtered verses for current view
     const filteredVerses = computed(() => {
       return getVersesForView()
+    })
+
+    const getVerseSortContextKey = (collectionId = currentCollectionId.value) => {
+      if (!collectionId) return 'library'
+      return VIRTUAL_COLLECTION_IDS.has(String(collectionId))
+        ? `virtual:${collectionId}`
+        : `collection:${collectionId}`
+    }
+
+    const currentVerseSortContextKey = computed(() => getVerseSortContextKey())
+    const currentVerseSortPreference = computed(() => normalizeVerseSortPreference(
+      appSettings.value.verseSortPreferences?.[currentVerseSortContextKey.value]
+    ))
+
+    const verseSortOptions = computed(() => VERSE_SORT_CRITERIA.map(criterion => {
+      const available = hasVerseSortValues(filteredVerses.value, criterion.id)
+      const unavailableLabels = {
+        createdAt: 'No added dates',
+        masteredAt: 'No mastered dates',
+        lastReviewed: 'No review dates',
+        nextReviewDate: 'No scheduled dates',
+      }
+
+      return {
+        ...criterion,
+        available,
+        unavailableLabel: available ? '' : unavailableLabels[criterion.id] || 'Unavailable',
+      }
+    }))
+
+    const verseSortDirectionOptions = computed(() => {
+      const criterion = currentVerseSortPreference.value.criterion
+      if (criterion === 'reference') {
+        return [
+          { direction: 'asc', label: 'Genesis first' },
+          { direction: 'desc', label: 'Revelation first' },
+        ]
+      }
+      if (criterion === 'lastReviewed') {
+        return [
+          { direction: 'asc', label: 'Least recently reviewed' },
+          { direction: 'desc', label: 'Most recently reviewed' },
+        ]
+      }
+      if (criterion === 'nextReviewDate') {
+        return [
+          { direction: 'asc', label: 'Due soonest' },
+          { direction: 'desc', label: 'Due latest' },
+        ]
+      }
+      return [
+        { direction: 'desc', label: 'Newest first' },
+        { direction: 'asc', label: 'Oldest first' },
+      ]
     })
 
     const collectionNameCollator = new Intl.Collator(undefined, {
@@ -4177,29 +4259,9 @@ export default {
       return !!editingCollection.value.parentId || editableParentCollections.value.length > 0
     })
 
-    const sortVersesByReference = (items) => {
-      return [...items].sort((a, b) => {
-        const aParsed = parseReference(a.reference)
-        const bParsed = parseReference(b.reference)
-
-        // Sort by book
-        if (aParsed.book !== bParsed.book) {
-          return aParsed.book - bParsed.book
-        }
-
-        // Then by chapter
-        if (aParsed.chapter !== bParsed.chapter) {
-          return aParsed.chapter - bParsed.chapter
-        }
-
-        // Then by verse
-        return aParsed.verse - bParsed.verse
-      })
-    }
-
-    // Sort filtered verses by biblical reference
+    // Sort collection-like lists using the preference for the active context.
     const sortedVerses = computed(() => {
-      return sortVersesByReference(filteredVerses.value)
+      return sortVerses(filteredVerses.value, currentVerseSortPreference.value)
     })
 
     const visibleVerseIds = computed(() => sortedVerses.value.map(verse => verse.id))
@@ -4209,6 +4271,20 @@ export default {
       !searchActive.value &&
       sortedVerses.value.length > 0 &&
       (!!currentCollectionId.value || collections.value.length === 0)
+    ))
+
+    const canSortCurrentVerseList = computed(() => (
+      currentView.value === 'collections' &&
+      !searchActive.value &&
+      sortedVerses.value.length > 1 &&
+      (!!currentCollectionId.value || collections.value.length === 0)
+    ))
+
+    const showCollectionActions = computed(() => (
+      !isVerseSelectionMode.value &&
+      currentView.value === 'collections' &&
+      !searchActive.value &&
+      (!!currentCollectionId.value || (collections.value.length === 0 && sortedVerses.value.length > 0))
     ))
 
     const isRealCurrentCollection = computed(() => (
@@ -5239,7 +5315,11 @@ export default {
     const handleStartReviewAction = () => {
       const verse = reviewSortedVerses.value[0]
       if (!verse) return
-      handleVerseClick(verse)
+      setPracticeTransition('mode')
+      startReview(verse, {
+        sourceList: [...reviewSortedVerses.value],
+        sourceState: { view: 'collections' },
+      })
     }
 
     const collapseVerseListItems = () => {
@@ -6043,6 +6123,44 @@ export default {
       collectionActionsOpen.value = false
     }
 
+    const closeVerseSort = () => {
+      showVerseSort.value = false
+      consumeModalState('verseSort')
+    }
+
+    const openVerseSort = () => {
+      closeCollectionActions()
+      showVerseSort.value = true
+      pushModalState('verseSort')
+    }
+
+    const saveCurrentVerseSortPreference = (preference) => {
+      const normalized = normalizeVerseSortPreference(preference)
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        verseSortPreferences: {
+          ...(appSettings.value.verseSortPreferences || {}),
+          [currentVerseSortContextKey.value]: normalized,
+        },
+      })
+    }
+
+    const applyVerseSortCriterion = (criterion) => {
+      const option = verseSortOptions.value.find(item => item.id === criterion)
+      if (!option?.available) return
+      saveCurrentVerseSortPreference({
+        criterion,
+        direction: getDefaultVerseSortDirection(criterion),
+      })
+    }
+
+    const applyVerseSortDirection = (direction) => {
+      saveCurrentVerseSortPreference({
+        ...currentVerseSortPreference.value,
+        direction,
+      })
+    }
+
     const getCurrentCollection = () => collections.value.find(collection => (
       String(collection.id) === String(currentCollectionId.value)
     )) || null
@@ -6176,6 +6294,9 @@ export default {
         
         // Remove collection
         collections.value = collections.value.filter(c => c.id !== collectionId)
+        const verseSortPreferences = { ...(appSettings.value.verseSortPreferences || {}) }
+        delete verseSortPreferences[getVerseSortContextKey(collectionId)]
+        saveAppSettingsLocally({ ...appSettings.value, verseSortPreferences }, false)
         saveCollections()
         
         // If viewing this collection, go up one level.
@@ -7212,7 +7333,14 @@ export default {
 
     const resolveSourceNavigationState = (sourceState, fallbackView = 'collections') => {
       if (sourceState?.collectionId) {
-        return { view: 'collection', collectionId: sourceState.collectionId }
+        const collectionId = String(sourceState.collectionId)
+        if (
+          VIRTUAL_COLLECTION_IDS.has(collectionId) ||
+          collections.value.some(collection => String(collection.id) === collectionId)
+        ) {
+          return { view: 'collection', collectionId }
+        }
+        return { view: 'collections' }
       }
 
       if (sourceState?.view === 'review-list') {
@@ -7341,29 +7469,34 @@ export default {
       return [...sortedVerses.value]
     }
 
-    const getCollectionReviewSourceList = (collectionId) => {
+    const getCollectionSourceVerses = (collectionId) => {
       if (collectionId === 'master-list') {
-        return sortVersesByReference(verses.value)
+        return verses.value
       }
 
       if (collectionId === 'no-collection') {
-        return sortVersesByReference(verses.value.filter(v => {
+        return verses.value.filter(v => {
           const ids = v.collectionIds
           return !ids || (Array.isArray(ids) && ids.length === 0)
-        }))
+        })
       }
 
       if (collectionId === 'to-learn') {
-        return sortVersesByReference(verses.value.filter(v => v.memorizationStatus !== 'mastered'))
+        return verses.value.filter(v => v.memorizationStatus !== 'mastered')
       }
 
-      return sortVersesByReference(getCollectionVerses(verses.value, collections.value, collectionId, { includeChildren: false }))
+      return getCollectionVerses(verses.value, collections.value, collectionId, { includeChildren: false })
+    }
+
+    const getOrderedCollectionSourceList = (collectionId) => {
+      const preference = appSettings.value.verseSortPreferences?.[getVerseSortContextKey(collectionId)]
+      return sortVerses(getCollectionSourceVerses(collectionId), preference)
     }
 
     const getReviewSourceContext = (sourceState = getCurrentSourceState()) => {
       if (sourceState?.collectionId) {
         return {
-          list: getCollectionReviewSourceList(sourceState.collectionId),
+          list: getOrderedCollectionSourceList(sourceState.collectionId),
           state: {
             view: 'collection',
             collectionId: sourceState.collectionId
@@ -7378,39 +7511,32 @@ export default {
         }
       }
 
+      if (sourceState?.view === 'collections' && collections.value.length === 0 && !searchActive.value) {
+        return {
+          list: sortVerses(verses.value, appSettings.value.verseSortPreferences?.library),
+          state: { view: 'collections' },
+        }
+      }
+
       return {
         list: [...reviewSortedVerses.value],
         state: { view: 'collections' }
       }
     }
 
-    const getMemorizationSourceVerses = () => {
-      return memorizationSourceList.value?.length
-        ? memorizationSourceList.value
-        : getCurrentPracticeSourceList()
-    }
-
     const getAdjacentMemorizationSourceVerse = (offset) => {
       if (!memorizingVerse.value) return null
-
-      const sourceVerses = getMemorizationSourceVerses()
-      if (!sourceVerses.length) return null
-
-      const currentIndex = sourceVerses.findIndex(v => v.id === memorizingVerse.value.id)
-      if (currentIndex === -1) return null
-
-      return sourceVerses[currentIndex + offset] || null
+      return peekPracticeSequenceMove(offset)?.verse || null
     }
     const nextMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(1))
     const previousMemorizationVerse = computed(() => getAdjacentMemorizationSourceVerse(-1))
     const nextMemorizationVerseWords = computed(() => buildPracticeWords(nextMemorizationVerse.value, memorizationMode.value, memorizeRetryCount.value))
     const previousMemorizationVerseWords = computed(() => buildPracticeWords(previousMemorizationVerse.value, memorizationMode.value, memorizeRetryCount.value))
 
-    const clearReviewSessionState = () => {
+    const clearReviewSessionState = ({ preserveSequence = false } = {}) => {
       stopSpeaking()
       reviewingVerse.value = null
-      reviewSourceList.value = null
-      reviewSourceState.value = null
+      if (!preserveSequence) practiceSequence.value = null
       clearCombinedPassageReviewState()
       currentReviewSaved.value = false
       firstAttemptGrade.value = null
@@ -7540,7 +7666,7 @@ export default {
     }
 
     // Start memorizing a verse
-    const startMemorization = (verse, mode) => {
+    const startMemorization = (verse, mode, options = {}) => {
       if (
         (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
         verse.id === guidedOnboardingVerseId.value
@@ -7553,16 +7679,15 @@ export default {
       reviewMistakes.value = 0
       if (mode === 'memorize') memorizeRetryCount.value += 1 // Alternate pattern each time
 
-      // Track whether we're already in a session before potentially setting the source state
-      const alreadyInSession = !!memorizationSourceState.value
-
-      // Store the source state for navigation (only if not already set, to preserve it during mode advancement)
-      if (!memorizationSourceState.value) {
-        memorizationSourceState.value = getCurrentSourceState()
-      }
-
-      if (!memorizationSourceList.value) {
-        memorizationSourceList.value = getCurrentPracticeSourceList()
+      const restoredSequence = normalizePracticeSequence(options.sourceSequence)
+      const alreadyInSession = !!practiceSequence.value || !!restoredSequence
+      if (restoredSequence) practiceSequence.value = restoredSequence
+      if (!practiceSequence.value) {
+        practiceSequence.value = createPracticeSequence(
+          getCurrentPracticeSourceList(),
+          verse.id,
+          getCurrentSourceState()
+        )
       }
       
       resetPracticeSequence(verse, mode, memorizeRetryCount.value)
@@ -7572,7 +7697,8 @@ export default {
         view: 'memorization',
         verseId: verse.id,
         mode: mode,
-        collectionId: currentCollectionId.value
+        collectionId: currentCollectionId.value,
+        practiceSequence: normalizePracticeSequence(practiceSequence.value),
       }
       if (alreadyInSession) {
         replaceNavigationState(navState)
@@ -7629,6 +7755,7 @@ export default {
       const replaceHistory = options.replaceHistory === true
       const sourceStateOverride = options.sourceState || null
       const sourceListOverride = options.sourceList || null
+      const sourceSequenceOverride = normalizePracticeSequence(options.sourceSequence)
       const passageRecords = options.passageRecords || null
       const requestedMode = options.mode || null
 
@@ -7647,10 +7774,7 @@ export default {
             // Sequential review from a collection can hand off into memorization.
             // End the review session first so the old review overlay/header unmounts
             // and browser back still returns to the original collection.
-            const sourceList = reviewSourceList.value?.length ? [...reviewSourceList.value] : null
-            memorizationSourceState.value = reviewSourceState.value || getCurrentSourceState()
-            memorizationSourceList.value = sourceList
-            clearReviewSessionState()
+            clearReviewSessionState({ preserveSequence: true })
           }
           startMemorization(verse, nextMode)
         }
@@ -7714,17 +7838,25 @@ export default {
         clearCombinedPassageReviewState()
       }
       
-      const isSequentialNavigation = preserveSource && !!reviewSourceList.value
+      const isSequentialNavigation = preserveSource && !!practiceSequence.value
 
       if (!isSequentialNavigation) {
-        if (sourceListOverride) {
-          reviewSourceList.value = sourceListOverride
-          reviewSourceState.value = sourceStateOverride || getCurrentSourceState()
+        if (sourceSequenceOverride) {
+          practiceSequence.value = sourceSequenceOverride
+        } else if (sourceListOverride) {
+          practiceSequence.value = createPracticeSequence(
+            sourceListOverride,
+            verse.id,
+            sourceStateOverride || getCurrentSourceState()
+          )
         } else {
           const sourceContext = getReviewSourceContext(sourceStateOverride || getCurrentSourceState())
-          reviewSourceList.value = sourceContext.list
-          reviewSourceState.value = sourceContext.state
+          practiceSequence.value = createPracticeSequence(sourceContext.list, verse.id, sourceContext.state)
         }
+      }
+
+      if (!practiceSequence.value) {
+        practiceSequence.value = createPracticeSequence([verse], verse.id, sourceStateOverride || getCurrentSourceState())
       }
       
       // Push or replace navigation state
@@ -7732,8 +7864,9 @@ export default {
         view: 'review',
         verseId: verse.id,
         collectionId: currentCollectionId.value,
-        sourceView: reviewSourceState.value?.view || null,
-        sourceCollectionId: reviewSourceState.value?.collectionId || null
+        sourceView: practiceSequence.value?.sourceState?.view || null,
+        sourceCollectionId: practiceSequence.value?.sourceState?.collectionId || null,
+        practiceSequence: normalizePracticeSequence(practiceSequence.value),
       }
       
       if (isSequentialNavigation) {
@@ -7899,11 +8032,8 @@ export default {
       }
       
       // Get the source state before clearing it
-      const sourceState = memorizationSourceState.value
-      
-      // Clear source tracking
-      memorizationSourceState.value = null
-      memorizationSourceList.value = null
+      const sourceState = practiceSequence.value?.sourceState || null
+      practiceSequence.value = null
       
       // Reset memorization state
       memorizingVerse.value = null
@@ -7972,26 +8102,18 @@ export default {
     const navigateMemorizationVerse = (offset) => {
       if (!memorizingVerse.value) return
 
-      const targetVerse = getAdjacentMemorizationSourceVerse(offset)
+      const targetVerse = movePracticeSequenceCursor(offset)
       if (!targetVerse) return
 
       setPracticeTransition(offset > 0 ? 'next' : 'previous')
       stopSpeaking()
 
       if (targetVerse.memorizationStatus === 'mastered') {
-        const sourceVerses = getMemorizationSourceVerses()
-        const sourceState = memorizationSourceState.value || getCurrentSourceState()
-
         memorizingVerse.value = null
         memorizationMode.value = null
         setPracticeWords([])
         typedLetter.value = ''
         reviewMistakes.value = 0
-        memorizationSourceState.value = null
-        memorizationSourceList.value = null
-
-        reviewSourceList.value = sourceVerses.length ? [...sourceVerses] : null
-        reviewSourceState.value = sourceState
         startReview(targetVerse, { preserveSource: true })
         return
       }
@@ -8005,7 +8127,7 @@ export default {
     const previousVerse = () => {
       if (!reviewingVerse.value) return
 
-      const previousSourceVerse = getPreviousReviewSourceVerse()
+      const previousSourceVerse = movePracticeSequenceCursor(-1)
       if (previousSourceVerse) {
         setPracticeTransition('previous')
         startReview(previousSourceVerse, { preserveSource: true, mode: memorizationMode.value || 'master' })
@@ -8148,7 +8270,7 @@ export default {
           })
         }
         
-        const nextSourceVerse = getNextReviewSourceVerse()
+        const nextSourceVerse = movePracticeSequenceCursor(1)
         if (nextSourceVerse) {
           setPracticeTransition('next')
           startReview(nextSourceVerse, { preserveSource: true, mode: memorizationMode.value || 'master' })
@@ -8262,11 +8384,8 @@ export default {
       
       // Navigate back to the source state (collection or review list)
       // This ensures back button always goes up the hierarchy, not to previous verses
-      const sourceState = reviewSourceState.value
-      
-      // Clear source tracking
-      reviewSourceList.value = null
-      reviewSourceState.value = null
+      const sourceState = practiceSequence.value?.sourceState || null
+      practiceSequence.value = null
       
       // Reset review state
       reviewingVerse.value = null
@@ -9420,6 +9539,8 @@ export default {
       startReviewCalloutBody,
       sortedVerses,
       canUseVerseSelection,
+      canSortCurrentVerseList,
+      showCollectionActions,
       isVerseSelectionMode,
       selectedVerseCount,
       selectedMasteredVerseCount,
@@ -9520,6 +9641,14 @@ export default {
       isRealCurrentCollection,
       collectionActionsOpen,
       closeCollectionActions,
+      showVerseSort,
+      openVerseSort,
+      closeVerseSort,
+      verseSortOptions,
+      verseSortDirectionOptions,
+      currentVerseSortPreference,
+      applyVerseSortCriterion,
+      applyVerseSortDirection,
       editCurrentCollection,
       exportCurrentCollectionCSV,
       showCollectionForm,

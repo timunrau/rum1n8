@@ -1,10 +1,21 @@
+import { normalizeVerseSortPreference } from './utils/verse-sort.js'
+
 const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 
 export const DEFAULT_APP_SETTINGS = Object.freeze({
   requireReferenceTyping: false,
   analyticsOptOut: false,
-  defaultBibleVersion: ''
+  defaultBibleVersion: '',
+  verseSortPreferences: {}
 })
+
+function normalizeVerseSortPreferences(preferences) {
+  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return {}
+
+  return Object.fromEntries(Object.entries(preferences)
+    .filter(([key, preference]) => key && preference && typeof preference === 'object' && !Array.isArray(preference))
+    .map(([key, preference]) => [key, normalizeVerseSortPreference(preference)]))
+}
 
 export function normalizeAppSettings(settings = {}) {
   const defaultBibleVersion = typeof settings.defaultBibleVersion === 'string'
@@ -16,7 +27,8 @@ export function normalizeAppSettings(settings = {}) {
     ...settings,
     requireReferenceTyping: !!settings.requireReferenceTyping,
     analyticsOptOut: !!settings.analyticsOptOut,
-    defaultBibleVersion
+    defaultBibleVersion,
+    verseSortPreferences: normalizeVerseSortPreferences(settings.verseSortPreferences)
   }
 }
 
