@@ -111,6 +111,30 @@ test('collection and review screens share the same centered verse item header', 
   expectCenteredHeader(await centeredHeaderLayout(reviewCard))
 })
 
+test('desktop collection header and verse list share the app content width', async ({ page }) => {
+  await openSeededVerseList(page)
+
+  for (const width of [800, 1280]) {
+    await page.setViewportSize({ width, height: 800 })
+
+    const header = page.locator('.app-view-header .app-content-header__inner')
+    const card = verseCard(page, dueVerse.reference)
+    await expect(header).toBeVisible()
+    await expect(card).toBeVisible()
+
+    const [headerBox, cardBox] = await Promise.all([
+      header.boundingBox(),
+      card.boundingBox(),
+    ])
+
+    expect(headerBox).not.toBeNull()
+    expect(cardBox).not.toBeNull()
+    expect(Math.abs(headerBox!.x - cardBox!.x)).toBeLessThan(1)
+    expect(Math.abs(headerBox!.width - cardBox!.width)).toBeLessThan(1)
+    expect(Math.abs((headerBox!.x + headerBox!.width) - (cardBox!.x + cardBox!.width))).toBeLessThan(1)
+  }
+})
+
 test('expanding a verse keeps the chevron fixed and avoids inline height animation', async ({ page }) => {
   await openSeededVerseList(page)
 

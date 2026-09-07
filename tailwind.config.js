@@ -12,6 +12,9 @@ export default {
         sans: 'var(--font-sans)',
         mono: 'var(--font-mono)',
       },
+      maxWidth: {
+        app: 'var(--app-content-max-width)',
+      },
       colors: {
         base: 'var(--color-bg-base)',
         chrome: 'var(--color-bg-chrome)',

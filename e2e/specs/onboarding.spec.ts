@@ -125,7 +125,7 @@ test('desktop first practice aligns chrome, guidance, stages, and completion wit
     const width = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().width || 0
     return {
       frame: width('.practice-swipe-frame'),
-      header: width('.practice-session-header__inner'),
+      header: width('.app-content-header__inner'),
       card: width('.practice-swipe-panel--active .practice-card'),
       guidance: width('[data-testid="practice-mode-callout"]'),
       stages: width('.practice-swipe-panel--active .practice-stage-rail'),

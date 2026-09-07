@@ -33,7 +33,7 @@
     --radius-xl: 14px;
     --radius-pill: 999px;
     --radius-control: 10px;
-    --practice-content-max-width: 42rem;
+    --app-content-max-width: 56rem;
 
     /* Font families */
     --font-serif: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
@@ -797,7 +797,7 @@
     position: relative;
     z-index: 10;
     flex-shrink: 0;
-    width: min(calc(100% - 2rem), var(--practice-content-max-width));
+    width: min(calc(100% - 2rem), var(--app-content-max-width));
     margin: 0 auto 0.7rem;
     padding: 0.75rem clamp(0.85rem, 4vw, 1.35rem) calc(1.25rem + env(safe-area-inset-bottom));
     color: var(--color-text-primary);
@@ -843,7 +843,7 @@
 
   @media (max-width: 430px) {
     .completion-tray {
-      width: min(calc(100% - 1.4rem), 42rem);
+      width: min(calc(100% - 1.4rem), var(--app-content-max-width));
       padding-inline: 0.7rem;
     }
 
@@ -858,7 +858,7 @@
 
   @media (max-width: 340px) {
     .completion-tray {
-      width: min(calc(100% - 1rem), 42rem);
+      width: min(calc(100% - 1rem), var(--app-content-max-width));
       padding-inline: 0.5rem;
     }
 

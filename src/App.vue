@@ -7,7 +7,7 @@
     style="height: 100dvh;"
   >
     <header class="bg-chrome border-b border-border-default z-40 flex-shrink-0">
-      <div class="h-16 flex items-center px-4 gap-2 max-w-4xl mx-auto w-full">
+      <div class="h-16 flex items-center px-4 gap-2 max-w-app mx-auto w-full">
         <button
           @click="clearSearch"
           class="p-2 -ml-2 text-text-secondary active:bg-surface-active rounded-full transition-colors"
@@ -43,7 +43,7 @@
       </div>
     </header>
     <div class="flex-1 overflow-y-auto px-4 pt-3 pb-8">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-app mx-auto">
       <div v-if="searchQuery.trim()" class="space-y-3">
         <div
           v-for="result in searchResults"
@@ -101,7 +101,7 @@
   >
     <!-- Top App Bar -->
     <header class="practice-session-header z-40 flex-shrink-0">
-      <div class="practice-session-header__inner">
+      <div class="app-content-header__inner">
         <button
           @click="exitMemorization"
           class="practice-header-button practice-header-button--plain -ml-1 mr-1"
@@ -194,7 +194,7 @@
   >
     <!-- Top App Bar -->
     <header class="practice-session-header z-40 flex-shrink-0">
-      <div class="practice-session-header__inner">
+      <div class="app-content-header__inner">
         <button
           @click="exitReview"
           class="practice-header-button practice-header-button--plain -ml-1 mr-1"
@@ -581,8 +581,8 @@
           >
             <div
               :class="currentCollectionId
-                ? 'practice-session-header__inner'
-                : 'h-16 flex items-center px-2 max-w-4xl mx-auto w-full'"
+                ? 'app-content-header__inner'
+                : 'h-16 flex items-center px-2 max-w-app mx-auto w-full'"
             >
               <!-- Hamburger menu button (top-level only) -->
               <button
@@ -741,7 +741,7 @@
           </header>
 
     <div :class="['px-4', panelView === 'collections' ? 'pt-16 pb-24' : '']">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-app mx-auto">
 
       <!-- Review List View -->
       <div v-if="panelView === 'review-list' && !currentCollectionId" class="">
@@ -1171,7 +1171,7 @@
 
     <!-- Bottom Navigation -->
     <nav v-if="!memorizingVerse && !reviewingVerse && !currentCollectionId" class="glass-chrome glass-chrome--nav fixed bottom-0 left-0 right-0 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
-      <div class="flex items-center justify-around h-16 max-w-4xl mx-auto">
+      <div class="flex items-center justify-around h-16 max-w-app mx-auto">
         <!-- Verses Tab (far left) -->
         <button
           data-testid="nav-collections"
@@ -1232,7 +1232,7 @@
     <div
       v-if="isVerseSelectionMode"
       data-testid="verse-selection-bar"
-      class="selection-bar fixed left-4 right-4 z-40 mx-auto max-w-4xl"
+      class="selection-bar fixed left-4 right-4 z-40 mx-auto max-w-app"
       :style="!currentCollectionId
         ? 'bottom: calc(5rem + env(safe-area-inset-bottom))'
         : 'bottom: calc(1rem + env(safe-area-inset-bottom))'"
@@ -9856,10 +9856,10 @@ export default {
   background: var(--color-bg-base);
 }
 
-.practice-session-header__inner {
+.app-content-header__inner {
   display: flex;
   width: 100%;
-  max-width: var(--practice-content-max-width);
+  max-width: var(--app-content-max-width);
   min-height: 4rem;
   align-items: center;
   margin: 0 auto;
@@ -9867,16 +9867,16 @@ export default {
 }
 
 @media (min-width: 640px) {
-  .practice-session-header__inner {
-    width: min(calc(100% - 2rem), var(--practice-content-max-width));
+  .app-content-header__inner {
+    width: min(calc(100% - 2rem), var(--app-content-max-width));
     padding-inline: 0;
   }
 
-  .practice-session-header__inner > .practice-header-button:first-child {
+  .app-content-header__inner > .practice-header-button:first-child {
     margin-left: -0.5rem;
   }
 
-  .practice-session-header__inner > :last-child {
+  .app-content-header__inner > :last-child {
     margin-right: -0.5rem;
   }
 }

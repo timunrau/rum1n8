@@ -1,6 +1,6 @@
 <template>
   <div
-    class="practice-swipe-frame flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full"
+    class="practice-swipe-frame flex-1 flex flex-col overflow-hidden w-full"
     @touchstart.passive="onPracticeTouchStart"
     @touchmove="onPracticeTouchMove"
     @touchend.passive="onPracticeTouchEnd"
@@ -810,7 +810,7 @@ export default {
 .practice-card {
   display: flex;
   width: 100%;
-  max-width: var(--practice-content-max-width);
+  max-width: var(--app-content-max-width);
   max-height: 100%;
   min-height: min(clamp(15rem, 44vh, 24rem), 100%);
   flex-direction: column;
@@ -846,7 +846,7 @@ export default {
 }
 
 .practice-guidance {
-  max-width: var(--practice-content-max-width);
+  max-width: var(--app-content-max-width);
   margin-inline: auto;
 }
 
@@ -856,7 +856,7 @@ export default {
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.35rem 0.65rem;
-  width: min(100%, var(--practice-content-max-width));
+  width: min(100%, var(--app-content-max-width));
   max-height: 3rem;
   margin: 0 auto 0.45rem;
   overflow: hidden;
@@ -903,7 +903,7 @@ export default {
   align-items: center;
   justify-content: space-around;
   width: 100%;
-  max-width: var(--practice-content-max-width);
+  max-width: var(--app-content-max-width);
   margin: 0 auto;
   padding: 0;
 }
