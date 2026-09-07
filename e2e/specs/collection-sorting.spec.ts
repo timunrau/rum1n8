@@ -125,6 +125,33 @@ test('sort chooser applies choices live, keeps labels readable, and waits to be 
   await expect.poll(() => visibleVerseOrder(page)).toEqual(['Psalm 1:1', 'Psalm 2:1', 'Psalm 3:1'])
 })
 
+test('alphabetical sorting uses natural reference order and starts practice in that order', async ({ page }) => {
+  const verses = [
+    makeVerse('psalm', 'Psalm 1:1'),
+    makeVerse('acts-10', 'Acts 10:1'),
+    makeVerse('john', 'John 3:16'),
+    makeVerse('acts-2', 'Acts 2:1'),
+  ]
+  const collections = [{ id: 'sorting', name: 'Sorting', parentId: null, createdAt: now, lastModified: now }]
+  await seedStorage(page, verses, collections)
+  await gotoApp(page, '?view=collection&collection=sorting')
+
+  await openSortSheet(page)
+  await page.getByTestId('verse-sort-option-alphabetical').click()
+  await expect(page.getByRole('radio', { name: 'A to Z' })).toHaveAttribute('aria-checked', 'true')
+  await expect.poll(() => visibleVerseOrder(page)).toEqual(['Acts 2:1', 'Acts 10:1', 'John 3:16', 'Psalm 1:1'])
+  await dismissSortSheet(page)
+
+  await page.getByText('Acts 2:1').click()
+  await expect.poll(() => page.evaluate(() => window.history.state?.practiceSequence)).toMatchObject({
+    verseIds: ['acts-2', 'acts-10', 'john', 'psalm'],
+    cursor: 0,
+    sourceState: { view: 'collection', collectionId: 'sorting' },
+  })
+  await swipePracticeVerse(page, 'next')
+  await expect(page.locator('h1')).toContainText('Acts 10:1')
+})
+
 test('sort action appears on the flat library and unavailable criteria explain why', async ({ page }) => {
   const verses = [
     makeVerse('learning-2', 'Psalm 2:1', {

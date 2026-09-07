@@ -38,11 +38,13 @@ describe('app settings', () => {
     expect(normalizeAppSettings({
       verseSortPreferences: {
         'collection:promises': { criterion: 'lastReviewed', direction: 'desc' },
+        'collection:alphabetical': { criterion: 'alphabetical', direction: 'desc' },
         'virtual:master-list': { criterion: 'nextReviewDate', direction: 'invalid' },
         'collection:broken': { criterion: 'unknown', direction: 'desc' },
       },
     }).verseSortPreferences).toEqual({
       'collection:promises': { criterion: 'lastReviewed', direction: 'desc' },
+      'collection:alphabetical': { criterion: 'alphabetical', direction: 'desc' },
       'virtual:master-list': { criterion: 'nextReviewDate', direction: 'asc' },
       'collection:broken': { criterion: 'reference', direction: 'asc' },
     })

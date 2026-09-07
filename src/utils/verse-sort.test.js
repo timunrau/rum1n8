@@ -20,10 +20,40 @@ const verse = (id, reference, overrides = {}) => ({
 describe('verse sorting', () => {
 	it('defines the natural direction for every criterion', () => {
 		expect(getDefaultVerseSortDirection('reference')).toBe('asc')
+		expect(getDefaultVerseSortDirection('alphabetical')).toBe('asc')
 		expect(getDefaultVerseSortDirection('createdAt')).toBe('desc')
 		expect(getDefaultVerseSortDirection('masteredAt')).toBe('desc')
 		expect(getDefaultVerseSortDirection('lastReviewed')).toBe('asc')
 		expect(getDefaultVerseSortDirection('nextReviewDate')).toBe('asc')
+	})
+
+	it('sorts references alphabetically with natural chapter and verse ordering', () => {
+		const input = [
+			verse('psalm', 'Psalm 1:1'),
+			verse('acts-10', 'Acts 10:1'),
+			verse('john', 'John 3:16'),
+			verse('acts-2-10', 'Acts 2:10'),
+			verse('acts-2-2', 'Acts 2:2'),
+		]
+
+		expect(sortVerses(input, { criterion: 'alphabetical', direction: 'asc' }).map(item => item.id))
+			.toEqual(['acts-2-2', 'acts-2-10', 'acts-10', 'john', 'psalm'])
+		expect(sortVerses(input, { criterion: 'alphabetical', direction: 'desc' }).map(item => item.id))
+			.toEqual(['psalm', 'john', 'acts-10', 'acts-2-10', 'acts-2-2'])
+	})
+
+	it('places missing and invalid references last for alphabetical sorting', () => {
+		const input = [
+			verse('missing', ''),
+			verse('psalm', 'Psalm 1:1'),
+			verse('invalid', 'not a reference'),
+			verse('acts', 'Acts 1:1'),
+		]
+
+		expect(sortVerses(input, { criterion: 'alphabetical', direction: 'asc' }).map(item => item.id))
+			.toEqual(['acts', 'psalm', 'invalid', 'missing'])
+		expect(sortVerses(input, { criterion: 'alphabetical', direction: 'desc' }).map(item => item.id))
+			.toEqual(['psalm', 'acts', 'invalid', 'missing'])
 	})
 
 	it('normalizes missing and invalid preferences', () => {
@@ -123,6 +153,7 @@ describe('verse sorting', () => {
 		]
 
 		expect(hasVerseSortValues(input, 'reference')).toBe(true)
+		expect(hasVerseSortValues(input, 'alphabetical')).toBe(true)
 		expect(hasVerseSortValues(input, 'masteredAt')).toBe(false)
 		expect(hasVerseSortValues([...input, verse('dated', 'Psalm 3:1', { masteredAt: '2026-02-01T00:00:00.000Z' })], 'masteredAt')).toBe(true)
 	})

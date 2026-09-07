@@ -4179,6 +4179,12 @@ export default {
           { direction: 'desc', label: 'Revelation first' },
         ]
       }
+      if (criterion === 'alphabetical') {
+        return [
+          { direction: 'asc', label: 'A to Z' },
+          { direction: 'desc', label: 'Z to A' },
+        ]
+      }
       if (criterion === 'lastReviewed') {
         return [
           { direction: 'asc', label: 'Least recently reviewed' },

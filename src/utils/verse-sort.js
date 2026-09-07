@@ -2,6 +2,7 @@ import { BIBLE_BOOKS, parseVerseSpanReference } from './bible-reference.js'
 
 export const VERSE_SORT_CRITERIA = Object.freeze([
 	{ id: 'reference', label: 'Biblical order' },
+	{ id: 'alphabetical', label: 'Alphabetical' },
 	{ id: 'createdAt', label: 'Date added' },
 	{ id: 'masteredAt', label: 'Date mastered' },
 	{ id: 'lastReviewed', label: 'Last reviewed' },
@@ -11,6 +12,7 @@ export const VERSE_SORT_CRITERIA = Object.freeze([
 const CRITERION_IDS = new Set(VERSE_SORT_CRITERIA.map(criterion => criterion.id))
 const DATE_CRITERIA = new Set(['createdAt', 'masteredAt', 'lastReviewed', 'nextReviewDate'])
 const BOOK_INDEX_BY_ID = new Map(BIBLE_BOOKS.map((book, index) => [book.id, index]))
+const BOOK_NAME_BY_ID = new Map(BIBLE_BOOKS.map(book => [book.id, book.name]))
 
 export function getDefaultVerseSortDirection(criterion = 'reference') {
 	if (criterion === 'createdAt' || criterion === 'masteredAt') return 'desc'
@@ -48,12 +50,13 @@ function parseTimestamp(value) {
 function getReferenceParts(reference = '') {
 	const parsed = parseVerseSpanReference(String(reference || ''))
 	if (!parsed) {
-		return { available: false, book: Number.MAX_SAFE_INTEGER, chapter: 0, verse: 0 }
+		return { available: false, book: Number.MAX_SAFE_INTEGER, bookName: '', chapter: 0, verse: 0 }
 	}
 
 	return {
 		available: true,
 		book: BOOK_INDEX_BY_ID.get(parsed.bookId) ?? Number.MAX_SAFE_INTEGER,
+		bookName: BOOK_NAME_BY_ID.get(parsed.bookId) || '',
 		chapter: parsed.startChapter,
 		verse: parsed.startVerse,
 	}
@@ -67,6 +70,20 @@ function compareReference(a, b, direction = 'asc') {
 
 	const sign = direction === 'desc' ? -1 : 1
 	if (aReference.book !== bReference.book) return (aReference.book - bReference.book) * sign
+	if (aReference.chapter !== bReference.chapter) return (aReference.chapter - bReference.chapter) * sign
+	if (aReference.verse !== bReference.verse) return (aReference.verse - bReference.verse) * sign
+	return 0
+}
+
+function compareAlphabetical(a, b, direction = 'asc') {
+	const aReference = getReferenceParts(a?.reference)
+	const bReference = getReferenceParts(b?.reference)
+
+	if (aReference.available !== bReference.available) return aReference.available ? -1 : 1
+
+	const sign = direction === 'desc' ? -1 : 1
+	const bookComparison = compareText(aReference.bookName, bReference.bookName)
+	if (bookComparison !== 0) return bookComparison * sign
 	if (aReference.chapter !== bReference.chapter) return (aReference.chapter - bReference.chapter) * sign
 	if (aReference.verse !== bReference.verse) return (aReference.verse - bReference.verse) * sign
 	return 0
@@ -99,6 +116,10 @@ export function sortVerses(items = [], preference = {}) {
 			const referenceComparison = compareReference(a, b, direction)
 			return referenceComparison || compareTieBreakers(a, b)
 		}
+		if (criterion === 'alphabetical') {
+			const alphabeticalComparison = compareAlphabetical(a, b, direction)
+			return alphabeticalComparison || compareTieBreakers(a, b)
+		}
 
 		const aValue = parseTimestamp(a?.[criterion])
 		const bValue = parseTimestamp(b?.[criterion])
@@ -113,7 +134,7 @@ export function sortVerses(items = [], preference = {}) {
 }
 
 export function hasVerseSortValues(items = [], criterion = 'reference') {
-	if (criterion === 'reference') return items.length > 0
+	if (criterion === 'reference' || criterion === 'alphabetical') return items.length > 0
 	if (!DATE_CRITERIA.has(criterion)) return false
 	return items.some(item => parseTimestamp(item?.[criterion]) !== null)
 }
