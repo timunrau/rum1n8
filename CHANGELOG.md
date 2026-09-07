@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/timunrau/rum1n8/compare/v1.50.4...v1.51.0) (2026-09-07)
+
+
+### Features
+
+* add collection verse sorting ([a6594e2](https://github.com/timunrau/rum1n8/commit/a6594e2a64af763a3a26933ee80ef0f71ecba894))
+
 ## [1.50.4](https://github.com/timunrau/rum1n8/compare/v1.50.3...v1.50.4) (2026-09-07)
 
 ## [1.50.3](https://github.com/timunrau/rum1n8/compare/v1.50.2...v1.50.3) (2026-09-07)
