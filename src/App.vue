@@ -321,14 +321,12 @@
           style="border-radius: 0 16px 16px 0;"
         >
         <!-- App header -->
-        <div class="px-6 pt-10 pb-5" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
+        <div class="px-6 pt-10 pb-4" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
           <div class="flex items-center gap-3">
             <BrandMark size="sm" />
-            <span class="font-serif text-2xl tracking-tight text-text-primary">rum1n8</span>
+            <span class="font-serif text-2xl leading-none tracking-tight text-text-primary">rum1n8</span>
           </div>
-          <p class="mt-2 font-serif italic text-sm text-text-muted">Bible Memory</p>
         </div>
-        <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->
         <nav class="flex-1 px-3 py-2 overflow-y-auto">
           <!-- Sync status card -->

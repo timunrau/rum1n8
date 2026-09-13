@@ -19,7 +19,7 @@
 
 ## Marketing Screenshots
 
-- After any user interface change, run `node scripts/generate-marketing-assets.mjs` and include all regenerated screenshots from `public/marketing/` with the change.
+- Run `node scripts/generate-marketing-assets.mjs` only before committing, or when regenerated screenshots are needed to inspect a user-interface change. Include all regenerated screenshots from `public/marketing/` with the change.
 
 ## Git Workflow
 
