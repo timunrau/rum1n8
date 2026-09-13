@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/timunrau/rum1n8/compare/v1.52.1...v1.53.0) (2026-09-13)
+
+
+### Features
+
+* expand generated marketing screenshots ([74daecc](https://github.com/timunrau/rum1n8/commit/74daeccc7efbf11c1427462e04b4487db4d22595))
+
 ## [1.52.1](https://github.com/timunrau/rum1n8/compare/v1.52.0...v1.52.1) (2026-09-07)
 
 
