@@ -1,4 +1,4 @@
-# rum1n8 - Bible Memory App
+# rum1n8 - Bible Memory
 ![rum1n8 overview](public/marketing/og-card.png)
 
 *Pronounced "Ruminate"* — to turn something over in the mind; to meditate or reflect on deeply. Inspired by Joshua 1:8:

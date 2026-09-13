@@ -326,7 +326,7 @@
             <BrandMark size="sm" />
             <span class="font-serif text-2xl tracking-tight text-text-primary">rum1n8</span>
           </div>
-          <p class="mt-2 font-serif italic text-sm text-text-muted">Bible verse memorization</p>
+          <p class="mt-2 font-serif italic text-sm text-text-muted">Bible Memory</p>
         </div>
         <div class="border-t border-border-default mx-4 mb-2" />
         <!-- Settings items -->

@@ -111,7 +111,7 @@ function renderHtmlTemplate(template, replacements) {
 
 function buildSiteMetadata(env) {
   const productName = 'rum1n8'
-  const title = `${productName} - Bible Memory App`
+  const title = `${productName} - Bible Memory`
   const defaultDescription = 'A simple Bible memory app that gives you control of your data.'
   const memorizationBenefitsTitle = 'Memorization Is A Spiritual Life-Hack'
   const memorizationBenefitsDescription = "A short case for why Scripture memorization unlocks real growth in your walk with God."
