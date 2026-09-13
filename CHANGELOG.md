@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/timunrau/rum1n8/compare/v1.53.1...v1.54.0) (2026-09-13)
+
+
+### Features
+
+* simplify drawer branding ([28688b3](https://github.com/timunrau/rum1n8/commit/28688b37e2b61016b434307938bb5af1ccc4f951))
+
 ## [1.53.1](https://github.com/timunrau/rum1n8/compare/v1.53.0...v1.53.1) (2026-09-13)
 
 
