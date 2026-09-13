@@ -17,6 +17,10 @@
 - If Playwright reports that Chromium is missing, run `npx playwright install chromium`.
 - In Codex's sandbox, always run `npm run test:e2e` with escalated permissions from the outset. The sandboxed run cannot launch Chrome reliably (`SIGABRT`/`EPERM`) and only wastes a full test attempt; escalation also permits Playwright's Vite server to open its local listening port.
 
+## Marketing Screenshots
+
+- After any user interface change, run `node scripts/generate-marketing-assets.mjs` and include all regenerated screenshots from `public/marketing/` with the change.
+
 ## Git Workflow
 
 - Do not create branches or pull requests for routine work in this repository unless the user explicitly requests one.
