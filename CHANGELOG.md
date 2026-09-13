@@ -1,3 +1,10 @@
+## [1.53.1](https://github.com/timunrau/rum1n8/compare/v1.53.0...v1.53.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* standardize Bible Memory naming ([63eb4a7](https://github.com/timunrau/rum1n8/commit/63eb4a733ebd635153da9070888fcb007bda26f9))
+
 # [1.53.0](https://github.com/timunrau/rum1n8/compare/v1.52.1...v1.53.0) (2026-09-13)
 
 
