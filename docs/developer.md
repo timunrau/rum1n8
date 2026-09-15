@@ -9,7 +9,15 @@ npm install
 npm run dev
 ```
 
-The Vite dev server binds to `127.0.0.1:5173` by default. To expose it on your LAN:
+The launcher starts the app, marketing site, and WebDAV proxy:
+
+```text
+App:       http://127.0.0.1:5173/app/
+Marketing: http://127.0.0.1:5174/
+WebDAV:    http://127.0.0.1:3001/health
+```
+
+The individual processes remain available as `npm run dev:app`, `npm run dev:site`, and `npm run dev:proxy`. To expose the frontend servers on your LAN:
 
 ```bash
 HOST=0.0.0.0 npm run dev
@@ -21,6 +29,7 @@ HOST=0.0.0.0 npm run dev
 - Playwright starts the app server from `playwright.config.ts`; do not manually start another dev server unless you are intentionally reusing one
 - If Chromium is missing, run `npx playwright install chromium`
 - In sandboxed environments, e2e may need permission to open a local listening port
+- To exercise already-running production containers, set `PLAYWRIGHT_SKIP_WEBSERVER=1`, `PLAYWRIGHT_BASE_URL`, `PLAYWRIGHT_APP_URL`, and `PLAYWRIGHT_MARKETING_URL`; for a local self-signed TLS proxy, also set `PLAYWRIGHT_IGNORE_HTTPS_ERRORS=1`
 
 ## Maintenance
 
@@ -39,6 +48,7 @@ npm audit
 npm test
 npm run build
 npm run test:e2e
+npm run test:pwa-upgrade
 ```
 
 ## WebDAV development
@@ -55,7 +65,7 @@ Or run the app and proxy together:
 NEXTCLOUD_URL=https://your-nextcloud.com/remote.php/webdav npm run dev:all
 ```
 
-When using the dev proxy, set the proxy URL in the app to `http://localhost:3001`.
+The app development server forwards `/api/webdav` to the local proxy automatically.
 
 ## Android Trusted Web Activity
 

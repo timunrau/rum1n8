@@ -1,104 +1,169 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { clearAppStorage } from '../helpers/storage'
 import { gotoApp } from '../helpers/navigation'
 
+const APP_URL = (process.env.PLAYWRIGHT_APP_URL || 'http://127.0.0.1:5173').replace(/\/$/, '')
+const MARKETING_URL = (process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')
 const HERO_HEADING = 'Ruminate: to turn something over in the mind.'
 
+async function gotoMarketing(page: Page, path = '/') {
+  await page.goto(`${MARKETING_URL}${path}`)
+}
+
+async function openAppMenu(page: Page) {
+  await page.getByTestId('hamburger-button').click()
+  await expect(page.getByTestId('settings-about')).toBeVisible()
+}
+
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await gotoApp(page)
   await clearAppStorage(page)
-  await page.reload()
+  await gotoMarketing(page)
+  await page.evaluate(() => localStorage.clear())
 })
 
-test('fresh visit to root shows the marketing page', async ({ page }) => {
-  await page.goto('/')
+test('fresh marketing visit shows the static homepage and app CTA', async ({ page }) => {
+  await gotoMarketing(page)
 
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(`${MARKETING_URL}/`)
   await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Start memorizing' }).first()).toHaveAttribute(
+    'href',
+    `${APP_URL}/app/`,
+  )
   await expect(page.getByTestId('nav-collections')).toHaveCount(0)
 })
 
-test('returning users visiting root are redirected back into the app', async ({ page }) => {
-  await page.addInitScript(() => {
+test('marketing origin does not inspect app-local UI state', async ({ page }) => {
+  await page.evaluate(() => {
     localStorage.setItem('rum1n8-ui-state', JSON.stringify({
       hasOpenedApp: true,
       lastAppUrl: '/app/?view=stats',
     }))
   })
+  await page.reload()
 
-  await page.goto('/')
-
-  await expect(page).toHaveURL(/\/app\/\?view=stats$/)
-  await expect(page.getByTestId('nav-stats')).toHaveClass(/tab-btn--active/)
+  await expect(page).toHaveURL(`${MARKETING_URL}/`)
+  await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
 })
 
-test('root return links stay public even for returning users', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('rum1n8-ui-state', JSON.stringify({
-      hasOpenedApp: true,
-      lastAppUrl: '/app/?view=review-list',
-    }))
+for (const legacyQuery of ['view=stats', 'collection=abc', 'verse=def', 'mode=master']) {
+  test(`app root preserves legacy ${legacyQuery.split('=')[0]} navigation`, async ({ request }) => {
+    const response = await request.get(`${APP_URL}/?${legacyQuery}`, { maxRedirects: 0 })
+
+    expect(response.status()).toBe(301)
+    expect(response.headers().location).toBe(`/app/?${legacyQuery}`)
   })
+}
 
-  await page.goto('/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
+test('allowlisted returnTo produces an exact absolute app return link', async ({ page }) => {
+  await gotoMarketing(page, '/tips-for-memorizing-scripture/?returnTo=%2Fapp%2F%3Fview%3Dreview-list%23today')
 
-  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F%3Fview%3Dreview-list$/)
-  await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute(
     'href',
-    '/app/?view=review-list'
+    `${APP_URL}/app/?view=review-list#today`,
   )
 })
 
-test('deprecated about URL redirects to the canonical root and preserves return target', async ({ page }) => {
-  await page.goto('/about/?returnTo=%2Fapp%2F%3Fview%3Dreview-list')
+for (const returnTo of ['https://evil.example/app/', '//evil.example/app/', '/privacy/']) {
+  test(`rejects unsafe returnTo value ${returnTo}`, async ({ page }) => {
+    await gotoMarketing(page, `/tips-for-memorizing-scripture/?returnTo=${encodeURIComponent(returnTo)}`)
 
-  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F%3Fview%3Dreview-list$/)
-  await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute(
-    'href',
-    '/app/?view=review-list'
-  )
-})
+    await expect(page.getByRole('link', { name: 'Back to app' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Start memorizing' }).first()).toHaveAttribute(
+      'href',
+      `${APP_URL}/app/`,
+    )
+  })
+}
 
-test('privacy page is available at the clean URL', async ({ page }) => {
-  await page.goto('/privacy')
+for (const [alias, canonical] of [
+  ['/index.html', '/'],
+  ['/about/', '/'],
+  ['/privacy.html', '/privacy/'],
+  ['/privacy', '/privacy/'],
+  ['/tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
+  ['/import/biblememory', '/import/biblememory/'],
+] as const) {
+  test(`marketing alias ${alias} redirects canonically with its query`, async ({ page }) => {
+    await gotoMarketing(page, `${alias}?campaign=old`)
 
-  await expect(page).toHaveURL(/\/privacy$/)
+    await expect(page).toHaveURL(`${MARKETING_URL}${canonical}?campaign=old`)
+  })
+}
+
+test('privacy has a clean URL and an independent analytics preference', async ({ page }) => {
+  await gotoMarketing(page, '/privacy/')
+
+  await expect(page).toHaveURL(`${MARKETING_URL}/privacy/`)
   await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible()
-  await expect(page.getByText('No data is sent to or stored on any rum1n8 server.')).toBeVisible()
+  const optOut = page.getByRole('checkbox', { name: /Do not load analytics/ })
+  await expect(optOut).not.toBeChecked()
+  await optOut.check()
+  await expect(page).toHaveURL(`${MARKETING_URL}/privacy/`)
+  await expect(optOut).toBeChecked()
+  expect(await page.evaluate(() => localStorage.getItem('rum1n8-marketing-analytics-opt-out'))).toBe('true')
 })
 
-test('legacy root app query redirects into the app path', async ({ page }) => {
-  await page.goto('/?view=review-list')
+for (const [testId, path, heading] of [
+  ['settings-about', '/', HERO_HEADING],
+  ['settings-memorization-tips', '/tips-for-memorizing-scripture/', 'Tips For Memorizing Scripture'],
+  ['settings-biblememory-import', '/import/biblememory/', 'Import from BibleMemory.com'],
+  ['settings-privacy', '/privacy/', 'Privacy Policy'],
+] as const) {
+  test(`app action ${testId} crosses origins and returns to the exact app screen`, async ({ page }) => {
+    await gotoApp(page, '?view=collections')
+    await openAppMenu(page)
+    await page.getByTestId(testId).click()
 
-  await expect(page).toHaveURL(/\/app\/\?view=review-list$/)
-  await expect(page.getByTestId('nav-review')).toHaveClass(/tab-btn--active/)
-})
+    await expect(page).toHaveURL(`${MARKETING_URL}${path}?returnTo=%2Fapp%2F%3Fview%3Dcollections`)
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+    await page.getByRole('link', { name: 'Back to app' }).click()
+    await expect(page).toHaveURL(`${APP_URL}/app/?view=collections`)
+  })
+}
 
-test('app About opens the public page with a back link to the current app view', async ({
-  page,
-}) => {
-  await gotoApp(page)
-
-  await page.getByTestId('hamburger-button').click()
-  await expect(page.getByTestId('settings-about')).toBeVisible()
+test('ordinary browser Back returns from marketing to the app', async ({ page }) => {
+  await gotoApp(page, '?view=collections')
+  await openAppMenu(page)
   await page.getByTestId('settings-about').click()
+  await expect(page).toHaveURL(new RegExp(`^${MARKETING_URL.replaceAll('.', '\\.')}/`))
 
-  await expect(page).toHaveURL(/\/\?returnTo=%2Fapp%2F$/)
-  await expect(page.getByRole('heading', { name: HERO_HEADING })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Back to app' })).toHaveAttribute('href', '/app/')
+  await page.goBack()
+  await expect(page).toHaveURL(`${APP_URL}/app/?view=collections`)
+})
+
+test('Share app shares the public marketing URL', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async (data: ShareData) => {
+        ;(window as typeof window & { __sharedApp?: ShareData }).__sharedApp = data
+      },
+    })
+  })
+  await gotoApp(page)
+  await openAppMenu(page)
+  await page.getByTestId('settings-share').click()
+
+  const shared = await page.evaluate(
+    () => (window as typeof window & { __sharedApp?: ShareData }).__sharedApp,
+  )
+  expect(shared).toMatchObject({
+    title: 'rum1n8',
+    url: `${MARKETING_URL}/`,
+  })
 })
 
 test('dedication links are marked for analytics tracking', async ({ page }) => {
-  await page.goto('/')
+  await gotoMarketing(page)
 
   await expect(page.getByRole('link', { name: 'Donate to Church Renewal International' })).toHaveAttribute(
     'data-marketing-track',
-    'marketing_church_renewal_donate_clicked'
+    'marketing_church_renewal_donate_clicked',
   )
   await expect(page.getByRole('link', { name: 'Visit TheWay.app' })).toHaveAttribute(
     'data-marketing-track',
-    'marketing_theway_clicked'
+    'marketing_theway_clicked',
   )
 })

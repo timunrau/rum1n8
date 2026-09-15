@@ -1,20 +1,34 @@
 import './marketing.css'
 import bibleMemoryBookmarkletUrl from '../scripts/biblememory-migration/bookmarklet.min.js?raw'
-import { initAnalytics, trackEvent } from './analytics.js'
-import { getAppSettings } from './app-settings.js'
 import {
-  APP_ROOT_PATH,
-  BIBLEMEMORY_IMPORT_PATH,
-  TIPS_PATH,
-  getPreferredAppUrl,
-  getUiState,
-  normalizeAppUrl,
-  shouldBypassMarketing,
-} from './ui-state.js'
+  initMarketingAnalytics,
+  initMarketingAnalyticsPreference,
+  trackMarketingEvent,
+} from './marketing-analytics.js'
+
+const APP_ROOT_PATH = '/app/'
+const BIBLEMEMORY_IMPORT_PATH = '/import/biblememory/'
+const TIPS_PATH = '/tips-for-memorizing-scripture/'
+const APP_URL = import.meta.env?.VITE_APP_URL || 'http://127.0.0.1:5173/app/'
 
 function getReturnTarget() {
   const params = new URLSearchParams(window.location.search)
-  return normalizeAppUrl(params.get('returnTo'))
+  const value = params.get('returnTo')
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return null
+
+  try {
+    const url = new URL(value, 'https://rum1n8.invalid')
+    if (url.origin !== 'https://rum1n8.invalid') return null
+    if (url.pathname === '/app' || url.pathname === '/app/index.html') url.pathname = APP_ROOT_PATH
+    if (!url.pathname.startsWith(APP_ROOT_PATH)) return null
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch {
+    return null
+  }
+}
+
+function getAppTarget(returnTarget = null) {
+  return returnTarget ? new URL(returnTarget.replace(/^\//, ''), new URL('/', APP_URL)).toString() : APP_URL
 }
 
 function updateAppLinks(target, label) {
@@ -101,17 +115,12 @@ function initMarketingPage() {
         ? 'tips'
         : 'home'
 
-  const uiState = getUiState()
   const explicitReturnTarget = getReturnTarget()
-  const appTarget = explicitReturnTarget || getPreferredAppUrl()
-  const isReturning = shouldBypassMarketing() || !!explicitReturnTarget || !!uiState.lastAppUrl
-  const appLabel = isReturning ? 'Open app' : 'Start memorizing'
-  const shouldShowReturnLink =
-    !!explicitReturnTarget ||
-    ((pathname.startsWith(TIPS_PATH) || pathname.startsWith(BIBLEMEMORY_IMPORT_PATH)) && isReturning)
+  const appTarget = getAppTarget(explicitReturnTarget)
+  const appLabel = explicitReturnTarget ? 'Open app' : 'Start memorizing'
 
-  updateAppLinks(appTarget || APP_ROOT_PATH, appLabel)
-  updateReturnLink(appTarget || APP_ROOT_PATH, shouldShowReturnLink)
+  updateAppLinks(appTarget, appLabel)
+  updateReturnLink(appTarget, !!explicitReturnTarget)
 
   if (pathname.startsWith(BIBLEMEMORY_IMPORT_PATH)) {
     initBibleMemoryImportPage()
@@ -121,7 +130,7 @@ function initMarketingPage() {
 function initTrackedMarketingLinks() {
   document.querySelectorAll('[data-marketing-track]').forEach((link) => {
     link.addEventListener('click', () => {
-      trackEvent(link.getAttribute('data-marketing-track'), {
+      trackMarketingEvent(link.getAttribute('data-marketing-track'), {
         href: link.getAttribute('href') || '',
         page: window.location.pathname,
       })
@@ -129,14 +138,16 @@ function initTrackedMarketingLinks() {
   })
 }
 
-initAnalytics({ optOut: getAppSettings().analyticsOptOut })
+initMarketingAnalytics()
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initMarketingPage()
     initTrackedMarketingLinks()
+    initMarketingAnalyticsPreference()
   }, { once: true })
 } else {
   initMarketingPage()
   initTrackedMarketingLinks()
+  initMarketingAnalyticsPreference()
 }

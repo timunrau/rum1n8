@@ -1255,7 +1255,7 @@ async function captureOgCard(browser, baseUrl) {
 }
 
 const server = await createServer({
-  configFile: path.join(projectRoot, 'vite.config.js'),
+  configFile: path.join(projectRoot, 'vite.app.config.js'),
   server: {
     host: '127.0.0.1',
     port: 4173,

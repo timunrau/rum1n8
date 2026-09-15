@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="robots" content="noindex,follow">
   <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Source+Sans+3:wght@400;500;600;700&display=swap">
-  <title>Privacy Policy — rum1n8</title>
+  <meta name="robots" content="%META_ROBOTS%">
+  <meta name="description" content="%PAGE_DESCRIPTION%">
+  %HEAD_CANONICAL_TAGS%
+  %HEAD_SOCIAL_TAGS%
+  %HEAD_JSON_LD%
+  <title>%PAGE_TITLE%</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -183,6 +187,21 @@
       flex-shrink: 0;
     }
 
+    .analytics-preference {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin: 1rem 0;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: rgba(31, 61, 46, 0.04);
+    }
+
+    .analytics-preference input {
+      margin-top: 0.3rem;
+    }
+
     @media (prefers-color-scheme: dark) {
       :root {
         --page-bg: #121411;
@@ -217,6 +236,9 @@
   </style>
 </head>
 <body>
+  <div class="app-return" data-return-banner hidden>
+    <a class="back-link" data-return-link href="%APP_URL%">Back to app</a>
+  </div>
   <header class="site-header">
     <a class="brand" href="/">
       <span class="brand__mark">r</span>
@@ -245,11 +267,15 @@
 
     <!--ANALYTICS_SECTION_START-->
     <h2>Third-Party Services</h2>
-    <p>rum1n8 does not use any analytics, tracking, advertising, or telemetry services. No cookies are set for tracking purposes. The only external requests the app makes are:</p>
+    <p>The marketing website may use a self-hosted instance of Umami for aggregate usage analytics. It does not use advertising trackers or third-party tracking cookies.</p>
     <ul>
-      <li>Bible text imports via the <a href="https://fetch.bible" target="_blank" rel="noopener noreferrer">fetch.bible</a> API (when you import verse content)</li>
-      <li>Your configured sync provider (only if you set one up)</li>
+      <li>The app and marketing site use separate analytics website entries.</li>
+      <li>Their opt-out preferences are independent because the two sites live on separate origins.</li>
     </ul>
+    <label class="analytics-preference">
+      <input type="checkbox" data-marketing-analytics-opt-out>
+      <span>Do not load analytics on this marketing site in this browser.</span>
+    </label>
     <!--ANALYTICS_SECTION_END-->
 
     <h2>Data You Control</h2>
@@ -264,12 +290,13 @@
     <h2>Contact</h2>
     <p>For questions about this privacy policy, please open an issue on the <a href="https://github.com/timunrau/rum1n8" target="_blank" rel="noopener noreferrer">GitHub repository</a>.</p>
 
-    <a href="/app/" class="back-link">
+    <a data-app-link href="%APP_URL%" class="back-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
-      Back to app
+      <span data-app-link-label>Start memorizing</span>
     </a>
   </main>
+  <script type="module" src="/src/marketing.js"></script>
 </body>
 </html>

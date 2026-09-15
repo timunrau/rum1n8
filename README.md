@@ -5,7 +5,7 @@
 
 > "This Book of the Law must not depart from your mouth; meditate on it day and night, so that you may be careful to do everything written in it. For then you will prosper and succeed in all you do." — Joshua 1:8 (BSB)
 
-[Open rum1n8](https://rum1n8.unrau.xyz)
+[Open the rum1n8 app](https://rum1n8.unrau.xyz/app/)
 
 
 ## Why rum1n8 exists

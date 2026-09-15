@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
 jobs:
   unit-tests:
     uses: ./.github/workflows/unit-tests.yml
@@ -21,6 +25,7 @@ jobs:
     outputs:
       released: ${{ steps.release-result.outputs.released }}
       version: ${{ steps.release-result.outputs.version }}
+      sha: ${{ steps.release-result.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,38 +40,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Capture release state before semantic-release
-        id: state-before
-        run: |
-          VERSION=$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version)")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
-
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
 
-      - name: Capture release state after semantic-release
-        id: state-after
-        run: |
-          git fetch origin main --tags
-          VERSION=$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version)")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
-
-      - name: Determine whether a release was published
+      - name: Resolve released main state
         id: release-result
         run: |
-          if [ "${{ steps.state-before.outputs.tag }}" != "${{ steps.state-after.outputs.tag }}" ]; then
+          git fetch origin --tags '+refs/heads/main:refs/remotes/origin/main'
+          RELEASE_TAG=$(git describe --tags --abbrev=0 origin/main 2>/dev/null || true)
+          RELEASE_SHA="$GITHUB_SHA"
+          if [ -n "$RELEASE_TAG" ]; then
+            TAG_SHA=$(git rev-list -n 1 "$RELEASE_TAG")
+          fi
+          if [ -n "${TAG_SHA:-}" ] && git merge-base --is-ancestor "$GITHUB_SHA" "$TAG_SHA"; then
             echo "released=true" >> "$GITHUB_OUTPUT"
+            RELEASE_SHA="$TAG_SHA"
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
           fi
-          echo "version=${{ steps.state-after.outputs.version }}" >> "$GITHUB_OUTPUT"
+          git checkout --detach "$RELEASE_SHA"
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
 
-  build-and-push:
-    needs: [unit-tests, e2e-tests, release]
+  build-app:
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,60 +74,166 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
-
-      - name: Build image tags
-        id: image-tags
-        run: |
-          CURRENT_SHA=$(git rev-parse HEAD)
-          rum_tags="ghcr.io/timunrau/rum1n8:latest"$'\n'"ghcr.io/timunrau/rum1n8:${CURRENT_SHA}"
-          proxy_tags="ghcr.io/timunrau/rum1n8-proxy:latest"$'\n'"ghcr.io/timunrau/rum1n8-proxy:${CURRENT_SHA}"
-
-          if [ "${{ needs.release.outputs.released }}" = "true" ]; then
-            rum_tags="$rum_tags"$'\n'"ghcr.io/timunrau/rum1n8:${{ needs.release.outputs.version }}"
-            proxy_tags="$proxy_tags"$'\n'"ghcr.io/timunrau/rum1n8-proxy:${{ needs.release.outputs.version }}"
-          fi
-
-          {
-            echo "rum_tags<<EOF"
-            echo "$rum_tags"
-            echo "EOF"
-            echo "proxy_tags<<EOF"
-            echo "$proxy_tags"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and push rum1n8
+      - uses: docker/setup-buildx-action@v4
+      - name: Build and publish app SHA
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.app
           push: true
-          tags: ${{ steps.image-tags.outputs.rum_tags }}
+          tags: ghcr.io/timunrau/rum1n8-app:${{ needs.release.outputs.sha }}
           build-args: |
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_GOOGLE_CLIENT_SECRET=${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
             VITE_UMAMI_SCRIPT_URL=${{ secrets.VITE_UMAMI_SCRIPT_URL }}
             VITE_UMAMI_WEBSITE_ID=${{ secrets.VITE_UMAMI_WEBSITE_ID }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            VITE_APP_URL=${{ secrets.VITE_APP_URL }}
+            VITE_MARKETING_URL=${{ secrets.VITE_MARKETING_URL }}
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
 
-      - name: Build and push webdav-proxy
+  build-site:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Build and publish marketing SHA
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile.site
+          push: true
+          tags: ghcr.io/timunrau/rum1n8-site:${{ needs.release.outputs.sha }}
+          build-args: |
+            VITE_UMAMI_SCRIPT_URL=${{ secrets.VITE_UMAMI_SCRIPT_URL }}
+            VITE_UMAMI_MARKETING_WEBSITE_ID=${{ secrets.VITE_UMAMI_MARKETING_WEBSITE_ID }}
+            VITE_APP_URL=${{ secrets.VITE_APP_URL }}
+            VITE_MARKETING_URL=${{ secrets.VITE_MARKETING_URL }}
+          cache-from: type=gha,scope=site
+          cache-to: type=gha,mode=max,scope=site
+
+  build-proxy:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Build and publish proxy SHA
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.proxy
           push: true
-          tags: ${{ steps.image-tags.outputs.proxy_tags }}
+          tags: ghcr.io/timunrau/rum1n8-proxy:${{ needs.release.outputs.sha }}
           cache-from: type=gha,scope=proxy
           cache-to: type=gha,mode=max,scope=proxy
+
+  verify-and-promote:
+    needs: [release, build-app, build-site, build-proxy]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      SHA: ${{ needs.release.outputs.sha }}
+      VERSION: ${{ needs.release.outputs.version }}
+      RELEASED: ${{ needs.release.outputs.released }}
+      MARKETING_URL: ${{ secrets.VITE_MARKETING_URL }}
+    steps:
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Pull immutable images
+        run: |
+          docker pull "ghcr.io/timunrau/rum1n8-app:$SHA"
+          docker pull "ghcr.io/timunrau/rum1n8-site:$SHA"
+          docker pull "ghcr.io/timunrau/rum1n8-proxy:$SHA"
+
+      - name: Assert image boundaries
+        run: |
+          docker run --rm --entrypoint sh "ghcr.io/timunrau/rum1n8-site:$SHA" -c '
+            test -f /usr/share/nginx/html/index.html
+            test -f /usr/share/nginx/html/privacy/index.html
+            test -f /usr/share/nginx/html/marketing/screenshot-empty.png
+            test ! -e /usr/share/nginx/html/app/index.html
+            test ! -e /usr/share/nginx/html/manifest.webmanifest
+            test ! -e /usr/share/nginx/html/sw.js
+            test ! -e /usr/share/nginx/html/registerSW.js
+            test ! -e /usr/share/nginx/html/gdrive-callback.html
+          '
+          docker run --rm --entrypoint sh "ghcr.io/timunrau/rum1n8-app:$SHA" -c '
+            test -f /usr/share/nginx/html/app/index.html
+            test -f /usr/share/nginx/html/manifest.webmanifest
+            test -f /usr/share/nginx/html/sw.js
+            test ! -e /usr/share/nginx/html/index.html
+            test ! -e /usr/share/nginx/html/privacy/index.html
+          '
+
+      - name: Smoke-test frontend images
+        run: |
+          docker network create rum1n8-smoke
+          trap 'docker rm -f rum1n8-smoke-app rum1n8-smoke-site webdav-proxy >/dev/null 2>&1 || true; docker network rm rum1n8-smoke >/dev/null 2>&1 || true' EXIT
+          docker run -d --network rum1n8-smoke --name webdav-proxy "ghcr.io/timunrau/rum1n8-proxy:$SHA"
+          docker run -d --network rum1n8-smoke --name rum1n8-smoke-app -p 18080:80 "ghcr.io/timunrau/rum1n8-app:$SHA"
+          docker run -d --network rum1n8-smoke --name rum1n8-smoke-site -p 18081:80 "ghcr.io/timunrau/rum1n8-site:$SHA"
+          for attempt in {1..20}; do
+            curl -fsS http://127.0.0.1:18080/health >/dev/null \
+              && curl -fsS http://127.0.0.1:18081/health >/dev/null \
+              && break
+            sleep 1
+          done
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/app/)" = "200"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/app/deep-link)" = "200"
+          test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18080/app/index.html?view=stats')" = "http://127.0.0.1:18080/app/?view=stats"
+          test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18080/?view=stats&mode=master')" = "http://127.0.0.1:18080/app/?view=stats&mode=master"
+          curl -fsS http://127.0.0.1:18080/manifest.webmanifest >/dev/null
+          curl -fsS http://127.0.0.1:18080/.well-known/assetlinks.json >/dev/null
+          curl -fsS http://127.0.0.1:18081/ >/dev/null
+          curl -fsS http://127.0.0.1:18081/privacy/ >/dev/null
+          curl -fsS http://127.0.0.1:18081/marketing/screenshot-empty.png >/dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18081/not-a-real-page)" = "404"
+          test "$(curl -sSI -H 'Host: marketing.example' -H 'X-Forwarded-Proto: https' 'http://127.0.0.1:18081/privacy?from=old' | sed -n 's/^Location: //p' | tr -d '\r')" = "/privacy/?from=old"
+          test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18081/privacy.html?from=old')" = "http://127.0.0.1:18081/privacy/?from=old"
+          test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18081/about/?from=old')" = "http://127.0.0.1:18081/?from=old"
+          test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18080/privacy?from=old')" = "${MARKETING_URL}privacy/?from=old"
+
+      - name: Promote verified images
+        run: |
+          for package in rum1n8-app rum1n8-site rum1n8-proxy; do
+            source="ghcr.io/timunrau/$package:$SHA"
+            tags=(-t "ghcr.io/timunrau/$package:latest")
+            if [ "$RELEASED" = "true" ]; then
+              tags+=(-t "ghcr.io/timunrau/$package:$VERSION")
+            fi
+            docker buildx imagetools create "${tags[@]}" "$source"
+          done

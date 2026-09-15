@@ -20,92 +20,16 @@
     <title>%PAGE_TITLE%</title>
     <style>
       @media (prefers-color-scheme: dark) {
-        html:not([data-redirecting='true']) {
+        html {
           background: #08101b;
         }
       }
     </style>
-    <script>
-      (() => {
-        const APP_PATH = '/app/'
-        const params = new URLSearchParams(window.location.search)
-        const hasLegacyNavigation = ['view', 'collection', 'verse', 'mode'].some((key) => params.has(key))
-
-        const normalizeTarget = (target) => {
-          if (!target || typeof target !== 'string') return null
-
-          try {
-            const url = new URL(target, window.location.origin)
-
-            if (url.pathname === '/app' || url.pathname === '/app/index.html') {
-              url.pathname = APP_PATH
-            }
-
-            if (!url.pathname.startsWith(APP_PATH)) {
-              return null
-            }
-
-            return `${url.pathname}${url.search}${url.hash}`
-          } catch {
-            return null
-          }
-        }
-        const explicitReturnTarget = normalizeTarget(params.get('returnTo'))
-
-        const hasLegacyAppData = [
-          'rum1n8-verses',
-          'rum1n8-collections',
-          'rum1n8-app-settings',
-          'rum1n8-webdav-settings',
-          'rum1n8-gdrive-settings',
-          'rum1n8-sync-provider',
-          'rum1n8-sync-state',
-          'rum1n8-last-backup',
-          'bible-memory-verses',
-          'bible-memory-collections',
-          'bible-memory-webdav-settings',
-          'bible-memory-sync-state',
-          'bible-memory-last-backup',
-        ].some((key) => localStorage.getItem(key) !== null)
-
-        const isStandalone =
-          window.navigator.standalone === true ||
-          window.matchMedia('(display-mode: standalone)').matches
-
-        let preferredTarget = null
-        let hasOpenedApp = false
-        const rawUiState = localStorage.getItem('rum1n8-ui-state')
-
-        if (rawUiState) {
-          try {
-            const uiState = JSON.parse(rawUiState)
-            preferredTarget = normalizeTarget(uiState.lastAppUrl)
-            hasOpenedApp = !!uiState.hasOpenedApp
-          } catch {
-            preferredTarget = null
-            hasOpenedApp = false
-          }
-        }
-
-        let redirectTarget = null
-
-        if (hasLegacyNavigation) {
-          redirectTarget = `${APP_PATH}${window.location.search}${window.location.hash}`
-        } else if (!explicitReturnTarget && (isStandalone || hasLegacyAppData || hasOpenedApp)) {
-          redirectTarget = preferredTarget || APP_PATH
-        }
-
-        if (redirectTarget) {
-          document.documentElement.dataset.redirecting = 'true'
-          window.location.replace(redirectTarget)
-        }
-      })()
-    </script>
   </head>
   <body>
     <div class="site-shell">
       <div class="app-return" data-return-banner hidden>
-        <a class="app-return__link" data-return-link href="/app/">
+        <a class="app-return__link" data-return-link href="%APP_URL%">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -132,7 +56,7 @@
             <p class="hero__lede">That's all this app does. Memorize Scripture simply, with your data under your control.</p>
 
             <div class="hero__actions">
-              <a class="button button--primary" data-app-link href="/app/">
+              <a class="button button--primary" data-app-link href="%APP_URL%">
                 <span data-app-link-label>Start memorizing</span>
               </a>
             </div>
@@ -248,7 +172,7 @@
 
         <footer class="site-footer">
           <div class="site-footer__action">
-            <a class="button button--primary" data-app-link href="/app/">
+            <a class="button button--primary" data-app-link href="%APP_URL%">
               <span data-app-link-label>Start memorizing</span>
             </a>
           </div>
@@ -257,7 +181,7 @@
             <a href="/memorization-is-a-spiritual-life-hack/">Why Memorize?</a>
             <a href="/tips-for-memorizing-scripture/">Tips</a>
             <a href="/import/biblememory/">Import</a>
-            <a href="/privacy">Privacy</a>
+            <a href="/privacy/">Privacy</a>
             <a href="https://github.com/timunrau/rum1n8" target="_blank" rel="noopener noreferrer" data-marketing-track="marketing_source_code_clicked">GitHub</a>
             <a href="https://freely.giving" target="_blank" rel="noopener noreferrer" data-marketing-track="marketing_freely_given_clicked">
               <img class="footer-meta__badge" src="https://freely.giving/badges/fg_standard_pde.png" alt="Freely given: no conditions" width="150" height="42" />

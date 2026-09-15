@@ -1,28 +1,31 @@
 services:
-  rum1n8:
-    image: ghcr.io/timunrau/rum1n8:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-        - VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}
-        - VITE_UMAMI_SCRIPT_URL=${VITE_UMAMI_SCRIPT_URL:-}
-        - VITE_UMAMI_WEBSITE_ID=${VITE_UMAMI_WEBSITE_ID:-}
-    environment:
-      - VITE_SITE_URL=${VITE_SITE_URL:-}
-    container_name: rum1n8
+  rum1n8-app:
+    image: ghcr.io/timunrau/rum1n8-app:latest
+    container_name: rum1n8-app
     ports:
       - "1234:80"
     restart: unless-stopped
     depends_on:
       - webdav-proxy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  rum1n8-site:
+    image: ghcr.io/timunrau/rum1n8-site:latest
+    container_name: rum1n8-site
+    ports:
+      - "1235:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   webdav-proxy:
     image: ghcr.io/timunrau/rum1n8-proxy:latest
@@ -50,4 +53,4 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=60
       - WATCHTOWER_ROLLING_RESTART=true
-    command: rum1n8 rum1n8-proxy
+    command: rum1n8-app rum1n8-site rum1n8-proxy

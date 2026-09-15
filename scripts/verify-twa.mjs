@@ -38,7 +38,7 @@ function isAppUrl(value, origin) {
 }
 
 const twa = await readJson('android-twa/twa-manifest.json', 'Bubblewrap manifest')
-const web = await readJson('dist/manifest.webmanifest', 'built web manifest')
+const web = await readJson('dist-app/manifest.webmanifest', 'built web manifest')
 const embeddedWeb = await readJson(
   'android-twa/app/src/main/res/raw/web_app_manifest.json',
   'embedded web manifest',
@@ -52,7 +52,7 @@ const launcherActivity = await readText(
   'android-twa/app/src/main/java/xyz/unrau/rum1n8/LauncherActivity.java',
   'generated launcher activity',
 )
-const nginx = await readText('nginx.conf', 'Nginx configuration')
+const nginx = await readText('nginx.app.conf.template', 'app Nginx configuration')
 
 if (twa) {
   const origin = `https://${twa.host}`
@@ -86,6 +86,8 @@ for (const [label, manifest] of [
   ['embedded web manifest', embeddedWeb],
 ]) {
   if (!manifest) continue
+  check(manifest.id === '/', `${label} id must remain exactly /.`)
+  check(manifest.scope === '/', `${label} scope must remain exactly /.`)
   check(manifest.start_url === APP_PATH, `${label} start_url must be exactly ${APP_PATH}.`)
   check(manifest.display === 'standalone', `${label} display must remain standalone.`)
   check(manifest.icons?.some((icon) => icon.sizes === '192x192'), `${label} needs a 192 px icon.`)
@@ -126,13 +128,17 @@ check(
   'Nginx must serve the exact manifest path as application/manifest+json without fallback.',
 )
 check(
+  /location \/app\/ \{[\s\S]*?try_files \$uri \$uri\/ \/app\/index\.html;[\s\S]*?\}/.test(nginx),
+  'App Nginx navigation fallback must remain scoped to /app/.',
+)
+check(
   /location = \/\.well-known\/assetlinks\.json \{[\s\S]*?default_type application\/json;[\s\S]*?try_files \$uri =404;[\s\S]*?\}/.test(nginx),
   'Nginx must serve the exact assetlinks path as application/json without fallback.',
 )
 
 try {
-  await access(resolve('dist/app/index.html'))
-  await access(resolve('dist/sw.js'))
+  await access(resolve('dist-app/app/index.html'))
+  await access(resolve('dist-app/sw.js'))
 } catch (error) {
   failures.push(`The production build must contain /app/index.html and /sw.js: ${error.message}`)
 }

@@ -1,0 +1,180 @@
+map $args $rum1n8_legacy_app_query {
+    default 0;
+    ~*(^|&)(view|collection|verse|mode)(=|&|$) 1;
+}
+
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    absolute_redirect off;
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml application/xml application/json application/javascript;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        try_files /health =404;
+        add_header Cache-Control "no-store" always;
+    }
+
+    location = /sw.js {
+        try_files $uri =404;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+    }
+
+    location = /registerSW.js {
+        try_files $uri =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location = /manifest.webmanifest {
+        default_type application/manifest+json;
+        try_files $uri =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location = /.well-known/assetlinks.json {
+        default_type application/json;
+        try_files $uri =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location = /gdrive-callback.html {
+        try_files $uri =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location /api/webdav {
+        set $webdav_proxy http://webdav-proxy:3001;
+        proxy_pass $webdav_proxy;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-WebDAV-Target $http_x_webdav_target;
+        proxy_pass_request_headers on;
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+
+    location = / {
+        if ($rum1n8_legacy_app_query) {
+            return 301 /app/$is_args$args;
+        }
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /index.html {
+        if ($rum1n8_legacy_app_query) {
+            return 301 /app/$is_args$args;
+        }
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /home {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /home/ {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /home/index.html {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /about {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /about/ {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+    location = /about/index.html {
+        return 301 __MARKETING_ORIGIN__/$is_args$args;
+    }
+
+    location = /memorization-is-a-spiritual-life-hack {
+        return 301 __MARKETING_ORIGIN__/memorization-is-a-spiritual-life-hack/$is_args$args;
+    }
+    location = /memorization-is-a-spiritual-life-hack/ {
+        return 301 __MARKETING_ORIGIN__/memorization-is-a-spiritual-life-hack/$is_args$args;
+    }
+    location = /memorization-is-a-spiritual-life-hack/index.html {
+        return 301 __MARKETING_ORIGIN__/memorization-is-a-spiritual-life-hack/$is_args$args;
+    }
+
+    location = /tips-for-memorizing-scripture {
+        return 301 __MARKETING_ORIGIN__/tips-for-memorizing-scripture/$is_args$args;
+    }
+    location = /tips-for-memorizing-scripture/ {
+        return 301 __MARKETING_ORIGIN__/tips-for-memorizing-scripture/$is_args$args;
+    }
+    location = /tips-for-memorizing-scripture/index.html {
+        return 301 __MARKETING_ORIGIN__/tips-for-memorizing-scripture/$is_args$args;
+    }
+
+    location = /import/biblememory {
+        return 301 __MARKETING_ORIGIN__/import/biblememory/$is_args$args;
+    }
+    location = /import/biblememory/ {
+        return 301 __MARKETING_ORIGIN__/import/biblememory/$is_args$args;
+    }
+    location = /import/biblememory/index.html {
+        return 301 __MARKETING_ORIGIN__/import/biblememory/$is_args$args;
+    }
+
+    location = /privacy {
+        return 301 __MARKETING_ORIGIN__/privacy/$is_args$args;
+    }
+    location = /privacy/ {
+        return 301 __MARKETING_ORIGIN__/privacy/$is_args$args;
+    }
+    location = /privacy.html {
+        return 301 __MARKETING_ORIGIN__/privacy/$is_args$args;
+    }
+
+    location = /app {
+        return 301 /app/$is_args$args;
+    }
+    location = /app/index.html {
+        if ($request_uri ~ ^/app/index\.html(?:\?|$)) {
+            return 301 /app/$is_args$args;
+        }
+        try_files /app/index.html =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location ~* ^/assets/.*\.(?:js|css)$ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.(?:png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    location = /app/ {
+        try_files /app/index.html =404;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location /app/ {
+        try_files $uri $uri/ /app/index.html;
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

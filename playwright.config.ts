@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === '1'
+
 export default defineConfig({
   testDir: './e2e/specs',
   fullyParallel: true,
@@ -8,7 +10,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:5173',
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === '1',
     trace: 'on-first-retry',
     video: 'on-first-retry',
     screenshot: 'only-on-failure',
@@ -19,12 +22,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         ...(process.env.CI ? {} : { channel: 'chrome' }),
+        ...(process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === '1'
+          ? { launchOptions: { args: ['--ignore-certificate-errors'] } }
+          : {}),
       },
     },
   ],
-  webServer: {
+  webServer: skipWebServer ? undefined : {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: 'http://127.0.0.1:5173',
     reuseExistingServer: true,
     timeout: 120 * 1000,
   },

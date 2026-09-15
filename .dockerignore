@@ -1,5 +1,7 @@
 node_modules
 dist
+dist-app
+dist-site
 dist-ssr
 .git
 .gitignore

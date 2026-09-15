@@ -486,6 +486,16 @@
             </svg>
             About
           </button>
+          <button
+            data-testid="settings-privacy"
+            @click="openPrivacy"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left text-base text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 3v5c0 4.6-2.9 8.2-7 10-4.1-1.8-7-5.4-7-10V6l7-3z" />
+            </svg>
+            Privacy
+          </button>
           <a
             data-testid="settings-source-code"
             href="https://github.com/timunrau/rum1n8"
@@ -2399,6 +2409,7 @@ import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } 
 import {
   buildBibleMemoryImportUrl,
   buildPublicHomeUrl,
+  buildPrivacyUrl,
   buildTipsUrl,
   dismissOnboarding as dismissOnboardingUiState,
   getInstallReminderState,
@@ -3219,6 +3230,7 @@ export default {
     }
 
     const getMarketingPageUrl = () => {
+      if (import.meta.env?.VITE_MARKETING_URL) return import.meta.env.VITE_MARKETING_URL
       if (typeof window === 'undefined') return 'https://rum1n8.local/'
       return new URL('/', window.location.origin).toString()
     }
@@ -9102,6 +9114,12 @@ export default {
       window.location.assign(buildBibleMemoryImportUrl(getCurrentAppUrl()))
     }
 
+    const openPrivacy = () => {
+      closeSettingsMenu()
+      closeDrawer()
+      window.location.assign(buildPrivacyUrl(getCurrentAppUrl()))
+    }
+
     const shareApp = async (surface = 'hamburger') => {
       trackShareClicked(surface)
       closeSettingsMenu()
@@ -9770,6 +9788,7 @@ export default {
       continueToIOSInstallSteps,
       openAbout,
       openMemorizationTips,
+      openPrivacy,
       shareApp,
       backupAllData,
       importFromBackup,

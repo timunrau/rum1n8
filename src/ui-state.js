@@ -3,6 +3,7 @@ export const APP_ROOT_PATH = '/app/'
 export const PUBLIC_HOME_PATH = '/'
 export const TIPS_PATH = '/tips-for-memorizing-scripture/'
 export const BIBLEMEMORY_IMPORT_PATH = '/import/biblememory/'
+export const PRIVACY_PATH = '/privacy/'
 
 const DEFAULT_UI_STATE = Object.freeze({
   hasOpenedApp: false,
@@ -336,34 +337,34 @@ export function shouldBypassMarketing() {
 }
 
 export function buildPublicHomeUrl(returnTo = getCurrentAppUrl()) {
-  const url = new URL(PUBLIC_HOME_PATH, getBaseOrigin())
+  return buildMarketingUrl(PUBLIC_HOME_PATH, returnTo)
+}
+
+function getMarketingOrigin() {
+  return import.meta.env?.VITE_MARKETING_URL || getBaseOrigin()
+}
+
+function buildMarketingUrl(path, returnTo) {
+  const url = new URL(path, getMarketingOrigin())
   const normalizedReturnTo = normalizeAppUrl(returnTo)
 
   if (normalizedReturnTo) {
     url.searchParams.set('returnTo', normalizedReturnTo)
   }
 
-  return `${url.pathname}${url.search}${url.hash}`
+  return import.meta.env?.VITE_MARKETING_URL
+    ? url.toString()
+    : `${url.pathname}${url.search}${url.hash}`
 }
 
 export function buildTipsUrl(returnTo = getCurrentAppUrl()) {
-  const url = new URL(TIPS_PATH, getBaseOrigin())
-  const normalizedReturnTo = normalizeAppUrl(returnTo)
-
-  if (normalizedReturnTo) {
-    url.searchParams.set('returnTo', normalizedReturnTo)
-  }
-
-  return `${url.pathname}${url.search}${url.hash}`
+  return buildMarketingUrl(TIPS_PATH, returnTo)
 }
 
 export function buildBibleMemoryImportUrl(returnTo = getCurrentAppUrl()) {
-  const url = new URL(BIBLEMEMORY_IMPORT_PATH, getBaseOrigin())
-  const normalizedReturnTo = normalizeAppUrl(returnTo)
+  return buildMarketingUrl(BIBLEMEMORY_IMPORT_PATH, returnTo)
+}
 
-  if (normalizedReturnTo) {
-    url.searchParams.set('returnTo', normalizedReturnTo)
-  }
-
-  return `${url.pathname}${url.search}${url.hash}`
+export function buildPrivacyUrl(returnTo = getCurrentAppUrl()) {
+  return buildMarketingUrl(PRIVACY_PATH, returnTo)
 }
