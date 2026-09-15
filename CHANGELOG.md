@@ -1,3 +1,10 @@
+# [1.55.0](https://github.com/timunrau/rum1n8/compare/v1.54.0...v1.55.0) (2026-09-15)
+
+
+### Features
+
+* split app and marketing deployments ([bcb85f4](https://github.com/timunrau/rum1n8/commit/bcb85f42d89ce06b9e5ef6810d51e48c127f3f6b))
+
 # [1.54.0](https://github.com/timunrau/rum1n8/compare/v1.53.1...v1.54.0) (2026-09-13)
 
 
