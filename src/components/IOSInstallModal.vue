@@ -8,7 +8,7 @@
         {{ isSafari ? 'Add to Home Screen' : 'Open in Safari to install' }}
       </h2>
       <p v-if="!isSafari" class="text-sm text-text-secondary mb-5">
-        Installation works best from Safari on iOS. Open this page in Safari, then add rum1n8 to your Home Screen.
+        Installation works best from Safari on iOS. Open this page in Safari, then add Ruminate to your Home Screen.
       </p>
 
       <ol class="space-y-5 mb-6">

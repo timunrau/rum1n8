@@ -48,6 +48,10 @@ const androidManifest = await readText(
   'android-twa/app/src/main/AndroidManifest.xml',
   'generated Android manifest',
 )
+const androidShortcuts = await readText(
+  'android-twa/app/src/main/res/xml/shortcuts.xml',
+  'generated Android shortcuts',
+)
 const launcherActivity = await readText(
   'android-twa/app/src/main/java/xyz/unrau/rum1n8/LauncherActivity.java',
   'generated launcher activity',
@@ -58,6 +62,8 @@ if (twa) {
   const origin = `https://${twa.host}`
   check(twa.packageId === 'xyz.unrau.rum1n8', 'Bubblewrap packageId must be xyz.unrau.rum1n8.')
   check(twa.host === 'rum1n8.unrau.xyz', 'Bubblewrap host must be rum1n8.unrau.xyz.')
+  check(twa.name === 'Ruminate: Bible Memory', 'Bubblewrap application name must be Ruminate: Bible Memory.')
+  check(twa.launcherName === 'Ruminate', 'Bubblewrap launcher name must be Ruminate.')
   check(twa.startUrl === APP_PATH, `Bubblewrap startUrl must be exactly ${APP_PATH}.`)
   check(twa.display === 'standalone', 'Bubblewrap display mode must remain standalone.')
   check(twa.fallbackType === 'customtabs', 'Bubblewrap fallback must remain Custom Tabs.')
@@ -71,7 +77,11 @@ if (twa) {
 
   for (const shortcut of twa.shortcuts || []) {
     check(isAppUrl(shortcut.url, origin), `Shortcut URL must stay under ${origin}${APP_PATH}: ${shortcut.url}`)
+    check(androidShortcuts.includes(`android:data='${shortcut.url}'`), `Generated Android shortcuts are missing ${shortcut.url}.`)
   }
+
+  const generatedShortcutCount = (androidShortcuts.match(/<shortcut\b/g) || []).length
+  check(generatedShortcutCount === (twa.shortcuts || []).length, 'Generated Android shortcut count differs from twa-manifest.json.')
 
   for (const fingerprint of twa.fingerprints || []) {
     check(
@@ -90,6 +100,8 @@ for (const [label, manifest] of [
   check(manifest.scope === '/', `${label} scope must remain exactly /.`)
   check(manifest.start_url === APP_PATH, `${label} start_url must be exactly ${APP_PATH}.`)
   check(manifest.display === 'standalone', `${label} display must remain standalone.`)
+  check(manifest.name === 'Ruminate: Bible Memory', `${label} name must be Ruminate: Bible Memory.`)
+  check(manifest.short_name === 'Ruminate', `${label} short_name must be Ruminate.`)
   check(manifest.icons?.some((icon) => icon.sizes === '192x192'), `${label} needs a 192 px icon.`)
   check(manifest.icons?.some((icon) => icon.sizes === '512x512'), `${label} needs a 512 px icon.`)
 }

@@ -1,8 +1,8 @@
 {
   "packageId": "xyz.unrau.rum1n8",
   "host": "rum1n8.unrau.xyz",
-  "name": "rum1n8",
-  "launcherName": "rum1n8",
+  "name": "Ruminate: Bible Memory",
+  "launcherName": "Ruminate",
   "display": "standalone",
   "themeColor": "#F1EEE8",
   "themeColorDark": "#121411",

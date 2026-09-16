@@ -24,8 +24,8 @@ def twaManifest = [
     applicationId: 'xyz.unrau.rum1n8',
     hostName: 'rum1n8.unrau.xyz', // The domain being opened in the TWA.
     launchUrl: '/app/', // The start path for the TWA. Must be relative to the domain.
-    name: 'rum1n8', // The application name.
-    launcherName: 'rum1n8', // The name shown on the Android Launcher.
+    name: 'Ruminate: Bible Memory', // The application name.
+    launcherName: 'Ruminate', // The name shown on the Android Launcher.
     themeColor: '#F1EEE8', // The color used for the status bar.
     themeColorDark: '#121411', // The color used for the dark status bar.
     navigationColor: '#FBF8F2', // The color used for the navigation bar.

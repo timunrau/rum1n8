@@ -10,7 +10,7 @@ const marketingDir = path.join(projectRoot, 'public', 'marketing')
 const mobileViewport = { width: 378, height: 672 }
 const mobileDeviceScaleFactor = 1080 / 378
 
-const productName = 'rum1n8'
+const productName = 'Ruminate'
 const title = 'Bible Memory App'
 const description = 'A simple Bible memory app that gives you control of your data.'
 const now = '2026-04-12T12:00:00.000Z'
@@ -1012,7 +1012,7 @@ async function captureFirstRunIOSStates(browser, baseUrl, colorScheme = 'light')
 
   try {
     await page.goto(`${baseUrl}/app/?view=collections`, { waitUntil: 'domcontentloaded' })
-    await page.getByText('Use rum1n8 as an app, or keep going in your browser.').waitFor()
+    await page.getByText('Use Ruminate as an app, or keep going in your browser.').waitFor()
     await captureFirstRunScreenshot(page, '10', 'ios-install-prompt', colorScheme)
 
     await page.getByRole('button', { name: 'Install app' }).click()
@@ -1102,34 +1102,8 @@ async function captureOgCard(browser, baseUrl) {
               gap: 28px;
               padding: 18px 10px 18px 8px;
             }
-            .badge {
-              display: inline-flex;
-              align-items: center;
-              gap: 12px;
-              width: fit-content;
-              padding: 10px 16px;
-              border-radius: 14px;
-              background: rgba(251, 248, 242, 0.82);
-              border: 1px solid var(--stroke);
-              box-shadow: none;
-              font-size: 18px;
-              font-weight: 700;
-              letter-spacing: 0.02em;
-            }
-            .badge-mark {
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              width: 34px;
-              height: 34px;
-              border-radius: 12px;
-              background: #1F3D2E;
-              border: 1px solid #14291F;
-              color: #FBF8F2;
-              font-size: 19px;
-            }
             h1 {
-              margin: 24px 0 12px;
+              margin: 0 0 12px;
               font-size: 68px;
               line-height: 0.96;
               letter-spacing: -0.04em;
@@ -1222,10 +1196,6 @@ async function captureOgCard(browser, baseUrl) {
             <div class="glow"></div>
             <section class="left">
               <div>
-                <div class="badge">
-                  <span class="badge-mark">r</span>
-                  <span>${productName}</span>
-                </div>
                 <h1>${productName}<span>${title}</span></h1>
                 <p>${description}</p>
                 <div class="chips">

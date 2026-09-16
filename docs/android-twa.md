@@ -1,12 +1,13 @@
 # Android TWA development
 
-rum1n8's Android project is a Bubblewrap-generated Trusted Web Activity in `android-twa/`. It launches the hosted production PWA at `https://rum1n8.unrau.xyz/app/`; it does not bundle the Vue application or implement the separate standalone/Capacitor architecture.
+Ruminate's Android project is a Bubblewrap-generated Trusted Web Activity in `android-twa/`. It launches the hosted production PWA at `https://rum1n8.unrau.xyz/app/`; it does not bundle the Vue application or implement the separate standalone/Capacitor architecture.
 
 ## Fixed prototype decisions
 
 - Origin: `https://rum1n8.unrau.xyz`
 - Android application ID: `xyz.unrau.rum1n8`
-- Display and launcher name: `rum1n8`
+- Application name: `Ruminate: Bible Memory`
+- Launcher name: `Ruminate`
 - Launcher and shortcut scope: `/app/`
 - Display/orientation: standalone, portrait
 - Unsupported-browser fallback: Custom Tab, never WebView
@@ -75,6 +76,14 @@ Replace `2` with an integer greater than the last distributed Android `versionCo
 
 Internal, closed, open, and production testing tracks use a signed Android App Bundle rather than the debug artifact. Create the upload key first, store it and its passwords outside the repository (or as protected CI secrets), run the signed release command above, and upload the resulting `.aab`. After Play App Signing is enabled, publish Play's app-signing certificate fingerprint—not merely the local upload certificate—in `assetlinks.json`.
 
+## Ruminate rebrand release
+
+Keep the existing Google Play application and package ID. Update its listing title to `Ruminate: Bible Memory`, replace only assets or copy that display the old public name, and retain the existing positioning, category, privacy URL, and support details. Use this one-time release note:
+
+> rum1n8 is now Ruminate: Bible Memory—same app, same data.
+
+Deploy and verify the web release first. Then use a `versionCode` greater than the latest Play release, build the AAB from the released root package version, and validate an upgrade through a Play testing track before production. Confirm the launcher reads `Ruminate`, existing local data remains available, and the verified TWA still opens without browser chrome.
+
 ## Digital Asset Links
 
 Do not publish a placeholder statement. Once a real upload/release certificate exists, create the public directory and let the pinned Bubblewrap CLI record its SHA-256 fingerprint and generate the statement:
@@ -89,4 +98,4 @@ After enabling Play App Signing, repeat this for the Play app-signing certificat
 
 ## Required gates before distribution
 
-The generated repository project is an unsigned prototype. Before calling the TWA complete, follow the remaining gates and acceptance matrix in [the TWA implementation plan](android-twa-plan.md): verify a signed local build and Play-signed internal build, exercise core/import/export/sync/OAuth/device flows on physical hardware and a fallback browser, test offline-after-first-launch and first-launch-offline behaviour, and confirm the production monitoring/rollback process.
+Before distributing an update, follow the acceptance matrix in [the TWA implementation plan](android-twa-plan.md): verify a signed local build and Play-signed test build, exercise core/import/export/sync/OAuth/device flows on physical hardware and a fallback browser, test offline-after-first-launch and first-launch-offline behaviour, and confirm the production monitoring/rollback process.

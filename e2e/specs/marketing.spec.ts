@@ -150,7 +150,7 @@ test('Share app shares the public marketing URL', async ({ page }) => {
     () => (window as typeof window & { __sharedApp?: ShareData }).__sharedApp,
   )
   expect(shared).toMatchObject({
-    title: 'rum1n8',
+    title: 'Ruminate: Bible Memory',
     url: `${MARKETING_URL}/`,
   })
 })

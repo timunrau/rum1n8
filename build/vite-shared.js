@@ -126,19 +126,23 @@ function serializeJsonForHtml(value) {
 
 export function buildSiteMetadata(env, mode = 'development') {
   const { appUrl, marketingUrl } = resolvePublicUrls(env, mode)
+  const websiteName = 'Ruminate: Bible Memory App'
+  const applicationName = 'Ruminate: Bible Memory'
+  const shortName = 'Ruminate'
 
   return {
-    productName: 'rum1n8',
-    title: 'rum1n8 - Bible Memory',
+    websiteName,
+    applicationName,
+    shortName,
     defaultDescription: 'A simple Bible memory app that gives you control of your data.',
-    memorizationBenefitsTitle: 'Memorization Is A Spiritual Life-Hack',
+    memorizationBenefitsTitle: `Memorization Is A Spiritual Life-Hack - ${websiteName}`,
     memorizationBenefitsDescription: "A short case for why Scripture memorization unlocks real growth in your walk with God.",
-    scriptureTipsTitle: 'Tips For Memorizing Scripture',
+    scriptureTipsTitle: `Tips For Memorizing Scripture - ${websiteName}`,
     scriptureTipsDescription: 'Practical tips for starting small, building a daily Scripture memorization habit, and reviewing consistently.',
-    bibleMemoryImportTitle: 'Import from BibleMemory.com',
+    bibleMemoryImportTitle: `Import from BibleMemory.com - ${websiteName}`,
     bibleMemoryImportDescription: 'Export your BibleMemory.com verses with a local bookmarklet, download a CSV, and import it into Ruminate.',
-    privacyTitle: 'Privacy Policy - rum1n8',
-    privacyDescription: 'How rum1n8 stores your data, handles optional sync, and respects your analytics preference.',
+    privacyTitle: `Privacy Policy - ${websiteName}`,
+    privacyDescription: 'How Ruminate stores your data, handles optional sync, and respects your analytics preference.',
     appUrl,
     marketingUrl,
     siteUrl: withoutTrailingSlash(marketingUrl),
@@ -149,7 +153,7 @@ export function buildSiteMetadata(env, mode = 'development') {
     bibleMemoryImportPath: '/import/biblememory/',
     privacyPath: '/privacy/',
     socialPreviewImagePath: '/marketing/og-card.png',
-    socialPreviewImageAlt: 'rum1n8 app preview',
+    socialPreviewImageAlt: 'Ruminate: Bible Memory App preview',
     screenshotPaths: [
       '/marketing/screenshot-empty.png',
       '/marketing/screenshot-practice.png',
@@ -162,8 +166,8 @@ function buildJsonLd(metadata) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: metadata.title,
-    alternateName: metadata.productName,
+    name: metadata.websiteName,
+    alternateName: metadata.applicationName,
     description: metadata.defaultDescription,
     applicationCategory: 'EducationalApplication',
     operatingSystem: 'Web Browser',
@@ -211,7 +215,7 @@ function pageMetadata(metadata, page) {
   }
 
   return byPage[page] || {
-    title: page === 'app' ? `${metadata.productName} App` : metadata.title,
+    title: page === 'app' ? metadata.applicationName : metadata.websiteName,
     description: metadata.defaultDescription,
     path: '/',
   }
@@ -235,7 +239,7 @@ export function buildHtmlReplacements(metadata, page) {
         `<meta property="og:title" content="${escapeHtml(current.title)}" />`,
         `<meta property="og:description" content="${escapeHtml(current.description)}" />`,
         '<meta property="og:type" content="website" />',
-        `<meta property="og:site_name" content="${escapeHtml(metadata.productName)}" />`,
+        `<meta property="og:site_name" content="${escapeHtml(metadata.websiteName)}" />`,
         `<meta property="og:image" content="${escapeHtml(socialImageUrl)}" />`,
         `<meta property="og:image:alt" content="${escapeHtml(metadata.socialPreviewImageAlt)}" />`,
         '<meta name="twitter:card" content="summary_large_image" />',

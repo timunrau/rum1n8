@@ -324,7 +324,7 @@
         <div class="px-6 pt-10 pb-4" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
           <div class="flex items-center gap-3">
             <BrandMark size="sm" />
-            <span class="font-serif text-2xl leading-none tracking-tight text-text-primary">rum1n8</span>
+            <span class="font-serif text-2xl leading-none tracking-tight text-text-primary">Ruminate</span>
           </div>
         </div>
         <!-- Settings items -->
@@ -1102,10 +1102,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <p class="hero-onboarding__eyebrow">rum1n8</p>
+            <p class="hero-onboarding__eyebrow">Ruminate</p>
             <h2 class="hero-onboarding__title">Start ruminating</h2>
             <p class="hero-onboarding__subtitle">
-              {{ shouldShowIOSInstallFirstPrompt ? 'Use rum1n8 as an app, or keep going in your browser.' : 'Choose a verse to get started.' }}
+              {{ shouldShowIOSInstallFirstPrompt ? 'Use Ruminate as an app, or keep going in your browser.' : 'Choose a verse to get started.' }}
             </p>
             <div class="mt-7 flex flex-wrap items-center gap-4">
               <PrimaryButton
@@ -1131,7 +1131,7 @@
             >
               <p class="text-sm font-semibold text-status-info-text">Looking for verses from Safari?</p>
               <p class="mt-1 text-sm leading-6 text-status-info-text">
-                Set up sync here too, and rum1n8 will bring them into the Home Screen app.
+                Set up sync here too, and Ruminate will bring them into the Home Screen app.
               </p>
               <button
                 type="button"
@@ -1156,7 +1156,7 @@
             >
               <p class="text-sm font-semibold text-status-info-text">Looking for verses from Safari?</p>
               <p class="mt-1 text-sm leading-6 text-status-info-text">
-                Set up sync here too, and rum1n8 will bring them into the Home Screen app.
+                Set up sync here too, and Ruminate will bring them into the Home Screen app.
               </p>
               <button
                 type="button"
@@ -2337,7 +2337,7 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
       >
         <div class="space-y-4">
           <p class="text-sm text-text-secondary">
-            Turn on sync before installing. If the Home Screen app opens empty, set up sync there too and rum1n8 will bring your verses in.
+            Turn on sync before installing. If the Home Screen app opens empty, set up sync there too and Ruminate will bring your verses in.
           </p>
           <div
             v-if="iosInstallBackupDownloaded"
@@ -7259,7 +7259,7 @@ export default {
       verse.content,
       formatVerseShareReference(verse),
       '',
-      'Shared from rum1n8',
+      'Shared from Ruminate',
       getMarketingPageUrl()
     ].join('\n')
 
@@ -9140,8 +9140,8 @@ export default {
 
       try {
         await navigator.share({
-          title: 'rum1n8',
-          text: 'Memorize Bible verses with rum1n8.',
+          title: 'Ruminate: Bible Memory',
+          text: 'Memorize Bible verses with Ruminate.',
           url: appUrl
         })
         shareSuccess.value = true
@@ -9180,7 +9180,7 @@ export default {
         const url = URL.createObjectURL(blob)
         
         const dateStr = new Date().toISOString().split('T')[0]
-        const filename = `rum1n8-backup-${dateStr}.json`
+        const filename = `ruminate-backup-${dateStr}.json`
         
         const link = document.createElement('a')
         link.href = url

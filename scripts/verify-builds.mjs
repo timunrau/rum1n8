@@ -95,6 +95,8 @@ const manifest = JSON.parse(await readText(resolve(appDir, 'manifest.webmanifest
 check(manifest.id === '/', 'Manifest id must be /.')
 check(manifest.scope === '/', 'Manifest scope must be /.')
 check(manifest.start_url === '/app/', 'Manifest start_url must be /app/.')
+check(manifest.name === 'Ruminate: Bible Memory', 'Manifest name must be Ruminate: Bible Memory.')
+check(manifest.short_name === 'Ruminate', 'Manifest short_name must be Ruminate.')
 check(manifest.screenshots?.length === 3, 'Manifest must retain exactly three screenshots.')
 
 const sw = await readText(resolve(appDir, 'sw.js'), 'App service worker')
@@ -125,6 +127,7 @@ if (marketingRoot) {
 
 const rootHtml = await readText(resolve(siteDir, 'index.html'), 'Marketing homepage')
 check(rootHtml.includes('application/ld+json'), 'Marketing homepage is missing JSON-LD.')
+check(rootHtml.includes('<title>Ruminate: Bible Memory App</title>'), 'Marketing homepage has the wrong title.')
 if (marketingRoot) {
   const screenshotUrl = new URL('marketing/screenshot-empty.png', marketingRoot).toString()
   check(rootHtml.includes(screenshotUrl), 'Marketing homepage JSON-LD has the wrong screenshot URL.')

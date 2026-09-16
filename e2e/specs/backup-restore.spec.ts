@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage } from '../helpers/storage'
@@ -22,7 +23,7 @@ test('download backup: Settings -> Backup/Import -> Download -> file download tr
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: /Download Backup/i }).click()
   const download = await downloadPromise
-  expect(download.suggestedFilename()).toMatch(/rum1n8-backup.*\.json/)
+  expect(download.suggestedFilename()).toMatch(/ruminate-backup.*\.json/)
 })
 
 test('restore: Settings -> choose backup file -> confirm -> data replaced', async ({ page }) => {
@@ -31,7 +32,11 @@ test('restore: Settings -> choose backup file -> confirm -> data replaced', asyn
 
   await expect(page.getByTestId('modal-backup-restore')).toBeVisible()
   const fileInput = page.locator('#backup-file-input')
-  await fileInput.setInputFiles(path.join(__dirname, '../fixtures/sample-backup.json'))
+  await fileInput.setInputFiles({
+    name: 'rum1n8-backup-legacy.json',
+    mimeType: 'application/json',
+    buffer: readFileSync(path.join(__dirname, '../fixtures/sample-backup.json')),
+  })
 
   await expect(page.getByTestId('modal-restore-backup-confirm')).toBeVisible()
   await page.getByTestId('modal-restore-backup-confirm').getByRole('button', { name: 'Restore' }).click()

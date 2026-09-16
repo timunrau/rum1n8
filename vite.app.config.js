@@ -101,8 +101,8 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['icons/icon-192x192.png'],
         manifest: {
           id: '/',
-          name: metadata.title,
-          short_name: metadata.productName,
+          name: metadata.applicationName,
+          short_name: metadata.shortName,
           description: metadata.defaultDescription,
           theme_color: '#F1EEE8',
           background_color: '#F1EEE8',

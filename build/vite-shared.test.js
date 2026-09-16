@@ -28,10 +28,16 @@ describe('public URL validation', () => {
 describe('marketing metadata', () => {
   const metadata = buildSiteMetadata(productionEnv, 'production')
 
+  it('keeps website, application, and compact names distinct', () => {
+    expect(metadata.websiteName).toBe('Ruminate: Bible Memory App')
+    expect(metadata.applicationName).toBe('Ruminate: Bible Memory')
+    expect(metadata.shortName).toBe('Ruminate')
+  })
+
   it('uses a unique canonical URL and description for Privacy', () => {
     const replacements = buildHtmlReplacements(metadata, 'privacy')
 
-    expect(replacements['%PAGE_TITLE%']).toBe('Privacy Policy - rum1n8')
+    expect(replacements['%PAGE_TITLE%']).toBe('Privacy Policy - Ruminate: Bible Memory App')
     expect(replacements['%PAGE_DESCRIPTION%']).toContain('analytics preference')
     expect(replacements['%HEAD_CANONICAL_TAGS%']).toContain('https://remember.example/privacy/')
     expect(replacements['%HEAD_SOCIAL_TAGS%']).toContain('twitter:card')
@@ -43,5 +49,6 @@ describe('marketing metadata', () => {
     expect(replacements['%META_ROBOTS%']).toBe('noindex,nofollow')
     expect(replacements['%HEAD_CANONICAL_TAGS%']).toBe('')
     expect(replacements['%HEAD_SOCIAL_TAGS%']).toBe('')
+    expect(replacements['%PAGE_TITLE%']).toBe('Ruminate: Bible Memory')
   })
 })

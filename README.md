@@ -1,24 +1,24 @@
-# rum1n8 - Bible Memory
-![rum1n8 overview](public/marketing/og-card.png)
+# Ruminate: Bible Memory
+![Ruminate: Bible Memory overview](public/marketing/og-card.png)
 
 *Pronounced "Ruminate"* — to turn something over in the mind; to meditate or reflect on deeply. Inspired by Joshua 1:8:
 
 > "This Book of the Law must not depart from your mouth; meditate on it day and night, so that you may be careful to do everything written in it. For then you will prosper and succeed in all you do." — Joshua 1:8 (BSB)
 
-[Open the rum1n8 app](https://rum1n8.unrau.xyz/app/)
+[Open Ruminate](https://rum1n8.unrau.xyz/app/)
 
 
-## Why rum1n8 exists
+## Why Ruminate exists
 
-I built rum1n8 to solve the frustrations I had with existing Bible memory apps. They were slow and bloated with too many features, had artificial paywalls and limits, and made it difficult or impossible to export my data. Here's how rum1n8 differs:
+I built Ruminate to solve the frustrations I had with existing Bible memory apps. They were slow and bloated with too many features, had artificial paywalls and limits, and made it difficult or impossible to export my data. Here's how Ruminate differs:
 
 - **No accounts.** Open the app and use it. No signup, no login, no account required.
-- **You own your data.** Other memory apps do not make it easy to export what you have put into them. rum1n8 keeps your data on your device by default, lets you back it up to a file you can read, and you can sync it with your own Google Drive or WebDAV server. It even includes a dedicated [migration guide](/import/biblememory/) for BibleMemory.com users.
+- **You own your data.** Other memory apps do not make it easy to export what you have put into them. Ruminate keeps your data on your device by default, lets you back it up to a file you can read, and you can sync it with your own Google Drive or WebDAV server. It even includes a dedicated [migration guide](/import/biblememory/) for BibleMemory.com users.
 - **Free.** No artificial usage limits. No subscriptions. No paywalls.
 - **No bloat.** The app is intentionally simple, focused, and fast. It is built around first-letter typing, active recall, and spaced repetition instead of piling on extra features and options.
 - **Fast review and fast verse entry.** It takes seconds to start reviewing. Adding verses does not take a hundred taps through a bunch of screens. Type a reference or verse range, import the verse text, and start.
-- **Not tied to an app store.** rum1n8 is an installable offline web app, so it is not at the mercy of Apple or Google deciding whether it stays on their platforms.
-- **You can truly own your own copy of the app.** Most apps only give you permission to use them, and if the owner stops supporting them, you can lose access. rum1n8 is self-hostable and released under the [MIT-0 License](LICENSE), so you can copy the whole app, run it yourself, and not depend on me to keep it online forever.
+- **Not tied to an app store.** Ruminate is an installable offline web app, so it is not at the mercy of Apple or Google deciding whether it stays on their platforms.
+- **You can truly own your own copy of the app.** Most apps only give you permission to use them, and if the owner stops supporting them, you can lose access. Ruminate is self-hostable and released under the [MIT-0 License](LICENSE), so you can copy the whole app, run it yourself, and not depend on me to keep it online forever.
 
 ## Features
 
@@ -32,9 +32,9 @@ I built rum1n8 to solve the frustrations I had with existing Bible memory apps. 
 
 ## Why memorization matters to me
 
-I started building rum1n8 when I got serious about Scripture memorization myself. Memorization has been one of the most impactful spiritual disciplines in my walk with Jesus. Even when it is only five minutes a day, I have found that it gives me more peace, less anxiety, fewer negative thoughts, clearer thinking, more focus on God, more Scripture in prayer, and more readiness to share a verse with someone in the moment.
+I started building Ruminate when I got serious about Scripture memorization myself. Memorization has been one of the most impactful spiritual disciplines in my walk with Jesus. Even when it is only five minutes a day, I have found that it gives me more peace, less anxiety, fewer negative thoughts, clearer thinking, more focus on God, more Scripture in prayer, and more readiness to share a verse with someone in the moment.
 
-As the number of verses I had memorized grew, my memorization data — which verses I had memorized and when to review them next — became very personal and valuable to me. I did not want something that meaningful trapped inside someone else's app with no clear way to get it back out. rum1n8 was built to give me, and anyone else who wants it, control over their memorization data.
+As the number of verses I had memorized grew, my memorization data — which verses I had memorized and when to review them next — became very personal and valuable to me. I did not want something that meaningful trapped inside someone else's app with no clear way to get it back out. Ruminate was built to give me, and anyone else who wants it, control over their memorization data.
 
 ## Dedication
 
@@ -48,7 +48,7 @@ I also recommend [TheWay.app](https://theway.app), a devotional and discipleship
 
 [<img src="https://freely.giving/badges/fg_standard_pde.png" alt="Freely given: public-domain-equivalent" width="180">](https://freely.giving)
 
-rum1n8 is released under the [MIT-0 License](LICENSE), which means you can use, copy, modify, distribute, and self-host it without attribution requirements.
+Ruminate is released under the [MIT-0 License](LICENSE), which means you can use, copy, modify, distribute, and self-host it without attribution requirements.
 
 ## More docs
 

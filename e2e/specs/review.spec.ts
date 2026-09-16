@@ -150,7 +150,7 @@ test('click verse -> enters review screen', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
-test('practice share button uses native share with version and rum1n8 footer', async ({ page }) => {
+test('practice share button uses native share with version and Ruminate footer', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', {
       configurable: true,
@@ -186,7 +186,7 @@ test('practice share button uses native share with version and rum1n8 footer', a
   expect(shared?.title).toBe('Psalm 23:1 (BSB)')
   expect(shared?.text).toContain('The LORD is my shepherd')
   expect(shared?.text).toContain('Psalm 23:1 (BSB)')
-  expect(shared?.text).toContain('Shared from rum1n8')
+  expect(shared?.text).toContain('Shared from Ruminate')
   expect(shared?.text).toContain('/')
 })
 
