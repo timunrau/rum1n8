@@ -1,3 +1,10 @@
+# [1.57.0](https://github.com/timunrau/rum1n8/compare/v1.56.0...v1.57.0) (2026-09-16)
+
+
+### Features
+
+* adopt new book icon ([339c91d](https://github.com/timunrau/rum1n8/commit/339c91d74c83e2749b484e7ee3d59369dbf7eddf))
+
 # [1.56.0](https://github.com/timunrau/rum1n8/compare/v1.55.0...v1.56.0) (2026-09-16)
 
 
