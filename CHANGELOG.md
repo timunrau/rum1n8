@@ -1,3 +1,10 @@
+# [1.56.0](https://github.com/timunrau/rum1n8/compare/v1.55.0...v1.56.0) (2026-09-16)
+
+
+### Features
+
+* rebrand app as Ruminate ([01ade2b](https://github.com/timunrau/rum1n8/commit/01ade2b036307492b5dd6f4b3579f2d5e3bc87ae))
+
 # [1.55.0](https://github.com/timunrau/rum1n8/compare/v1.54.0...v1.55.0) (2026-09-15)
 
 
