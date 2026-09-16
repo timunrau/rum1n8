@@ -1,3 +1,11 @@
+## [1.57.1](https://github.com/timunrau/rum1n8/compare/v1.57.0...v1.57.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* refine onboarding hero card ([eb8dd9b](https://github.com/timunrau/rum1n8/commit/eb8dd9b1664afb022ee6ff8e4cf7738fcb10ce50))
+* refine onboarding subtitle typography ([07a86e3](https://github.com/timunrau/rum1n8/commit/07a86e3de2785dc826e2e51f7e7d8e09d9da06e6))
+
 # [1.57.0](https://github.com/timunrau/rum1n8/compare/v1.56.0...v1.57.0) (2026-09-16)
 
 
