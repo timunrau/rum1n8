@@ -22,11 +22,14 @@ const APP_PAGE = Object.freeze({
   path: APP_PATH,
 })
 
-const ICONS = [48, 72, 96, 128, 144, 152, 192, 256, 384, 512]
-  .map((size) => `icons/icon-${size}x${size}.png`)
+const ICON_SIZES = [48, 72, 96, 128, 144, 152, 192, 256, 384, 512]
+const ICONS = ICON_SIZES.flatMap((size) => [
+  { src: `icons/icon-${size}x${size}.png`, purpose: 'any' },
+  { src: `icons/icon-maskable-${size}x${size}.png`, purpose: 'maskable' },
+])
 
 const APP_STATIC_ASSETS = [
-  ...ICONS,
+  ...ICONS.map(({ src }) => src),
   '.well-known/assetlinks.json',
   'gdrive-callback.html',
   'marketing/screenshot-empty.png',
@@ -122,11 +125,11 @@ export default defineConfig(({ mode }) => {
             { name: 'Review', short_name: 'Review', description: 'Open verses due for review', url: '/app/?view=review-list', icons: [{ src: 'icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }] },
             { name: 'Stats', short_name: 'Stats', description: 'Open memorization stats', url: '/app/?view=stats', icons: [{ src: 'icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }] },
           ],
-          icons: ICONS.map((path) => ({
-            src: path,
-            sizes: path.match(/icon-(\d+x\d+)/)[1],
+          icons: ICONS.map(({ src, purpose }) => ({
+            src,
+            sizes: src.match(/(\d+x\d+)/)[1],
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose,
           })),
         },
         workbox: {

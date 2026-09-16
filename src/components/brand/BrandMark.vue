@@ -5,37 +5,27 @@ defineProps({
 </script>
 
 <template>
-  <span
+  <img
     class="brand-mark"
     :class="{ 'brand-mark--sm': size === 'sm' }"
+    :src="'/icons/icon-192x192.png'"
+    alt=""
     aria-hidden="true"
-  >r</span>
+  >
 </template>
 
 <style scoped>
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 2.3rem;
   height: 2.3rem;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-action-bg);
-  color: var(--color-action-text);
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1;
-  letter-spacing: 0;
-  padding: 0 0 0.25em 0.1em;
+  object-fit: contain;
   flex-shrink: 0;
-  border: 1px solid var(--color-action-border);
   box-shadow: none;
 }
 
 .brand-mark--sm {
-  width: 1.8rem;
-  height: 1.8rem;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
+  width: 3.125rem;
+  height: 3.125rem;
 }
 </style>

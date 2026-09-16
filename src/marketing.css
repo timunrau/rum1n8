@@ -136,31 +136,24 @@ img {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 5px;
   font-weight: 700;
   color: var(--text);
 }
 
 .brand__mark {
-  width: 2.3rem;
-  height: 2.3rem;
-  display: grid;
-  place-items: center;
-  border-radius: 0.75rem;
-  background: var(--action-bg);
-  border: 1px solid var(--action-border);
-  color: var(--action-text);
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-  padding: 0 0 0.25em 0.1em;
+  width: 3.125rem;
+  height: 3.125rem;
+  display: block;
+  object-fit: contain;
 }
 
 .brand__name {
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
+  padding-bottom: 6px;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: -0.025em;
 }
 
 .brand--mark-only .brand__mark {

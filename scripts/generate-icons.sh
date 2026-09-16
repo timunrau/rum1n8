@@ -1,34 +1,24 @@
 #!/bin/bash
-# Generate app icons from the wordmark SVG
+# Generate regular and maskable app icons from the source PNGs
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ICONS_DIR="$SCRIPT_DIR/../public/icons"
-SVG_FILE="$SCRIPT_DIR/icon-source.svg"
+SOURCES_DIR="$SCRIPT_DIR/../assets/icons"
+REGULAR_SOURCE="$SOURCES_DIR/icon.png"
+MASKABLE_SOURCE="$SOURCES_DIR/icon-maskable.png"
 
-# Create SVG source matching the BrandMark component
-cat > "$SVG_FILE" << 'SVGEOF'
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1F3D2E"/>
-  <text
-    x="272"
-    y="330"
-    text-anchor="middle"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-weight="bold"
-    font-size="320"
-    fill="#FBF8F2"
-  >r</text>
-</svg>
-SVGEOF
+if ! command -v magick >/dev/null 2>&1; then
+  echo "ImageMagick is required to generate icons." >&2
+  exit 1
+fi
 
-echo "Generating icons from SVG..."
+echo "Generating regular and maskable icons..."
 
-# Generate each size using rsvg-convert
 for size in 48 72 96 128 144 152 192 256 384 512; do
-  rsvg-convert -w "$size" -h "$size" "$SVG_FILE" -o "$ICONS_DIR/icon-${size}x${size}.png"
-  echo "  Generated ${size}x${size}"
+  magick "$REGULAR_SOURCE" -resize "${size}x${size}" "$ICONS_DIR/icon-${size}x${size}.png"
+  magick "$MASKABLE_SOURCE" -resize "${size}x${size}" "$ICONS_DIR/icon-maskable-${size}x${size}.png"
+  echo "  Generated regular and maskable ${size}x${size} icons"
 done
 
-rm "$SVG_FILE"
 echo "Done."

@@ -322,9 +322,9 @@
         >
         <!-- App header -->
         <div class="px-6 pt-10 pb-4" style="padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 1rem));">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-[5px]">
             <BrandMark size="sm" />
-            <span class="font-serif text-2xl leading-none tracking-tight text-text-primary">Ruminate</span>
+            <span class="pb-[6px] font-serif text-2xl font-semibold leading-none tracking-tight text-text-primary">Ruminate</span>
           </div>
         </div>
         <!-- Settings items -->

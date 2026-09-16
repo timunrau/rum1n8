@@ -1048,6 +1048,7 @@ async function captureOgCard(browser, baseUrl) {
   const screenshotEmptyUrl = `${baseUrl}/marketing/screenshot-empty.png`
   const screenshotPracticeUrl = `${baseUrl}/marketing/screenshot-practice.png`
   const screenshotReviewUrl = `${baseUrl}/marketing/screenshot-review.png`
+  const iconUrl = `${baseUrl}/icons/icon-192x192.png`
 
   try {
     await page.setContent(`
@@ -1055,6 +1056,9 @@ async function captureOgCard(browser, baseUrl) {
       <html lang="en">
         <head>
           <meta charset="utf-8" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&family=Source+Sans+3:wght@400;600&display=swap" />
           <style>
             :root {
               color-scheme: light;
@@ -1076,7 +1080,7 @@ async function captureOgCard(browser, baseUrl) {
               margin: 0;
               width: 1200px;
               height: 630px;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              font-family: "Source Sans 3", "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
               color: var(--ink);
               background: linear-gradient(135deg, var(--bg-soft) 0%, var(--bg) 100%);
             }
@@ -1102,18 +1106,47 @@ async function captureOgCard(browser, baseUrl) {
               gap: 28px;
               padding: 18px 10px 18px 8px;
             }
+            .brand-lockup {
+              display: flex;
+              width: max-content;
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 6px;
+              margin-bottom: 12px;
+            }
+            .brand-icon-crop {
+              position: relative;
+              width: 120px;
+              height: 64px;
+              overflow: hidden;
+            }
+            .brand-icon {
+              position: absolute;
+              top: -28px;
+              left: -7px;
+              display: block;
+              width: 120px;
+              height: 120px;
+            }
             h1 {
-              margin: 0 0 12px;
+              margin: 0;
+              font-family: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
+              font-weight: 600;
               font-size: 68px;
               line-height: 0.96;
               letter-spacing: -0.04em;
             }
-            h1 span {
+            .product-name {
               display: block;
+              margin-left: -4px;
+            }
+            .product-title {
+              display: block;
+              font-family: "Source Sans 3", "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
               font-size: 30px;
               font-weight: 600;
               letter-spacing: -0.02em;
-              color: var(--forest);
+              color: var(--ink);
               margin-top: 18px;
             }
             p {
@@ -1122,21 +1155,6 @@ async function captureOgCard(browser, baseUrl) {
               line-height: 1.45;
               color: var(--muted);
               max-width: 540px;
-            }
-            .chips {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 12px;
-              margin-top: 22px;
-            }
-            .chip {
-              padding: 10px 14px;
-              border-radius: 12px;
-              background: rgba(251, 248, 242, 0.84);
-              border: 1px solid rgba(30, 30, 30, 0.10);
-              color: var(--ink);
-              font-size: 16px;
-              font-weight: 600;
             }
             .right {
               position: relative;
@@ -1196,13 +1214,11 @@ async function captureOgCard(browser, baseUrl) {
             <div class="glow"></div>
             <section class="left">
               <div>
-                <h1>${productName}<span>${title}</span></h1>
-                <p>${description}</p>
-                <div class="chips">
-                  <span class="chip">Sovereign</span>
-                  <span class="chip">Simple</span>
-                  <span class="chip">Free</span>
+                <div class="brand-lockup">
+                  <div class="brand-icon-crop"><img class="brand-icon" src="${iconUrl}" alt="" /></div>
+                  <h1><span class="product-name">${productName}</span><span class="product-title">${title}</span></h1>
                 </div>
+                <p>${description}</p>
               </div>
             </section>
             <section class="right">
@@ -1218,6 +1234,7 @@ async function captureOgCard(browser, baseUrl) {
     `, { waitUntil: 'load' })
 
     await page.waitForLoadState('networkidle')
+    await page.evaluate(async () => { await document.fonts.ready })
     await capturePageScreenshot(page, path.join(marketingDir, 'og-card.png'))
   } finally {
     await context.close()
