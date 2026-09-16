@@ -884,19 +884,10 @@
     position: relative;
     z-index: 1;
   }
-  .hero-onboarding__eyebrow {
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.24em;
-    color: var(--color-accent-warm-text);
-    margin: 0 0 0.75rem;
-  }
   .hero-onboarding__title {
     font-family: var(--font-serif);
     font-size: clamp(2rem, 6vw, 2.75rem);
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.05;
     color: var(--color-text-primary);

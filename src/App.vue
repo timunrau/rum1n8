@@ -1102,7 +1102,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <p class="hero-onboarding__eyebrow">Ruminate</p>
             <h2 class="hero-onboarding__title">Start ruminating</h2>
             <p class="hero-onboarding__subtitle">
               {{ shouldShowIOSInstallFirstPrompt ? 'Use Ruminate as an app, or keep going in your browser.' : 'Choose a verse to get started.' }}
