@@ -21,6 +21,11 @@
 
 - Run `node scripts/generate-marketing-assets.mjs` only before committing, or when regenerated screenshots are needed to inspect a user-interface change. Include all regenerated screenshots from `public/marketing/` with the change.
 
+## Android Release Signing
+
+- The upload keystore path and alias are configured in `android-twa/twa-manifest.json`; the keystore itself remains outside the repository.
+- On the maintainer's Mac, locate the project-specific signing entries by inspecting macOS Keychain generic-password item metadata. Retrieve the secrets directly into the Bubblewrap release-build environment without printing them, writing them to a file, or asking the user to paste them into chat.
+
 ## Git Workflow
 
 - Do not create branches or pull requests for routine work in this repository unless the user explicitly requests one.

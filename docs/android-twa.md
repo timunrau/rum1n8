@@ -13,6 +13,7 @@ Ruminate's Android project is a Bubblewrap-generated Trusted Web Activity in `an
 - Unsupported-browser fallback: Custom Tab, never WebView
 - Optional native delegations: disabled
 - Bubblewrap CLI: `1.24.1`, isolated and pinned in `android-twa/package-lock.json`; its vulnerable transitive `tar` is overridden to patched `7.5.21`
+- Android Browser Helper: `2.7.3`, reapplied after generation so cold TWA launches use the current stable Chrome integration; this raises the minimum supported Android version to Android 6 (API 23)
 
 The application ID and production origin become permanent once a signed build is distributed. Confirm both before creating the upload key or Play listing.
 
@@ -43,7 +44,7 @@ Regenerate Android source only from `android-twa/twa-manifest.json`:
 npm run twa:update
 ```
 
-`twa:update` runs Bubblewrap in `android-twa/`, reapplies the deterministic `/app/` App Link restriction, builds the web app, and verifies every launch declaration. Bubblewrap otherwise claims the whole host and overwrites generated Android files, so do not run `bubblewrap update` from the repository root or hand-edit generated source.
+`twa:update` runs Bubblewrap in `android-twa/`, reapplies the deterministic `/app/` App Link restriction and Android Browser Helper pin, builds the web app, and verifies every launch declaration. Bubblewrap otherwise claims the whole host and overwrites generated Android files, so do not run `bubblewrap update` from the repository root or hand-edit generated source.
 
 ## Build and install
 

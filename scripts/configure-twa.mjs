@@ -1,8 +1,8 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, extname, join, resolve } from 'node:path'
+import { configureGeneratedTwaBuildGradle } from '../build/twa-build-gradle.js'
 
 const APP_LINK_PATH = '/app/'
-const TARGET_SDK = 36
 const GENERATED_TEXT_EXTENSIONS = new Set(['.bat', '.gradle', '.java', '.properties', '.xml'])
 const GENERATED_TEXT_NAMES = new Set(['gradlew'])
 const SKIPPED_DIRECTORIES = new Set(['.gradle', 'build', 'node_modules'])
@@ -53,31 +53,11 @@ if (configured !== source) {
 }
 
 const buildGradle = await readFile(buildGradlePath, 'utf8')
-const compileSdkMatches = [...buildGradle.matchAll(/compileSdkVersion\s+(\d+)/g)]
-const targetSdkMatches = [...buildGradle.matchAll(/targetSdkVersion\s+(\d+)/g)]
-
-if (compileSdkMatches.length !== 1 || targetSdkMatches.length !== 1) {
-  throw new Error(
-    `Expected one compileSdkVersion and one targetSdkVersion in ${buildGradlePath}; `
-      + `found ${compileSdkMatches.length} and ${targetSdkMatches.length}.`,
-  )
+const buildGradleResult = configureGeneratedTwaBuildGradle(buildGradle)
+if (buildGradleResult.configured !== buildGradle) {
+  await writeFile(buildGradlePath, buildGradleResult.configured)
 }
-
-const compileSdk = Number(compileSdkMatches[0][1])
-const targetSdk = Number(targetSdkMatches[0][1])
-
-if (compileSdk < TARGET_SDK) {
-  throw new Error(`Android compile SDK ${compileSdk} is lower than required target SDK ${TARGET_SDK}.`)
-}
-
-if (targetSdk !== TARGET_SDK) {
-  const configuredBuildGradle = buildGradle.replace(
-    targetSdkMatches[0][0],
-    `targetSdkVersion ${TARGET_SDK}`,
-  )
-  await writeFile(buildGradlePath, configuredBuildGradle)
-  changes.push(`set the Android target SDK to ${TARGET_SDK}`)
-}
+changes.push(...buildGradleResult.changes)
 
 async function findGeneratedTextFiles(directory) {
   const files = []

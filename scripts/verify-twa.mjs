@@ -1,5 +1,9 @@
 import { access, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import {
+  ANDROID_BROWSER_HELPER_VERSION,
+  MIN_ANDROID_SDK,
+} from '../build/twa-build-gradle.js'
 
 const APP_PATH = '/app/'
 const failures = []
@@ -109,12 +113,26 @@ for (const [label, manifest] of [
 if (twa) {
   const escapedPackage = twa.packageId.replaceAll('.', '\\.')
   const compileSdk = Number(gradle.match(/compileSdkVersion (\d+)/)?.[1])
+  const minSdk = Number(gradle.match(/minSdkVersion (\d+)/)?.[1])
   const targetSdk = Number(gradle.match(/targetSdkVersion (\d+)/)?.[1])
+  const browserHelperVersions = [
+    ...gradle.matchAll(/com\.google\.androidbrowserhelper:androidbrowserhelper:([^'"\s]+)/g),
+  ].map((match) => match[1])
   check(new RegExp(`applicationId: '${escapedPackage}'`).test(gradle), 'Generated Gradle package ID differs from twa-manifest.json.')
   check(new RegExp(`applicationId "${escapedPackage}"`).test(gradle), 'Gradle defaultConfig package ID differs from twa-manifest.json.')
   check(/launchUrl: '\/app\/'/.test(gradle), 'Generated Gradle launchUrl must be exactly /app/.')
   check(compileSdk >= targetSdk, 'Android compile SDK must not be lower than its target SDK.')
+  check(minSdk === twa.minSdkVersion, 'Generated Android minimum SDK differs from twa-manifest.json.')
+  check(
+    minSdk >= MIN_ANDROID_SDK,
+    `Android minimum SDK must be at least ${MIN_ANDROID_SDK} for the pinned browser helper.`,
+  )
   check(targetSdk >= 36, 'Android target SDK is below the current Play requirement.')
+  check(
+    browserHelperVersions.length === 1
+      && browserHelperVersions[0] === ANDROID_BROWSER_HELPER_VERSION,
+    `Generated TWA must use Android Browser Helper ${ANDROID_BROWSER_HELPER_VERSION} for cold launch compatibility.`,
+  )
   check(gradle.includes(`versionCode ${twa.appVersionCode}`), 'Generated Android versionCode differs from twa-manifest.json.')
   check(gradle.includes(`versionName "${twa.appVersionName}"`), 'Generated Android versionName differs from twa-manifest.json.')
   check(new RegExp(`package ${escapedPackage};`).test(launcherActivity), 'LauncherActivity package differs from twa-manifest.json.')
