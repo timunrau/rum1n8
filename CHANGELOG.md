@@ -1,3 +1,10 @@
+## [1.57.2](https://github.com/timunrau/rum1n8/compare/v1.57.1...v1.57.2) (2026-09-20)
+
+
+### Bug Fixes
+
+* restore cold offline TWA launches ([6e6e79a](https://github.com/timunrau/rum1n8/commit/6e6e79a431e4f989c79d3877fc55b86a5ee57ded))
+
 ## [1.57.1](https://github.com/timunrau/rum1n8/compare/v1.57.0...v1.57.1) (2026-09-16)
 
 
