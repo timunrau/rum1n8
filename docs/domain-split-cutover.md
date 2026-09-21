@@ -13,7 +13,7 @@ Create a separate Umami website for the marketing domain. In GitHub Actions, set
 | Secret | Value |
 |---|---|
 | `VITE_APP_URL` | `https://rum1n8.unrau.xyz/app/` |
-| `VITE_MARKETING_URL` | `https://<marketing-domain>/` |
+| `VITE_MARKETING_URL` | `https://ruminatebiblememory.com/` |
 | `VITE_UMAMI_MARKETING_WEBSITE_ID` | Marketing Umami website ID |
 
 Confirm that `VITE_GOOGLE_CLIENT_ID`, `VITE_GOOGLE_CLIENT_SECRET`, `VITE_UMAMI_SCRIPT_URL`, and `VITE_UMAMI_WEBSITE_ID` are still present.
@@ -24,7 +24,7 @@ In Nginx Proxy Manager, leave the existing app Proxy Host unchanged and add the 
 
 | Setting | App | Marketing |
 |---|---|---|
-| Domain | `rum1n8.unrau.xyz` | `<marketing-domain>` |
+| Domain | `rum1n8.unrau.xyz` | `ruminatebiblememory.com` |
 | Scheme | `http` | `http` |
 | Forward port | `1234` | `1235` |
 | Force SSL | On | On |

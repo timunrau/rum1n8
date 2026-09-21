@@ -22,7 +22,7 @@ VITE_APP_URL
 VITE_MARKETING_URL
 ```
 
-The app URL must be `https://rum1n8.unrau.xyz/app/`. The marketing URL must be an HTTPS origin ending in `/`. Production builds reject missing, malformed, non-HTTPS, or incorrectly pathed values.
+The app URL must be `https://rum1n8.unrau.xyz/app/`. The marketing URL must be `https://ruminatebiblememory.com/`. Production builds reject missing, malformed, non-HTTPS, or incorrectly pathed values.
 
 Only genuine infrastructure secrets belong in the server `.env`:
 
@@ -38,8 +38,8 @@ Frontend URLs and analytics website IDs do not need to be duplicated on the serv
 Create two ordinary TLS-enabled Proxy Hosts in Nginx Proxy Manager:
 
 ```text
-rum1n8.unrau.xyz  -> server:1234
-marketing domain  -> server:1235
+rum1n8.unrau.xyz          -> server:1234
+ruminatebiblememory.com   -> server:1235
 ```
 
 Force HTTPS for both. Do not add advanced Nginx configuration or path routing; each domain maps to one frontend container.

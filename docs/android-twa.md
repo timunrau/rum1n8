@@ -70,7 +70,9 @@ For a signed release, keep the keystore outside this repository, ensure `android
 
 ```bash
 npm run twa:version -- 2
-npm run twa:build:release
+VITE_APP_URL=https://rum1n8.unrau.xyz/app/ \
+VITE_MARKETING_URL=https://ruminatebiblememory.com/ \
+  npm run twa:build:release
 ```
 
 Replace `2` with an integer greater than the last distributed Android `versionCode`; the command maps the current root `package.json` version to Android `versionName`. The committed signing path resolves outside the repository. A different path can be supplied with Bubblewrap's `--signingKeyPath` option from `android-twa/`. Never commit a keystore, password, service-account file, APK, or AAB.
