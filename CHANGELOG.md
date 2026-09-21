@@ -1,3 +1,10 @@
+## [1.57.3](https://github.com/timunrau/rum1n8/compare/v1.57.2...v1.57.3) (2026-09-21)
+
+
+### Bug Fixes
+
+* keep launcher icon within adaptive safe area ([3df0002](https://github.com/timunrau/rum1n8/commit/3df0002bf8b815c7d6149eeafddbdd0434d2b26c))
+
 ## [1.57.2](https://github.com/timunrau/rum1n8/compare/v1.57.1...v1.57.2) (2026-09-20)
 
 
