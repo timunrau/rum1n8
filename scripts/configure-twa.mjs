@@ -9,6 +9,8 @@ const SKIPPED_DIRECTORIES = new Set(['.gradle', 'build', 'node_modules'])
 const androidProjectPath = resolve('android-twa')
 const manifestPath = resolve('android-twa/app/src/main/AndroidManifest.xml')
 const buildGradlePath = resolve('android-twa/app/build.gradle')
+const twaManifestPath = resolve('android-twa/twa-manifest.json')
+const shortcutsPath = resolve('android-twa/app/src/main/res/xml/shortcuts.xml')
 const source = await readFile(manifestPath, 'utf8')
 const filters = source.match(/<intent-filter android:autoVerify="true">[\s\S]*?<\/intent-filter>/g) || []
 let configured = source
@@ -58,6 +60,41 @@ if (buildGradleResult.configured !== buildGradle) {
   await writeFile(buildGradlePath, buildGradleResult.configured)
 }
 changes.push(...buildGradleResult.changes)
+
+function escapeXmlAttribute(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll("'", '&apos;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+}
+
+function generateShortcutsXml(twaManifest) {
+  const shortcuts = twaManifest.shortcuts || []
+  const lines = ["<shortcuts xmlns:android='http://schemas.android.com/apk/res/android'>"]
+
+  shortcuts.forEach((shortcut, index) => {
+    const packageId = escapeXmlAttribute(twaManifest.packageId)
+    const url = escapeXmlAttribute(shortcut.url)
+    lines.push(
+      `    <shortcut android:shortcutId='shortcut${index}' android:enabled='true' android:icon='@drawable/shortcut_${index}' android:shortcutShortLabel='@string/shortcut_short_name_${index}' android:shortcutLongLabel='@string/shortcut_name_${index}'>`,
+      `        <intent android:action='android.intent.action.MAIN' android:targetPackage='${packageId}' android:targetClass='${packageId}.LauncherActivity' android:data='${url}' />`,
+      "        <categories android:name='android.intent.category.LAUNCHER' />",
+      '    </shortcut>',
+    )
+  })
+
+  lines.push('</shortcuts>')
+  return `${lines.join('\n')}\n`
+}
+
+const twaManifest = JSON.parse(await readFile(twaManifestPath, 'utf8'))
+const generatedShortcuts = generateShortcutsXml(twaManifest)
+const shortcutsSource = await readFile(shortcutsPath, 'utf8')
+if (shortcutsSource !== generatedShortcuts) {
+  await writeFile(shortcutsPath, generatedShortcuts)
+  changes.push(`restored ${(twaManifest.shortcuts || []).length} generated shortcuts`)
+}
 
 async function findGeneratedTextFiles(directory) {
   const files = []

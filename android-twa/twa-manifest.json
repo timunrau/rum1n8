@@ -20,8 +20,8 @@
     "path": "../../rum1n8-upload.keystore",
     "alias": "rum1n8-upload"
   },
-  "appVersionName": "1.57.1",
-  "appVersionCode": 4,
+  "appVersionName": "1.57.4",
+  "appVersionCode": 5,
   "shortcuts": [
     {
       "name": "Collections",
@@ -71,5 +71,5 @@
     "minimal-ui",
     "browser"
   ],
-  "appVersion": "1.57.1"
+  "appVersion": "1.57.4"
 }
