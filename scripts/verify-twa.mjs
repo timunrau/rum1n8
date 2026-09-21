@@ -69,6 +69,10 @@ if (twa) {
   check(twa.name === 'Ruminate: Bible Memory', 'Bubblewrap application name must be Ruminate: Bible Memory.')
   check(twa.launcherName === 'Ruminate', 'Bubblewrap launcher name must be Ruminate.')
   check(twa.startUrl === APP_PATH, `Bubblewrap startUrl must be exactly ${APP_PATH}.`)
+  check(
+    twa.maskableIconUrl === `${origin}/icons/icon-maskable-512x512.png`,
+    'Bubblewrap must use the dedicated maskable launcher icon.',
+  )
   check(twa.display === 'standalone', 'Bubblewrap display mode must remain standalone.')
   check(twa.fallbackType === 'customtabs', 'Bubblewrap fallback must remain Custom Tabs.')
   check(twa.enableNotifications === false, 'Notification delegation must remain disabled.')

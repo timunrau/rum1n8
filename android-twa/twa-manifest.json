@@ -14,7 +14,7 @@
   "enableNotifications": false,
   "startUrl": "/app/",
   "iconUrl": "https://rum1n8.unrau.xyz/icons/icon-512x512.png",
-  "maskableIconUrl": "https://rum1n8.unrau.xyz/icons/icon-512x512.png",
+  "maskableIconUrl": "https://rum1n8.unrau.xyz/icons/icon-maskable-512x512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "../../rum1n8-upload.keystore",
