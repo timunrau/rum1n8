@@ -1,3 +1,10 @@
+## [1.57.4](https://github.com/timunrau/rum1n8/compare/v1.57.3...v1.57.4) (2026-09-21)
+
+
+### Bug Fixes
+
+* add more launcher icon padding ([8f60882](https://github.com/timunrau/rum1n8/commit/8f60882a5c848abb0e288c77f0f86fa85f98295c))
+
 ## [1.57.3](https://github.com/timunrau/rum1n8/compare/v1.57.2...v1.57.3) (2026-09-21)
 
 
