@@ -1,3 +1,15 @@
+# [1.58.0](https://github.com/timunrau/rum1n8/compare/v1.57.4...v1.58.0) (2026-09-23)
+
+
+### Bug Fixes
+
+* clarify verse shuffle action ([3c9c391](https://github.com/timunrau/rum1n8/commit/3c9c3914cf9d167b3c12cdb320ce5cfc3c62638e))
+
+
+### Features
+
+* add random verse sorting ([b2caaa3](https://github.com/timunrau/rum1n8/commit/b2caaa3e2d09e8446ad5d934a38f086dc8d53bd1))
+
 ## [1.57.4](https://github.com/timunrau/rum1n8/compare/v1.57.3...v1.57.4) (2026-09-21)
 
 
