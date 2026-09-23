@@ -90,6 +90,11 @@ const versesScreenVerses = [
   }),
 ]
 
+const sortScreenshotVerses = versesScreenVerses.map((verse, index) => ({
+  ...verse,
+  createdAt: new Date(Date.parse(now) - index * 86400000).toISOString(),
+}))
+
 const practiceVerses = [
   buildVerse(baseVerses.joshua, {
     memorizationStatus: 'unmemorized',
@@ -696,6 +701,43 @@ async function captureReviewState(browser, baseUrl, colorScheme = 'light') {
   }
 }
 
+async function captureSortState(browser, baseUrl, criterion, colorScheme = 'light') {
+  const { context, page } = await createMobilePage(
+    browser,
+    buildOnboardingCompleteStorageState({ verses: sortScreenshotVerses }),
+    colorScheme
+  )
+  const suffix = colorScheme === 'dark' ? '-dark' : ''
+  const name = criterion === 'random' ? 'random' : 'date-added'
+
+  try {
+    await page.addInitScript(() => {
+      const originalGetRandomValues = window.crypto.getRandomValues.bind(window.crypto)
+      window.crypto.getRandomValues = (array) => {
+        if (array instanceof Uint32Array && array.length === 1) {
+          array[0] = 0x5eed1234
+          return array
+        }
+        return originalGetRandomValues(array)
+      }
+    })
+    await page.goto(`${baseUrl}/?view=collections`, { waitUntil: 'domcontentloaded' })
+    await page.getByTestId('collection-actions-trigger').click()
+    await page.getByTestId('collection-sort-action').click()
+    const sheet = page.getByTestId('modal-verse-sort')
+    await sheet.getByTestId(`verse-sort-option-${criterion}`).click()
+    await page.waitForFunction((id) => (
+      document.querySelector(`[data-testid="verse-sort-option-${id}"]`)?.getAttribute('aria-checked') === 'true'
+    ), criterion)
+    await sheet.locator('.overflow-y-auto').evaluate((scroller) => {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'instant' })
+    })
+    await capturePageScreenshot(page, path.join(marketingDir, `screenshot-sort-${name}${suffix}.png`))
+  } finally {
+    await context.close()
+  }
+}
+
 async function captureAddVerseState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(browser, {
     ...buildStorageState({ collections: addVerseCollections }),
@@ -1274,6 +1316,8 @@ try {
       await captureVersesState(browser, baseUrl, colorScheme)
       await capturePracticeState(browser, baseUrl, colorScheme)
       await captureReviewState(browser, baseUrl, colorScheme)
+      await captureSortState(browser, baseUrl, 'random', colorScheme)
+      await captureSortState(browser, baseUrl, 'createdAt', colorScheme)
       await captureAddVerseState(browser, baseUrl, colorScheme)
       await captureMemorizeState(browser, baseUrl, colorScheme)
       await captureSyncState(browser, baseUrl, colorScheme)

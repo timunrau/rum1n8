@@ -2197,7 +2197,18 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
             </button>
           </div>
 
-          <div class="border-t border-border-default pt-4">
+          <div v-if="currentVerseSortPreference.criterion === 'random'" class="border-t border-border-default pt-4">
+            <button
+              type="button"
+              data-testid="verse-sort-shuffle-again"
+              class="btn-secondary w-full"
+              @click="shuffleVerseSortAgain"
+            >
+              Shuffle again
+            </button>
+          </div>
+
+          <div v-else class="border-t border-border-default pt-4">
             <p class="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Order</p>
             <div class="space-y-1" role="radiogroup" aria-label="Sort direction">
               <button
@@ -4159,6 +4170,21 @@ export default {
         : `collection:${collectionId}`
     }
 
+    const verseSortVisitSeeds = ref({})
+    const createVerseSortSeed = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0]
+    const setVerseSortVisitSeed = (contextKey, seed = createVerseSortSeed()) => {
+      verseSortVisitSeeds.value = { ...verseSortVisitSeeds.value, [contextKey]: seed }
+    }
+    const getVerseSortVisitSeed = (contextKey) => verseSortVisitSeeds.value[contextKey] ?? 0
+
+    watch(
+      () => currentView.value === 'collections' ? getVerseSortContextKey() : null,
+      (contextKey, previousContextKey) => {
+        if (contextKey && contextKey !== previousContextKey) setVerseSortVisitSeed(contextKey)
+      },
+      { immediate: true, flush: 'sync' }
+    )
+
     const currentVerseSortContextKey = computed(() => getVerseSortContextKey())
     const currentVerseSortPreference = computed(() => normalizeVerseSortPreference(
       appSettings.value.verseSortPreferences?.[currentVerseSortContextKey.value]
@@ -4276,7 +4302,11 @@ export default {
 
     // Sort collection-like lists using the preference for the active context.
     const sortedVerses = computed(() => {
-      return sortVerses(filteredVerses.value, currentVerseSortPreference.value)
+      return sortVerses(
+        filteredVerses.value,
+        currentVerseSortPreference.value,
+        getVerseSortVisitSeed(currentVerseSortContextKey.value)
+      )
     })
 
     const visibleVerseIds = computed(() => sortedVerses.value.map(verse => verse.id))
@@ -5316,7 +5346,7 @@ export default {
         }
       } else {
         // Mastered - start review
-        if (currentCollectionId.value) {
+        if (currentCollectionId.value && currentVerseSortPreference.value.criterion !== 'random') {
           const passageSequence = getPassageReviewSequence(verse, sortedVerses.value)
           if (passageSequence.length > 1 && openPassageReviewOffer(verse, passageSequence)) {
             return
@@ -6163,10 +6193,26 @@ export default {
     const applyVerseSortCriterion = (criterion) => {
       const option = verseSortOptions.value.find(item => item.id === criterion)
       if (!option?.available) return
+      if (criterion === 'random' && currentVerseSortPreference.value.criterion !== 'random') {
+        setVerseSortVisitSeed(currentVerseSortContextKey.value)
+      }
       saveCurrentVerseSortPreference({
         criterion,
         direction: getDefaultVerseSortDirection(criterion),
       })
+    }
+
+    const shuffleVerseSortAgain = () => {
+      if (currentVerseSortPreference.value.criterion !== 'random') return
+      const currentOrder = sortedVerses.value.map(verse => verse.id).join('\u0000')
+      let nextSeed
+      for (let attempt = 0; attempt < 64; attempt += 1) {
+        nextSeed = createVerseSortSeed()
+        const nextOrder = sortVerses(filteredVerses.value, currentVerseSortPreference.value, nextSeed)
+          .map(verse => verse.id).join('\u0000')
+        if (nextOrder !== currentOrder) break
+      }
+      setVerseSortVisitSeed(currentVerseSortContextKey.value, nextSeed)
     }
 
     const applyVerseSortDirection = (direction) => {
@@ -7504,8 +7550,9 @@ export default {
     }
 
     const getOrderedCollectionSourceList = (collectionId) => {
-      const preference = appSettings.value.verseSortPreferences?.[getVerseSortContextKey(collectionId)]
-      return sortVerses(getCollectionSourceVerses(collectionId), preference)
+      const contextKey = getVerseSortContextKey(collectionId)
+      const preference = appSettings.value.verseSortPreferences?.[contextKey]
+      return sortVerses(getCollectionSourceVerses(collectionId), preference, getVerseSortVisitSeed(contextKey))
     }
 
     const getReviewSourceContext = (sourceState = getCurrentSourceState()) => {
@@ -7528,7 +7575,7 @@ export default {
 
       if (sourceState?.view === 'collections' && collections.value.length === 0 && !searchActive.value) {
         return {
-          list: sortVerses(verses.value, appSettings.value.verseSortPreferences?.library),
+          list: sortVerses(verses.value, appSettings.value.verseSortPreferences?.library, getVerseSortVisitSeed('library')),
           state: { view: 'collections' },
         }
       }
@@ -9669,6 +9716,7 @@ export default {
       verseSortDirectionOptions,
       currentVerseSortPreference,
       applyVerseSortCriterion,
+      shuffleVerseSortAgain,
       applyVerseSortDirection,
       editCurrentCollection,
       exportCurrentCollectionCSV,

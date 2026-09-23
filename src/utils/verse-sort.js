@@ -7,6 +7,7 @@ export const VERSE_SORT_CRITERIA = Object.freeze([
 	{ id: 'masteredAt', label: 'Date mastered' },
 	{ id: 'lastReviewed', label: 'Last reviewed' },
 	{ id: 'nextReviewDate', label: 'Next review' },
+	{ id: 'random', label: 'Random order' },
 ])
 
 const CRITERION_IDS = new Set(VERSE_SORT_CRITERIA.map(criterion => criterion.id))
@@ -22,7 +23,7 @@ export function getDefaultVerseSortDirection(criterion = 'reference') {
 export function normalizeVerseSortPreference(preference = {}) {
 	const hasValidCriterion = CRITERION_IDS.has(preference?.criterion)
 	const criterion = hasValidCriterion ? preference.criterion : 'reference'
-	const direction = preference?.direction === 'asc' || preference?.direction === 'desc'
+	const direction = criterion !== 'random' && (preference?.direction === 'asc' || preference?.direction === 'desc')
 		? (hasValidCriterion ? preference.direction : getDefaultVerseSortDirection(criterion))
 		: getDefaultVerseSortDirection(criterion)
 
@@ -107,8 +108,26 @@ function compareTieBreakers(a, b) {
 	return compareText(a?.id, b?.id)
 }
 
-export function sortVerses(items = [], preference = {}) {
+function getRandomRank(id, seed) {
+	const text = String(id ?? '')
+	let hash = (Number(seed) ^ 0x9e3779b9) >>> 0
+	for (let index = 0; index < text.length; index += 1) {
+		hash = Math.imul(hash ^ text.charCodeAt(index), 0x85ebca6b)
+	}
+	hash ^= hash >>> 16
+	hash = Math.imul(hash, 0x7feb352d)
+	hash ^= hash >>> 15
+	hash = Math.imul(hash, 0x846ca68b)
+	return (hash ^ (hash >>> 16)) >>> 0
+}
+
+export function sortVerses(items = [], preference = {}, randomSeed = 0) {
 	const { criterion, direction } = normalizeVerseSortPreference(preference)
+	if (criterion === 'random') {
+		return [...items].sort((a, b) => (
+			getRandomRank(a?.id, randomSeed) - getRandomRank(b?.id, randomSeed) || compareText(a?.id, b?.id)
+		))
+	}
 	const sign = direction === 'desc' ? -1 : 1
 
 	return [...items].sort((a, b) => {
@@ -134,7 +153,7 @@ export function sortVerses(items = [], preference = {}) {
 }
 
 export function hasVerseSortValues(items = [], criterion = 'reference') {
-	if (criterion === 'reference' || criterion === 'alphabetical') return items.length > 0
+	if (criterion === 'reference' || criterion === 'alphabetical' || criterion === 'random') return items.length > 0
 	if (!DATE_CRITERIA.has(criterion)) return false
 	return items.some(item => parseTimestamp(item?.[criterion]) !== null)
 }

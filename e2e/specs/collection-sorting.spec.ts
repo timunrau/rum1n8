@@ -125,6 +125,63 @@ test('sort chooser applies choices live, keeps labels readable, and waits to be 
   await expect.poll(() => visibleVerseOrder(page)).toEqual(['Psalm 1:1', 'Psalm 2:1', 'Psalm 3:1'])
 })
 
+test('random order can be reshuffled, follows practice, and resets on a new visit', async ({ page }) => {
+  const references = ['Psalm 1:1', 'Psalm 2:1', 'Psalm 3:1', 'Psalm 4:1', 'Psalm 5:1']
+  const verses = references.map((reference, index) => makeVerse(`psalm-${index}`, reference))
+  const collections = [{ id: 'sorting', name: 'Sorting', parentId: null, createdAt: now, lastModified: now }]
+  await seedStorage(page, verses, collections)
+  await gotoApp(page, '?view=collection&collection=sorting')
+
+  await openSortSheet(page)
+  await page.getByTestId('verse-sort-option-random').click()
+  await expect(page.getByRole('radiogroup', { name: 'Sort direction' })).toHaveCount(0)
+  await expect(page.getByTestId('verse-sort-shuffle-again')).toBeVisible()
+  const firstOrder = await visibleVerseOrder(page)
+  await page.getByTestId('verse-sort-shuffle-again').click()
+  await expect.poll(() => visibleVerseOrder(page)).not.toEqual(firstOrder)
+  const shuffledOrder = await visibleVerseOrder(page)
+  await dismissSortSheet(page)
+
+  const storedPreference = await page.evaluate(() => JSON.parse(localStorage.getItem('rum1n8-app-settings') || '{}').appSettings?.verseSortPreferences?.['collection:sorting'])
+  expect(storedPreference).toEqual({ criterion: 'random', direction: 'asc' })
+
+  await page.getByText(shuffledOrder[0] as string).click()
+  await expect.poll(() => page.evaluate(() => window.history.state?.practiceSequence?.verseIds)).toEqual(
+    shuffledOrder.map(reference => verses[references.indexOf(reference as string)].id)
+  )
+  await page.getByLabel('Back').click()
+  await expect.poll(() => visibleVerseOrder(page)).toEqual(shuffledOrder)
+
+  await page.getByLabel('Back').click()
+  await page.getByTestId('collection-tile-sorting').click()
+  const visitOrders = [await visibleVerseOrder(page)]
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await page.getByLabel('Back').click()
+    await page.getByTestId('collection-tile-sorting').click()
+    visitOrders.push(await visibleVerseOrder(page))
+  }
+  expect(new Set(visitOrders.map(order => order.join(','))).size).toBeGreaterThan(1)
+})
+
+test('random order disables combined passage review', async ({ page }) => {
+  const verses = [makeVerse('john-16', 'John 3:16'), makeVerse('john-17', 'John 3:17')]
+  const collections = [{ id: 'sorting', name: 'Sorting', parentId: null, createdAt: now, lastModified: now }]
+  await seedStorage(page, verses, collections)
+  await gotoApp(page, '?view=collection&collection=sorting')
+
+  await openSortSheet(page)
+  await page.getByTestId('verse-sort-option-random').click()
+  if ((await visibleVerseOrder(page))[0] !== 'John 3:16') {
+    await page.getByTestId('verse-sort-shuffle-again').click()
+  }
+  await expect.poll(() => visibleVerseOrder(page)).toEqual(['John 3:16', 'John 3:17'])
+  await dismissSortSheet(page)
+
+  await page.getByText('John 3:16').click()
+  await expect(page.getByTestId('modal-passage-review-offer')).toBeHidden()
+  await expect(page.locator('#letter-input-review')).toBeFocused()
+})
+
 test('alphabetical sorting uses natural reference order and starts practice in that order', async ({ page }) => {
   const verses = [
     makeVerse('psalm', 'Psalm 1:1'),

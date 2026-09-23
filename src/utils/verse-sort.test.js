@@ -25,6 +25,32 @@ describe('verse sorting', () => {
 		expect(getDefaultVerseSortDirection('masteredAt')).toBe('desc')
 		expect(getDefaultVerseSortDirection('lastReviewed')).toBe('asc')
 		expect(getDefaultVerseSortDirection('nextReviewDate')).toBe('asc')
+		expect(getDefaultVerseSortDirection('random')).toBe('asc')
+	})
+
+	it('keeps a seeded random order stable across input and metadata changes', () => {
+		const input = [
+			verse('one', 'Psalm 1:1'),
+			verse('two', 'Psalm 2:1'),
+			verse('three', 'Psalm 3:1'),
+			verse('four', 'Psalm 4:1'),
+		]
+		const preference = { criterion: 'random', direction: 'desc' }
+		const order = sortVerses(input, preference, 123).map(item => item.id)
+
+		expect(sortVerses([...input].reverse(), preference, 123).map(item => item.id)).toEqual(order)
+		expect(sortVerses(input.map(item => ({ ...item, lastReviewed: '2026-02-01' })), preference, 123).map(item => item.id)).toEqual(order)
+		expect(input.map(item => item.id)).toEqual(['one', 'two', 'three', 'four'])
+		expect(new Set(Array.from({ length: 12 }, (_, seed) => sortVerses(input, preference, seed).map(item => item.id).join(','))).size).toBeGreaterThan(1)
+	})
+
+	it('normalizes random as a directionless criterion and makes it available for populated lists', () => {
+		expect(normalizeVerseSortPreference({ criterion: 'random', direction: 'desc' })).toEqual({
+			criterion: 'random',
+			direction: 'asc',
+		})
+		expect(hasVerseSortValues([], 'random')).toBe(false)
+		expect(hasVerseSortValues([verse('one', 'Psalm 1:1')], 'random')).toBe(true)
 	})
 
 	it('sorts references alphabetically with natural chapter and verse ordering', () => {
