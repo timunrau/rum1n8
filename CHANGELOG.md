@@ -1,3 +1,10 @@
+## [1.58.2](https://github.com/timunrau/rum1n8/compare/v1.58.1...v1.58.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* remove pale rim from Android launcher icon ([454f5da](https://github.com/timunrau/rum1n8/commit/454f5daa544d3cd7d1ff266e4da13e7deaf811b2))
+
 ## [1.58.1](https://github.com/timunrau/rum1n8/compare/v1.58.0...v1.58.1) (2026-09-23)
 
 # [1.58.0](https://github.com/timunrau/rum1n8/compare/v1.57.4...v1.58.0) (2026-09-23)
