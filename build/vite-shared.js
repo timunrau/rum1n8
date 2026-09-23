@@ -7,32 +7,32 @@ export const MARKETING_PAGES = Object.freeze([
   {
     page: 'marketing',
     inputName: 'marketing',
-    inputFile: 'index.html',
+    inputFile: 'site/index.html',
     path: '/',
     includeJsonLd: true,
   },
   {
     page: 'memorizationBenefits',
     inputName: 'memorizationBenefits',
-    inputFile: 'memorization-is-a-spiritual-life-hack/index.html',
+    inputFile: 'site/memorization-is-a-spiritual-life-hack/index.html',
     path: '/memorization-is-a-spiritual-life-hack/',
   },
   {
     page: 'scriptureTips',
     inputName: 'scriptureTips',
-    inputFile: 'tips-for-memorizing-scripture/index.html',
+    inputFile: 'site/tips-for-memorizing-scripture/index.html',
     path: '/tips-for-memorizing-scripture/',
   },
   {
     page: 'bibleMemoryImport',
     inputName: 'bibleMemoryImport',
-    inputFile: 'import/biblememory/index.html',
+    inputFile: 'site/import/biblememory/index.html',
     path: '/import/biblememory/',
   },
   {
     page: 'privacy',
     inputName: 'privacy',
-    inputFile: 'privacy/index.html',
+    inputFile: 'site/privacy/index.html',
     path: '/privacy/',
   },
 ])

@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
   const metadata = buildSiteMetadata(env, mode)
 
   return {
+    root: resolve(process.cwd(), 'site'),
     publicDir: false,
     server: {
       host: serverHost(),
@@ -38,7 +39,7 @@ export default defineConfig(({ mode }) => {
       watch: { ignored: ['**/dist-app/**', '**/dist-site/**', '**/dev-dist/**'] },
     },
     build: {
-      outDir: 'dist-site',
+      outDir: resolve(process.cwd(), 'dist-site'),
       emptyOutDir: true,
       rollupOptions: {
         input: Object.fromEntries(MARKETING_PAGES.map(({ inputName, inputFile }) => [

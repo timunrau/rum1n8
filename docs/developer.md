@@ -23,6 +23,8 @@ The individual processes remain available as `npm run dev:app`, `npm run dev:sit
 HOST=0.0.0.0 npm run dev
 ```
 
+The marketing site's HTML, JavaScript, and CSS live in `site/`. Vite keeps the public routes at `/`, `/privacy/`, and the other page paths when it builds `dist-site/`. Shared screenshots remain in `public/marketing/` because the app also uses some of them. Regenerate them with `node scripts/generate-marketing-assets.mjs` when the app UI changes.
+
 ## Tests
 
 - Run both test suites after code changes: `npm test` and `npm run test:e2e`
