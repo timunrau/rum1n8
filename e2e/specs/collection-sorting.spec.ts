@@ -136,6 +136,7 @@ test('random order can be reshuffled, follows practice, and resets on a new visi
   await page.getByTestId('verse-sort-option-random').click()
   await expect(page.getByRole('radiogroup', { name: 'Sort direction' })).toHaveCount(0)
   await expect(page.getByTestId('verse-sort-shuffle-again')).toBeVisible()
+  await expect(page.getByTestId('verse-sort-shuffle-again')).toHaveText('Shuffle verses')
   const firstOrder = await visibleVerseOrder(page)
   await page.getByTestId('verse-sort-shuffle-again').click()
   await expect.poll(() => visibleVerseOrder(page)).not.toEqual(firstOrder)

@@ -2204,7 +2204,7 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               class="btn-secondary w-full"
               @click="shuffleVerseSortAgain"
             >
-              Shuffle again
+              Shuffle verses
             </button>
           </div>
 
