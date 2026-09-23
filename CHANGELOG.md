@@ -1,3 +1,5 @@
+## [1.58.3](https://github.com/timunrau/rum1n8/compare/v1.58.2...v1.58.3) (2026-09-23)
+
 ## [1.58.2](https://github.com/timunrau/rum1n8/compare/v1.58.1...v1.58.2) (2026-09-23)
 
 
