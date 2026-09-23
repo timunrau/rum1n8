@@ -27,7 +27,7 @@
     "twa:validate": "npm run validate --prefix android-twa",
     "twa:verify": "node scripts/verify-twa.mjs",
     "twa:version": "node scripts/set-twa-version.mjs",
-    "twa:update": "npm run update --prefix android-twa && npm run twa:configure && npm run build",
+    "twa:update": "npm run update --prefix android-twa && npm run twa:configure && node scripts/sync-twa-maskable.mjs && npm run build",
     "twa:build:debug": "npm run twa:update && node scripts/run-twa-gradle.mjs assembleDebug",
     "twa:build:unsigned": "npm run twa:update && npm run build:unsigned --prefix android-twa",
     "twa:build:release": "npm run twa:update && npm run build --prefix android-twa",

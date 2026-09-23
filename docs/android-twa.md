@@ -44,7 +44,7 @@ Regenerate Android source only from `android-twa/twa-manifest.json`:
 npm run twa:update
 ```
 
-`twa:update` runs Bubblewrap in `android-twa/`, reapplies the deterministic `/app/` App Link restriction and Android Browser Helper pin, builds the web app, and verifies every launch declaration. Bubblewrap otherwise claims the whole host and overwrites generated Android files, so do not run `bubblewrap update` from the repository root or hand-edit generated source.
+`twa:update` runs Bubblewrap in `android-twa/`, reapplies the deterministic `/app/` App Link restriction and Android Browser Helper pin, syncs the local maskable icon into Android's launcher resources, builds the web app, and verifies every launch declaration. ImageMagick is required for the icon sync. Bubblewrap otherwise claims the whole host and overwrites generated Android files, so do not run `bubblewrap update` from the repository root or hand-edit generated source.
 
 ## Build and install
 
