@@ -42,7 +42,9 @@
             :id="panel.isCurrent ? `practice-word-${index}` : null"
             :class="[
               word.separatorAfter ? 'practice-word inline-block' : 'practice-word inline-block mr-2',
-              panel.isCurrent && currentWordIndex === index ? 'practice-word--current' : ''
+              panel.isCurrent && currentWordIndex === index ? 'practice-word--current' : '',
+              panel.isCurrent && currentWordIndex === index && inputMode === 'voice' ? 'practice-word--voice-current' : '',
+              panel.isCurrent && voicePreview.includes(index) ? 'practice-word--voice-preview' : ''
             ]"
           >
             <span v-if="panel.mode === 'learn'">
@@ -162,7 +164,7 @@
             {{ passageSegmentFeedback.reference }} · {{ passageSegmentFeedback.accuracyLabel }}
           </span>
           <button
-            v-if="passageSegmentFeedback.belowThreshold"
+            v-if="passageSegmentFeedback.belowThreshold && !deferPassageRetry"
             type="button"
             class="passage-segment-feedback__action"
             data-testid="passage-segment-retry"
@@ -219,6 +221,7 @@
       <input
         ref="inputRef"
         :value="typedLetter"
+        :disabled="inputMode !== 'keyboard' || blockInput"
         type="text"
         autocomplete="off"
         autocorrect="off"
@@ -257,6 +260,10 @@ export default {
     getPartialWordText: { type: Function, required: true },
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
+    inputMode: { type: String, default: 'keyboard' },
+    voicePreview: { type: Array, default: () => [] },
+    deferPassageRetry: { type: Boolean, default: false },
+    blockInput: { type: Boolean, default: false },
     showTray: { type: Boolean, default: false },
     showPracticeModesHint: { type: Boolean, default: false },
     previousVerse: { type: Object, default: null },
@@ -358,12 +365,14 @@ export default {
     }
 
     function onInput(e) {
+      if (props.inputMode !== 'keyboard' || props.blockInput) return
       const value = e.target && e.target.value
       emit('update:typedLetter', value !== undefined ? value : '')
       emit('input')
     }
 
     function onKeydown(e) {
+      if (props.inputMode !== 'keyboard' || props.blockInput) return
       emit('keydown', e)
     }
 
@@ -376,6 +385,7 @@ export default {
     }
 
     function focusInput() {
+      if (props.inputMode !== 'keyboard' || props.blockInput) return
       if (props.showTray && hasCoarsePointer()) return
 
       const input = getRefElement(inputRef.value)
@@ -383,6 +393,10 @@ export default {
         input.focus()
       }
     }
+
+    watch(() => props.inputMode, mode => {
+      if (mode !== 'keyboard') getRefElement(inputRef.value)?.blur()
+    })
 
     watch(() => props.showTray, (showTray) => {
       if (!showTray || !hasCoarsePointer()) return
@@ -832,6 +846,10 @@ export default {
   letter-spacing: 0;
   color: var(--color-text-primary);
 }
+
+.practice-word--voice-current { outline: 2px solid var(--color-accent-warm-text); outline-offset: 2px; border-radius: .2rem; }
+
+.practice-word--voice-preview { outline: 1px dashed var(--color-accent-warm-text); border-radius: .2rem; }
 
 .practice-word {
   position: relative;
