@@ -1,7 +1,7 @@
 <template>
   <section class="completion-tray voice-panel" aria-label="Voice practice" data-testid="voice-practice-panel">
     <div class="completion-tray__copy">
-      <h2 class="completion-tray__title">{{ status === 'listening' ? 'Listening' : 'Voice practice' }} <small>BETA</small></h2>
+      <h2 class="completion-tray__title"><span v-if="status === 'listening'" class="voice-panel__recording" aria-hidden="true"></span>{{ status === 'listening' ? 'Listening' : 'Voice practice' }}</h2>
       <p role="status" aria-live="polite" aria-atomic="true" class="completion-tray__meta">{{ message || statusText }}</p>
     </div>
     <div class="completion-tray__actions">
@@ -10,7 +10,7 @@
       <button class="btn-secondary" @click="$emit('reveal')">Reveal next word</button>
     </div>
     <button class="voice-panel__keyboard" @click="$emit('keyboard')">Use keyboard instead</button>
-    <p class="voice-panel__disclosure">Your browser may process speech online. Ruminate does not save your audio.</p>
+    <p class="voice-panel__disclosure">Your browser may process speech online. Ruminate does not save your audio. <small>BETA</small></p>
   </section>
 </template>
 <script setup>
@@ -22,8 +22,12 @@ const statusText = computed(() => ({ idle: 'Ready to listen.', starting: 'Starti
 </script>
 <style scoped>
 .voice-panel { max-height: 43dvh; overflow-y: auto; text-align: center; }
-.voice-panel small { color: var(--color-accent-warm-text); font-family: var(--font-mono); font-size: .6rem; letter-spacing: .08em; vertical-align: middle; }
+.voice-panel .completion-tray__title { display: inline-flex; align-items: center; gap: 0.5rem; }
+.voice-panel__recording { position: relative; top: 2px; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-accent-warm); animation: voice-recording 1.35s ease-in-out infinite; }
+@keyframes voice-recording { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.78); } }
 .voice-panel__keyboard { display: block; margin: .55rem auto 0; padding: .25rem .5rem; font-size: .8rem; text-decoration: underline; }
 .voice-panel__disclosure { max-width: 32rem; margin: .4rem auto 0; color: var(--color-text-muted); font-size: .72rem; line-height: 1.4; }
+.voice-panel__disclosure small { margin-left: .4rem; color: var(--color-accent-warm-text); font-family: var(--font-mono); font-size: .6rem; letter-spacing: .08em; vertical-align: middle; }
+@media (prefers-reduced-motion: reduce) { .voice-panel__recording { animation: none; } }
 @media (max-height: 600px) { .voice-panel { max-height: 48dvh; } }
 </style>

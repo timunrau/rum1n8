@@ -121,7 +121,8 @@
           <button v-if="voiceSupported" class="practice-header-button practice-header-button--plain"
             :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
             @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
+            <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
+            <svg v-else class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
           </button>
           <!-- Read Aloud / Stop Button -->
           <button
@@ -228,7 +229,8 @@
           <button v-if="voiceSupported" class="practice-header-button practice-header-button--plain"
             :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
             @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
+            <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
+            <svg v-else class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
           </button>
           <!-- Read Aloud / Stop Button -->
           <button
@@ -2473,6 +2475,7 @@ import {
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
 import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference, parseVerseSpanReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
+import { getVerseWords } from './utils/verse-words.js'
 import {
   buildPassageReviewVerse,
   calculatePassageSegmentAccuracy,
@@ -2536,9 +2539,8 @@ import {
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import { completePracticeUnit, canSavePracticeAttempt } from './utils/practice-operations.js'
 import { createRecognitionAdapter, recognitionConstructor } from './utils/voice/recognition.js'
-import { matchSpeech, resolveSpeechAlternatives } from './utils/voice/matcher.js'
-import { speechTokensWithOffsets } from './utils/voice/normalization.js'
-import { matchSpokenReference, supportedSpokenReference } from './utils/voice/spoken-reference.js'
+import { resolveVoiceAlternatives } from './utils/voice/session.js'
+import { supportedSpokenReference } from './utils/voice/spoken-reference.js'
 import VoicePracticePanel from './components/VoicePracticePanel.vue'
 import VersePracticeView from './components/VersePracticeView.vue'
 import CompletionTray from './components/CompletionTray.vue'
@@ -2906,74 +2908,29 @@ export default {
         startVoice()
       } else nextTick(focusInput)
     }
-    const matchVoiceText = (text) => {
-      const units = reviewWords.value
-      const start = currentPracticeWordIndex.value
-      if (start < 0) return { decisions: [], remainder: '' }
-      let content = units[start].isReferenceUnit ? { decisions: [], nextIndex: start, remainder: text, remainders: [text] } : matchSpeech(units, start, text)
-      if (content.ambiguous) return content
-      // A completed spoken reference also locates the end of the verse. If
-      // the last content word was different or omitted, count just that unit
-      // as missed and continue into the reference.
-      const lastContent = units[content.nextIndex]
-      if (lastContent && !lastContent.isReferenceUnit && units[content.nextIndex + 1]?.isReferenceUnit) {
-        const reference = (memorizingVerse.value || reviewingVerse.value)?.reference || ''
-        const { ends } = speechTokensWithOffsets(content.remainder)
-        for (const skip of [0, 1]) {
-          if (skip && !ends.length) break
-          const remainder = skip ? content.remainder.slice(ends[0]).trim() : content.remainder
-          const located = matchSpokenReference(units, content.nextIndex + 1, reference, remainder)
-          if (!located.decisions?.length || located.pending || located.ambiguous) continue
-          content = {
-            ...content,
-            decisions: [...content.decisions, { index: lastContent.index, incorrect: true }],
-            nextIndex: content.nextIndex + 1,
-            remainder,
-            remainders: [...content.remainders, remainder],
-          }
-          break
-        }
-      }
-      if (units[content.nextIndex]?.isReferenceUnit) {
-        const reference = (memorizingVerse.value || reviewingVerse.value)?.reference || ''
-        const result = matchSpokenReference(units, content.nextIndex, reference, content.remainder)
-        const remainder = result.decisions.length ? '' : content.remainder
-        return {
-          ...result, decisions: [...content.decisions, ...result.decisions], remainder,
-          // A partial reference still needs its book and structure to be parsed.
-          remainders: [...content.remainders, ...result.decisions.map((_, index) => index === result.decisions.length - 1 ? '' : content.remainder)],
-        }
-      }
-      return content
-    }
+    const voiceMatchContext = () => ({
+      units: reviewWords.value,
+      startIndex: currentPracticeWordIndex.value,
+      reference: (memorizingVerse.value || reviewingVerse.value)?.reference || '',
+    })
     const consumeVoiceAlternatives = (alternatives, preview = false) => {
-      let prefixes = voiceBuffers
-      if (voiceRepeatPending) {
-        const restart = resolveSpeechAlternatives(alternatives.map(matchVoiceText))
-        // A clear repetition from the cursor replaces the disputed suffix. Do
-        // not let an old recognition hypothesis veto the user's correction.
-        if (restart.decisions.length >= Math.min(2, reviewWords.value.length - currentPracticeWordIndex.value) && restart.decisions.slice(0, 2).every(decision => !decision.incorrect)) prefixes = ['']
-      }
-      const candidates = prefixes.flatMap(prefix => alternatives.map(text => `${prefix} ${text}`.trim()))
-      const result = resolveSpeechAlternatives(candidates.map(matchVoiceText))
-      if (preview) return result.decisions.filter(decision => !decision.incorrect).map(decision => decision.index)
-      voiceRepeatPending = result.ambiguous
-      voiceMessage.value = !result.decisions.length && (result.ambiguous || result.waiting)
+      const resolved = resolveVoiceAlternatives(
+        { ...voiceMatchContext(), buffers: voiceBuffers, repeatPending: voiceRepeatPending },
+        alternatives,
+      )
+      if (preview) return resolved.decisions.filter(decision => !decision.incorrect).map(decision => decision.index)
+      voiceRepeatPending = resolved.repeatPending
+      voiceMessage.value = resolved.overflow || resolved.needsContinuationPrompt
         ? voiceContinuePrompt.value : ''
-      voiceBuffers = result.remainders
-      if (voiceBuffers.length > 9 || voiceBuffers.some(text => text.length > 1500)) {
-        voiceBuffers = ['']
-        voiceRepeatPending = true
-        voiceMessage.value = voiceContinuePrompt.value
-      }
-      if (result.decisions.length) {
+      voiceBuffers = resolved.remainders
+      if (resolved.decisions.length) {
         voiceAttempt.value.hasVoice = true
-        for (const decision of result.decisions) {
+        for (const decision of resolved.decisions) {
           if (decision.index !== currentPracticeWordIndex.value) break
           finishPracticeUnit(reviewWords.value[decision.index], { incorrect: decision.incorrect, source: 'voice' })
         }
       }
-      if (result.unsupported && voiceAtReference.value) {
+      if (resolved.unsupported && voiceAtReference.value) {
         selectPracticeInput('keyboard')
         showToast('Use the keyboard for this reference. Your verse progress is preserved.')
       }
@@ -5257,30 +5214,6 @@ export default {
       const completedContentWords = contentWords.filter(word => word.revealed).length
       return Math.max(0, 1 - completedContentWords / contentWords.length)
     })
-
-    // Expand verse content into words, splitting dash-joined phrases into separate entries.
-    // "God—created" stays visually tight, while "God — created" keeps the authored spacing.
-    const getVerseWords = (content) => {
-      const result = []
-
-      for (const segment of content.split(/(\s*[-\u2010-\u2015]\s*)/g)) {
-        if (!segment) continue
-
-        if (/^\s*[-\u2010-\u2015]\s*$/.test(segment)) {
-          if (result.length > 0) {
-            result[result.length - 1].separatorAfter += segment
-          }
-          continue
-        }
-
-        const tokens = segment.split(/\s+/).filter(w => w.trim().length > 0)
-        for (const token of tokens) {
-          result.push({ text: token, separatorAfter: '' })
-        }
-      }
-
-      return result
-    }
 
     const buildContentPracticeWords = (content, mode, retryOffset = 0, options = {}) => {
       const wordEntries = getVerseWords(content)
@@ -10125,8 +10058,6 @@ export default {
 </script>
 
 <style scoped>
-.voice-selected { color: var(--color-accent-warm-text); background: var(--color-bg-elevated); box-shadow: inset 0 0 0 2px currentColor; }
-
 .practice-session-header {
   background: var(--color-bg-base);
 }
@@ -10213,6 +10144,10 @@ export default {
 
 .practice-header-button:hover {
   color: var(--color-text-primary);
+}
+
+.practice-header-button.voice-selected {
+  color: var(--color-accent-warm-text);
 }
 
 .app-view-stage {

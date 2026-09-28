@@ -1,0 +1,340 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  createRecognitionAdapter,
+  recognitionConstructor,
+  recognitionErrors,
+} from './recognition.js'
+
+// Minimal stand-in for SpeechRecognition. Tests drive the lifecycle by hand.
+class FakeRecognition {
+  static instances = []
+
+  constructor() {
+    this.continuous = false
+    this.interimResults = false
+    this.maxAlternatives = 1
+    this.lang = ''
+    this.startCalls = 0
+    this.stopCalls = 0
+    this.abortCalls = 0
+    this.started = false
+    FakeRecognition.instances.push(this)
+  }
+
+  start() {
+    this.startCalls++
+    this.started = true
+  }
+
+  stop() {
+    this.stopCalls++
+  }
+
+  abort() {
+    this.abortCalls++
+  }
+
+  fireStart() {
+    this.onstart?.({})
+  }
+
+  fireResult(results, resultIndex = 0) {
+    this.onresult?.({ results, resultIndex })
+  }
+
+  fireError(error) {
+    this.onerror?.({ error })
+  }
+
+  fireEnd() {
+    this.onend?.({})
+  }
+}
+
+const alternative = transcript => ({ transcript })
+
+const resultList = entries => entries.map(([transcripts, isFinal]) => {
+  const alternatives = transcripts.map(alternative)
+  return { isFinal, length: alternatives.length, ...alternatives }
+})
+
+const createScope = (Constructor = FakeRecognition, navigatorLike = { languages: ['en-US', 'fr'] }) => ({
+  [Constructor === FakeRecognition ? 'webkitSpeechRecognition' : 'SpeechRecognition']: Constructor,
+  navigator: navigatorLike,
+})
+
+const latest = () => FakeRecognition.instances[FakeRecognition.instances.length - 1]
+
+describe('recognitionConstructor', () => {
+  it('prefers the standard name and falls back to the prefixed one', () => {
+    const standard = class {}
+    const prefixed = class {}
+
+    expect(recognitionConstructor({ SpeechRecognition: standard })).toBe(standard)
+    expect(recognitionConstructor({ webkitSpeechRecognition: prefixed })).toBe(prefixed)
+    expect(recognitionConstructor({ SpeechRecognition: standard, webkitSpeechRecognition: prefixed })).toBe(standard)
+  })
+
+  it('returns null when the browser has no speech recognition', () => {
+    expect(recognitionConstructor({})).toBeNull()
+  })
+})
+
+describe('createRecognitionAdapter start', () => {
+  beforeEach(() => {
+    FakeRecognition.instances = []
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('requests continuous interim results with three alternatives and an English locale', () => {
+    const onStatus = vi.fn()
+    const adapter = createRecognitionAdapter({ onStatus, onResult: vi.fn(), onError: vi.fn(), scope: createScope() })
+
+    adapter.start()
+
+    expect(onStatus).toHaveBeenNthCalledWith(1, 'idle')
+    expect(onStatus).toHaveBeenNthCalledWith(2, 'starting')
+    expect(latest()).toMatchObject({ continuous: true, interimResults: true, maxAlternatives: 3, lang: 'en-US' })
+  })
+
+  it('uses the first English locale the browser offers and falls back to en-US', () => {
+    const onStatus = vi.fn()
+    createRecognitionAdapter({
+      onStatus,
+      onResult: vi.fn(),
+      onError: vi.fn(),
+      scope: createScope(FakeRecognition, { languages: ['fr-FR', 'en-GB', 'de'] }),
+    }).start()
+    expect(latest().lang).toBe('en-GB')
+
+    FakeRecognition.instances = []
+    createRecognitionAdapter({
+      onStatus,
+      onResult: vi.fn(),
+      onError: vi.fn(),
+      scope: createScope(FakeRecognition, { languages: ['fr-FR'] }),
+    }).start()
+    expect(latest().lang).toBe('en-US')
+  })
+
+  it('reports listening only after the browser starts the microphone', () => {
+    const onStatus = vi.fn()
+    createRecognitionAdapter({ onStatus, onResult: vi.fn(), onError: vi.fn(), scope: createScope() }).start()
+    latest().fireStart()
+
+    expect(onStatus).toHaveBeenLastCalledWith('listening')
+  })
+
+  it('reports an unavailable microphone when the constructor throws', () => {
+    const onError = vi.fn()
+    const onStatus = vi.fn()
+    const Throwing = class {
+      start() { throw new Error('denied') }
+    }
+    createRecognitionAdapter({ onStatus, onResult: vi.fn(), onError, scope: createScope(Throwing) }).start()
+
+    expect(onError).toHaveBeenCalledWith('Speech recognition could not start. Tap Retry or use the keyboard.')
+    expect(onStatus).toHaveBeenLastCalledWith('error')
+  })
+
+  it('reports an unavailable feature when the browser has no speech recognition', () => {
+    const onError = vi.fn()
+    createRecognitionAdapter({ onStatus: vi.fn(), onResult: vi.fn(), onError, scope: {} }).start()
+
+    expect(onError).toHaveBeenCalledWith('Speech recognition is unavailable. Use the keyboard.')
+  })
+
+  it('aborts with an error when the microphone never starts', () => {
+    const onStatus = vi.fn()
+    const onError = vi.fn()
+    createRecognitionAdapter({ onStatus, onResult: vi.fn(), onError, scope: createScope() }).start()
+
+    vi.advanceTimersByTime(10000)
+
+    expect(onStatus).toHaveBeenLastCalledWith('error')
+    expect(onError).toHaveBeenCalledWith('The microphone did not start. Tap Retry or use the keyboard.')
+  })
+})
+
+describe('createRecognitionAdapter results', () => {
+  beforeEach(() => {
+    FakeRecognition.instances = []
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const start = (overrides = {}) => {
+    const onResult = vi.fn()
+    const adapter = createRecognitionAdapter({
+      onStatus: vi.fn(),
+      onError: vi.fn(),
+      onResult,
+      scope: createScope(),
+      ...overrides,
+    })
+    adapter.start()
+    latest().fireStart()
+    return { adapter, onResult }
+  }
+
+  it('reports each new final result once and keeps interim results revisable', () => {
+    const { onResult } = start()
+    const recognition = latest()
+
+    recognition.fireResult(resultList([[['For God'], false], [['so loved'], true]]), 1)
+    expect(onResult).toHaveBeenLastCalledWith({
+      finals: [{ index: 1, alternatives: ['so loved'] }],
+      interim: [{ index: 0, alternatives: ['For God'] }],
+      sessionId: 1,
+      resultIndex: 1,
+    })
+
+    recognition.fireResult(resultList([[['For God so'], false], [['so loved'], true]]), 0)
+    expect(onResult).toHaveBeenLastCalledWith({
+      finals: [],
+      interim: [{ index: 0, alternatives: ['For God so'] }],
+      sessionId: 1,
+      resultIndex: 0,
+    })
+  })
+
+  it('keeps at most three alternatives per result', () => {
+    const { onResult } = start()
+    latest().fireResult(resultList([[['a', 'b', 'c', 'd', 'e'], true]]))
+
+    expect(onResult.mock.calls[0][0].finals[0].alternatives).toEqual(['a', 'b', 'c'])
+  })
+
+  it('errors instead of consuming a result the service changed after the fact', () => {
+    const onError = vi.fn()
+    const onStatus = vi.fn()
+    start({ onError, onStatus })
+
+    latest().fireResult(resultList([[['For God'], true]]))
+    latest().fireResult(resultList([[['For Gods'], true]]))
+
+    expect(onError).toHaveBeenCalledWith('The speech service reset its results. Tap Resume to continue.')
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+  })
+
+  it('ignores results from a superseded recognition instance', () => {
+    const { adapter, onResult } = start()
+    const first = latest()
+
+    adapter.start()
+    onResult.mockClear()
+    first.fireResult(resultList([[['late words'], true]]))
+
+    expect(onResult).not.toHaveBeenCalled()
+  })
+})
+
+describe('createRecognitionAdapter errors and shutdown', () => {
+  beforeEach(() => {
+    FakeRecognition.instances = []
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const start = (overrides = {}) => {
+    const handlers = { onStatus: vi.fn(), onResult: vi.fn(), onError: vi.fn(), ...overrides }
+    const adapter = createRecognitionAdapter({ ...handlers, scope: createScope() })
+    adapter.start()
+    latest().fireStart()
+    return { adapter, ...handlers }
+  }
+
+  it('pauses on a silent microphone instead of erroring', () => {
+    const { onStatus, onError } = start()
+    latest().fireError('no-speech')
+
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+    expect(onError).toHaveBeenCalledWith(recognitionErrors['no-speech'], 'no-speech')
+  })
+
+  it('errors and reports the browser message for other failures', () => {
+    const { onStatus, onError } = start()
+    latest().fireError('not-allowed')
+
+    expect(onStatus).toHaveBeenLastCalledWith('error')
+    expect(onError).toHaveBeenCalledWith(recognitionErrors['not-allowed'], 'not-allowed')
+  })
+
+  it('falls back to a generic message for an unknown error code', () => {
+    const { onError } = start()
+    latest().fireError('something-new')
+
+    expect(onError).toHaveBeenCalledWith('Speech recognition failed. Tap Retry or use the keyboard.', 'something-new')
+  })
+
+  it('ignores a stale error after the user already stopped', () => {
+    const { adapter, onError } = start()
+    const recognition = latest()
+    adapter.abort('idle')
+    onError.mockClear()
+
+    recognition.fireError('not-allowed')
+    recognition.fireEnd()
+
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  it('pauses when the browser ends the session by itself', () => {
+    const { onStatus } = start()
+    latest().fireEnd()
+
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+  })
+
+  it('finishes, then pauses after the short grace period for late final results', () => {
+    const { adapter, onStatus } = start()
+    adapter.stop()
+
+    expect(onStatus).toHaveBeenLastCalledWith('finishing')
+    expect(latest().stopCalls).toBe(1)
+
+    vi.advanceTimersByTime(1500)
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+  })
+
+  it('pauses immediately when the browser refuses to stop', () => {
+    const { adapter, onStatus } = start()
+    const recognition = latest()
+    recognition.stop = () => { throw new Error('already ended') }
+
+    adapter.stop()
+
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+  })
+
+  it('ignores stop when nothing is listening', () => {
+    const { adapter, onStatus } = start()
+    onStatus.mockClear()
+
+    adapter.abort('idle')
+    onStatus.mockClear()
+    adapter.stop()
+
+    expect(onStatus).not.toHaveBeenCalled()
+  })
+
+  it('aborts the previous instance whenever a new one starts', () => {
+    const { adapter, onStatus } = start()
+    const first = latest()
+
+    adapter.start()
+
+    expect(first.abortCalls).toBe(1)
+    expect(onStatus).toHaveBeenLastCalledWith('starting')
+  })
+})

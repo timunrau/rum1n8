@@ -20,6 +20,7 @@ Voice is an alternate, English-only input for Learn, Memorize, Master, and revie
 - `src/utils/voice/normalization.js`: explicit number, contraction, and homophone normalization with source offsets.
 - `src/utils/voice/matcher.js`: bounded eight-unit alignment with subsequent anchors and conservative ambiguity handling.
 - `src/utils/voice/spoken-reference.js`: canonical Bible book identities and structurally parsed spoken references, without splitting digit runs from the expected answer.
+- `src/utils/voice/session.js`: content and reference matching across recognition results, with bounded buffers for unresolved speech.
 - `src/utils/voice/recognition.js`: browser API lifecycle and revisable result lists.
 - `src/components/VoicePracticePanel.vue` and `CompletionTray.vue`: centered capture controls and unified completion actions.
 - `src/App.vue`: session coordination, attempt ledger, existing grading, and navigation guards.
@@ -28,9 +29,15 @@ The adapter follows the [Web Speech result-list and lifecycle specification](htt
 
 ## Validation status
 
-Implementation is available locally and has not been released. Existing unit tests, the production build, and the existing Chrome Playwright suite are the regression checks. No new automated feature tests have been added: behavior approval is required first by this repository's workflow.
+Implementation is available locally and has not been released. The production build, the unit suite, and the Chrome Playwright suite are the regression checks.
 
-Temporary isolated Chrome demonstrations exercised:
+Behavior was approved, so deterministic automated coverage now exists:
+
+- `src/utils/voice/normalization.test.js`, `matcher.test.js`, `spoken-reference.test.js`, `recognition.test.js`, and `session.test.js` cover number, contraction, punctuation, and homophone folding; content matching, anchors, alternatives, and mistake decisions; spoken reference parsing; and the recognition lifecycle adapter.
+- `src/utils/verse-words.test.js` and `src/utils/practice-operations.test.js` cover content splitting, completion ordering, and voice-save eligibility.
+- `e2e/specs/voice-practice.spec.ts` drives the app through a fake Web Speech API installed before bootstrap and covers control availability, revisable interim and final results, substituted words, clean later alternatives, split spoken references, unsupported-reference keyboard fallback, natural pause and resume, denied and silent microphones, stale callback rejection, input-mode switching, Retry, Next Verse, deferred review and passage saves, below-threshold saves, and the Learn → Memorize → Master ladder.
+
+Behavior approval and automated coverage are complete. Temporary isolated Chrome demonstrations additionally exercised:
 
 - Immediate listening when selecting voice, with interim-only previews.
 - The unified completion tray: Retry discards the result, Next Verse saves it and starts listening on the next verse, and Done saves the final review once.
@@ -47,7 +54,6 @@ These demonstrations use synthetic browser recognition results. They are not evi
 
 ## Required before release
 
-- Approve the behavior, then add deterministic unit and browser coverage with a fake recognition adapter for the cases in the feature specification.
 - Exercise real Android Chrome and the installed TWA: permission grant/denial, natural pauses, long passages, each reference format, backgrounding, input switching, Read Aloud, and network failure.
 - Exercise real desktop Chrome recognition and an unsupported browser.
 - Confirm usable progression without cascading false mistakes, reliable reference completion, and no schedule changes before confirmation.
