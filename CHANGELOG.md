@@ -1,3 +1,10 @@
+## [1.58.6](https://github.com/timunrau/rum1n8/compare/v1.58.5...v1.58.6) (2026-09-28)
+
+
+### Bug Fixes
+
+* keep voice practice listening across browser restarts ([b8d3cb4](https://github.com/timunrau/rum1n8/commit/b8d3cb4a7184f8d961905e49212d18093f129a07))
+
 ## [1.58.5](https://github.com/timunrau/rum1n8/compare/v1.58.4...v1.58.5) (2026-09-28)
 
 
