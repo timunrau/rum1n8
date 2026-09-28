@@ -1,3 +1,10 @@
+## [1.58.7](https://github.com/timunrau/rum1n8/compare/v1.58.6...v1.58.7) (2026-09-28)
+
+
+### Bug Fixes
+
+* handle cumulative Brave speech results ([d647983](https://github.com/timunrau/rum1n8/commit/d6479835aa2a9eaa0fc64d5833d34c57d89b8f91))
+
 ## [1.58.6](https://github.com/timunrau/rum1n8/compare/v1.58.5...v1.58.6) (2026-09-28)
 
 
