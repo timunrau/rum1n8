@@ -6,7 +6,7 @@ Voice is an alternate, English-only input for Learn, Memorize, Master, and revie
 
 - Interim results only outline provisional matches. Final results advance the same display units as keyboard input.
 - Final-result indexes are tracked per recognition instance. New instances, attempt changes, backgrounding, and aborts invalidate older callbacks.
-- Pause accepts final results for up to 1.5 seconds, then aborts. Natural endings and errors require a tap to resume.
+- Pause accepts final results for up to 1.5 seconds, then aborts. An unexpected browser ending restarts recognition automatically while the attempt is active; repeated immediate endings pause with a message. Errors require a tap to resume.
 - Input changes keep completed units, typed reference digits, and mistakes. Pending speech is discarded.
 - Mistakes are recorded before unit completion can finish a passage segment. The in-memory ledger distinguishes keyboard mistakes, automatic voice flags, and deliberate reveals.
 - A completed voice attempt uses the regular completion tray. Retry discards the unsaved attempt and starts listening again. Done, Next Verse, or Continue saves the completed result, then moves on; listening starts automatically on the next practice item. Review attempts below 90% may still be saved at the user’s discretion.
@@ -35,7 +35,7 @@ Behavior was approved, so deterministic automated coverage now exists:
 
 - `src/utils/voice/normalization.test.js`, `matcher.test.js`, `spoken-reference.test.js`, `recognition.test.js`, and `session.test.js` cover number, contraction, punctuation, and homophone folding; content matching, anchors, alternatives, and mistake decisions; spoken reference parsing; and the recognition lifecycle adapter.
 - `src/utils/verse-words.test.js` and `src/utils/practice-operations.test.js` cover content splitting, completion ordering, and voice-save eligibility.
-- `e2e/specs/voice-practice.spec.ts` drives the app through a fake Web Speech API installed before bootstrap and covers control availability, revisable interim and final results, substituted words, clean later alternatives, split spoken references, unsupported-reference keyboard fallback, natural pause and resume, denied and silent microphones, stale callback rejection, input-mode switching, Retry, Next Verse, deferred review and passage saves, below-threshold saves, and the Learn → Memorize → Master ladder.
+- `e2e/specs/voice-practice.spec.ts` drives the app through a fake Web Speech API installed before bootstrap and covers control availability, revisable interim and final results, substituted words, clean later alternatives, split spoken references, unsupported-reference keyboard fallback, automatic restart after a browser session ends, denied and silent microphones, stale callback rejection, input-mode switching, Retry, Next Verse, deferred review and passage saves, below-threshold saves, and the Learn → Memorize → Master ladder.
 
 Behavior approval and automated coverage are complete. Temporary isolated Chrome demonstrations additionally exercised:
 

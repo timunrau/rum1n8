@@ -341,11 +341,45 @@ describe('createRecognitionAdapter errors and shutdown', () => {
     expect(onError).not.toHaveBeenCalled()
   })
 
-  it('pauses when the browser ends the session by itself', () => {
-    const { onStatus } = start()
+  it('restarts when the browser ends the session by itself', () => {
+    const { onStatus, onResult } = start()
+    const first = latest()
+    first.fireResult(resultList([[['One'], true]]))
+    first.fireEnd()
+
+    expect(onStatus).toHaveBeenLastCalledWith('starting')
+    vi.advanceTimersByTime(250)
+    expect(FakeRecognition.instances).toHaveLength(2)
+    latest().fireStart()
+    latest().fireResult(resultList([[['two'], true]]))
+    expect(onResult.mock.calls.map(([result]) => result.finals[0]?.alternatives[0])).toEqual(['One', 'two'])
+    expect(onStatus).toHaveBeenLastCalledWith('listening')
+  })
+
+  it('does not restart after Pause during the restart gap', () => {
+    const { adapter, onStatus } = start()
     latest().fireEnd()
+    adapter.stop()
+
+    vi.advanceTimersByTime(250)
+    expect(FakeRecognition.instances).toHaveLength(1)
+    expect(onStatus).toHaveBeenLastCalledWith('paused')
+  })
+
+  it('pauses after repeated immediate endings without speech', () => {
+    const { onStatus, onError } = start()
+    for (let index = 0; index < 3; index++) {
+      latest().fireEnd()
+      if (index < 2) {
+        vi.advanceTimersByTime(250)
+        latest().fireStart()
+      }
+    }
 
     expect(onStatus).toHaveBeenLastCalledWith('paused')
+    expect(onError).toHaveBeenCalledWith('The speech service stopped repeatedly. Tap Resume to try again.')
+    vi.advanceTimersByTime(250)
+    expect(FakeRecognition.instances).toHaveLength(3)
   })
 
   it('finishes, then pauses after the short grace period for late final results', () => {

@@ -13,9 +13,11 @@ export function recognitionConstructor(scope = globalThis) {
 export function createRecognitionAdapter({ onStatus, onResult, onError, scope = globalThis }) {
   let recognition = null, generation = 0, timer = null, finishing = false
   let microphoneReady = false, microphoneRequest = null
+  let listeningRequested = false, rapidEndCount = 0
   function abort(status = 'paused') {
     generation++
     finishing = false
+    listeningRequested = false
     clearTimeout(timer)
     const previous = recognition
     recognition = null
@@ -27,6 +29,8 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
     const Constructor = recognitionConstructor(scope)
     if (!Constructor) { onError('Speech recognition is unavailable. Use the keyboard.'); return }
     const id = generation
+    listeningRequested = true
+    rapidEndCount = 0
     onStatus('starting')
     const getUserMedia = scope.navigator?.mediaDevices?.getUserMedia?.bind(scope.navigator.mediaDevices)
     if (!getUserMedia || microphoneReady) { startRecognition(Constructor, id); return }
@@ -54,6 +58,7 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
   function startRecognition(Constructor, id) {
     const finals = new Map()
     let failed = false
+    let startedAt = 0
     let instance
     try {
       instance = new Constructor()
@@ -63,9 +68,10 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
       instance.maxAlternatives = 3
       instance.lang = (scope.navigator?.languages || [scope.navigator?.language]).find(locale => /^en(?:-|$)/i.test(locale || '')) || 'en-US'
       const active = () => generation === id && recognition === instance
-      instance.onstart = () => { if (active() && !finishing) { clearTimeout(timer); onStatus('listening') } }
+      instance.onstart = () => { if (active() && !finishing) { startedAt = Date.now(); clearTimeout(timer); onStatus('listening') } }
       instance.onresult = event => {
         if (!active() || failed) return
+        rapidEndCount = 0
         const fresh = [], interim = []
         // Results is the complete revisable list. Rebuild previews, including deletions.
         for (let index = 0; index < event.results.length; index++) {
@@ -99,7 +105,23 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
         clearTimeout(timer)
         recognition = null
         generation++
-        if (!failed) onStatus('paused')
+        if (failed) return
+        if (finishing || !listeningRequested) {
+          finishing = false
+          listeningRequested = false
+          onStatus('paused')
+          return
+        }
+        rapidEndCount = !startedAt || Date.now() - startedAt < 1500 ? rapidEndCount + 1 : 0
+        if (rapidEndCount >= 3) {
+          listeningRequested = false
+          onStatus('paused')
+          onError('The speech service stopped repeatedly. Tap Resume to try again.')
+          return
+        }
+        onStatus('starting')
+        const nextId = generation
+        timer = setTimeout(() => { if (generation === nextId && listeningRequested) startRecognition(Constructor, nextId) }, 250)
       }
       instance.start()
       timer = setTimeout(() => { if (active()) { abort('error'); onError('The microphone did not start. Tap Retry or use the keyboard.') } }, 10000)
@@ -109,8 +131,12 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
     }
   }
   function stop() {
-    if (!recognition) return
+    if (!recognition) {
+      if (listeningRequested) abort()
+      return
+    }
     finishing = true
+    listeningRequested = false
     onStatus('finishing')
     clearTimeout(timer)
     const id = generation

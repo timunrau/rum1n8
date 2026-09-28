@@ -248,19 +248,20 @@ test.describe('voice practice capture', () => {
 })
 
 test.describe('voice practice pausing and errors', () => {
-  test('pauses on a natural ending and waits for a tap to resume', async ({ page }) => {
+  test('keeps listening across a browser session ending mid-verse', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await startVoice(page, speech)
+    await speech.speak('One')
+    await expect(page.locator('#practice-word-1')).toHaveClass(/practice-word--current/)
+    const started = (await speech.calls()).started
     await speech.end()
 
-    await expect(voiceStatus(page)).toHaveText('Paused. Tap Resume to continue.')
-    await expect(voicePanel(page).getByRole('button', { name: 'Resume' })).toBeVisible()
-
-    const started = (await speech.calls()).started
-    await voicePanel(page).getByRole('button', { name: 'Resume' }).click()
     await expect.poll(() => speech.calls().then(calls => calls.started)).toBeGreaterThan(started)
+    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    await speech.speak('two three')
+    await expect(completionTitle(page)).toContainText('Learned')
   })
 
   test('reports a denied microphone and offers a retry', async ({ page }) => {
