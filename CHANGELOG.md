@@ -1,3 +1,10 @@
+## [1.58.5](https://github.com/timunrau/rum1n8/compare/v1.58.4...v1.58.5) (2026-09-28)
+
+
+### Bug Fixes
+
+* request microphone access when voice practice starts ([4645bad](https://github.com/timunrau/rum1n8/commit/4645badd9dba4070ce3bede89e432250b3e8ae62))
+
 ## [1.58.4](https://github.com/timunrau/rum1n8/compare/v1.58.3...v1.58.4) (2026-09-28)
 
 
