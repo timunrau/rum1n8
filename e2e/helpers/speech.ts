@@ -106,6 +106,10 @@ const INSTALL_FAKE = (options: { startThrows: boolean }) => {
   }
 
   Object.defineProperty(window, '__rum1n8Speech', { value: driver, configurable: true })
+  Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+    value: async () => ({ getTracks: () => [{ stop: () => {} }] }),
+    configurable: true,
+  })
   window.webkitSpeechRecognition = FakeSpeechRecognition
   window.SpeechRecognition = FakeSpeechRecognition
 }

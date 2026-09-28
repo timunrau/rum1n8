@@ -129,6 +129,58 @@ describe('createRecognitionAdapter start', () => {
     expect(onStatus).toHaveBeenLastCalledWith('listening')
   })
 
+  it('requests microphone access only when voice starts, then releases the stream', async () => {
+    const stop = vi.fn()
+    const getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] })
+    const scope = createScope(FakeRecognition, { mediaDevices: { getUserMedia } })
+    const adapter = createRecognitionAdapter({ onStatus: vi.fn(), onResult: vi.fn(), onError: vi.fn(), scope })
+
+    expect(getUserMedia).not.toHaveBeenCalled()
+    adapter.start()
+    expect(getUserMedia).toHaveBeenCalledWith({ audio: true })
+    expect(FakeRecognition.instances).toHaveLength(0)
+
+    await vi.waitFor(() => expect(FakeRecognition.instances).toHaveLength(1))
+    expect(stop).toHaveBeenCalledOnce()
+    expect(latest().startCalls).toBe(1)
+
+    adapter.start()
+    expect(getUserMedia).toHaveBeenCalledOnce()
+    expect(latest().startCalls).toBe(1)
+  })
+
+  it('does not start recognition if voice is cancelled while permission is pending', async () => {
+    let allow
+    const stop = vi.fn()
+    const getUserMedia = vi.fn(() => new Promise(resolve => { allow = resolve }))
+    const scope = createScope(FakeRecognition, { mediaDevices: { getUserMedia } })
+    const adapter = createRecognitionAdapter({ onStatus: vi.fn(), onResult: vi.fn(), onError: vi.fn(), scope })
+
+    adapter.start()
+    adapter.abort()
+    allow({ getTracks: () => [{ stop }] })
+    await vi.waitFor(() => expect(stop).toHaveBeenCalledOnce())
+    expect(FakeRecognition.instances).toHaveLength(0)
+  })
+
+  it('reports a denied microphone request and allows a retry', async () => {
+    const getUserMedia = vi.fn().mockRejectedValueOnce({ name: 'NotAllowedError' })
+      .mockResolvedValueOnce({ getTracks: () => [] })
+    const onError = vi.fn()
+    const adapter = createRecognitionAdapter({
+      onStatus: vi.fn(), onResult: vi.fn(), onError,
+      scope: createScope(FakeRecognition, { mediaDevices: { getUserMedia } }),
+    })
+
+    adapter.start()
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(recognitionErrors['not-allowed'], 'not-allowed'))
+    expect(FakeRecognition.instances).toHaveLength(0)
+
+    adapter.start()
+    await vi.waitFor(() => expect(FakeRecognition.instances).toHaveLength(1))
+    expect(getUserMedia).toHaveBeenCalledTimes(2)
+  })
+
   it('reports an unavailable microphone when the constructor throws', () => {
     const onError = vi.fn()
     const onStatus = vi.fn()

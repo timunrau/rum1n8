@@ -12,6 +12,7 @@ export function recognitionConstructor(scope = globalThis) {
 }
 export function createRecognitionAdapter({ onStatus, onResult, onError, scope = globalThis }) {
   let recognition = null, generation = 0, timer = null, finishing = false
+  let microphoneReady = false, microphoneRequest = null
   function abort(status = 'paused') {
     generation++
     finishing = false
@@ -26,6 +27,31 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
     const Constructor = recognitionConstructor(scope)
     if (!Constructor) { onError('Speech recognition is unavailable. Use the keyboard.'); return }
     const id = generation
+    onStatus('starting')
+    const getUserMedia = scope.navigator?.mediaDevices?.getUserMedia?.bind(scope.navigator.mediaDevices)
+    if (!getUserMedia || microphoneReady) { startRecognition(Constructor, id); return }
+    if (!microphoneRequest) {
+      // In a TWA, request the browser's site permission before starting speech recognition.
+      let request
+      try { request = getUserMedia({ audio: true }) } catch (error) { request = Promise.reject(error) }
+      microphoneRequest = Promise.resolve(request).then(stream => {
+        stream.getTracks().forEach(track => track.stop())
+        microphoneReady = true
+      }).finally(() => { microphoneRequest = null })
+    }
+    microphoneRequest.then(
+      () => { if (generation === id) startRecognition(Constructor, id) },
+      error => {
+        if (generation !== id) return
+        abort('error')
+        const code = ['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(error?.name)
+          ? 'not-allowed' : ['NotFoundError', 'DevicesNotFoundError', 'NotReadableError'].includes(error?.name)
+            ? 'audio-capture' : null
+        onError(recognitionErrors[code] || 'The microphone could not start. Tap Retry or use the keyboard.', code)
+      },
+    )
+  }
+  function startRecognition(Constructor, id) {
     const finals = new Map()
     let failed = false
     let instance
@@ -63,6 +89,7 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
       instance.onerror = event => {
         if (!active()) return
         failed = true
+        if (event.error === 'not-allowed') microphoneReady = false
         const message = recognitionErrors[event.error] || 'Speech recognition failed. Tap Retry or use the keyboard.'
         abort(event.error === 'no-speech' ? 'paused' : 'error')
         onError(message, event.error)
@@ -74,7 +101,6 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
         generation++
         if (!failed) onStatus('paused')
       }
-      onStatus('starting')
       instance.start()
       timer = setTimeout(() => { if (active()) { abort('error'); onError('The microphone did not start. Tap Retry or use the keyboard.') } }, 10000)
     } catch {
