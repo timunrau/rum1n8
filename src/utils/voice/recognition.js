@@ -10,6 +10,27 @@ export const recognitionErrors = {
 export function recognitionConstructor(scope = globalThis) {
   return scope.SpeechRecognition || scope.webkitSpeechRecognition || null
 }
+
+function transcriptWords(text) {
+  return [...text.toLowerCase().replace(/[’‘]/g, "'").matchAll(/[a-z0-9']+/g)]
+    .map(match => ({ text: match[0], end: match.index + match[0].length }))
+}
+
+function cumulativeSuffix(text, previousAlternatives) {
+  const words = transcriptWords(text)
+  let matched = 0
+  for (const previous of previousAlternatives) {
+    const prefix = transcriptWords(previous)
+    if (prefix.length <= matched || prefix.length > words.length) continue
+    if (prefix.every((word, index) => word.text === words[index].text)) matched = prefix.length
+  }
+  return {
+    matched,
+    extended: words.length > matched,
+    text: matched ? text.slice(words[matched - 1].end).trim() : text,
+  }
+}
+
 export function createRecognitionAdapter({ onStatus, onResult, onError, scope = globalThis }) {
   let recognition = null, generation = 0, timer = null, finishing = false
   let microphoneReady = false, microphoneRequest = null
@@ -59,6 +80,7 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
     const finals = new Map()
     let failed = false
     let startedAt = 0
+    let cumulativeEvidence = 0, cumulativeResults = false
     let instance
     try {
       instance = new Constructor()
@@ -77,18 +99,37 @@ export function createRecognitionAdapter({ onStatus, onResult, onError, scope = 
         for (let index = 0; index < event.results.length; index++) {
           const result = event.results[index]
           const alternatives = Array.from({ length: Math.min(result.length, 3) }, (_, i) => result[i].transcript)
-          if (result.isFinal) {
-            if (finals.has(index)) {
-              if (finals.get(index) !== JSON.stringify(alternatives)) {
-                abort()
-                onError('The speech service reset its results. Tap Resume to continue.')
-                return
-              }
-            } else {
-              finals.set(index, JSON.stringify(alternatives))
-              fresh.push({ index, alternatives })
+          if (result.isFinal && finals.has(index)) {
+            if (finals.get(index) !== JSON.stringify(alternatives)) {
+              abort()
+              onError('The speech service reset its results. Tap Resume to continue.')
+              return
             }
-          } else interim.push({ index, alternatives })
+            continue
+          }
+          const previous = index > 0 && event.results[index - 1].isFinal
+            ? Array.from({ length: Math.min(event.results[index - 1].length, 3) }, (_, i) => event.results[index - 1][i].transcript)
+            : []
+          if (result.isFinal) {
+            finals.set(index, JSON.stringify(alternatives))
+            if (previous.length && alternatives.length) {
+              // Brave on Android can append growing transcripts as separate final results.
+              // Confirm the pattern twice before removing words already delivered.
+              const first = cumulativeSuffix(alternatives[0], previous)
+              if (first.matched && first.extended) cumulativeEvidence++
+              else if (!first.matched && transcriptWords(alternatives[0]).length) cumulativeEvidence = 0
+              if (cumulativeEvidence >= 2) cumulativeResults = true
+            }
+            const spoken = cumulativeResults && previous.length
+              ? alternatives.map(text => cumulativeSuffix(text, previous).text)
+              : alternatives
+            if (spoken.some(text => text.trim())) fresh.push({ index, alternatives: spoken })
+          } else interim.push({
+            index,
+            alternatives: cumulativeResults && previous.length
+              ? alternatives.map(text => cumulativeSuffix(text, previous).text)
+              : alternatives,
+          })
         }
         onResult({ finals: fresh, interim, sessionId: id, resultIndex: event.resultIndex })
       }

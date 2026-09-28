@@ -264,6 +264,38 @@ describe('createRecognitionAdapter results', () => {
     expect(onResult.mock.calls[0][0].finals[0].alternatives).toEqual(['a', 'b', 'c'])
   })
 
+  it('removes repeated prefixes from cumulative final and interim results', () => {
+    const { onResult } = start()
+    const recognition = latest()
+
+    recognition.fireResult(resultList([[['one'], true]]))
+    recognition.fireResult(resultList([[['one'], true], [['one two'], true]]), 1)
+    recognition.fireResult(resultList([[['one'], true], [['one two'], true], [['one two three'], true]]), 2)
+    expect(onResult.mock.lastCall[0].finals).toEqual([{ index: 2, alternatives: ['three'] }])
+
+    recognition.fireResult(resultList([
+      [['one'], true], [['one two'], true], [['one two three'], true], [['one two three four'], false],
+    ]), 3)
+    expect(onResult.mock.lastCall[0].interim).toEqual([{ index: 3, alternatives: ['four'] }])
+
+    recognition.fireResult(resultList([
+      [['one'], true], [['one two'], true], [['one two three'], true], [['one two three'], true],
+    ]), 3)
+    expect(onResult.mock.lastCall[0].finals).toEqual([])
+  })
+
+  it('keeps separate repeated words when the transcript is not growing cumulatively', () => {
+    const { onResult } = start()
+    const recognition = latest()
+
+    recognition.fireResult(resultList([[['holy'], true]]))
+    recognition.fireResult(resultList([[['holy'], true], [['holy'], true]]), 1)
+    recognition.fireResult(resultList([[['holy'], true], [['holy'], true], [['holy'], true]]), 2)
+
+    expect(onResult.mock.calls.map(([result]) => result.finals[0]?.alternatives[0]))
+      .toEqual(['holy', 'holy', 'holy'])
+  })
+
   it('errors instead of consuming a result the service changed after the fact', () => {
     const onError = vi.fn()
     const onStatus = vi.fn()

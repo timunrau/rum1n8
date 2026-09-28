@@ -168,6 +168,25 @@ test.describe('voice practice capture', () => {
     await expect(page.locator('#practice-word-1 .text-word-incorrect')).toHaveCount(0)
   })
 
+  test('does not mistake cumulative browser transcripts for new speech', async ({ page }) => {
+    const speech = await installFakeSpeech(page)
+    const words = 'alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango'.split(' ')
+    await openLearnVerse(page, learnVerse({ content: words.join(' ') }))
+
+    await startVoice(page, speech)
+    for (let count = 1; count <= 12; count++) {
+      await speech.speak(words.slice(0, count).join(' '))
+    }
+
+    await expect(page.locator('#practice-word-12')).toHaveClass(/practice-word--current/)
+    await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
+    await expect(completionTitle(page)).toHaveCount(0)
+
+    await speech.speak(words.slice(12).join(' '))
+    await expect(completionTitle(page)).toContainText('Learned')
+    await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
+  })
+
   test('marks a substituted word as a mistake', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
