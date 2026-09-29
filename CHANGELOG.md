@@ -1,3 +1,10 @@
+# [1.59.0](https://github.com/timunrau/rum1n8/compare/v1.58.7...v1.59.0) (2026-09-29)
+
+
+### Features
+
+* use local speech recognition for voice practice ([6ef3cc0](https://github.com/timunrau/rum1n8/commit/6ef3cc0f9113cb3d7149c8953866c5c24c682c04))
+
 ## [1.58.7](https://github.com/timunrau/rum1n8/compare/v1.58.6...v1.58.7) (2026-09-28)
 
 
