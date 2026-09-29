@@ -226,9 +226,7 @@ jobs:
           test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18081/privacy.html?from=old')" = "http://127.0.0.1:18081/privacy/?from=old"
           test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18081/about/?from=old')" = "http://127.0.0.1:18081/?from=old"
           test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18080/privacy?from=old')" = "${MARKETING_URL}privacy/?from=old"
-
-      - name: Smoke-test the local voice model
-        run: |
+          # Keep these checks in this step: its EXIT trap removes the containers.
           model="http://127.0.0.1:18080/voice-model/sherpa-en-v1.13.7"
           curl -fsS -o /dev/null "$model/sherpa-onnx-asr.js"
           curl -fsS -o /dev/null "$model/NOTICE.md"
