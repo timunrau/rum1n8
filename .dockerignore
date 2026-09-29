@@ -12,6 +12,7 @@ README.md
 .DS_Store
 .vscode
 .idea
+.cache
 android-twa/node_modules
 android-twa/.gradle
 android-twa/**/build

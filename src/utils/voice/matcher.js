@@ -1,6 +1,25 @@
 import { normalizeSpeech, speechTokensWithOffsets } from './normalization.js'
 
-const fillers = new Set(['uh', 'um', 'erm', 'hmm'])
+// A recognised word is either heard or bridged. Bridged words were accepted
+// because a later distinctive phrase located the speaker, not because the
+// recognizer reported them. Neither is ever a mistake.
+export const VOICE_HEARD = 'heard'
+export const VOICE_BRIDGED = 'bridged'
+
+// Bound how far a single anchor may skip. Generous, but not unbounded: a verse
+// must not be marked complete because one late phrase matched.
+export const VOICE_MAX_BRIDGE = 8
+
+// Speech recognition omits, substitutes, and mis-hears words on ordinary
+// readings of a verse. Those are recognizer errors, not memorization errors, so
+// this matcher never reports `incorrect`. A mistake is only ever recorded by an
+// explicit Reveal in the practice view. The trade is deliberate: bridging across
+// a gap can grant credit for a genuinely skipped word, which the user prefers
+// over a red word they did not earn.
+
+function credits(accepted) {
+  return { incorrect: false, accepted }
+}
 
 // Return decisions in display-unit coordinates; multi-token contractions stay one unit.
 export function matchSpeech(units, startIndex, transcript) {
@@ -24,111 +43,85 @@ export function matchSpeech(units, startIndex, transcript) {
   while (cursor >= 0 && cursor < units.length && spoken < tokens.length && !units[cursor].isReferenceUnit) {
     const direct = matches(cursor, spoken)
     if (direct) {
-      decisions.push({ index: cursor++, incorrect: false })
+      decisions.push({ index: cursor++, ...credits(VOICE_HEARD) })
       spoken += direct
       consumed = spoken
       remainders.push(suffix(consumed))
       continue
     }
     const anchors = []
-    for (let skip = 1; skip <= 8 && cursor + skip < units.length; skip++) {
+    for (let skip = 1; skip <= VOICE_MAX_BRIDGE && cursor + skip < units.length; skip++) {
       const length = matches(cursor + skip, spoken)
       if (!length) continue
       const next = units[cursor + skip + 1]
-      // A two-unit anchor is required whenever another content unit is available.
+      // A two-unit anchor is required whenever another content unit is available,
+      // so a repeated "and" or a single trailing word cannot jump the passage.
       if (next && !next.isReferenceUnit && !matches(cursor + skip + 1, spoken + length)) continue
       anchors.push(skip)
     }
     // An inserted or repeated phrase can itself look like a later anchor.
-    // Prefer a nearby direct match to inventing omissions in that situation.
+    // Prefer a nearby direct match to inventing a gap in that situation.
+    // The follow-on word cannot be confirmed once the tokens run out, so
+    // allow the direct hit to stand on its own at the end of the utterance.
     let directAhead = 0
     for (let look = spoken + 1; look < Math.min(tokens.length, spoken + 9); look++) {
       const length = matches(cursor, look)
+      if (!length) continue
       const next = units[cursor + 1]
-      if (length && (!next || next.isReferenceUnit || matches(cursor + 1, look + length))) { directAhead = look; break }
+      const atEnd = spoken + length >= tokens.length
+      if (length && (!next || next.isReferenceUnit || atEnd || matches(cursor + 1, look + length))) { directAhead = look; break }
     }
     if (directAhead) { spoken = directAhead; continue }
     if (anchors.length === 1) {
-      const anchorIndex = cursor + anchors[0]
-      const anchorEndIndex = units[anchorIndex + 1] && !units[anchorIndex + 1].isReferenceUnit ? anchorIndex + 1 : anchorIndex
+      // One clear later phrase locates the speaker past these words. Advance
+      // across the gap as bridged progress rather than stopping or penalising.
       for (let i = 0; i < anchors[0]; i++) {
-        decisions.push({ index: cursor++, incorrect: true, anchorEndIndex })
+        decisions.push({ index: cursor++, ...credits(VOICE_BRIDGED) })
         remainders.push(suffix(spoken))
       }
       continue
     }
+    // Two or more positions fit: the evidence is not specific enough to move.
     if (anchors.length > 1) { ambiguous = true; break }
-    // At the very end there is no later word to anchor a substitution. A
-    // distinct spoken word can still count as a miss; silence, fillers, and a
-    // repeated previous word cannot.
-    if (cursor === units.length - 1 && spoken === tokens.length - 1 &&
-        !fillers.has(tokens[spoken]) &&
-        !normalizeSpeech(units[cursor - 1]?.text).includes(tokens[spoken])) {
-      decisions.push({ index: cursor++, incorrect: true })
-      consumed = ++spoken
-      remainders.push(suffix(consumed))
-      continue
-    }
-    // Ignore fillers and repeats. Unmatched suffix stays buffered for a later anchor.
+    // Nothing anchors this speech. Unmatched text stays buffered so a later
+    // phrase can still locate it, and silence or a filler advances nothing.
     spoken++
   }
   return { decisions, consumed, tokens, ambiguous, nextIndex: cursor, waiting: spoken > consumed, remainder: suffix(consumed), remainders }
 }
 
-// Prefer an explicitly matching alternative over competing recognition guesses.
-// Mistakes require a clear anchor, or an actual different word at the end.
+// Rank a hypothesis. Genuinely heard words dominate, then a penalty for every
+// bridged word, then raw reach. Bridging is a last resort: a clean hypothesis
+// that heard less must still win over one that invented a longer run.
+function score(result) {
+  const decisions = result.decisions || []
+  const bridged = decisions.filter(decision => decision.accepted === VOICE_BRIDGED).length
+  const heard = decisions.length - bridged
+  return heard * 1000 - bridged * 100 + decisions.length
+}
+
+// Prefer whichever hypothesis advances furthest with the fewest bridges. A worse
+// alternative must never veto words a better one already located.
 export function resolveSpeechAlternatives(results) {
-  if (!results.length) return { decisions: [], remainders: [''], ambiguous: false }
-  let first = results[0]
-  let count = 0
-  while (count < first.decisions.length && results.every(result => {
-    const decision = result.decisions[count]
-    return decision?.index === first.decisions[count].index && decision.incorrect === first.decisions[count].incorrect
-  })) count++
-  for (let index = 0; index < count; index++) {
-    if (results.some(result => result.decisions[index].anchorEndIndex > first.decisions[count - 1].index)) {
-      count = index
-      break
-    }
+  if (!results.length) {
+    return { decisions: [], remainders: [''], ambiguous: false, waiting: false, bridged: false, unsupported: false }
   }
-  // Be generous about correct recitation: a clean match in any alternative is
-  // evidence for acceptance. A worse alternative must not veto those words.
-  let acceptedResults = results
-  let best = first, cleanCount = 0
-  for (const result of results) {
-    const firstMistake = result.decisions.findIndex(decision => decision.incorrect)
-    const length = firstMistake < 0 ? result.decisions.length : firstMistake
-    if (length > cleanCount) { best = result; cleanCount = length }
+  let best = results[0]
+  let bestScore = score(best)
+  for (const result of results.slice(1)) {
+    const candidate = score(result)
+    if (candidate > bestScore) { best = result; bestScore = candidate }
   }
-  if (cleanCount > count) {
-    first = best
-    count = cleanCount
-    acceptedResults = results.filter(result => first.decisions.slice(0, count).every((decision, index) =>
-      result.decisions[index]?.index === decision.index && !result.decisions[index].incorrect
-    ))
-  } else {
-    // A shorter, unanchored alternative must not stall a longer alternative
-    // that has already located a wrong word from the words after it.
-    const anchored = results.filter(result => result.decisions.length > count &&
-      result.decisions.slice(count).some(decision => decision.incorrect) &&
-      result.decisions.every(decision => !decision.incorrect || decision.anchorEndIndex === undefined ||
-        result.decisions.some(anchor => anchor.index >= decision.anchorEndIndex && !anchor.incorrect)))
-    anchored.sort((left, right) => right.decisions.length - left.decisions.length ||
-      left.decisions.filter(decision => decision.incorrect).length - right.decisions.filter(decision => decision.incorrect).length)
-    if (anchored.length) {
-      first = anchored[0]
-      count = first.decisions.length
-      acceptedResults = anchored.filter(result => result.decisions.length === count &&
-        result.decisions.every((decision, index) => decision.index === first.decisions[index].index &&
-          decision.incorrect === first.decisions[index].incorrect))
-    }
-  }
-  const disagreement = acceptedResults.some(result => result.decisions.length !== count)
+
+  const agreements = results.filter(result => result.decisions.length >= best.decisions.length
+    && best.decisions.every((decision, index) => result.decisions[index]?.index === decision.index))
+
   return {
-    decisions: first.decisions.slice(0, count),
-    remainders: [...new Set(acceptedResults.map(result => result.remainders?.[count] ?? result.remainder ?? ''))],
-    ambiguous: disagreement || acceptedResults.some(result => result.ambiguous),
-    waiting: acceptedResults.some(result => result.waiting),
+    decisions: best.decisions,
+    remainders: [...new Set(agreements.map(result => result.remainders?.[best.decisions.length] ?? result.remainder ?? ''))],
+    ambiguous: agreements.some(result => result.ambiguous),
+    waiting: agreements.some(result => result.waiting),
+    bridged: best.decisions.some(decision => decision.accepted === VOICE_BRIDGED),
     unsupported: results.every(result => result.unsupported),
   }
 }

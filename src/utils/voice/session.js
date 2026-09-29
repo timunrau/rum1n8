@@ -1,4 +1,4 @@
-import { matchSpeech, resolveSpeechAlternatives } from './matcher.js'
+import { matchSpeech, resolveSpeechAlternatives, VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
 import { speechTokensWithOffsets } from './normalization.js'
 import { matchSpokenReference } from './spoken-reference.js'
 
@@ -19,9 +19,9 @@ export function matchVoiceUtterance({ units, startIndex, reference = '' }, text)
     ? { decisions: [], nextIndex: start, remainder: text, remainders: [text] }
     : matchSpeech(units, start, text)
   if (content.ambiguous) return content
-  // A completed spoken reference also locates the end of the verse. If
-  // the last content word was different or omitted, count just that unit
-  // as missed and continue into the reference.
+  // A completed spoken reference also locates the end of the verse. The trailing
+  // content word may have been omitted or misheard; treat it as bridged progress
+  // rather than a mistake, then continue into the reference.
   const lastContent = units[content.nextIndex]
   if (lastContent && !lastContent.isReferenceUnit && units[content.nextIndex + 1]?.isReferenceUnit) {
     const { ends } = speechTokensWithOffsets(content.remainder)
@@ -32,7 +32,7 @@ export function matchVoiceUtterance({ units, startIndex, reference = '' }, text)
       if (!located.decisions?.length || located.pending || located.ambiguous) continue
       content = {
         ...content,
-        decisions: [...content.decisions, { index: lastContent.index, incorrect: true }],
+        decisions: [...content.decisions, { index: lastContent.index, incorrect: false, accepted: VOICE_BRIDGED }],
         nextIndex: content.nextIndex + 1,
         remainder,
         remainders: [...content.remainders, remainder],
@@ -67,11 +67,12 @@ export function resolveVoiceAlternatives(
   let prefixes = buffers
   if (repeatPending) {
     const restart = resolveSpeechAlternatives(alternatives.map(text => matchVoiceUtterance(context, text)))
-    // A clear repetition from the cursor replaces the disputed suffix. Do
-    // not let an old recognition hypothesis veto the user's correction.
+    // A clear repetition from the cursor replaces the disputed suffix. Require
+    // the opening words to be genuinely heard, not bridged, so a late hypothesis
+    // cannot wipe the buffer and stall progress.
     const anchorLength = Math.min(firstAnchorUnits, units.length - startIndex)
     if (restart.decisions.length >= anchorLength &&
-        restart.decisions.slice(0, firstAnchorUnits).every(decision => !decision.incorrect)) {
+        restart.decisions.slice(0, firstAnchorUnits).every(decision => decision.accepted === VOICE_HEARD)) {
       prefixes = ['']
     }
   }

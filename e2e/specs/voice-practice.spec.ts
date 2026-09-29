@@ -4,7 +4,12 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage, getStoredVerses, seedAppSettings, seedStorage } from '../helpers/storage'
 import { gotoApp } from '../helpers/navigation'
-import { hideSpeechRecognition, installFakeSpeech, type FakeSpeech } from '../helpers/speech'
+import {
+  disableVoiceCapability,
+  installFakeSpeech,
+  installFakeSpeechWithoutModel,
+  type LocalSpeech,
+} from '../helpers/local-speech'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sampleVerses = JSON.parse(
@@ -78,13 +83,16 @@ async function openReviewVerse(page: Page, target = reviewVerse()) {
   await expect(page.locator('#letter-input-review')).toBeAttached()
 }
 
-/** Select the microphone control and wait for the fake recognizer to start listening. */
-async function startVoice(page: Page, speech: FakeSpeech) {
+/** Select the microphone control and wait until the fake engine is decoding. */
+async function startVoice(page: Page, speech: LocalSpeech) {
   const before = await speech.instances()
   await voiceButton(page).click()
   await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
   await expect.poll(() => speech.instances()).toBeGreaterThan(before)
   await expect.poll(() => speech.calls().then(calls => calls.started)).toBeGreaterThan(0)
+  // The decoder can confirm before getUserMedia resolves, so wait for the
+  // microphone itself rather than assuming it is already open.
+  await expect.poll(() => speech.tracksLive()).toBe(1)
 }
 
 const wordText = async (page: Page, index: number) =>
@@ -101,25 +109,47 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('voice practice availability', () => {
-  test('hides the microphone control when the browser has no speech recognition', async ({ page }) => {
-    await hideSpeechRecognition(page)
+  test('hides the microphone control when the browser cannot run local recognition', async ({ page }) => {
+    await disableVoiceCapability(page, 'audio-worklet')
     await openLearnVerse(page)
 
     await expect(voiceButton(page)).toHaveCount(0)
     await expect(voicePanel(page)).toHaveCount(0)
   })
 
-  test('shows the microphone control when speech recognition exists', async ({ page }) => {
+  test('hides the microphone control when WebAssembly is unavailable', async ({ page }) => {
+    await disableVoiceCapability(page, 'wasm')
+    await openLearnVerse(page)
+
+    await expect(voiceButton(page)).toHaveCount(0)
+  })
+
+  test('shows the microphone control when the browser can run local recognition', async ({ page }) => {
     await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await expect(voiceButton(page)).toBeVisible()
     await expect(voiceButton(page)).toHaveAttribute('aria-pressed', 'false')
   })
+
+  test('offers the model download instead of listening before the model is present', async ({ page }) => {
+    const speech = await installFakeSpeechWithoutModel(page)
+    await openLearnVerse(page)
+
+    await voiceButton(page).click()
+
+    // No silent 200 MB download, and no recognizer started behind the user's back.
+    await expect(voicePanel(page).getByRole('button', { name: /Download model/ })).toBeVisible()
+    await expect(voiceStatus(page)).toContainText('offline voice model')
+    expect(await speech.instances()).toBe(0)
+    await expect(voicePanel(page).getByRole('button', { name: 'Start' })).toHaveCount(0)
+    // The keyboard stays available.
+    await expect(voicePanel(page).getByText('Use keyboard instead')).toBeVisible()
+  })
 })
 
 test.describe('voice practice capture', () => {
-  test('selecting voice starts listening and interim speech only previews', async ({ page }) => {
+  test('selecting voice starts listening and partial speech only previews', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
@@ -136,7 +166,7 @@ test.describe('voice practice capture', () => {
     expect(await wordText(page, 0)).toBe('One')
   })
 
-  test('a final result advances the display units', async ({ page }) => {
+  test('a final segment advances the display units', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
@@ -149,7 +179,7 @@ test.describe('voice practice capture', () => {
     expect(await wordText(page, 2)).toBe('three')
   })
 
-  test('a revised interim result advances only when it becomes final', async ({ page }) => {
+  test('a revised partial advances only when it becomes final', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
@@ -163,12 +193,13 @@ test.describe('voice practice capture', () => {
 
     await speech.replace([['One two', true]])
     await expect(page.locator('#practice-word-2')).toHaveClass(/practice-word--current/)
+    // Committing the same words twice must not double-count them.
     await speech.replace([['One two', true]])
     await expect(page.locator('#practice-word-2')).toHaveClass(/practice-word--current/)
     await expect(page.locator('#practice-word-1 .text-word-incorrect')).toHaveCount(0)
   })
 
-  test('does not mistake cumulative browser transcripts for new speech', async ({ page }) => {
+  test('treats each decoded segment as separate speech across a long passage', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     const words = 'alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango'.split(' ')
     await openLearnVerse(page, learnVerse({ content: words.join(' ') }))
@@ -187,25 +218,17 @@ test.describe('voice practice capture', () => {
     await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
   })
 
-  test('marks a substituted word as a mistake', async ({ page }) => {
+  test('never marks a misheard word as a mistake', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await startVoice(page, speech)
+    // A substitution the recognizer made, not a memory failure.
     await speech.speak('One wrong three')
 
-    await expect(page.locator('#practice-word-1 .text-word-incorrect').first()).toHaveText('two')
-  })
-
-  test('accepts a clean result from a later recognition alternative', async ({ page }) => {
-    const speech = await installFakeSpeech(page)
-    await openLearnVerse(page)
-
-    await startVoice(page, speech)
-    await speech.speak(['One twoo three', 'One two three'])
-
     await expect(completionTitle(page)).toContainText('Learned')
-    await expect(page.locator('#practice-word-1 .text-word-incorrect')).toHaveCount(0)
+    await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
+    expect(await wordText(page, 1)).toBe('two')
   })
 
   test('finishes a spoken reference and completes the verse', async ({ page }) => {
@@ -227,7 +250,7 @@ test.describe('voice practice capture', () => {
     await expect(page.getByRole('button', { name: /Continue to Memorize/i })).toBeVisible()
   })
 
-  test('keeps a spoken reference split across final results', async ({ page }) => {
+  test('keeps a spoken reference split across segments', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await seedAppSettings(page, { requireReferenceTyping: true })
     await openLearnVerse(page, learnVerse({ content: 'Alpha beta gamma' }))
@@ -267,45 +290,64 @@ test.describe('voice practice capture', () => {
 })
 
 test.describe('voice practice pausing and errors', () => {
-  test('keeps listening across a browser session ending mid-verse', async ({ page }) => {
+  test('a decoded segment ending mid-verse does not pause capture', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await startVoice(page, speech)
     await speech.speak('One')
     await expect(page.locator('#practice-word-1')).toHaveClass(/practice-word--current/)
-    const started = (await speech.calls()).started
-    await speech.end()
 
-    await expect.poll(() => speech.calls().then(calls => calls.started)).toBeGreaterThan(started)
-    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    // A natural pause in the middle of a verse: the recognizer closed a segment.
     await speech.speak('two three')
+
+    // Still listening, still capturing, and the verse completed from the later words.
     await expect(completionTitle(page)).toContainText('Learned')
+    expect(await speech.tracksLive()).toBe(0)
   })
 
-  test('reports a denied microphone and offers a retry', async ({ page }) => {
+  test('Pause stops the microphone and Resume reopens it', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
+    await startVoice(page, speech)
+    expect(await speech.tracksLive()).toBe(1)
+
+    await voicePanel(page).getByRole('button', { name: 'Pause' }).click()
+    await expect(voiceStatus(page)).toHaveText('Paused. Tap Resume to continue.')
+    // The track is released synchronously with the tap, not after a decode flush.
+    expect(await speech.tracksLive()).toBe(0)
+    expect(await speech.tracksReleased()).toBeGreaterThanOrEqual(1)
+
+    await voicePanel(page).getByRole('button', { name: 'Resume' }).click()
+    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    expect(await speech.tracksLive()).toBe(1)
+  })
+
+  test('reports a denied microphone and offers a retry', async ({ page }) => {
+    await installFakeSpeech(page, { micDenied: true })
+    await openLearnVerse(page)
+
     await voiceButton(page).click()
-    await speech.fail('not-allowed')
 
     await expect(voiceStatus(page)).toContainText('Microphone permission was denied.')
     await expect(voicePanel(page).getByRole('button', { name: 'Retry' })).toBeVisible()
   })
 
-  test('reports a silent microphone without claiming the verse was wrong', async ({ page }) => {
+  test('a silent microphone never claims the verse was wrong', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await startVoice(page, speech)
-    await speech.fail('no-speech')
+    // Silence produces no transcript at all.
 
-    await expect(voiceStatus(page)).toContainText('No speech was detected.')
+    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
     await expect(page.locator('#practice-word-0')).toHaveClass(/practice-word--current/)
+    await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
+    await expect(completionTitle(page)).toHaveCount(0)
   })
 
-  test('ignores a final result that arrives after switching to the keyboard', async ({ page }) => {
+  test('ignores a segment that arrives after switching to the keyboard', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
@@ -333,6 +375,8 @@ test.describe('voice practice pausing and errors', () => {
     expect(await wordText(page, 0)).toBe('One')
     expect(await wordText(page, 1)).toBe('two')
     await expect(page.locator('#practice-word-2')).toHaveClass(/practice-word--current/)
+    // Switching away releases the microphone.
+    expect(await speech.tracksLive()).toBe(0)
   })
 })
 
@@ -449,13 +493,22 @@ test.describe('voice practice completion and saving', () => {
     }).toEqual([2, 2])
   })
 
-  test('saves a below-threshold voice review when the user chooses to continue', async ({ page }) => {
+  test('Reveal is the only source of a voice mistake, and it can still save a low grade', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openReviewVerse(page)
 
     await startVoice(page, speech)
-    await speech.speak('Alpha wrong gamma')
+    await voicePanel(page).getByRole('button', { name: 'Reveal next word' }).click()
+    await expect(page.locator('#practice-word-0 .text-word-incorrect').first()).toHaveText('Alpha')
+    // Revealing interrupts the session, so the microphone is released until the
+    // user resumes.
+    await expect(voiceStatus(page)).toHaveText('Paused. Tap Resume to continue.')
+    expect(await speech.tracksLive()).toBe(0)
 
+    await voicePanel(page).getByRole('button', { name: 'Resume' }).click()
+    await expect.poll(() => speech.tracksLive()).toBe(1)
+
+    await speech.speak('beta gamma')
     await expect(completionTitle(page)).toContainText('Keep practicing')
     await page.getByRole('button', { name: 'Done' }).click()
 

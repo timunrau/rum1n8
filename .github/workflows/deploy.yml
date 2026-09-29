@@ -227,6 +227,20 @@ jobs:
           test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18081/about/?from=old')" = "http://127.0.0.1:18081/?from=old"
           test "$(curl -sS -o /dev/null -w '%{redirect_url}' 'http://127.0.0.1:18080/privacy?from=old')" = "${MARKETING_URL}privacy/?from=old"
 
+      - name: Smoke-test the local voice model
+        run: |
+          model="http://127.0.0.1:18080/voice-model/sherpa-en-v1.13.7"
+          curl -fsS -o /dev/null "$model/sherpa-onnx-asr.js"
+          curl -fsS -o /dev/null "$model/NOTICE.md"
+          test "$(curl -sSI "$model/sherpa-onnx-wasm-main-asr.wasm" | sed -n 's/^[Cc]ontent-[Tt]ype: //p' | tr -d '\r')" = "application/wasm"
+          test "$(curl -sSI "$model/sherpa-onnx-wasm-main-asr.js" | sed -n 's/^[Cc]ontent-[Tt]ype: //p' | tr -d '\r')" = "text/javascript"
+          curl -sSI "$model/sherpa-onnx-wasm-main-asr.data" | grep -qi '^Cache-Control: .*immutable'
+          # The worker preloads the model into Cache Storage, so partial reads
+          # must be answerable and a missing asset must not fall back to the shell.
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -H 'Range: bytes=0-1023' "$model/sherpa-onnx-wasm-main-asr.data")" = "206"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' "$model/sherpa-onnx-asr-missing.js")" = "404"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/voice-model/)" = "404"
+
       - name: Promote verified images
         run: |
           for package in rum1n8-app rum1n8-site rum1n8-proxy; do

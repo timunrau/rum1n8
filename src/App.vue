@@ -181,7 +181,9 @@
 
   <VoicePracticePanel v-if="practiceInputMode === 'voice' && !allWordsRevealed"
     :status="voiceStatus" :message="voiceMessage" :reference="voiceAtReference"
-    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')" />
+    :model-state="voiceModelState" :model-progress="voiceModelProgress" :model-downloading="voiceModelDownloading" :size-label="voiceModelSizeLabel"
+    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')"
+    @download="downloadVoiceModelNow" @cancel-download="cancelVoiceModelDownload" @remove-model="removeVoiceModel" />
 
   <!-- Completion Tray for Memorization -->
   <Transition :name="practiceInputMode === 'voice' ? '' : 'result-tray'">
@@ -301,7 +303,9 @@
 
   <VoicePracticePanel v-if="practiceInputMode === 'voice' && !allWordsRevealed"
     :status="voiceStatus" :message="voiceMessage" :reference="voiceAtReference"
-    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')" />
+    :model-state="voiceModelState" :model-progress="voiceModelProgress" :model-downloading="voiceModelDownloading" :size-label="voiceModelSizeLabel"
+    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')"
+    @download="downloadVoiceModelNow" @cancel-download="cancelVoiceModelDownload" @remove-model="removeVoiceModel" />
 
   <!-- Completion Tray for Review -->
   <Transition :name="practiceInputMode === 'voice' ? '' : 'result-tray'">
@@ -2538,7 +2542,10 @@ import {
 } from 'chart.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
 import { completePracticeUnit, canSavePracticeAttempt } from './utils/practice-operations.js'
-import { createRecognitionAdapter, recognitionConstructor } from './utils/voice/recognition.js'
+import { voiceCapabilities } from './utils/voice/capability.js'
+import { createLocalRecognitionAdapter, voiceErrors } from './utils/voice/local-recognition.js'
+import { deleteVoiceModel, downloadVoiceModel, modelCacheState } from './utils/voice/model-store.js'
+import { VOICE_MODEL_SIZE_LABEL } from './utils/voice/model-manifest.js'
 import { resolveVoiceAlternatives } from './utils/voice/session.js'
 import { supportedSpokenReference } from './utils/voice/spoken-reference.js'
 import VoicePracticePanel from './components/VoicePracticePanel.vue'
@@ -2868,10 +2875,22 @@ export default {
       action?.()
     }
 
-    const voiceSupported = !!recognitionConstructor()
+    // Whether this browser *could* run local recognition. It says nothing about
+    // whether the model is downloaded; the model is optional and fetched later,
+    // so a fresh install must still offer voice.
+    const voiceCapabilitiesNow = voiceCapabilities()
+    const voiceSupported = voiceCapabilitiesNow.supported
+    const voiceUnsupportedReason = voiceCapabilitiesNow.reason
     const voiceStatus = ref('idle')
     const voiceMessage = ref('')
     const voicePreview = ref([])
+    // 'unknown' until checked, then 'ready' | 'missing' | 'unavailable'.
+    const voiceModelState = ref('unknown')
+    const voiceModelProgress = ref(0)
+    const voiceModelDownloading = ref(false)
+    const voiceModelSizeLabel = VOICE_MODEL_SIZE_LABEL
+    let voiceModelDownload = null
+    let voiceModelAbortController = null
     let voiceBuffers = ['']
     let voiceRepeatPending = false
     let voiceAttemptId = 0
@@ -2937,24 +2956,99 @@ export default {
       if (allWordsRevealed.value) abortVoice()
       return []
     }
-    const recognition = createRecognitionAdapter({
+    // The local recognizer reports one decoded segment at a time. Present it in
+    // the hypothesis shape the matcher consumes, so the matching rules stay
+    // independent of which engine produced the words.
+    const voiceHypothesis = (alternatives, finals) => ({ finals, interim: alternatives.map(text => ({ alternatives: [text] })) })
+    const recognition = createLocalRecognitionAdapter({
       onStatus: status => {
         voiceStatus.value = status
-        if (!['listening', 'finishing'].includes(status)) voicePreview.value = []
+        if (!['listening', 'finishing', 'starting'].includes(status)) voicePreview.value = []
       },
       onError: (message) => { voiceMessage.value = message; voicePreview.value = []; voiceBuffers = [''] },
-      onResult: ({ finals, interim }) => {
-        if (activeVoiceAttemptId !== voiceAttemptId || practiceInputMode.value !== 'voice') return
-        for (const result of finals) {
-          consumeVoiceAlternatives(result.alternatives)
-          if (activeVoiceAttemptId !== voiceAttemptId) return
-        }
-        const alternatives = interim.reduce((prefixes, result) => prefixes.flatMap(prefix => result.alternatives.map(text => `${prefix} ${text}`)).slice(0, 9), [''])
-        voicePreview.value = interim.length ? consumeVoiceAlternatives(alternatives, true) : []
-      },
+      onFinal: text => { if (text) onVoiceResult(voiceHypothesis([], [{ alternatives: [text] }])) },
+      onPartial: text => { if (text) onVoiceResult(voiceHypothesis([text], [])) },
     })
-    const startVoice = () => {
+    const onVoiceResult = ({ finals, interim }) => {
+      if (activeVoiceAttemptId !== voiceAttemptId || practiceInputMode.value !== 'voice') return
+      for (const result of finals) {
+        consumeVoiceAlternatives(result.alternatives)
+        if (activeVoiceAttemptId !== voiceAttemptId) return
+      }
+      const alternatives = interim.reduce((prefixes, result) => prefixes.flatMap(prefix => result.alternatives.map(text => `${prefix} ${text}`)).slice(0, 9), [''])
+      voicePreview.value = interim.length ? consumeVoiceAlternatives(alternatives, true) : []
+    }
+    // Confirm the model is cached before claiming voice works, and never block
+    // the app on it: a first run offers the download and keeps the keyboard.
+    const refreshVoiceModelState = async () => {
+      if (!voiceSupported) return
+      try {
+        const { state } = await modelCacheState()
+        // 'unsupported' means Cache Storage itself is unusable, which is a
+        // different problem from a model that simply has not been fetched yet.
+        voiceModelState.value = state === 'ready' ? 'ready' : (state === 'unsupported' ? 'unavailable' : 'missing')
+        if (state === 'unsupported') voiceMessage.value = 'This browser cannot store the voice model for offline use.'
+      } catch {
+        voiceModelState.value = 'unavailable'
+      }
+    }
+    const removeVoiceModel = async () => {
+      if (voiceModelDownload) return
+      try {
+        abortVoice('idle')
+        recognition.unload()
+        await deleteVoiceModel()
+        voiceModelState.value = 'missing'
+        voiceModelProgress.value = 0
+        showToast('Offline voice model removed.')
+      } catch {
+        showToast('Could not remove the voice model. Try again.')
+      }
+    }
+    const downloadVoiceModelNow = async () => {
+      if (voiceModelDownloading.value || !voiceSupported) return
+      voiceMessage.value = ''
+      voiceModelProgress.value = 0
+      voiceModelDownloading.value = true
+      voiceModelAbortController = new AbortController()
+      // downloadVoiceModel owns the storage-headroom and secure-context policy
+      // and reports it as a ModelStorageError, so do not second-guess it here.
+      voiceModelDownload = downloadVoiceModel({
+        signal: voiceModelAbortController.signal,
+        onProgress: ({ received, total }) => {
+          voiceModelProgress.value = total ? Math.min(1, received / total) : 0
+        },
+      })
+      try {
+        await voiceModelDownload
+        await recognition.prepare()
+        voiceModelState.value = 'ready'
+        showToast('Voice model ready. It works offline now.')
+      } catch (error) {
+        if (voiceModelAbortController.signal.aborted) {
+          await deleteVoiceModel()
+          voiceModelState.value = 'missing'
+          voiceMessage.value = 'Download cancelled.'
+          return
+        }
+        // A storage-policy refusal is not the same as a model that is merely
+        // absent, and the two need different words and a different next step.
+        const blocked = error?.code === 'no-space' || error?.code === 'insecure' || error?.code === 'unsupported'
+        voiceModelState.value = blocked ? 'unavailable' : 'missing'
+        voiceMessage.value = error?.message || voiceErrors['model-load-failed']
+      } finally {
+        voiceModelDownload = null
+        voiceModelAbortController = null
+        voiceModelDownloading.value = false
+      }
+    }
+    const cancelVoiceModelDownload = () => {
+      voiceModelAbortController?.abort()
+      if (voiceModelDownload) recognition.unload()
+    }
+    const startVoice = async () => {
       if (allWordsRevealed.value || practiceInputMode.value !== 'voice') return
+      const requestedAttempt = voiceAttemptId
       stopSpeaking()
       voiceMessage.value = ''
       if (voiceAtReference.value && !supportedSpokenReference((memorizingVerse.value || reviewingVerse.value).reference)) {
@@ -2962,10 +3056,21 @@ export default {
         showToast('Use the keyboard for this reference. Your verse progress is preserved.')
         return
       }
+      if (voiceModelState.value === 'unknown') await refreshVoiceModelState()
+      if (requestedAttempt !== voiceAttemptId || practiceInputMode.value !== 'voice' || allWordsRevealed.value) return
+      if (voiceModelState.value === 'missing') {
+        // Do not silently start a 200 MB download: let the user choose.
+        voiceMessage.value = `Download the ${VOICE_MODEL_SIZE_LABEL} offline voice model to practice by voice.`
+        return
+      }
+      if (voiceModelState.value === 'unavailable') {
+        voiceMessage.value = voiceMessage.value || voiceUnsupportedReason || voiceErrors['model-load-failed']
+        return
+      }
       activeVoiceAttemptId = voiceAttemptId
-      recognition.start()
+      await recognition.start()
     }
-    const stopVoice = () => recognition.stop()
+    const stopVoice = () => recognition.finish()
     const revealVoiceWord = () => {
       abortVoice()
       voiceMessage.value = ''
@@ -9677,6 +9782,8 @@ export default {
     // Cleanup event listener on unmount
     onBeforeUnmount(() => {
       abortVoice()
+      cancelVoiceModelDownload()
+      recognition.dispose()
       window.removeEventListener('popstate', handlePopState)
       document.removeEventListener('scroll', handleWindowScroll, { capture: true })
       document.removeEventListener('click', handleSelectionDocumentClick)
@@ -9728,8 +9835,10 @@ export default {
       reviewingVerse,
       reviewWords,
       practiceInputMode, voiceSupported, voiceStatus, voiceMessage, voicePreview, voiceAtReference,
+      voiceUnsupportedReason, voiceModelState, voiceModelProgress, voiceModelDownloading, voiceModelSizeLabel,
       voiceNeedsConfirmation, voiceLeaveAction, voiceActionPending,
       selectPracticeInput, startVoice, stopVoice, revealVoiceWord, retryPracticeAttempt,
+      downloadVoiceModelNow, cancelVoiceModelDownload, removeVoiceModel, refreshVoiceModelState,
       completeAndAdvanceMode, completeAndExitMemorization, completeAndNextVerse, completeAndExitReview,
       discardVoiceResults,
       practiceReferenceHeaderOpacity,

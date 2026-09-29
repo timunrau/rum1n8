@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
+import { VOICE_MODEL_ASSETS, VOICE_MODEL_BASE_PATH, VOICE_MODEL_NOTICE_FILE } from '../build/voice-model.mjs'
 
 const appDir = resolve('dist-app')
 const siteDir = resolve('dist-site')
@@ -90,6 +91,17 @@ for (const path of [
 ]) {
   check(!(await exists(resolve(appDir, path))), `App build must not contain marketing artifact ${path}.`)
 }
+
+const modelRoot = join(appDir, VOICE_MODEL_BASE_PATH)
+for (const asset of VOICE_MODEL_ASSETS) {
+  const path = join(modelRoot, asset.file)
+  if (!(await exists(path))) { check(false, `App build is missing voice model asset ${asset.file}.`); continue }
+  const { size } = await stat(path)
+  check(size === asset.bytes, `Voice model asset ${asset.file} is ${size} bytes, expected ${asset.bytes}.`)
+}
+check(await exists(join(modelRoot, VOICE_MODEL_NOTICE_FILE)), `App build is missing ${VOICE_MODEL_NOTICE_FILE} for the voice model.`)
+check(!(await exists(join(modelRoot, 'app-asr.js'))), 'Voice model directory must not ship the upstream demo app-asr.js.')
+check(!(await exists(join(modelRoot, 'index.html'))), 'Voice model directory must not ship the upstream demo index.html.')
 
 const manifest = JSON.parse(await readText(resolve(appDir, 'manifest.webmanifest'), 'App manifest') || '{}')
 check(manifest.id === '/', 'Manifest id must be /.')

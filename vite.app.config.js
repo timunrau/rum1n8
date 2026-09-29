@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync, createReadStream } from 'node:fs'
 import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
@@ -12,6 +12,7 @@ import {
   createStaticAssetsPlugin,
   serverHost,
 } from './build/vite-shared.js'
+import { VOICE_MODEL_ASSETS, VOICE_MODEL_BASE_PATH, VOICE_MODEL_NOTICE_FILE } from './build/voice-model.mjs'
 
 const packageJson = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
@@ -36,6 +37,55 @@ const APP_STATIC_ASSETS = [
   'marketing/screenshot-practice.png',
   'marketing/screenshot-review.png',
 ]
+
+const VOICE_MODEL_DEV_TYPES = {
+  '.js': 'text/javascript',
+  '.wasm': 'application/wasm',
+  '.data': 'application/octet-stream',
+  '.md': 'text/markdown',
+}
+
+// Serve the exact bytes `npm run voice-model:prepare` staged, so `npm run
+// dev:app` exercises the real payload without a production deploy. A missing
+// model file must 404 here exactly as it does behind nginx; the app shell is a
+// wrong answer for a model request because it would fail as a Wasm fetch.
+function createVoiceModelDevPlugin() {
+  const root = resolve(process.cwd(), `dist-app${VOICE_MODEL_BASE_PATH}`)
+  return {
+    name: 'rum1n8-voice-model-dev',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const [pathname, query] = (req.url || '').split('?')
+        if (!pathname.startsWith(`${VOICE_MODEL_BASE_PATH}/`)) return next()
+
+        const name = pathname.slice(VOICE_MODEL_BASE_PATH.length + 1)
+        const allowed = new Set([...VOICE_MODEL_ASSETS.map(asset => asset.file), VOICE_MODEL_NOTICE_FILE])
+        if (!allowed.has(name)) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'text/plain')
+          res.end('voice model asset not found')
+          return
+        }
+
+        const file = resolve(root, name)
+        if (!file.startsWith(root) || !statSync(file, { throwIfNoEntry: false })) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'text/plain')
+          res.end('run: npm run voice-model:prepare')
+          return
+        }
+
+        res.statusCode = 200
+        res.setHeader('Content-Type', VOICE_MODEL_DEV_TYPES[name.slice(name.lastIndexOf('.'))] || 'application/octet-stream')
+        res.setHeader('Content-Length', statSync(file).size)
+        res.setHeader('Cache-Control', 'no-store')
+        res.setHeader('X-Content-Type-Options', 'nosniff')
+        createReadStream(file).pipe(res)
+      })
+    },
+  }
+}
+
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -96,6 +146,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       createStaticAssetsPlugin(APP_STATIC_ASSETS),
+      createVoiceModelDevPlugin(),
       createHealthFilePlugin(),
       tailwindcss(),
       vue(),
@@ -134,7 +185,13 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           cleanupOutdatedCaches: true,
+          // The voice model is ~195 MiB and is fetched on demand into its own
+          // Cache Storage bucket (see src/utils/voice/model-store.js). It must
+          // never join the install precache, or every app install would pay for
+          // a download that most users never ask for.
           globPatterns: ['app/**/*.html', 'assets/*.{js,css}', 'icons/*.png'],
+          globIgnores: ['**/voice-model/**'],
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           navigateFallback: '/app/index.html',
           navigateFallbackAllowlist: [/^\/app(?:\/.*)?$/],
           runtimeCaching: [

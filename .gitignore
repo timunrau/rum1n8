@@ -15,6 +15,10 @@ dev-dist
 dist-ssr
 *.local
 
+# Pinned voice-model archive cache (see build/voice-model.mjs). The ~167 MB
+# tarball is re-downloadable and must never be committed; only the checksum is.
+.cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

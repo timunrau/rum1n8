@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { buildReferencePracticeUnits } from '../reference-typing.js'
 import { getVerseWords } from '../verse-words.js'
+import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
 import { matchVoiceUtterance, resolveVoiceAlternatives } from './session.js'
+
+const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
+const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const heardAll = indices => indices.map(heard)
 
 const practiceUnits = (content, reference) => {
   const words = getVerseWords(content).map((entry, index) => ({ text: entry.text, index }))
@@ -25,34 +30,35 @@ describe('matchVoiceUtterance', () => {
   it('accepts the content run and the spoken reference in one utterance', () => {
     const result = matchVoiceUtterance(context(JOHN, 0), 'one two three John three sixteen')
 
-    expect(result.decisions).toEqual([0, 1, 2, 3, 4, 5].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2, 3, 4, 5]))
     expect(result.remainder).toBe('')
   })
 
   it('matches the reference when the cursor already sits on it', () => {
     expect(matchVoiceUtterance(context(JOHN, 3), 'John three sixteen').decisions)
-      .toEqual([3, 4, 5].map(index => ({ index, incorrect: false })))
+      .toEqual(heardAll([3, 4, 5]))
   })
 
-  it('counts an omitted final content word as missed once a full reference locates the end', () => {
+  it('bridges a misheard final content word once a full reference locates the end', () => {
     const units = practiceUnits('Alpha beta gamma', 'John 3:16')
     const result = matchVoiceUtterance(context(units, 0, 'John 3:16'), 'alpha beta blah John three sixteen')
 
     expect(result.decisions).toEqual([
-      { index: 0, incorrect: false },
-      { index: 1, incorrect: false },
-      { index: 2, incorrect: true },
-      { index: 3, incorrect: false },
-      { index: 4, incorrect: false },
-      { index: 5, incorrect: false },
+      heard(0),
+      heard(1),
+      bridged(2),
+      heard(3),
+      heard(4),
+      heard(5),
     ])
+    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
   })
 
   it('leaves a partial reference pending instead of completing the verse', () => {
     const result = matchVoiceUtterance(context(JOHN, 0), 'one two three John three')
 
     expect(result.pending).toBe(true)
-    expect(result.decisions).toEqual([0, 1, 2].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
     expect(result.remainder).toBe('John three')
   })
 
@@ -69,7 +75,7 @@ describe('resolveVoiceAlternatives', () => {
   it('accepts correct words and clears the buffer', () => {
     const result = resolveVoiceAlternatives(context(JOHN, 0), ['one two'])
 
-    expect(result.decisions).toEqual([0, 1].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1]))
     expect(result.remainders).toEqual([''])
     expect(result.needsContinuationPrompt).toBe(false)
   })
@@ -82,19 +88,19 @@ describe('resolveVoiceAlternatives', () => {
 
     const second = resolveVoiceAlternatives(context(JOHN, 1, 'John 3:16', { buffers: first.remainders }), ['two three'])
 
-    expect(second.decisions).toEqual([1, 2].map(index => ({ index, incorrect: false })))
+    expect(second.decisions).toEqual(heardAll([1, 2]))
     expect(second.remainders).toEqual([''])
   })
 
   it('keeps a suffix that no later word can locate', () => {
     const first = resolveVoiceAlternatives(context(JOHN, 0), ['one zzz'])
-    expect(first.decisions).toEqual([{ index: 0, incorrect: false }])
+    expect(first.decisions).toEqual([heard(0)])
     expect(first.remainders).toEqual(['zzz'])
     expect(first.needsContinuationPrompt).toBe(false)
 
     const second = resolveVoiceAlternatives(context(JOHN, 1, 'John 3:16', { buffers: first.remainders }), ['two three'])
 
-    expect(second.decisions).toEqual([1, 2].map(index => ({ index, incorrect: false })))
+    expect(second.decisions).toEqual(heardAll([1, 2]))
   })
 
   it('asks to continue from the next word only when nothing was accepted', () => {
@@ -108,7 +114,7 @@ describe('resolveVoiceAlternatives', () => {
   it('stays quiet when words were accepted but speech is still buffered', () => {
     const result = resolveVoiceAlternatives(context(JOHN, 0), ['one two zzz'])
 
-    expect(result.decisions).toEqual([0, 1].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1]))
     expect(result.waiting).toBe(true)
     expect(result.needsContinuationPrompt).toBe(false)
   })
@@ -119,7 +125,7 @@ describe('resolveVoiceAlternatives', () => {
       ['one two'],
     )
 
-    expect(result.decisions).toEqual([0, 1].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1]))
     expect(result.repeatPending).toBe(false)
   })
 

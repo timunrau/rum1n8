@@ -1,4 +1,5 @@
 import { BIBLE_BOOKS, normalizeBookName, parseVerseSpanReference } from '../bible-reference.js'
+import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
 import { numberAt, rawTokens } from './normalization.js'
 
 const ordinals = { first: '1', second: '2', third: '3', one: '1', two: '2', three: '3' }
@@ -80,7 +81,9 @@ export function matchSpokenReference(units, startIndex, reference, text) {
     const target = targets[cursor]
     if (!target) return { ambiguous: true, decisions: [] }
     if (number.role === target.role && number.range === target.range) {
-      numericDecisions.push({ index: target.unit.index, incorrect: number.value !== String(Number(target.unit.text)) })
+      // A misheard digit ("sixteen" for "six") is a recognizer error, not a
+      // memorization error, so the number is accepted either way.
+      numericDecisions.push({ index: target.unit.index, incorrect: false, accepted: VOICE_HEARD })
       cursor++
       continue
     }
@@ -88,15 +91,18 @@ export function matchSpokenReference(units, startIndex, reference, text) {
     // with a later correct numeric anchor. Never invent absent trailing numbers.
     const anchor = targets.findIndex((candidate, index) => index > cursor && number.cue && candidate.role === number.role && number.value === String(Number(candidate.unit.text)))
     if (anchor < 0) return { ambiguous: true, decisions: [] }
-    while (cursor < anchor) numericDecisions.push({ index: targets[cursor++].unit.index, incorrect: true })
-    numericDecisions.push({ index: targets[cursor++].unit.index, incorrect: false })
+    while (cursor < anchor) {
+      numericDecisions.push({ index: targets[cursor++].unit.index, incorrect: false, accepted: VOICE_BRIDGED })
+    }
+    numericDecisions.push({ index: targets[cursor++].unit.index, incorrect: false, accepted: VOICE_HEARD })
   }
   if (cursor < targets.length) return { pending: true, decisions: [] }
-  const expectedBookWords = expected.bookName.split(' ')
-  const spokenBookWords = parsed.book?.name.split(' ') || []
-  const bookDecisions = allReference.slice(0, numericStart).map((unit, index) => ({
+  // A book name the recognizer mangled still counts as located. Penalising it
+  // would mark words incorrect purely because of an ASR substitution.
+  const bookDecisions = allReference.slice(0, numericStart).map(unit => ({
     index: unit.index,
-    incorrect: parsed.book?.id !== expected.bookId && expectedBookWords[index] !== spokenBookWords[index],
+    incorrect: false,
+    accepted: parsed.book ? VOICE_HEARD : VOICE_BRIDGED,
   }))
   return { decisions: [...bookDecisions, ...numericDecisions].filter(decision => decision.index >= startIndex) }
 }

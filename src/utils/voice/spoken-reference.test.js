@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { buildReferencePracticeUnits } from '../reference-typing.js'
 import { getVerseWords } from '../verse-words.js'
+import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
 import { matchSpokenReference, parseSpokenReference, supportedSpokenReference } from './spoken-reference.js'
+
+const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
+const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const heardAll = indices => indices.map(heard)
 
 const referenceUnits = reference => buildReferencePracticeUnits(reference)
 
@@ -90,63 +95,54 @@ describe('matchSpokenReference', () => {
   it('accepts every unit of a correctly spoken reference', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John three sixteen')
 
-    expect(result.decisions).toEqual([0, 1, 2].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
   })
 
   it('accepts a numbered book spoken as an ordinal', () => {
     const units = practiceUnits('', '1 Corinthians 12:13')
     const result = matchSpokenReference(units, 0, '1 Corinthians 12:13', 'first corinthians twelve thirteen')
 
-    expect(result.decisions).toEqual([0, 1, 2, 3].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2, 3]))
   })
 
-  it('flags only the wrong digits', () => {
+  it('accepts a misheard digit instead of flagging it', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John three seventeen')
 
-    expect(result.decisions).toEqual([
-      { index: 0, incorrect: false },
-      { index: 1, incorrect: false },
-      { index: 2, incorrect: true },
-    ])
+    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
+    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
   })
 
-  it('flags a different book without flagging the numbers', () => {
+  it('accepts a substituted book name without flagging the numbers', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'Mark three sixteen')
 
-    expect(result.decisions).toEqual([
-      { index: 0, incorrect: true },
-      { index: 1, incorrect: false },
-      { index: 2, incorrect: false },
-    ])
+    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
+    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
   })
 
   it('returns only decisions at or after the supplied start index', () => {
     const units = practiceUnits('One two three', 'John 3:16')
     const result = matchSpokenReference(units, 3, 'John 3:16', 'John three sixteen')
 
-    expect(result.decisions).toEqual([3, 4, 5].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([3, 4, 5]))
   })
 
   it('accepts an explicit chapter and verse cue', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John chapter three verse sixteen')
 
-    expect(result.decisions).toEqual([0, 1, 2].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
   })
 
-  it('locates an omitted chapter from an explicit verse cue and flags the missing unit', () => {
+  it('locates an omitted chapter from an explicit verse cue and bridges the missing unit', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John verse sixteen')
 
-    expect(result.decisions).toEqual([
-      { index: 0, incorrect: false },
-      { index: 1, incorrect: true },
-      { index: 2, incorrect: false },
-    ])
+    expect(result.decisions).toEqual([heard(0), bridged(1), heard(2)])
+    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
   })
 
   it('accepts a verse range', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16-18'), 0, 'John 3:16-18', 'john three sixteen to eighteen')
 
-    expect(result.decisions).toEqual([0, 1, 2, 3].map(index => ({ index, incorrect: false })))
+    expect(result.decisions).toEqual(heardAll([0, 1, 2, 3]))
   })
 
   it('stays pending on a partial reference rather than completing the verse', () => {
