@@ -1,3 +1,10 @@
+# [1.60.0](https://github.com/timunrau/rum1n8/compare/v1.59.0...v1.60.0) (2026-09-29)
+
+
+### Features
+
+* add voice practice setting ([78a782a](https://github.com/timunrau/rum1n8/commit/78a782ab45ce98cd926d11c39016a0347db076e8))
+
 # [1.59.0](https://github.com/timunrau/rum1n8/compare/v1.58.7...v1.59.0) (2026-09-29)
 
 
