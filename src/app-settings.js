@@ -4,6 +4,7 @@ const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 
 export const DEFAULT_APP_SETTINGS = Object.freeze({
   requireReferenceTyping: false,
+  voicePracticeEnabled: false,
   analyticsOptOut: false,
   defaultBibleVersion: '',
   verseSortPreferences: {}
@@ -26,6 +27,7 @@ export function normalizeAppSettings(settings = {}) {
     ...DEFAULT_APP_SETTINGS,
     ...settings,
     requireReferenceTyping: !!settings.requireReferenceTyping,
+    voicePracticeEnabled: !!settings.voicePracticeEnabled,
     analyticsOptOut: !!settings.analyticsOptOut,
     defaultBibleVersion,
     verseSortPreferences: normalizeVerseSortPreferences(settings.verseSortPreferences)

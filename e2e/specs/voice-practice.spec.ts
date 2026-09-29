@@ -65,6 +65,10 @@ const collections = [{
 const voiceButton = (page: Page) => page.getByRole('button', { name: 'Voice practice' })
 const voicePanel = (page: Page) => page.getByTestId('voice-practice-panel')
 const voiceStatus = (page: Page) => voicePanel(page).getByRole('status')
+const openPracticeSettings = async (page: Page) => {
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByTestId('settings-practice').click()
+}
 
 async function openLearnVerse(page: Page, target = learnVerse()) {
   await seedStorage(page, [target], collections)
@@ -105,10 +109,49 @@ const completionTitle = (page: Page) =>
 test.beforeEach(async ({ page }) => {
   await gotoApp(page)
   await clearAppStorage(page)
+  await seedAppSettings(page, { voicePracticeEnabled: true })
   await page.reload()
 })
 
 test.describe('voice practice availability', () => {
+  test('the beta setting defaults off and controls the microphone in both practice headings', async ({ page }) => {
+    await clearAppStorage(page)
+    await page.reload()
+    await installFakeSpeech(page)
+
+    await openPracticeSettings(page)
+    const toggle = page.getByTestId('voice-practice-toggle')
+    await expect(toggle).toHaveAttribute('aria-checked', 'false')
+    await expect(page.getByText('Beta: This feature is in active development and might not work properly.')).toBeVisible()
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    await openLearnVerse(page)
+    await expect(voiceButton(page)).toHaveCount(0)
+
+    await gotoApp(page, '?view=collections')
+    await openPracticeSettings(page)
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await page.getByRole('button', { name: 'Done' }).click()
+    await page.reload()
+    await openPracticeSettings(page)
+    await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    await openLearnVerse(page)
+    await expect(voiceButton(page)).toBeVisible()
+    await openReviewVerse(page)
+    await expect(voiceButton(page)).toBeVisible()
+
+    await gotoApp(page, '?view=collections')
+    await openPracticeSettings(page)
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-checked', 'false')
+    await page.getByRole('button', { name: 'Done' }).click()
+    await openReviewVerse(page)
+    await expect(voiceButton(page)).toHaveCount(0)
+  })
+
   test('hides the microphone control when the browser cannot run local recognition', async ({ page }) => {
     await disableVoiceCapability(page, 'audio-worklet')
     await openLearnVerse(page)
@@ -234,7 +277,7 @@ test.describe('voice practice capture', () => {
   test('finishes a spoken reference and completes the verse', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     const target = learnVerse({ id: 'voice-reference', content: 'Alpha beta gamma', reference: 'John 1:1' })
-    await seedAppSettings(page, { requireReferenceTyping: true })
+    await seedAppSettings(page, { requireReferenceTyping: true, voicePracticeEnabled: true })
     await openLearnVerse(page, target)
 
     await startVoice(page, speech)
@@ -252,7 +295,7 @@ test.describe('voice practice capture', () => {
 
   test('keeps a spoken reference split across segments', async ({ page }) => {
     const speech = await installFakeSpeech(page)
-    await seedAppSettings(page, { requireReferenceTyping: true })
+    await seedAppSettings(page, { requireReferenceTyping: true, voicePracticeEnabled: true })
     await openLearnVerse(page, learnVerse({ content: 'Alpha beta gamma' }))
 
     await startVoice(page, speech)
@@ -270,7 +313,7 @@ test.describe('voice practice capture', () => {
   test('falls back to the keyboard for an unsupported reference', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     const target = learnVerse({ id: 'voice-unsupported', content: 'Alpha beta', reference: 'Scroll 1:1' })
-    await seedAppSettings(page, { requireReferenceTyping: true })
+    await seedAppSettings(page, { requireReferenceTyping: true, voicePracticeEnabled: true })
     await openLearnVerse(page, target)
 
     await startVoice(page, speech)

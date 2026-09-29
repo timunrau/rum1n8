@@ -118,7 +118,7 @@
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
-          <button v-if="voiceSupported" class="practice-header-button practice-header-button--plain"
+          <button v-if="voiceSupported && appSettings.voicePracticeEnabled" class="practice-header-button practice-header-button--plain"
             :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
             @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
             <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
@@ -228,7 +228,7 @@
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
-          <button v-if="voiceSupported" class="practice-header-button practice-header-button--plain"
+          <button v-if="voiceSupported && appSettings.voicePracticeEnabled" class="practice-header-button practice-header-button--plain"
             :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
             @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
             <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
@@ -2159,6 +2159,34 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               </button>
             </label>
           </div>
+          <div class="rounded-xl bg-sunken p-4">
+            <div class="flex items-start gap-4">
+              <div class="flex-1">
+                <p id="voice-practice-setting-label" class="text-base font-semibold text-text-primary">Voice practice</p>
+                <p id="voice-practice-setting-description" class="mt-1 text-sm text-text-muted">Beta: This feature is in active development and might not work properly.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-labelledby="voice-practice-setting-label"
+                aria-describedby="voice-practice-setting-description"
+                :aria-checked="appSettings.voicePracticeEnabled"
+                data-testid="voice-practice-toggle"
+                :class="[
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                  appSettings.voicePracticeEnabled ? 'bg-accent-strong' : 'bg-border-default'
+                ]"
+                @click="updateVoicePracticeEnabled(!appSettings.voicePracticeEnabled)"
+              >
+                <span
+                  :class="[
+                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                    appSettings.voicePracticeEnabled ? 'translate-x-6' : 'translate-x-1'
+                  ]"
+                />
+              </button>
+            </div>
+          </div>
           <div v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" data-testid="analytics-opt-out-row">
             <label class="flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
@@ -2918,6 +2946,7 @@ export default {
       if (startIndex > 0) reviewMistakes.value = attemptLedger.value.length
     }
     const selectPracticeInput = (mode) => {
+      if (mode === 'voice' && (!voiceSupported || !appSettings.value.voicePracticeEnabled)) return
       abortVoice('idle')
       voiceMessage.value = ''
       practiceInputMode.value = mode
@@ -9162,6 +9191,20 @@ export default {
       trackLegacyAppProfile()
     }
 
+    const updateVoicePracticeEnabled = (enabled) => {
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        voicePracticeEnabled: enabled
+      })
+    }
+
+    watch(
+      () => appSettings.value.voicePracticeEnabled,
+      enabled => {
+        if (!enabled && practiceInputMode.value === 'voice') selectPracticeInput('keyboard')
+      }
+    )
+
     const updateDefaultBibleVersion = (value) => {
       saveAppSettingsLocally({
         ...appSettings.value,
@@ -10101,6 +10144,7 @@ export default {
       manualSync,
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
+      updateVoicePracticeEnabled,
       updateDefaultBibleVersion,
       handleDefaultBibleVersionFocus,
       commitDefaultBibleVersionCache,
