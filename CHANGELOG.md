@@ -1,3 +1,10 @@
+# [1.61.0](https://github.com/timunrau/rum1n8/compare/v1.60.2...v1.61.0) (2026-09-30)
+
+
+### Features
+
+* simplify practice feedback and keep references visible ([946d676](https://github.com/timunrau/rum1n8/commit/946d676a295383b6ad8e53622eef9184575c8387))
+
 ## [1.60.2](https://github.com/timunrau/rum1n8/compare/v1.60.1...v1.60.2) (2026-09-30)
 
 

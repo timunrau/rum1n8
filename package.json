@@ -1,7 +1,7 @@
 {
   "name": "rum1n8",
   "private": true,
-  "version": "1.60.2",
+  "version": "1.61.0",
   "license": "MIT-0",
   "type": "module",
   "scripts": {
