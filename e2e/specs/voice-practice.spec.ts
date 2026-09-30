@@ -91,7 +91,7 @@ async function openReviewVerse(page: Page, target = reviewVerse()) {
 async function startVoice(page: Page, speech: LocalSpeech) {
   const before = await speech.instances()
   await voiceButton(page).click()
-  await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+  await expect(voiceStatus(page)).toHaveText('Say the next words.')
   await expect.poll(() => speech.instances()).toBeGreaterThan(before)
   await expect.poll(() => speech.calls().then(calls => calls.started)).toBeGreaterThan(0)
   // The decoder can confirm before getUserMedia resolves, so wait for the
@@ -280,7 +280,7 @@ test.describe('voice practice capture', () => {
     await openLearnVerse(page, target)
 
     await startVoice(page, speech)
-    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    await expect(voiceStatus(page)).toHaveText('Say the next words.')
 
     await speech.speak('Alpha beta gamma')
 
@@ -362,7 +362,7 @@ test.describe('voice practice pausing and errors', () => {
     expect(await speech.tracksReleased()).toBeGreaterThanOrEqual(1)
 
     await voicePanel(page).getByRole('button', { name: 'Resume' }).click()
-    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    await expect(voiceStatus(page)).toHaveText('Say the next words.')
     expect(await speech.tracksLive()).toBe(1)
   })
 
@@ -383,7 +383,7 @@ test.describe('voice practice pausing and errors', () => {
     await startVoice(page, speech)
     // Silence produces no transcript at all.
 
-    await expect(voiceStatus(page)).toHaveText('Recite from the highlighted position.')
+    await expect(voiceStatus(page)).toHaveText('Say the next words.')
     await expect(page.locator('#practice-word-0')).toHaveClass(/practice-word--current/)
     await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
     await expect(completionTitle(page)).toHaveCount(0)

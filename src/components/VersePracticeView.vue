@@ -48,7 +48,7 @@
             ]"
           >
             <span v-if="panel.mode === 'learn'">
-              <template v-if="word.revealed">
+              <template v-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -75,10 +75,10 @@
               </template>
             </span>
             <span v-else-if="panel.mode === 'memorize'">
-              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-word-unrevealed">
+              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word) && !(panel.isCurrent && voicePreview.includes(index))" class="text-word-unrevealed">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
-              <template v-else-if="word.revealed">
+              <template v-else-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -107,7 +107,7 @@
               </span>
             </span>
             <span v-else-if="panel.mode === 'master'">
-              <template v-if="word.revealed">
+              <template v-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -846,10 +846,6 @@ export default {
   letter-spacing: 0;
   color: var(--color-text-primary);
 }
-
-.practice-word--voice-current { outline: 2px solid var(--color-accent-warm-text); outline-offset: 2px; border-radius: .2rem; }
-
-.practice-word--voice-preview { outline: 1px dashed var(--color-accent-warm-text); border-radius: .2rem; }
 
 .practice-word {
   position: relative;

@@ -38,7 +38,7 @@ defineEmits(['start', 'stop', 'reveal', 'keyboard', 'download', 'cancel-download
 const active = computed(() => ['starting', 'listening', 'finishing'].includes(props.status))
 const downloading = computed(() => props.modelDownloading)
 const progressLabel = computed(() => `${Math.round(props.modelProgress * 100)}%`)
-const statusText = computed(() => ({ idle: 'Ready to listen.', starting: 'Starting microphone…', listening: props.reference ? 'Say the reference.' : 'Recite from the highlighted position.', finishing: 'Finishing the last spoken words…', paused: 'Paused. Tap Resume to continue.', error: 'Tap Retry or use the keyboard.' })[props.status])
+const statusText = computed(() => ({ idle: 'Ready to listen.', starting: 'Starting microphone…', listening: props.reference ? 'Say the reference.' : 'Say the next words.', finishing: 'Finishing the last spoken words…', paused: 'Paused. Tap Resume to continue.', error: 'Tap Retry or use the keyboard.' })[props.status])
 </script>
 <style scoped>
 .voice-panel { max-height: 43dvh; overflow-y: auto; text-align: center; }

@@ -111,10 +111,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1
-          class="practice-session-title practice-session-title--fading flex-1 flex items-center min-w-0"
-          :style="{ opacity: practiceReferenceHeaderOpacity }"
-        >
+        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
@@ -221,10 +218,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1
-          class="practice-session-title practice-session-title--fading flex-1 flex items-center min-w-0"
-          :style="{ opacity: practiceReferenceHeaderOpacity }"
-        >
+        <h1 class="practice-session-title flex-1 flex items-center min-w-0">
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
@@ -328,7 +322,7 @@
   </Transition>
   </div>
 
-  <ModalSheet :show="!!voiceLeaveAction" title="Unsaved result" max-width="sm:max-w-md" @close="voiceLeaveAction = null">
+  <ModalSheet :show="!!voiceLeaveAction" title="Unsaved result" max-width="sm:max-w-md" compact @close="voiceLeaveAction = null">
     <p class="text-sm text-text-secondary">Your result has not been saved. Stay to finish it, or discard it and leave.</p>
     <template #footer><div class="flex flex-wrap gap-2">
       <button class="btn-secondary" @click="discardVoiceResults">Discard result</button>
@@ -5338,17 +5332,6 @@ export default {
       return mode === 'learn' || (mode === 'memorize' && (index + retryOffset) % 2 === 0)
     }
 
-    const practiceReferenceHeaderOpacity = computed(() => {
-      const verse = memorizingVerse.value || reviewingVerse.value
-      if (!verse || !shouldRequireReferenceTyping(verse)) return 1
-
-      const contentWords = reviewWords.value.filter(word => !word.isReferenceUnit)
-      if (contentWords.length === 0) return 1
-
-      const completedContentWords = contentWords.filter(word => word.revealed).length
-      return Math.max(0, 1 - completedContentWords / contentWords.length)
-    })
-
     const buildContentPracticeWords = (content, mode, retryOffset = 0, options = {}) => {
       const wordEntries = getVerseWords(content)
       return wordEntries.map((entry, index) => {
@@ -9196,6 +9179,7 @@ export default {
         ...appSettings.value,
         voicePracticeEnabled: enabled
       })
+      if (enabled && voiceSupported) refreshVoiceModelState()
     }
 
     watch(
@@ -9774,6 +9758,7 @@ export default {
       loadCollections()
       loadVerses()
       appSettings.value = getAppSettings()
+      if (voiceSupported && appSettings.value.voicePracticeEnabled) refreshVoiceModelState()
       migrateProviderSetting()
       consumeUpdateAppliedToast()
 
@@ -9884,7 +9869,6 @@ export default {
       downloadVoiceModelNow, cancelVoiceModelDownload, removeVoiceModel, refreshVoiceModelState,
       completeAndAdvanceMode, completeAndExitMemorization, completeAndNextVerse, completeAndExitReview,
       discardVoiceResults,
-      practiceReferenceHeaderOpacity,
       currentPracticeWordIndex,
       typedLetter,
       reviewInput,
@@ -10251,10 +10235,6 @@ export default {
   letter-spacing: 0;
   margin: 0;
   color: var(--color-text-primary);
-}
-
-.practice-session-title--fading {
-  transition: opacity 180ms linear;
 }
 
 .practice-session-title > span {

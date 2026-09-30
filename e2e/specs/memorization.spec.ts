@@ -403,7 +403,7 @@ test('memorize mode: alternates hidden words on initial entry', async ({ page })
   await expect(page.locator('#practice-word-3 .text-transparent')).not.toBeAttached()
 })
 
-test('reference typing fades the header through the verse and keeps it hidden on completion', async ({ page }) => {
+test('reference typing keeps the header visible through the verse and completion', async ({ page }) => {
   const verse = [
     {
       ...sampleVerses[0],
@@ -432,15 +432,15 @@ test('reference typing fades the header through the verse and keeps it hidden on
 
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('o', { delay: 50 })
-  await expect.poll(headerOpacity).toBeCloseTo(0.5, 2)
+  await expect.poll(headerOpacity).toBeCloseTo(1, 2)
 
   await page.keyboard.type('t', { delay: 50 })
-  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
+  await expect.poll(headerOpacity).toBeCloseTo(1, 2)
   await expect(page.getByText('Learned')).toHaveCount(0)
 
   await page.keyboard.type('j316', { delay: 50 })
   await expect(page.getByText('Learned').first()).toBeVisible({ timeout: 3000 })
-  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
+  await expect.poll(headerOpacity).toBeCloseTo(1, 2)
 })
 
 test('memorize mode continues alternating through reference chunks while keeping the colon visible', async ({ page }) => {
@@ -473,7 +473,7 @@ test('memorize mode continues alternating through reference chunks while keeping
   const headerOpacity = async () => Number(await header.evaluate((element) => getComputedStyle(element).opacity))
   await page.locator('#letter-input-memorize').focus()
   await page.keyboard.type('ottf', { delay: 50 })
-  await expect.poll(headerOpacity).toBeCloseTo(0, 2)
+  await expect.poll(headerOpacity).toBeCloseTo(1, 2)
 
   await page.keyboard.type('1c1213', { delay: 50 })
   await expect(page.getByText('Memorized').first()).toBeVisible({ timeout: 3000 })

@@ -39,7 +39,7 @@ Speech recognition can omit or mishear words. When a later phrase locates a gap 
 
 ## Attempt and saving rules
 
-- Interim results only outline provisional matches. Final results advance the same display units as keyboard input.
+- Interim results show matching words provisionally. Final results advance the same display units as keyboard input.
 - Committed words never move backward. Attempt IDs invalidate in-flight callbacks on new attempts, backgrounding, and aborts.
 - Input changes keep completed units, typed reference digits, and mistakes. Pending speech is discarded.
 - Mistakes are recorded before unit completion can finish a passage segment. The in-memory ledger distinguishes keyboard mistakes, deliberate reveals, and voice input.

@@ -49,6 +49,7 @@ export function createLocalRecognitionAdapter({
   let disposed = false
   // Guards against a late message from a superseded attempt being applied.
   let activeSession = 0
+  let pendingStart = null
 
   function setStatus(next) {
     if (status === next) return
@@ -97,11 +98,7 @@ export function createLocalRecognitionAdapter({
         workerReady = null
         break
       case 'listening':
-        // The decoder acking is not proof of a live microphone: a denied or
-        // missing getUserMedia can reject after this arrives. Only let the ack
-        // confirm a start that is still in progress, so a failed open settles on
-        // 'error' instead of a phantom 'Listening'.
-        if (status === 'starting') setStatus('listening')
+        // Only a successfully opened microphone can confirm Listening.
         break
       case 'partial':
         if (status !== 'listening') return
@@ -118,6 +115,7 @@ export function createLocalRecognitionAdapter({
         break
       case 'flushed':
         activeSession = 0
+        pendingStart = null
         scheduleIdle()
         break
       case 'error': {
@@ -192,52 +190,86 @@ export function createLocalRecognitionAdapter({
 
   async function start({ nextSession = true } = {}) {
     if (disposed) return
+    const resumingPending = pendingStart && !pendingStart.decoderStarted && pendingStart.micOpened &&
+      ['pause', 'finish'].includes(pendingStart.ending) && activeSession === pendingStart.sessionId
+    if (resumingPending) {
+      const attempt = pendingStart
+      attempt.endGeneration++
+      attempt.ending = null
+      attempt.flushReady = false
+      const currentCapture = createCapture(attempt)
+      capture = currentCapture
+      setStatus('starting')
+      try {
+        await currentCapture.start()
+        if (capture === currentCapture && activeSession === attempt.sessionId) setStatus('listening')
+        else currentCapture.stop()
+      } catch (error) {
+        currentCapture.stop()
+        if (capture === currentCapture) capture = null
+        if (error?.code !== 'cancelled' && activeSession === attempt.sessionId) setStatus('error')
+      }
+      return
+    }
     if (nextSession) {
       sessionId++
       activeSession = sessionId
       lastPartial = ''
     }
     cancelIdle()
-
-    try {
-      await prepare()
-    } catch {
-      return
-    }
-    cancelIdle()
-    if (disposed || activeSession !== sessionId) return
-
     const captureSession = sessionId
-    capture = createAudioCapture({
+    const attempt = { sessionId: captureSession, audio: [], decoderStarted: false, micOpened: false, ending: null, endGeneration: 0, flushReady: false }
+    pendingStart = attempt
+    setStatus('starting')
+    // Open the microphone while the model loads. Audio captured during a cold
+    // start is queued, then handed to the decoder in its original order.
+    const modelReady = prepare()
+    cancelIdle()
+    capture = createCapture(attempt)
+    const currentCapture = capture
+    try {
+      const microphoneReady = currentCapture.start().then(() => {
+        if (activeSession === captureSession && capture === currentCapture) {
+          attempt.micOpened = true
+          setStatus('listening')
+        }
+        else currentCapture.stop()
+      })
+      await Promise.all([modelReady, microphoneReady])
+      if (disposed || activeSession !== captureSession || pendingStart !== attempt) return
+      cancelIdle()
+      post({ type: 'start', sessionId: captureSession })
+      attempt.decoderStarted = true
+      for (const samples of attempt.audio) {
+        post({ type: 'audio', sessionId: captureSession, samples, last: lastPartial }, [samples.buffer])
+      }
+      attempt.audio = []
+      if (attempt.ending && attempt.flushReady) post({ type: 'flush', sessionId: captureSession, reason: attempt.ending })
+    } catch (error) {
+      currentCapture.stop()
+      if (pendingStart === attempt) {
+        capture?.stop()
+        capture = null
+        pendingStart = null
+      }
+      if (activeSession === captureSession && capture === null && error?.code !== 'cancelled') setStatus('error')
+    }
+  }
+
+  function createCapture(attempt) {
+    return createAudioCapture({
       scope,
       onAudio: samples => {
-        if (disposed || activeSession !== captureSession) return
-        post({ type: 'audio', sessionId: captureSession, samples, last: lastPartial }, [samples.buffer])
+        if (disposed || pendingStart !== attempt) return
+        if (attempt.decoderStarted) post({ type: 'audio', sessionId: attempt.sessionId, samples, last: lastPartial }, [samples.buffer])
+        else attempt.audio.push(samples)
       },
       onError: (message) => {
-        if (activeSession !== captureSession) return
+        if (activeSession !== attempt.sessionId) return
         setStatus('error')
         onError(message)
       },
     })
-    const currentCapture = capture
-
-    setStatus('starting')
-    post({ type: 'start', sessionId })
-    try {
-      await currentCapture.start()
-      // The worker acks 'listening' once it is actually decoding. A microphone
-      // that opened but delivers no PCM must not read as Listening.
-      if (activeSession !== captureSession || capture !== currentCapture) {
-        currentCapture.stop()
-        return
-      }
-      setStatus('listening')
-    } catch (error) {
-      currentCapture.stop()
-      if (capture === currentCapture) capture = null
-      if (activeSession === captureSession && capture === null && error?.code !== 'cancelled') setStatus('error')
-    }
   }
 
   // Pause: the button must respond immediately and the mic must actually stop.
@@ -248,8 +280,16 @@ export function createLocalRecognitionAdapter({
     setStatus('paused')
     const endingCapture = capture
     capture = null
+    const attempt = pendingStart?.sessionId === previous ? pendingStart : null
+    const endGeneration = attempt ? ++attempt.endGeneration : 0
+    if (attempt) { attempt.ending = 'pause'; attempt.flushReady = false }
     endingCapture?.stop({ flush: true }).then(() => {
-      if (activeSession === previous && previous) post({ type: 'flush', sessionId: previous, reason: 'pause' })
+      if (activeSession !== previous || !previous) return
+      if (attempt) {
+        if (attempt.endGeneration !== endGeneration) return
+        attempt.flushReady = true
+        if (attempt.decoderStarted && attempt.ending === 'pause') post({ type: 'flush', sessionId: previous, reason: 'pause' })
+      } else post({ type: 'flush', sessionId: previous, reason: 'pause' })
     })
     lastPartial = ''
   }
@@ -264,8 +304,16 @@ export function createLocalRecognitionAdapter({
     setStatus('paused')
     const endingCapture = capture
     capture = null
+    const attempt = pendingStart?.sessionId === previous ? pendingStart : null
+    const endGeneration = attempt ? ++attempt.endGeneration : 0
+    if (attempt) { attempt.ending = 'finish'; attempt.flushReady = false }
     endingCapture?.stop({ flush: true }).then(() => {
-      if (activeSession === previous && previous) post({ type: 'flush', sessionId: previous, reason: 'finish' })
+      if (activeSession !== previous || !previous) return
+      if (attempt) {
+        if (attempt.endGeneration !== endGeneration) return
+        attempt.flushReady = true
+        if (attempt.decoderStarted && attempt.ending === 'finish') post({ type: 'flush', sessionId: previous, reason: 'finish' })
+      } else post({ type: 'flush', sessionId: previous, reason: 'finish' })
     })
     lastPartial = ''
   }
@@ -276,6 +324,7 @@ export function createLocalRecognitionAdapter({
     if (disposed) return
     activeSession = 0
     sessionId++
+    pendingStart = null
     setStatus(status_)
     capture?.stop()
     capture = null
@@ -294,6 +343,7 @@ export function createLocalRecognitionAdapter({
     disposed = true
     cancelIdle()
     activeSession = 0
+    pendingStart = null
     capture?.stop()
     capture = null
     disposeWorker()
