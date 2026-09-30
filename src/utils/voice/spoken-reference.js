@@ -1,5 +1,5 @@
 import { BIBLE_BOOKS, normalizeBookName, parseVerseSpanReference } from '../bible-reference.js'
-import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
+import { VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
 import { numberAt, rawTokens } from './normalization.js'
 
 const ordinals = { first: '1', second: '2', third: '3', one: '1', two: '2', three: '3' }
@@ -9,6 +9,15 @@ function exactBook(text) {
 }
 export function supportedSpokenReference(reference) {
   return parseVerseSpanReference(reference.replace(/[–—]/g, '-'))
+}
+
+// Nearby numbers are easy for ASR to confuse ("sixteen"/"seventeen"). Only
+// count a fully parsed numeric mismatch when the values are far apart and do
+// not even share a final digit ("sixteen"/"six" should still be lenient).
+function clearNumberMismatch(spoken, expected) {
+  const actual = String(Number(spoken))
+  const target = String(Number(expected))
+  return Math.abs(Number(actual) - Number(target)) >= 10 && actual.at(-1) !== target.at(-1)
 }
 
 // Parse the utterance independently. In particular, never split "316" using the answer.
@@ -81,9 +90,13 @@ export function matchSpokenReference(units, startIndex, reference, text) {
     const target = targets[cursor]
     if (!target) return { ambiguous: true, decisions: [] }
     if (number.role === target.role && number.range === target.range) {
-      // A misheard digit ("sixteen" for "six") is a recognizer error, not a
-      // memorization error, so the number is accepted either way.
-      numericDecisions.push({ index: target.unit.index, incorrect: false, accepted: VOICE_HEARD })
+      const sameValue = number.value === String(Number(target.unit.text))
+      const wrong = !sameValue && clearNumberMismatch(number.value, target.unit.text)
+      numericDecisions.push({
+        index: target.unit.index,
+        incorrect: wrong,
+        accepted: sameValue ? VOICE_HEARD : (wrong ? VOICE_REPLACED : VOICE_BRIDGED),
+      })
       cursor++
       continue
     }
@@ -97,12 +110,13 @@ export function matchSpokenReference(units, startIndex, reference, text) {
     numericDecisions.push({ index: targets[cursor++].unit.index, incorrect: false, accepted: VOICE_HEARD })
   }
   if (cursor < targets.length) return { pending: true, decisions: [] }
-  // A book name the recognizer mangled still counts as located. Penalising it
-  // would mark words incorrect purely because of an ASR substitution.
+  // An explicit, different book is a mistake; an unrecognized book remains
+  // uncertain and keeps the benefit of the doubt.
+  const bookWrong = !!parsed.book && parsed.book.id !== expected.bookId
   const bookDecisions = allReference.slice(0, numericStart).map(unit => ({
     index: unit.index,
-    incorrect: false,
-    accepted: parsed.book ? VOICE_HEARD : VOICE_BRIDGED,
+    incorrect: bookWrong,
+    accepted: bookWrong ? VOICE_REPLACED : (parsed.book ? VOICE_HEARD : VOICE_BRIDGED),
   }))
   return { decisions: [...bookDecisions, ...numericDecisions].filter(decision => decision.index >= startIndex) }
 }

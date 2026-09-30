@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { buildReferencePracticeUnits } from '../reference-typing.js'
 import { getVerseWords } from '../verse-words.js'
-import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
+import { VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
 import { matchSpokenReference, parseSpokenReference, supportedSpokenReference } from './spoken-reference.js'
 
 const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
 const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const replaced = index => ({ index, incorrect: true, accepted: VOICE_REPLACED })
 const heardAll = indices => indices.map(heard)
 
 const referenceUnits = reference => buildReferencePracticeUnits(reference)
@@ -105,18 +106,25 @@ describe('matchSpokenReference', () => {
     expect(result.decisions).toEqual(heardAll([0, 1, 2, 3]))
   })
 
-  it('accepts a misheard digit instead of flagging it', () => {
+  it('gives a nearby number the benefit of the doubt', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John three seventeen')
 
-    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
+    expect(result.decisions).toEqual([heard(0), heard(1), bridged(2)])
     expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
+    expect(matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John three six').decisions)
+      .toEqual([heard(0), heard(1), bridged(2)])
   })
 
-  it('accepts a substituted book name without flagging the numbers', () => {
+  it('marks an explicit different book as a mistake without flagging matching numbers', () => {
     const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'Mark three sixteen')
 
-    expect(result.decisions).toEqual(heardAll([0, 1, 2]))
-    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
+    expect(result.decisions).toEqual([replaced(0), heard(1), heard(2)])
+  })
+
+  it('marks a distant spoken number as a mistake', () => {
+    const result = matchSpokenReference(practiceUnits('', 'John 3:16'), 0, 'John 3:16', 'John three ninety nine')
+
+    expect(result.decisions).toEqual([heard(0), heard(1), replaced(2)])
   })
 
   it('returns only decisions at or after the supplied start index', () => {

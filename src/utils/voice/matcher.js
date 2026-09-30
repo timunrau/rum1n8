@@ -1,24 +1,45 @@
 import { normalizeSpeech, speechTokensWithOffsets } from './normalization.js'
 
-// A recognised word is either heard or bridged. Bridged words were accepted
-// because a later distinctive phrase located the speaker, not because the
-// recognizer reported them. Neither is ever a mistake.
+// Keep the reason for each decision so a clear replacement can be graded
+// differently from speech the recognizer merely omitted.
 export const VOICE_HEARD = 'heard'
 export const VOICE_BRIDGED = 'bridged'
+export const VOICE_REPLACED = 'replaced'
 
 // Bound how far a single anchor may skip. Generous, but not unbounded: a verse
 // must not be marked complete because one late phrase matched.
 export const VOICE_MAX_BRIDGE = 8
 
-// Speech recognition omits, substitutes, and mis-hears words on ordinary
-// readings of a verse. Those are recognizer errors, not memorization errors, so
-// this matcher never reports `incorrect`. A mistake is only ever recorded by an
-// explicit Reveal in the practice view. The trade is deliberate: bridging across
-// a gap can grant credit for a genuinely skipped word, which the user prefers
-// over a red word they did not earn.
+// ASR can omit or mishear a word. Only a distinct, explicit replacement with
+// matching context on both sides is a voice mistake. Gaps and close-sounding
+// guesses continue to receive the benefit of the doubt.
 
 function credits(accepted) {
   return { incorrect: false, accepted }
+}
+
+function spellingDistance(a, b) {
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index)
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i]
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      )
+    }
+    previous.splice(0, previous.length, ...current)
+  }
+  return previous[b.length]
+}
+
+const fillerWords = new Set(['uh', 'um', 'ah', 'er', 'hmm'])
+
+export function clearVoiceReplacement(expected, spoken, previous = '', next = '') {
+  if (!expected || !spoken || fillerWords.has(spoken) || spoken === previous || spoken === next) return false
+  const length = Math.max(expected.length, spoken.length)
+  return spellingDistance(expected, spoken) >= Math.max(2, Math.ceil(length / 2))
 }
 
 // Return decisions in display-unit coordinates; multi-token contractions stay one unit.
@@ -72,6 +93,22 @@ export function matchSpeech(units, startIndex, transcript) {
       if (length && (!next || next.isReferenceUnit || atEnd || matches(cursor + 1, look + length))) { directAhead = look; break }
     }
     if (directAhead) { spoken = directAhead; continue }
+    const expected = normalizeSpeech(units[cursor].text)
+    const previous = decisions.at(-1)
+    const previousWord = normalizeSpeech(units[cursor - 1]?.text)[0]
+    const nextWord = normalizeSpeech(units[cursor + 1]?.text)[0]
+    // The spoken token takes the place of exactly one expected word. Require
+    // a heard word before it and a direct match after it, so a new segment,
+    // insertion, or unlocated phrase cannot create a false mistake.
+    if (expected.length === 1 && previous?.index === cursor - 1 && previous.accepted === VOICE_HEARD &&
+        spoken + 1 < tokens.length && matches(cursor + 1, spoken + 1) &&
+        clearVoiceReplacement(expected[0], tokens[spoken], previousWord, nextWord)) {
+      decisions.push({ index: cursor++, incorrect: true, accepted: VOICE_REPLACED })
+      spoken++
+      consumed = spoken
+      remainders.push(suffix(consumed))
+      continue
+    }
     if (anchors.length === 1) {
       // One clear later phrase locates the speaker past these words. Advance
       // across the gap as bridged progress rather than stopping or penalising.
@@ -90,14 +127,14 @@ export function matchSpeech(units, startIndex, transcript) {
   return { decisions, consumed, tokens, ambiguous, nextIndex: cursor, waiting: spoken > consumed, remainder: suffix(consumed), remainders }
 }
 
-// Rank a hypothesis. Genuinely heard words dominate, then a penalty for every
-// bridged word, then raw reach. Bridging is a last resort: a clean hypothesis
-// that heard less must still win over one that invented a longer run.
+// Prefer clean heard words over uncertain bridges or replacements. A clean
+// alternative should not be vetoed by another hypothesis guessing a mistake.
 function score(result) {
   const decisions = result.decisions || []
-  const bridged = decisions.filter(decision => decision.accepted === VOICE_BRIDGED).length
-  const heard = decisions.length - bridged
-  return heard * 1000 - bridged * 100 + decisions.length
+  const wrong = decisions.filter(decision => decision.incorrect).length
+  const bridged = decisions.filter(decision => !decision.incorrect && decision.accepted === VOICE_BRIDGED).length
+  const heard = decisions.length - bridged - wrong
+  return heard * 1000 - bridged * 100 - wrong * 1000 + decisions.length
 }
 
 // Prefer whichever hypothesis advances furthest with the fewest bridges. A worse

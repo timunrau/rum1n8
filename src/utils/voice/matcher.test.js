@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildReferencePracticeUnits } from '../reference-typing.js'
 import { getVerseWords } from '../verse-words.js'
-import { matchAlternatives, matchSpeech, resolveSpeechAlternatives, VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
+import { matchAlternatives, matchSpeech, resolveSpeechAlternatives, VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
 
 const contentUnits = content => getVerseWords(content).map((entry, index) => ({ text: entry.text, index }))
 
@@ -19,6 +19,7 @@ const john = () => contentUnits(JOHN)
 
 const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
 const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const replaced = index => ({ index, incorrect: true, accepted: VOICE_REPLACED })
 const heardAll = indices => indices.map(heard)
 
 describe('matchSpeech accepting correct words', () => {
@@ -61,14 +62,27 @@ describe('matchSpeech accepting correct words', () => {
   })
 })
 
-// Recognition drops, substitutes, and reorders words on ordinary readings. These
-// cases previously produced red words; they now advance as accepted progress.
-describe('matchSpeech never reports a recognizer error as a mistake', () => {
-  it('accepts a substituted word when later words anchor the position', () => {
+describe('matchSpeech distinguishes clear replacements from uncertain speech', () => {
+  it('marks a distinct spoken replacement when both sides align', () => {
     const result = matchSpeech(john(), 0, 'In the start was the Word')
 
-    expect(result.decisions).toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
-    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
+    expect(result.decisions).toEqual([heard(0), heard(1), replaced(2), heard(3), heard(4), heard(5)])
+    expect(matchSpeech(contentUnits('One two three'), 0, 'One wrong three').decisions)
+      .toEqual([heard(0), replaced(1), heard(2)])
+  })
+
+  it('does not penalize a close recognition guess or a filler', () => {
+    expect(matchSpeech(john(), 0, 'In the begining was the Word').decisions)
+      .toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
+    expect(matchSpeech(john(), 0, 'In the uh was the Word').decisions)
+      .toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
+    expect(matchSpeech(john(), 0, 'In the the was the Word').decisions)
+      .toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
+  })
+
+  it('does not penalize an unmatched word at an utterance boundary', () => {
+    expect(matchSpeech(john(), 0, 'start the beginning was the Word').decisions)
+      .toEqual([bridged(0), ...heardAll([1, 2, 3, 4, 5])])
   })
 
   it('bridges every skipped unit when a later two-unit anchor locates the resume point', () => {
@@ -182,6 +196,12 @@ describe('resolveSpeechAlternatives', () => {
     const result = matchAlternatives(john(), 0, ['In the start was the Word', 'In the beginning was the'])
 
     expect(result.decisions).toEqual(heardAll([0, 1, 2, 3, 4]))
+  })
+
+  it('prefers a clean alternative over one that guesses a replacement', () => {
+    const result = matchAlternatives(john(), 0, ['In the start was the Word', 'In the beginning was the Word'])
+
+    expect(result.decisions).toEqual(heardAll([0, 1, 2, 3, 4, 5]))
   })
 
   it('reports the whole remainder list as unsupported only when no alternative parsed', () => {

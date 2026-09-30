@@ -1,5 +1,5 @@
-import { matchSpeech, resolveSpeechAlternatives, VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
-import { speechTokensWithOffsets } from './normalization.js'
+import { clearVoiceReplacement, matchSpeech, resolveSpeechAlternatives, VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
+import { normalizeSpeech, speechTokensWithOffsets } from './normalization.js'
 import { matchSpokenReference } from './spoken-reference.js'
 
 // Unmatched speech stays buffered so a later anchor can still locate it. These
@@ -19,20 +19,25 @@ export function matchVoiceUtterance({ units, startIndex, reference = '' }, text)
     ? { decisions: [], nextIndex: start, remainder: text, remainders: [text] }
     : matchSpeech(units, start, text)
   if (content.ambiguous) return content
-  // A completed spoken reference also locates the end of the verse. The trailing
-  // content word may have been omitted or misheard; treat it as bridged progress
-  // rather than a mistake, then continue into the reference.
+  // A completed spoken reference also locates the end of the verse. It can
+  // anchor a clearly replaced last word; silence or unclear speech is bridged.
   const lastContent = units[content.nextIndex]
   if (lastContent && !lastContent.isReferenceUnit && units[content.nextIndex + 1]?.isReferenceUnit) {
-    const { ends } = speechTokensWithOffsets(content.remainder)
+    const { tokens, ends } = speechTokensWithOffsets(content.remainder)
     for (const skip of [0, 1]) {
       if (skip && !ends.length) break
       const remainder = skip ? content.remainder.slice(ends[0]).trim() : content.remainder
       const located = matchSpokenReference(units, content.nextIndex + 1, reference, remainder)
       if (!located.decisions?.length || located.pending || located.ambiguous) continue
+      const preceding = content.decisions.at(-1)
+      const expected = normalizeSpeech(lastContent.text)
+      const previousWord = normalizeSpeech(units[content.nextIndex - 1]?.text)[0]
+      const wrong = skip === 1 && expected.length === 1 &&
+        preceding?.index === lastContent.index - 1 && preceding.accepted === VOICE_HEARD &&
+        clearVoiceReplacement(expected[0], tokens[0], previousWord)
       content = {
         ...content,
-        decisions: [...content.decisions, { index: lastContent.index, incorrect: false, accepted: VOICE_BRIDGED }],
+        decisions: [...content.decisions, { index: lastContent.index, incorrect: wrong, accepted: wrong ? VOICE_REPLACED : VOICE_BRIDGED }],
         nextIndex: content.nextIndex + 1,
         remainder,
         remainders: [...content.remainders, remainder],

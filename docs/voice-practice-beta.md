@@ -25,14 +25,15 @@ Audio never leaves the device. Ruminate does not record or save audio, store tra
 
 ## Matching and mistakes
 
-Speech recognition omits, substitutes, and reorders words on ordinary readings of a verse. Those are recognizer errors, not memorization errors, so the matcher never reports `incorrect`.
+Speech recognition can omit or mishear words. The matcher gives uncertain speech the benefit of the doubt, but a clearly transcribed replacement can count as a mistake when the surrounding words locate it.
 
-- Every decision is `heard` or `bridged`. `heard` means the recognizer heard that display unit. `bridged` means a later distinctive phrase located the speaker past those words, which were accepted without proof.
-- Reveal next word is the only way a voice attempt records a mistake.
+- Decisions are `heard`, `bridged`, or `replaced`. `heard` means the transcript matched the display unit. `bridged` means context located the speaker past a word without proving it was spoken; this remains correct. `replaced` means a distinct word occupied that unit between direct matches, so it counts as a mistake.
+- Filler words, repeated words, close spelling guesses, and unmatched utterance boundaries are not automatically marked wrong. Reveal next word also records a mistake.
 - Bridging is bounded to eight units, and a two-unit anchor is required whenever another content unit is available, so a repeated word or a single trailing word cannot jump the passage.
 - When several positions fit, progress stays pending and the recognizer keeps listening rather than guessing. Uncertain alignment still names the next word with "Continue from…".
 - Alternatives are ranked by genuinely heard words first, then fewest bridges, then reach, so a clean shorter hypothesis beats a longer bridging one and a worse guess never vetoes a better one.
-- Speech may cross a reference in one utterance. A misheard final content word is bridged once a full spoken reference locates the end; a partial reference stays pending.
+- Speech may cross a reference in one utterance. A distinct replacement of the final content word can count as a mistake when a full spoken reference anchors it; an omitted or unclear word is bridged. A partial reference stays pending.
+- A fully parsed different book or distant reference number counts as a mistake. Nearby number mismatches are accepted as uncertain because the recognizer can confuse similar spoken numbers.
 - Unsupported imported references fall back to keyboard input without losing verse progress.
 
 ## Attempt and saving rules
@@ -55,7 +56,7 @@ Speech recognition omits, substitutes, and reorders words on ordinary readings o
 - `src/utils/voice/audio-capture.js`: `getUserMedia`, worklet, and immediate track release.
 - `src/workers/voice/asr-worker.js`: classic worker that owns the recognizer, reads the preloaded model from Cache Storage, and decodes in a dedicated thread.
 - `src/utils/voice/local-recognition.js`: prepare, start, pause, finish, abort, dispose.
-- `src/utils/voice/matcher.js`: bounded alignment, accept-only decisions, alternative ranking.
+- `src/utils/voice/matcher.js`: bounded alignment, conservative replacement detection, alternative ranking.
 - `src/utils/voice/session.js`, `spoken-reference.js`, `normalization.js`: cross-result matching, spoken reference parsing, and number/contraction/homophone folding.
 - `src/components/VoicePracticePanel.vue` and `src/App.vue`: capture controls, model download, session coordination, attempt ledger, grading, and navigation guards.
 
@@ -67,7 +68,7 @@ The production build, the unit suite, and the Chrome Playwright suite are the re
 
 Automated coverage that exists today:
 
-- `src/utils/voice/normalization.test.js`, `matcher.test.js`, `spoken-reference.test.js`, and `session.test.js` cover number, contraction, punctuation, and homophone folding; accept-only content matching, anchors, bridge bounds, alternatives, and spoken reference parsing.
+- `src/utils/voice/normalization.test.js`, `matcher.test.js`, `spoken-reference.test.js`, and `session.test.js` cover number, contraction, punctuation, and homophone folding; content replacements, uncertain gaps, bridge bounds, alternatives, and spoken reference parsing.
 - `src/utils/verse-words.test.js` and `src/utils/practice-operations.test.js` cover content splitting, completion ordering, and voice-save eligibility.
 - `build/deploy-workflow.test.js` guards the deployment gate, which smoke-tests the model over real HTTP.
 - `e2e/specs/voice-practice.spec.ts` drives the local adapter with a fake worker, microphone, and model cache. It covers capture state, matching, navigation, and saving without downloading the large model in CI.

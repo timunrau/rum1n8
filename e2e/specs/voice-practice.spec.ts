@@ -261,16 +261,15 @@ test.describe('voice practice capture', () => {
     await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
   })
 
-  test('never marks a misheard word as a mistake', async ({ page }) => {
+  test('marks a clear spoken replacement without interrupting voice practice', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openLearnVerse(page)
 
     await startVoice(page, speech)
-    // A substitution the recognizer made, not a memory failure.
     await speech.speak('One wrong three')
 
-    await expect(completionTitle(page)).toContainText('Learned')
-    await expect(page.locator('.text-word-incorrect')).toHaveCount(0)
+    await expect(completionTitle(page)).toContainText('Keep practicing')
+    await expect(page.locator('#practice-word-1 .text-word-incorrect').first()).toHaveText('two')
     expect(await wordText(page, 1)).toBe('two')
   })
 
@@ -536,7 +535,7 @@ test.describe('voice practice completion and saving', () => {
     }).toEqual([2, 2])
   })
 
-  test('Reveal is the only source of a voice mistake, and it can still save a low grade', async ({ page }) => {
+  test('Reveal records a voice mistake, and the attempt can still save a low grade', async ({ page }) => {
     const speech = await installFakeSpeech(page)
     await openReviewVerse(page)
 

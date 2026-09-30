@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { buildReferencePracticeUnits } from '../reference-typing.js'
 import { getVerseWords } from '../verse-words.js'
-import { VOICE_BRIDGED, VOICE_HEARD } from './matcher.js'
+import { VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
 import { matchVoiceUtterance, resolveVoiceAlternatives } from './session.js'
 
 const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
 const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const replaced = index => ({ index, incorrect: true, accepted: VOICE_REPLACED })
 const heardAll = indices => indices.map(heard)
 
 const practiceUnits = (content, reference) => {
@@ -39,19 +40,25 @@ describe('matchVoiceUtterance', () => {
       .toEqual(heardAll([3, 4, 5]))
   })
 
-  it('bridges a misheard final content word once a full reference locates the end', () => {
+  it('marks a distinct replacement of the final content word before a full reference', () => {
     const units = practiceUnits('Alpha beta gamma', 'John 3:16')
     const result = matchVoiceUtterance(context(units, 0, 'John 3:16'), 'alpha beta blah John three sixteen')
 
     expect(result.decisions).toEqual([
       heard(0),
       heard(1),
-      bridged(2),
+      replaced(2),
       heard(3),
       heard(4),
       heard(5),
     ])
-    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
+  })
+
+  it('bridges an omitted final content word once a full reference locates the end', () => {
+    const units = practiceUnits('Alpha beta gamma', 'John 3:16')
+    const result = matchVoiceUtterance(context(units, 0), 'alpha beta John three sixteen')
+
+    expect(result.decisions).toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
   })
 
   it('leaves a partial reference pending instead of completing the verse', () => {
