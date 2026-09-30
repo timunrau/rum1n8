@@ -1,3 +1,10 @@
+## [1.60.2](https://github.com/timunrau/rum1n8/compare/v1.60.1...v1.60.2) (2026-09-30)
+
+
+### Bug Fixes
+
+* count skipped voice words as mistakes ([afe78c5](https://github.com/timunrau/rum1n8/commit/afe78c55249ffcb69bd166f0fc95d169d4b7f1ef))
+
 ## [1.60.1](https://github.com/timunrau/rum1n8/compare/v1.60.0...v1.60.1) (2026-09-30)
 
 
