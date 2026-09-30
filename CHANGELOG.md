@@ -1,3 +1,10 @@
+## [1.60.1](https://github.com/timunrau/rum1n8/compare/v1.60.0...v1.60.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* catch clear voice practice substitutions ([6d01ced](https://github.com/timunrau/rum1n8/commit/6d01ced1c98d217397422600dee4111f625c35df))
+
 # [1.60.0](https://github.com/timunrau/rum1n8/compare/v1.59.0...v1.60.0) (2026-09-29)
 
 
