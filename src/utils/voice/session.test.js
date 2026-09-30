@@ -5,7 +5,7 @@ import { VOICE_BRIDGED, VOICE_HEARD, VOICE_REPLACED } from './matcher.js'
 import { matchVoiceUtterance, resolveVoiceAlternatives } from './session.js'
 
 const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
-const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const bridged = index => ({ index, incorrect: true, accepted: VOICE_BRIDGED })
 const replaced = index => ({ index, incorrect: true, accepted: VOICE_REPLACED })
 const heardAll = indices => indices.map(heard)
 
@@ -54,7 +54,7 @@ describe('matchVoiceUtterance', () => {
     ])
   })
 
-  it('bridges an omitted final content word once a full reference locates the end', () => {
+  it('counts an omitted final content word once a full reference locates the end', () => {
     const units = practiceUnits('Alpha beta gamma', 'John 3:16')
     const result = matchVoiceUtterance(context(units, 0), 'alpha beta John three sixteen')
 

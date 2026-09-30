@@ -20,7 +20,7 @@ export function matchVoiceUtterance({ units, startIndex, reference = '' }, text)
     : matchSpeech(units, start, text)
   if (content.ambiguous) return content
   // A completed spoken reference also locates the end of the verse. It can
-  // anchor a clearly replaced last word; silence or unclear speech is bridged.
+  // anchor a clearly replaced last word or show that the word was omitted.
   const lastContent = units[content.nextIndex]
   if (lastContent && !lastContent.isReferenceUnit && units[content.nextIndex + 1]?.isReferenceUnit) {
     const { tokens, ends } = speechTokensWithOffsets(content.remainder)
@@ -37,7 +37,7 @@ export function matchVoiceUtterance({ units, startIndex, reference = '' }, text)
         clearVoiceReplacement(expected[0], tokens[0], previousWord)
       content = {
         ...content,
-        decisions: [...content.decisions, { index: lastContent.index, incorrect: wrong, accepted: wrong ? VOICE_REPLACED : VOICE_BRIDGED }],
+        decisions: [...content.decisions, { index: lastContent.index, incorrect: true, accepted: wrong ? VOICE_REPLACED : VOICE_BRIDGED }],
         nextIndex: content.nextIndex + 1,
         remainder,
         remainders: [...content.remainders, remainder],

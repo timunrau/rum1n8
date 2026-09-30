@@ -25,14 +25,15 @@ Audio never leaves the device. Ruminate does not record or save audio, store tra
 
 ## Matching and mistakes
 
-Speech recognition can omit or mishear words. The matcher gives uncertain speech the benefit of the doubt, but a clearly transcribed replacement can count as a mistake when the surrounding words locate it.
+Speech recognition can omit or mishear words. When a later phrase locates a gap in the verse, the matcher counts the words in that gap as missed instead of crediting words it did not hear. A clearly transcribed replacement also counts as a mistake when the surrounding words locate it. A recognizer omission can therefore cause a false penalty; this version does not verify the underlying audio.
 
-- Decisions are `heard`, `bridged`, or `replaced`. `heard` means the transcript matched the display unit. `bridged` means context located the speaker past a word without proving it was spoken; this remains correct. `replaced` means a distinct word occupied that unit between direct matches, so it counts as a mistake.
-- Filler words, repeated words, close spelling guesses, and unmatched utterance boundaries are not automatically marked wrong. Reveal next word also records a mistake.
-- Bridging is bounded to eight units, and a two-unit anchor is required whenever another content unit is available, so a repeated word or a single trailing word cannot jump the passage.
+- Decisions are `heard`, `bridged`, or `replaced`. `heard` means the transcript matched the display unit. `bridged` means context located the speaker past a verse word without proving it was spoken; this now counts as a missed word. `replaced` means a distinct word occupied that unit between direct matches, so it counts as a mistake. Spoken-reference units retain their more forgiving rules.
+- Filler or repeated words are ignored when the expected word follows them. When later context shows that the expected word was skipped, that word counts as missed. Reveal next word also records a mistake.
+- Bridging is bounded to eight units. A two-unit anchor is required when another content unit follows; a single final word can locate a bounded gap, but those skipped words count as mistakes.
 - When several positions fit, progress stays pending and the recognizer keeps listening rather than guessing. Uncertain alignment still names the next word with "Continue from…".
-- Alternatives are ranked by genuinely heard words first, then fewest bridges, then reach, so a clean shorter hypothesis beats a longer bridging one and a worse guess never vetoes a better one.
-- Speech may cross a reference in one utterance. A distinct replacement of the final content word can count as a mistake when a full spoken reference anchors it; an omitted or unclear word is bridged. A partial reference stays pending.
+- A different final word counts as a mistake when it follows directly heard words in the same decoded segment. A final word recognized alone may still remain pending because it has no surrounding context.
+- Alternatives are ranked by genuinely heard words first, then fewest inferred mistakes, then reach, so a clean shorter hypothesis beats a longer one with a gap and a worse guess never vetoes a better one.
+- Speech may cross a reference in one utterance. A distinct replacement or omission of the final content word counts as a mistake when a full spoken reference anchors it. A partial reference stays pending.
 - A fully parsed different book or distant reference number counts as a mistake. Nearby number mismatches are accepted as uncertain because the recognizer can confuse similar spoken numbers.
 - Unsupported imported references fall back to keyboard input without losing verse progress.
 

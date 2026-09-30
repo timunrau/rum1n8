@@ -18,7 +18,7 @@ const JOHN = 'In the beginning was the Word'
 const john = () => contentUnits(JOHN)
 
 const heard = index => ({ index, incorrect: false, accepted: VOICE_HEARD })
-const bridged = index => ({ index, incorrect: false, accepted: VOICE_BRIDGED })
+const bridged = index => ({ index, incorrect: true, accepted: VOICE_BRIDGED })
 const replaced = index => ({ index, incorrect: true, accepted: VOICE_REPLACED })
 const heardAll = indices => indices.map(heard)
 
@@ -71,7 +71,7 @@ describe('matchSpeech distinguishes clear replacements from uncertain speech', (
       .toEqual([heard(0), replaced(1), heard(2)])
   })
 
-  it('does not penalize a close recognition guess or a filler', () => {
+  it('does not credit a missing word after a close guess or filler', () => {
     expect(matchSpeech(john(), 0, 'In the begining was the Word').decisions)
       .toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
     expect(matchSpeech(john(), 0, 'In the uh was the Word').decisions)
@@ -80,24 +80,24 @@ describe('matchSpeech distinguishes clear replacements from uncertain speech', (
       .toEqual([heard(0), heard(1), bridged(2), heard(3), heard(4), heard(5)])
   })
 
-  it('does not penalize an unmatched word at an utterance boundary', () => {
+  it('counts an unmatched opening word when the rest of the utterance is located', () => {
     expect(matchSpeech(john(), 0, 'start the beginning was the Word').decisions)
       .toEqual([bridged(0), ...heardAll([1, 2, 3, 4, 5])])
   })
 
-  it('bridges every skipped unit when a later two-unit anchor locates the resume point', () => {
+  it('counts every skipped unit when a later anchor locates the resume point', () => {
     const result = matchSpeech(john(), 0, 'In the Word')
 
     expect(result.decisions).toEqual([heard(0), heard(1), bridged(2), bridged(3), bridged(4), heard(5)])
     expect(result.nextIndex).toBe(6)
   })
 
-  it('leaves a misheard final word undecided instead of counting it as a mistake', () => {
-    const result = matchSpeech(john(), 0, 'In the beginning was the Wordd')
+  it('counts a different final word after a directly heard phrase', () => {
+    const result = matchSpeech(john(), 0, 'In the beginning was the World')
 
-    expect(result.decisions).toEqual(heardAll([0, 1, 2, 3, 4]))
-    expect(result.nextIndex).toBe(5)
-    expect(result.remainder).toBe('Wordd')
+    expect(result.decisions).toEqual([...heardAll([0, 1, 2, 3, 4]), replaced(5)])
+    expect(result.nextIndex).toBe(6)
+    expect(result.remainder).toBe('')
   })
 
   it('does not count a repeated previous word at the end as a mistake', () => {
@@ -107,11 +107,11 @@ describe('matchSpeech distinguishes clear replacements from uncertain speech', (
     expect(result.remainder).toBe('the')
   })
 
-  it('credits words the speaker started past as bridged progress', () => {
+  it('counts words the speaker started past as missed progress', () => {
     const result = matchSpeech(john(), 0, 'beginning was')
 
     expect(result.decisions).toEqual([bridged(0), bridged(1), heard(2), heard(3)])
-    expect(result.decisions.every(decision => !decision.incorrect)).toBe(true)
+    expect(result.decisions.filter(decision => decision.incorrect).map(decision => decision.index)).toEqual([0, 1])
   })
 
   it('stays pending when a lone distant word would need an unbounded bridge', () => {

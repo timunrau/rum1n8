@@ -1,7 +1,7 @@
 import { normalizeSpeech, speechTokensWithOffsets } from './normalization.js'
 
-// Keep the reason for each decision so a clear replacement can be graded
-// differently from speech the recognizer merely omitted.
+// Keep the reason for each decision so the UI can distinguish words actually
+// heard from words located only by later context.
 export const VOICE_HEARD = 'heard'
 export const VOICE_BRIDGED = 'bridged'
 export const VOICE_REPLACED = 'replaced'
@@ -10,9 +10,10 @@ export const VOICE_REPLACED = 'replaced'
 // must not be marked complete because one late phrase matched.
 export const VOICE_MAX_BRIDGE = 8
 
-// ASR can omit or mishear a word. Only a distinct, explicit replacement with
-// matching context on both sides is a voice mistake. Gaps and close-sounding
-// guesses continue to receive the benefit of the doubt.
+// ASR can omit or mishear a word. A later anchor locates a gap, but does not
+// prove the missing words were spoken. Count that gap as missed rather than
+// awarding credit for it. This can produce false penalties when ASR drops audio;
+// resolving those requires evidence from the audio itself.
 
 function credits(accepted) {
   return { incorrect: false, accepted }
@@ -109,11 +110,25 @@ export function matchSpeech(units, startIndex, transcript) {
       remainders.push(suffix(consumed))
       continue
     }
+    // The final word has no right-hand anchor. When it is the only remaining
+    // token after a directly heard phrase, a different spoken word should not
+    // leave the user stuck repeating the end of the verse. Ignore hesitations
+    // and repetitions of the preceding word, which may be self-corrections.
+    if (cursor === units.length - 1 && expected.length === 1 && spoken === tokens.length - 1 &&
+        previous?.index === cursor - 1 && previous.accepted === VOICE_HEARD &&
+        !fillerWords.has(tokens[spoken]) && tokens[spoken] !== previousWord) {
+      decisions.push({ index: cursor++, incorrect: true, accepted: VOICE_REPLACED })
+      spoken++
+      consumed = spoken
+      remainders.push(suffix(consumed))
+      continue
+    }
     if (anchors.length === 1) {
       // One clear later phrase locates the speaker past these words. Advance
-      // across the gap as bridged progress rather than stopping or penalising.
+      // without asking them to repeat, but do not award credit for words that
+      // the recognizer never heard.
       for (let i = 0; i < anchors[0]; i++) {
-        decisions.push({ index: cursor++, ...credits(VOICE_BRIDGED) })
+        decisions.push({ index: cursor++, incorrect: true, accepted: VOICE_BRIDGED })
         remainders.push(suffix(spoken))
       }
       continue
@@ -127,17 +142,16 @@ export function matchSpeech(units, startIndex, transcript) {
   return { decisions, consumed, tokens, ambiguous, nextIndex: cursor, waiting: spoken > consumed, remainder: suffix(consumed), remainders }
 }
 
-// Prefer clean heard words over uncertain bridges or replacements. A clean
+// Prefer clean heard words over inferred gaps or replacements. A clean
 // alternative should not be vetoed by another hypothesis guessing a mistake.
 function score(result) {
   const decisions = result.decisions || []
   const wrong = decisions.filter(decision => decision.incorrect).length
-  const bridged = decisions.filter(decision => !decision.incorrect && decision.accepted === VOICE_BRIDGED).length
-  const heard = decisions.length - bridged - wrong
-  return heard * 1000 - bridged * 100 - wrong * 1000 + decisions.length
+  const heard = decisions.length - wrong
+  return heard * 1000 - wrong * 1000 + decisions.length
 }
 
-// Prefer whichever hypothesis advances furthest with the fewest bridges. A worse
+// Prefer whichever hypothesis has the most credited words and fewest mistakes. A worse
 // alternative must never veto words a better one already located.
 export function resolveSpeechAlternatives(results) {
   if (!results.length) {
