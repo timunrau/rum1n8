@@ -4,7 +4,7 @@ import { gotoApp } from '../helpers/navigation'
 
 const APP_URL = (process.env.PLAYWRIGHT_APP_URL || 'http://127.0.0.1:5173').replace(/\/$/, '')
 const MARKETING_URL = (process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')
-const HERO_HEADING = 'Ruminate: to turn something over in the mind.'
+const HERO_HEADING = "Everything you need to memorize Scripture. Nothing you don't."
 
 async function gotoMarketing(page: Page, path = '/') {
   await page.goto(`${MARKETING_URL}${path}`)
@@ -32,6 +32,85 @@ test('fresh marketing visit shows the static homepage and app CTA', async ({ pag
     `${APP_URL}/app/`,
   )
   await expect(page.getByTestId('nav-collections')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Back to app' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Google Play', exact: true })).toHaveAttribute(
+    'href',
+    'https://play.google.com/store/apps/details?id=xyz.unrau.rum1n8',
+  )
+})
+
+test('mobile navigation opens, dismisses, and resets when switching to desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 466, height: 888 })
+  await gotoMarketing(page)
+
+  const navigation = page.getByRole('navigation', { name: 'Main navigation' })
+  const toggle = page.getByRole('button', { name: /navigation menu/, includeHidden: true })
+  await expect(navigation).toBeHidden()
+  await toggle.click()
+  await expect(navigation).toBeVisible()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await navigation.getByRole('link', { name: 'Tips', exact: true }).focus()
+  await page.keyboard.press('Escape')
+  await expect(navigation).toBeHidden()
+  await expect(toggle).toBeFocused()
+
+  await toggle.click()
+  await page.locator('.home-hero__description').click()
+  await expect(navigation).toBeHidden()
+
+  await toggle.click()
+  await page.setViewportSize({ width: 912, height: 888 })
+  await expect(toggle).toBeHidden()
+  await expect(navigation).toBeVisible()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await page.setViewportSize({ width: 466, height: 888 })
+  await expect(toggle).toBeVisible()
+  await expect(navigation).toBeHidden()
+  await toggle.click()
+  await navigation.getByRole('link', { name: 'Tips', exact: true }).click()
+  await expect(page).toHaveURL(`${MARKETING_URL}/tips-for-memorizing-scripture/`)
+})
+
+for (const path of [
+  '/',
+  '/memorization-is-a-spiritual-life-hack/',
+  '/tips-for-memorizing-scripture/',
+  '/import/biblememory/',
+  '/privacy/',
+]) {
+  test(`app return remains left of the brand on desktop and mobile at ${path}`, async ({ page }) => {
+    await gotoMarketing(page, `${path}?returnTo=%2Fapp%2F%3Fview%3Dreview-list%23today`)
+
+    const returnLink = page.getByRole('link', { name: 'Back to app', exact: true })
+    const brand = page.getByRole('banner').getByRole('link', { name: /^Ruminate(?: home)?$/ })
+    for (const width of [842, 466, 320]) {
+      await page.setViewportSize({ width, height: 888 })
+      await expect(returnLink).toBeVisible()
+      await expect(brand).toBeVisible()
+      await expect.poll(async () => {
+        const returnBox = await returnLink.boundingBox()
+        const brandBox = await brand.boundingBox()
+        return returnBox && brandBox && returnBox.x + returnBox.width <= brandBox.x
+      }).toBe(true)
+      await expect(returnLink).toHaveAttribute('href', `${APP_URL}/app/?view=review-list#today`)
+    }
+  })
+}
+
+test('browsing marketing pages retains the exact app return destination', async ({ page }) => {
+  const returnTo = '/app/?view=review-list#today'
+  await gotoMarketing(page, `/?returnTo=${encodeURIComponent(returnTo)}`)
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Tips', exact: true }).click()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(returnTo)
+  await page.getByRole('banner').getByRole('link', { name: 'Ruminate home' }).click()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(returnTo)
+
+  await page.setViewportSize({ width: 466, height: 888 })
+  await page.getByRole('button', { name: 'Open navigation menu' }).click()
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Privacy', exact: true }).click()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(returnTo)
+  await page.getByRole('link', { name: 'Back to app', exact: true }).click()
+  await expect(page).toHaveURL(`${APP_URL}${returnTo}`)
 })
 
 test('marketing origin does not inspect app-local UI state', async ({ page }) => {

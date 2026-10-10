@@ -9,6 +9,13 @@ import {
 const APP_ROOT_PATH = '/app/'
 const BIBLEMEMORY_IMPORT_PATH = '/import/biblememory/'
 const TIPS_PATH = '/tips-for-memorizing-scripture/'
+const MARKETING_PATHS = new Set([
+  '/',
+  '/memorization-is-a-spiritual-life-hack/',
+  TIPS_PATH,
+  BIBLEMEMORY_IMPORT_PATH,
+  '/privacy/',
+])
 const APP_URL = import.meta.env?.VITE_APP_URL || 'http://127.0.0.1:5173/app/'
 
 function getReturnTarget() {
@@ -50,9 +57,43 @@ function updateReturnLink(target, isVisible) {
     return
   }
 
-  banner.hidden = false
+  const header = document.querySelector('.home-header')
+    || document.querySelector('.site-header__inner')
+    || document.querySelector('.site-header')
+  const brand = header?.querySelector('.brand')
+  if (brand) {
+    banner.classList.add('app-return--header')
+    brand.insertAdjacentElement('beforebegin', banner)
+    if (header.matches('.site-header')) header.classList.add('site-header--with-return')
+  }
+
   banner.querySelectorAll('[data-return-link]').forEach((link) => {
     link.setAttribute('href', target)
+    link.setAttribute('aria-label', 'Back to app')
+    link.setAttribute('title', 'Back to app')
+    link.classList.add('app-return__link')
+    link.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m0 0 6-6m-6 6 6 6" />
+      </svg>
+      <span class="app-return__label">Back to app</span>
+    `
+  })
+  banner.hidden = false
+}
+
+function preserveReturnTarget(returnTarget) {
+  if (!returnTarget) return
+
+  document.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute('href')
+    if (!href || href.startsWith('#')) return
+
+    const url = new URL(href, window.location.href)
+    if (url.origin !== window.location.origin || !MARKETING_PATHS.has(url.pathname)) return
+
+    url.searchParams.set('returnTo', returnTarget)
+    link.setAttribute('href', `${url.pathname}${url.search}${url.hash}`)
   })
 }
 
@@ -121,6 +162,7 @@ function initMarketingPage() {
 
   updateAppLinks(appTarget, appLabel)
   updateReturnLink(appTarget, !!explicitReturnTarget)
+  preserveReturnTarget(explicitReturnTarget)
 
   if (pathname.startsWith(BIBLEMEMORY_IMPORT_PATH)) {
     initBibleMemoryImportPage()
