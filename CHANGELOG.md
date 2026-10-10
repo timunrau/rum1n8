@@ -1,3 +1,10 @@
+## [1.62.1](https://github.com/timunrau/rum1n8/compare/v1.62.0...v1.62.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* clarify marketing branding and social preview copy ([e0c63b5](https://github.com/timunrau/rum1n8/commit/e0c63b5c307af6c99b82a02e9c2d69046fb0f899))
+
 # [1.62.0](https://github.com/timunrau/rum1n8/compare/v1.61.0...v1.62.0) (2026-10-10)
 
 
