@@ -9,10 +9,14 @@ const projectRoot = path.resolve(__dirname, '..')
 const marketingDir = path.join(projectRoot, 'public', 'marketing')
 const mobileViewport = { width: 378, height: 672 }
 const mobileDeviceScaleFactor = 1080 / 378
+const ogOnly = process.argv.includes('--og-only')
 
 const productName = 'Ruminate'
 const title = 'Bible Memory App'
-const description = 'A simple Bible memory app that gives you control of your data.'
+const descriptionParagraphs = [
+  "Ruminate's structured memory system makes it easy to learn and review Bible verses.",
+  "It's simple, completely free, and requires no account. There are no limits on how many verses you can memorize, and you can export them anytime.",
+]
 const now = '2026-04-12T12:00:00.000Z'
 const yesterday = '2026-04-11T12:00:00.000Z'
 const tomorrow = '2026-04-13T12:00:00.000Z'
@@ -1198,6 +1202,9 @@ async function captureOgCard(browser, baseUrl) {
               color: var(--muted);
               max-width: 540px;
             }
+            p + p {
+              margin-top: 16px;
+            }
             .right {
               position: relative;
               z-index: 1;
@@ -1260,7 +1267,7 @@ async function captureOgCard(browser, baseUrl) {
                   <div class="brand-icon-crop"><img class="brand-icon" src="${iconUrl}" alt="" /></div>
                   <h1><span class="product-name">${productName}</span><span class="product-title">${title}</span></h1>
                 </div>
-                <p>${description}</p>
+                ${descriptionParagraphs.map((paragraph) => `<p>${paragraph}</p>`).join('\n')}
               </div>
             </section>
             <section class="right">
@@ -1312,7 +1319,7 @@ try {
   const browser = await launchBrowser()
 
   try {
-    for (const colorScheme of ['light', 'dark']) {
+    for (const colorScheme of ogOnly ? [] : ['light', 'dark']) {
       await captureVersesState(browser, baseUrl, colorScheme)
       await capturePracticeState(browser, baseUrl, colorScheme)
       await captureReviewState(browser, baseUrl, colorScheme)

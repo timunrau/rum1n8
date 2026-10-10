@@ -82,7 +82,7 @@ for (const path of [
     await gotoMarketing(page, `${path}?returnTo=%2Fapp%2F%3Fview%3Dreview-list%23today`)
 
     const returnLink = page.getByRole('link', { name: 'Back to app', exact: true })
-    const brand = page.getByRole('banner').getByRole('link', { name: /^Ruminate(?: home)?$/ })
+    const brand = page.getByRole('banner').getByRole('link', { name: /^Ruminate(?: Bible Memory App)?(?: home)?$/ })
     for (const width of [842, 466, 320]) {
       await page.setViewportSize({ width, height: 888 })
       await expect(returnLink).toBeVisible()
