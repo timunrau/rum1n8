@@ -1,3 +1,10 @@
+# [1.62.0](https://github.com/timunrau/rum1n8/compare/v1.61.0...v1.62.0) (2026-10-10)
+
+
+### Features
+
+* rebuild the marketing homepage ([0f404dc](https://github.com/timunrau/rum1n8/commit/0f404dc1e66151758da7e15a0dc036c73c2051d0))
+
 # [1.61.0](https://github.com/timunrau/rum1n8/compare/v1.60.2...v1.61.0) (2026-09-30)
 
 
