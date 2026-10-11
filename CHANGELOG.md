@@ -1,3 +1,10 @@
+## [1.62.2](https://github.com/timunrau/rum1n8/compare/v1.62.1...v1.62.2) (2026-10-11)
+
+
+### Bug Fixes
+
+* align marketing hero and product descriptions ([af1b45c](https://github.com/timunrau/rum1n8/commit/af1b45c511498198dd9670ed202c9ae3c868db20))
+
 ## [1.62.1](https://github.com/timunrau/rum1n8/compare/v1.62.0...v1.62.1) (2026-10-10)
 
 
