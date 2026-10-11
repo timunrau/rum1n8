@@ -4,7 +4,7 @@ import { gotoApp } from '../helpers/navigation'
 
 const APP_URL = (process.env.PLAYWRIGHT_APP_URL || 'http://127.0.0.1:5173').replace(/\/$/, '')
 const MARKETING_URL = (process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')
-const HERO_HEADING = "Everything you need to memorize Scripture. Nothing you don't."
+const HERO_HEADING = 'A simple Bible memory system that keeps you in control of your data'
 
 async function gotoMarketing(page: Page, path = '/') {
   await page.goto(`${MARKETING_URL}${path}`)

@@ -134,7 +134,7 @@ export function buildSiteMetadata(env, mode = 'development') {
     websiteName,
     applicationName,
     shortName,
-    defaultDescription: 'A simple Bible memory app that gives you control of your data.',
+    defaultDescription: 'A simple Bible memory system that keeps you in control of your data.',
     memorizationBenefitsTitle: `Memorization Is A Spiritual Life-Hack - ${websiteName}`,
     memorizationBenefitsDescription: "A short case for why Scripture memorization unlocks real growth in your walk with God.",
     scriptureTipsTitle: `Tips For Memorizing Scripture - ${websiteName}`,
