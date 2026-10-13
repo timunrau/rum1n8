@@ -1,4 +1,4 @@
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 # The pinned voice model is a .tar.bz2 archive. Busybox tar in Alpine cannot
 # read bzip2, so the extraction step in scripts/prepare-voice-model.mjs needs
