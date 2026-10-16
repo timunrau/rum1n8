@@ -1,10 +1,10 @@
+# Keep supported versions current through manageable stable batches. See AGENTS.md.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/Winnipeg
     cooldown:
@@ -12,6 +12,10 @@ updates:
       semver-patch-days: 3
       semver-minor-days: 7
       semver-major-days: 30
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
@@ -30,8 +34,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/Winnipeg
     cooldown:
@@ -39,6 +42,10 @@ updates:
       semver-patch-days: 3
       semver-minor-days: 7
       semver-major-days: 30
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
@@ -53,8 +60,7 @@ updates:
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/Winnipeg
     cooldown:
@@ -62,6 +68,10 @@ updates:
       semver-patch-days: 3
       semver-minor-days: 7
       semver-major-days: 30
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
@@ -76,8 +86,7 @@ updates:
   - package-ecosystem: npm
     directory: /android-twa
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/Winnipeg
     cooldown:
@@ -85,6 +94,10 @@ updates:
       semver-patch-days: 3
       semver-minor-days: 7
       semver-major-days: 30
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 1
     commit-message:
       prefix: "chore(deps)"
@@ -92,8 +105,7 @@ updates:
   - package-ecosystem: gradle
     directory: /android-twa
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/Winnipeg
     cooldown:
@@ -101,6 +113,10 @@ updates:
       semver-patch-days: 3
       semver-minor-days: 7
       semver-major-days: 30
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 1
     commit-message:
       prefix: "chore(deps)"

@@ -1,5 +1,14 @@
 # rum1n8 – Codex Notes
 
+## Maintenance Philosophy
+
+- Prioritize stability and steady, manageable maintenance. Keep the app current enough to avoid unsupported dependencies and large, risky catch-up upgrades; do not update merely to have the newest version.
+- Accept stable, compatible patch/minor updates in manageable batches after reviewing release notes and passing the relevant checks. An observed app bug is not required to justify routine maintenance.
+- Avoid prerelease, experimental, or unsupported versions. Do not migrate to a new major simply because Dependabot proposes it; review compatibility and support needs first.
+- Keep Node on a supported LTS line. Update development, CI, and Docker together when a major migration is justified.
+- Keep Dependabot low-noise: monthly version-update batches, separate production and development dependencies, and no routine major-version PRs. Do not repeatedly fight individual bot PRs or disable security maintenance.
+- See [docs/developer.md](docs/developer.md#maintenance) for the maintenance workflow.
+
 ## Environment Setup
 
 - Install dependencies with `npm install`.

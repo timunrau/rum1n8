@@ -35,11 +35,18 @@ The marketing site's HTML, JavaScript, and CSS live in `site/`. Vite keeps the p
 
 ## Maintenance
 
-- Dependabot checks npm, GitHub Actions, and Docker dependencies weekly on Monday at 09:00 America/Winnipeg
-- Treat patch/minor dependency PRs as routine maintenance; merge them when CI is green
-- Review semver-major dependency PRs as planned batches, not mixed with unrelated feature work
-- Handle critical/high audit findings within a few days; moderate/low findings can wait for the monthly maintenance pass
-- Avoid routine `npm audit fix --force`; inspect breaking changes first
+Keep the app stable and reasonably current through regular, manageable updates. Avoid both unnecessary version chasing and letting dependencies drift until a large, risky catch-up upgrade is required.
+
+- Accept stable, compatible patch/minor updates in manageable batches after reviewing release notes, transitive changes, and CI. Routine maintenance does not need to fix an observed app bug to be worthwhile.
+- Avoid prerelease, experimental, or unsupported versions. Review major migrations separately for compatibility, support, and maintenance benefits; do not upgrade just because a newer major exists.
+- Keep Node on a supported LTS line. Coordinate development, CI, and all Docker images when a major migration is needed.
+- Dependabot checks npm, GitHub Actions, Docker, and Android dependencies monthly at 09:00 America/Winnipeg. Production and development npm updates are grouped separately. Routine major-version PRs are disabled; plan those migrations explicitly.
+- Keep security triage separate from routine version-update cadence. Review critical/high findings promptly against actual usage and exposure; moderate/low findings can normally wait for the monthly pass.
+- Avoid `npm audit fix --force` and unreviewed blanket refreshes. Prefer compatible fixes and document remaining findings instead of claiming a clean audit.
+
+The [October 16, 2026 review](maintenance-2026-10-16.md) records the PR decisions and remaining audit findings.
+
+At each monthly pass, also review runtime and toolchain support timelines and plan upcoming major migrations early enough to avoid an end-of-support scramble.
 
 Monthly maintenance pass:
 
