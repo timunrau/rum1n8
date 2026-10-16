@@ -13,6 +13,7 @@
 //    backgrounds, or leaves.
 
 import { createAudioCapture } from './audio-capture.js'
+import bpeVocabUrl from './zipformer-bpe.vocab?url'
 import { readModelAsset, voiceModelCacheName } from './model-store.js'
 import {
   VOICE_MODEL_BASE_PATH,
@@ -32,11 +33,17 @@ const IDLE_DISPOSE_MS = 5 * 60 * 1000
 
 export function createLocalRecognitionAdapter({
   scope = globalThis,
+  debug = false,
+  endpointMode = 'default',
+  decoderMode = 'greedy',
+  biasMode = 'none',
+  getHotwords = () => [],
   onStatus = () => {},
   onPartial = () => {},
   onFinal = () => {},
   onError = () => {},
   onStats = () => {},
+  onDiagnostic = () => {},
 } = {}) {
   let worker = null
   let workerReady = null
@@ -108,10 +115,13 @@ export function createLocalRecognitionAdapter({
         break
       case 'final':
         lastPartial = ''
-        onFinal(data.text)
+        onFinal(data.text, { reason: data.reason, biasTokens: data.biasTokens, contextScoreCount: data.contextScoreCount, hotwordsCount: data.hotwordsCount })
         break
       case 'stats':
         onStats(data.stats)
+        break
+      case 'diagnostic':
+        onDiagnostic(data.message)
         break
       case 'flushed':
         activeSession = 0
@@ -172,6 +182,12 @@ export function createLocalRecognitionAdapter({
       baseUrl: voiceModelBaseUrl(),
       cacheName: voiceModelCacheName,
       preloadUrl: voiceModelAssetUrl(VOICE_MODEL_PRELOAD_FILE),
+      debug,
+      endpointMode,
+      decoderMode,
+      biasMode,
+      hotwords: biasMode === 'verse' ? getHotwords() : [],
+      bpeVocabUrl: biasMode === 'verse' ? bpeVocabUrl : '',
     })
     scheduleIdle()
     return promise
@@ -238,7 +254,7 @@ export function createLocalRecognitionAdapter({
       await Promise.all([modelReady, microphoneReady])
       if (disposed || activeSession !== captureSession || pendingStart !== attempt) return
       cancelIdle()
-      post({ type: 'start', sessionId: captureSession })
+      post({ type: 'start', sessionId: captureSession, hotwords: biasMode === 'verse' ? getHotwords() : [] })
       attempt.decoderStarted = true
       for (const samples of attempt.audio) {
         post({ type: 'audio', sessionId: captureSession, samples, last: lastPartial }, [samples.buffer])

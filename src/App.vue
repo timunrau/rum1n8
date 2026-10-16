@@ -2879,8 +2879,12 @@ export default {
     const attemptLedger = ref([])
     const voiceLeaveAction = ref(null)
     const voiceActionPending = ref(false)
+    const voiceDebugParams = import.meta.env.DEV ? new URLSearchParams(window.location.search) : null
+    const voiceDebug = voiceDebugParams?.has('voiceDebug') || false
+    // A local comparison run may span several verses without changing SRS data.
+    const voiceTrialMode = voiceDebug && voiceDebugParams.get('voiceTrial') === '1'
     const voiceNeedsConfirmation = computed(() => voiceAttempt.value.hasVoice && !voiceAttempt.value.confirmed && !voiceAttempt.value.discarded)
-    const practiceSaveEligible = () => canSavePracticeAttempt(voiceAttempt.value)
+    const practiceSaveEligible = () => !voiceTrialMode && canSavePracticeAttempt(voiceAttempt.value)
     const hasUnconfirmedResults = () => voiceNeedsConfirmation.value && (
       allWordsRevealed.value || Object.keys(passageSegmentResults.value).some(id => !passageSegmentSaved.value[id])
     )
@@ -2917,6 +2921,29 @@ export default {
     let voiceRepeatPending = false
     let voiceAttemptId = 0
     let activeVoiceAttemptId = 0
+    // Opt-in local diagnostics for testing natural pauses with a real microphone.
+    // Nothing is stored or sent; this is absent from production builds.
+    const voiceEndpointMode = voiceDebug && voiceDebugParams.get('voiceEndpoint') === 'long' ? 'long' : 'default'
+    const voiceBiasMode = voiceDebug && voiceDebugParams.get('voiceBias') === 'verse' ? 'verse' : 'none'
+    const voiceDecoderMode = voiceBiasMode === 'verse' || (voiceDebug && voiceDebugParams.get('voiceDecoder') === 'beam') ? 'beam' : 'greedy'
+    const voiceHotwords = () => voiceBiasMode === 'verse'
+      ? [...new Set(reviewWords.value
+        .filter(word => !word.isReferenceUnit)
+        .flatMap(word => word.text.toUpperCase().match(/[A-Z]{3,}/g) || []))]
+      : []
+    const traceVoice = (event, details = {}) => {
+      if (voiceDebug) console.info(`[voice debug] ${JSON.stringify({
+        event,
+        verseId: (reviewingVerse.value || memorizingVerse.value)?.id || null,
+        reference: (reviewingVerse.value || memorizingVerse.value)?.reference || null,
+        trial: voiceTrialMode,
+        cursor: currentPracticeWordIndex.value,
+        ...details,
+      })}`)
+    }
+    let lastVoiceDebugSeconds = -1
+    let lastVoiceDebugSegments = -1
+    let voiceDebugPeak = 0
     const voiceAtReference = computed(() => !!reviewWords.value[currentPracticeWordIndex.value]?.isReferenceUnit)
     const voiceContinuePrompt = computed(() => {
       const word = reviewWords.value[currentPracticeWordIndex.value]
@@ -2960,7 +2987,17 @@ export default {
         { ...voiceMatchContext(), buffers: voiceBuffers, repeatPending: voiceRepeatPending },
         alternatives,
       )
-      if (preview) return resolved.decisions.filter(decision => !decision.incorrect).map(decision => decision.index)
+      if (!preview) traceVoice('match', {
+        alternatives,
+        buffers: voiceBuffers,
+        decisions: resolved.decisions,
+        remainders: resolved.remainders,
+        waiting: resolved.waiting,
+        ambiguous: resolved.ambiguous,
+      })
+      if (preview) {
+        return resolved.decisions.filter(decision => !decision.incorrect).map(decision => decision.index)
+      }
       voiceRepeatPending = resolved.repeatPending
       voiceMessage.value = resolved.overflow || resolved.needsContinuationPrompt
         ? voiceContinuePrompt.value : ''
@@ -2984,13 +3021,40 @@ export default {
     // independent of which engine produced the words.
     const voiceHypothesis = (alternatives, finals) => ({ finals, interim: alternatives.map(text => ({ alternatives: [text] })) })
     const recognition = createLocalRecognitionAdapter({
+      debug: voiceDebug,
+      endpointMode: voiceEndpointMode,
+      decoderMode: voiceDecoderMode,
+      biasMode: voiceBiasMode,
+      getHotwords: voiceHotwords,
       onStatus: status => {
+        if (status === 'starting') {
+          lastVoiceDebugSeconds = -1
+          lastVoiceDebugSegments = -1
+          voiceDebugPeak = 0
+        }
+        traceVoice('status', { status, endpointMode: voiceEndpointMode, decoderMode: voiceDecoderMode, biasMode: voiceBiasMode })
         voiceStatus.value = status
         if (!['listening', 'finishing', 'starting'].includes(status)) voicePreview.value = []
       },
-      onError: (message) => { voiceMessage.value = message; voicePreview.value = []; voiceBuffers = [''] },
-      onFinal: text => { if (text) onVoiceResult(voiceHypothesis([], [{ alternatives: [text] }])) },
-      onPartial: text => { if (text) onVoiceResult(voiceHypothesis([text], [])) },
+      onError: (message) => { traceVoice('error', { message }); voiceMessage.value = message; voicePreview.value = []; voiceBuffers = [''] },
+      onDiagnostic: message => { traceVoice('diagnostic', { message }) },
+      onFinal: (text, diagnostics) => {
+        traceVoice('final', { text, ...diagnostics })
+        if (text) onVoiceResult(voiceHypothesis([], [{ alternatives: [text] }]))
+      },
+      onPartial: text => {
+        traceVoice('partial', { text })
+        if (text) onVoiceResult(voiceHypothesis([text], []))
+      },
+      onStats: stats => {
+        if (!voiceDebug) return
+        voiceDebugPeak = Math.max(voiceDebugPeak, stats.audioRms || 0)
+        if (stats.audioSeconds === lastVoiceDebugSeconds && stats.segments === lastVoiceDebugSegments) return
+        lastVoiceDebugSeconds = stats.audioSeconds
+        lastVoiceDebugSegments = stats.segments
+        traceVoice('audio', { seconds: stats.audioSeconds, segments: stats.segments, backlog: stats.backlog, peakRms: +voiceDebugPeak.toFixed(4) })
+        voiceDebugPeak = 0
+      },
     })
     const onVoiceResult = ({ finals, interim }) => {
       if (activeVoiceAttemptId !== voiceAttemptId || practiceInputMode.value !== 'voice') return
@@ -4240,6 +4304,9 @@ export default {
     // The user must still retry to reach 90% to proceed, but the SRS schedule
     // reflects the honest first-attempt performance, not a polished retry.
     watch([allWordsRevealed, () => voiceAttempt.value.confirmed], ([revealed]) => {
+      if (voiceTrialMode && revealed && reviewingVerse.value && practiceInputMode.value === 'voice' && !voiceAttempt.value.confirmed) {
+        traceVoice('trial-result', { accuracy: accuracy.value, mistakes: reviewMistakes.value, units: totalPracticeUnitCount.value })
+      }
       if (!practiceSaveEligible()) return
       if (!revealed || !reviewingVerse.value || memorizationMode.value !== 'master') return
       if (combinedPassageReview.value) return

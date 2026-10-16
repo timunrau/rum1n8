@@ -38,6 +38,9 @@ let recognizer = null
 let stream = null
 let disposed = false
 let loading = null
+let debugAudio = false
+let workerContext = null
+let currentHotwords = ''
 
 // Every reply carries a session id so a late message can never touch a newer
 // attempt, and a sequence number so reordering is detectable.
@@ -45,7 +48,7 @@ let activeSession = 0
 let sequence = 0
 
 // Diagnostics only: timings and counters. No words, no audio, ever.
-const stats = { decodeMs: 0, audioSamples: 0, backlog: 0, segments: 0, lastDecodeMs: 0 }
+const stats = { decodeMs: 0, audioSamples: 0, backlog: 0, segments: 0, lastDecodeMs: 0, audioRms: 0 }
 
 function post(type, payload = {}) {
   self.postMessage({ type, sessionId: activeSession, sequence: ++sequence, ...payload })
@@ -55,7 +58,11 @@ function reportStats() {
   post('stats', { stats: { ...stats, audioSeconds: Math.round(stats.audioSamples / SAMPLE_RATE) } })
 }
 
-function baseConfig() {
+function baseConfig(context, hotwords = []) {
+  const endpointConfig = context.debug && context.endpointMode === 'long'
+    ? { rule1MinTrailingSilence: 4, rule2MinTrailingSilence: 3, rule3MinUtteranceLength: 60 }
+    : ENDPOINT_CONFIG
+  const hotwordsBuf = context.debug && context.biasMode === 'verse' ? hotwords.join('\n') : ''
   return {
     featConfig: { sampleRate: SAMPLE_RATE, featureDim: 80 },
     // These names are the virtual files inside the emscripten preload, not URLs.
@@ -70,15 +77,17 @@ function baseConfig() {
       provider: 'cpu',
       debug: 0,
       modelType: '',
-      modelingUnit: 'cjkchar',
-      bpeVocab: '',
+      modelingUnit: hotwordsBuf ? 'bpe' : 'cjkchar',
+      bpeVocab: hotwordsBuf ? './bpe.vocab' : '',
     },
-    decodingMethod: 'greedy_search',
+    decodingMethod: context.debug && context.decoderMode === 'beam' ? 'modified_beam_search' : 'greedy_search',
     maxActivePaths: 4,
     enableEndpoint: 1,
-    ...ENDPOINT_CONFIG,
+    ...endpointConfig,
     hotwordsFile: '',
-    hotwordsScore: 1.5,
+    hotwordsBuf,
+    hotwordsBufSize: new TextEncoder().encode(hotwordsBuf).length,
+    hotwordsScore: hotwordsBuf ? 0.75 : 1.5,
     ctcFstDecoderConfig: { graph: '', maxActive: 3000 },
     ruleFsts: '',
     ruleFars: '',
@@ -107,7 +116,9 @@ async function loadModel(context) {
         // Synchronous by contract: hand over the buffer we already read.
         getPreloadedPackage: () => preload,
         print: () => {},
-        printErr: () => {},
+        printErr: message => {
+          if (context.debug && context.biasMode === 'verse') post('diagnostic', { message: String(message) })
+        },
         onRuntimeInitialized: () => {
           clearTimeout(timer)
           resolve()
@@ -125,7 +136,14 @@ async function loadModel(context) {
   }
 
   if (disposed) return
-  recognizer = createOnlineRecognizer(self.Module, baseConfig())
+  if (context.debug && context.biasMode === 'verse') {
+    const vocabResponse = await fetch(context.bpeVocabUrl)
+    if (!vocabResponse.ok) throw new Error('The voice vocabulary could not be loaded for this local trial.')
+    self.Module.FS_createDataFile('/', 'bpe.vocab', await vocabResponse.text(), true, false)
+  }
+  workerContext = context
+  currentHotwords = (context.hotwords || []).join('\n')
+  recognizer = createOnlineRecognizer(self.Module, baseConfig(context, context.hotwords))
   post('ready', { loadMs: Date.now() - started, preloadBytes: preload.byteLength })
 }
 
@@ -154,7 +172,26 @@ function pump({ final = false } = {}) {
   const text = (result.text || '').trim()
   const endpointed = !final && recognizer.isEndpoint(active)
   if (endpointed) stats.segments++
-  return { text, endpointed, decoded }
+  const contextScores = debugAudio ? (result.context_scores || []) : []
+  return {
+    text,
+    endpointed,
+    decoded,
+    contextScoreCount: contextScores.length,
+    biasTokens: contextScores.filter(score => score !== 0).length,
+  }
+}
+
+function finalPayload(result, reason) {
+  return {
+    text: result.text,
+    ...(reason ? { reason } : {}),
+    ...(debugAudio ? {
+      biasTokens: result.biasTokens,
+      contextScoreCount: result.contextScoreCount,
+      hotwordsCount: currentHotwords.split('\n').filter(Boolean).length,
+    } : {}),
+  }
 }
 
 function resetStream() {
@@ -173,6 +210,7 @@ function dropStream() {
 const handlers = {
   init(context) {
     if (loading || disposed) return loading
+    debugAudio = context.debug === true
     loading = loadModel(context).then(() => { loading = null }).catch(error => {
       loading = null
       post('error', { code: 'model-load-failed', message: String(error?.message || error) })
@@ -188,17 +226,31 @@ const handlers = {
     stats.segments = 0
     // Drop anything the previous attempt left half decoded.
     dropStream()
+    if (workerContext?.debug && workerContext.biasMode === 'verse') {
+      const nextHotwords = (message.hotwords || []).join('\n')
+      if (nextHotwords !== currentHotwords) {
+        recognizer.free()
+        recognizer = null
+        recognizer = createOnlineRecognizer(self.Module, baseConfig(workerContext, message.hotwords))
+        currentHotwords = nextHotwords
+      }
+    }
     post('listening')
   },
 
   audio(message) {
     if (!recognizer || message.sessionId !== activeSession) return
     stats.audioSamples += message.samples.length
+    if (debugAudio && message.samples.length) {
+      let energy = 0
+      for (const sample of message.samples) energy += sample * sample
+      stats.audioRms = Math.sqrt(energy / message.samples.length)
+    }
     const active = ensureStream()
     active.acceptWaveform(SAMPLE_RATE, message.samples)
     const result = pump()
     if (result.endpointed) {
-      if (result.text) post('final', { text: result.text })
+      if (result.text) post('final', finalPayload(result))
       resetStream()
     } else if (result.text && result.text !== message.last) {
       // Only report a changed hypothesis, so a long tail of silence does not
@@ -214,7 +266,7 @@ const handlers = {
   flush(message) {
     if (!recognizer || message.sessionId !== activeSession) return
     const result = pump({ final: true })
-    if (result.text) post('final', { text: result.text, reason: message.reason })
+    if (result.text) post('final', finalPayload(result, message.reason))
     dropStream()
     reportStats()
     post('flushed')
