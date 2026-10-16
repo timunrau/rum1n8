@@ -1,3 +1,10 @@
+## [1.62.3](https://github.com/timunrau/rum1n8/compare/v1.62.2...v1.62.3) (2026-10-16)
+
+
+### Bug Fixes
+
+* refine Scripture memorization marketing copy ([4f874df](https://github.com/timunrau/rum1n8/commit/4f874dfe0807e44ebfd04bd9295e946cd1c4bcc2))
+
 ## [1.62.2](https://github.com/timunrau/rum1n8/compare/v1.62.1...v1.62.2) (2026-10-11)
 
 
