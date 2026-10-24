@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/timunrau/rum1n8/compare/v1.62.4...v1.63.0) (2026-10-24)
+
+
+### Features
+
+* allow hiding placeholder lines in Master ([7d19282](https://github.com/timunrau/rum1n8/commit/7d1928268fb500d1f4d2915f2c6b33173b3bd168)), closes [#171](https://github.com/timunrau/rum1n8/issues/171)
+
 ## [1.62.4](https://github.com/timunrau/rum1n8/compare/v1.62.3...v1.62.4) (2026-10-24)
 
 
