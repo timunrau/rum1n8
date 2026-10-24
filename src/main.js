@@ -1,11 +1,12 @@
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
-import { migrateStorage } from './migrate-storage.js'
+import { cleanupRetiredVoiceModels, migrateStorage } from './migrate-storage.js'
 import { initAnalytics } from './analytics.js'
 import { getAppSettings } from './app-settings.js'
 
 migrateStorage()
+void cleanupRetiredVoiceModels()
 initAnalytics({ optOut: getAppSettings().analyticsOptOut })
 
 const app = createApp(App)

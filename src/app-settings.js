@@ -5,7 +5,6 @@ const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 export const DEFAULT_APP_SETTINGS = Object.freeze({
   requireReferenceTyping: false,
   showMasterPlaceholderLines: true,
-  voicePracticeEnabled: false,
   analyticsOptOut: false,
   defaultBibleVersion: '',
   verseSortPreferences: {}
@@ -20,16 +19,18 @@ function normalizeVerseSortPreferences(preferences) {
 }
 
 export function normalizeAppSettings(settings = {}) {
+  const currentSettings = { ...settings }
+  // Older clients and backups may still send this retired preference.
+  delete currentSettings.voicePracticeEnabled
   const defaultBibleVersion = typeof settings.defaultBibleVersion === 'string'
     ? settings.defaultBibleVersion.trim().toUpperCase()
     : ''
 
   return {
     ...DEFAULT_APP_SETTINGS,
-    ...settings,
+    ...currentSettings,
     requireReferenceTyping: !!settings.requireReferenceTyping,
     showMasterPlaceholderLines: settings.showMasterPlaceholderLines !== false,
-    voicePracticeEnabled: !!settings.voicePracticeEnabled,
     analyticsOptOut: !!settings.analyticsOptOut,
     defaultBibleVersion,
     verseSortPreferences: normalizeVerseSortPreferences(settings.verseSortPreferences)

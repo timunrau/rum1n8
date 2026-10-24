@@ -1,7 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import { chromium } from '@playwright/test'
+import { seedRetiredVoiceData, verifyRetiredVoiceCleanup } from '../e2e/helpers/retired-voice.mjs'
 
 const oldImage = process.env.OLD_APP_IMAGE || 'ghcr.io/timunrau/rum1n8:latest'
+// Keep the original monolithic-app migration gate by default. An already split
+// pre-removal app image can exercise voice retirement separately.
+const expectOldMarketingCache = process.env.EXPECT_OLD_MARKETING_CACHE !== '0'
 const newImage = process.env.NEW_APP_IMAGE || 'rum1n8-app:local'
 const proxyImage = process.env.PROXY_IMAGE || 'rum1n8-proxy:local'
 const port = Number(process.env.UPGRADE_TEST_PORT || 18082)
@@ -136,9 +140,10 @@ try {
   await page.reload({ waitUntil: 'networkidle' })
   const oldUrls = await cacheUrls(page)
   const oldMarketingUrls = marketingCacheUrls(oldUrls)
-  if (oldMarketingUrls.length === 0) {
+  if (expectOldMarketingCache && oldMarketingUrls.length === 0) {
     throw new Error('Released worker did not expose an obsolete marketing cache entry to test')
   }
+  await seedRetiredVoiceData(page)
 
   docker(['stop', appName])
   startApp(newImage)
@@ -147,7 +152,11 @@ try {
   await page.getByTestId('hamburger-button').click()
   await page.getByRole('button', { name: /^v\d/ }).click()
   const newUrls = await waitForNewWorkerCache(page, newAssetPath)
-  await page.waitForLoadState('domcontentloaded')
+  // Installation can finish before the existing app's update flow reloads.
+  // Check the new document, not just the new service worker's precache.
+  await page.waitForFunction(asset => Array.from(document.scripts)
+    .some(script => new URL(script.src, location.href).pathname === asset), newAssetPath)
+  await verifyRetiredVoiceCleanup(page)
 
   const retained = await page.evaluate(() => localStorage.getItem('rum1n8-verses'))
   const retainedVerse = JSON.parse(retained || '[]')
@@ -164,11 +173,14 @@ try {
   await context.setOffline(true)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await page.getByTestId('hamburger-button').waitFor({ state: 'visible' })
+  await verifyRetiredVoiceCleanup(page)
 
   console.log(JSON.stringify({
     oldImage,
     newImage,
     oldMarketingEntriesRemoved: oldMarketingUrls.length,
+    retiredVoiceModelsRemoved: true,
+    unrelatedCachesAndSettingsRetained: true,
     localDataRetained: true,
     offlineAppLoaded: true,
   }, null, 2))

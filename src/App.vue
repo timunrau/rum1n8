@@ -115,12 +115,6 @@
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
-          <button v-if="voiceSupported && appSettings.voicePracticeEnabled" class="practice-header-button practice-header-button--plain"
-            :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
-            @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
-            <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
-            <svg v-else class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
-          </button>
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse, 'practice')"
@@ -151,10 +145,6 @@
         :show-master-placeholder-lines="appSettings.showMasterPlaceholderLines"
         :review-words="reviewWords"
         :current-word-index="currentPracticeWordIndex"
-        :input-mode="practiceInputMode"
-        :voice-preview="voicePreview"
-        :defer-passage-retry="voiceNeedsConfirmation"
-        :block-input="voiceNeedsConfirmation && allWordsRevealed"
         context="memorization"
         v-model:typed-letter="typedLetter"
         :get-memorization-status="getMemorizationStatus"
@@ -177,14 +167,8 @@
       />
     </div>
 
-  <VoicePracticePanel v-if="practiceInputMode === 'voice' && !allWordsRevealed"
-    :status="voiceStatus" :message="voiceMessage" :reference="voiceAtReference"
-    :model-state="voiceModelState" :model-progress="voiceModelProgress" :model-downloading="voiceModelDownloading" :size-label="voiceModelSizeLabel"
-    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')"
-    @download="downloadVoiceModelNow" @cancel-download="cancelVoiceModelDownload" @remove-model="removeVoiceModel" />
-
   <!-- Completion Tray for Memorization -->
-  <Transition :name="practiceInputMode === 'voice' ? '' : 'result-tray'">
+  <Transition name="result-tray">
     <CompletionTray
       v-if="allWordsRevealed && memorizationMode"
       context="memorization"
@@ -193,10 +177,9 @@
       :review-mistakes="reviewMistakes"
       :review-words-length="totalPracticeUnitCount"
       :memorization-mode="memorizationMode"
-      :busy="voiceActionPending"
       @advance="completeAndAdvanceMode"
       @exit="completeAndExitMemorization"
-      @retry="retryPracticeAttempt"
+      @retry="retryMemorization"
     />
   </Transition>
   </div>
@@ -223,12 +206,6 @@
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
-          <button v-if="voiceSupported && appSettings.voicePracticeEnabled" class="practice-header-button practice-header-button--plain"
-            :class="{ 'voice-selected': practiceInputMode === 'voice' }" aria-label="Voice practice" :aria-pressed="practiceInputMode === 'voice'"
-            @click="selectPracticeInput(practiceInputMode === 'voice' ? 'keyboard' : 'voice')">
-            <svg v-if="practiceInputMode === 'voice'" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.6" width="6" height="11.4" rx="3" stroke="none"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v2.4m-3.4.2h6.8" fill="none" stroke-width="2.2"/></svg>
-            <svg v-else class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
-          </button>
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse, 'practice')"
@@ -269,10 +246,6 @@
         :show-master-placeholder-lines="appSettings.showMasterPlaceholderLines"
         :review-words="reviewWords"
         :current-word-index="currentPracticeWordIndex"
-        :input-mode="practiceInputMode"
-        :voice-preview="voicePreview"
-        :defer-passage-retry="voiceNeedsConfirmation"
-        :block-input="voiceNeedsConfirmation && allWordsRevealed"
         context="review"
         v-model:typed-letter="typedLetter"
         :get-memorization-status="getMemorizationStatus"
@@ -297,14 +270,8 @@
       />
     </div>
 
-  <VoicePracticePanel v-if="practiceInputMode === 'voice' && !allWordsRevealed"
-    :status="voiceStatus" :message="voiceMessage" :reference="voiceAtReference"
-    :model-state="voiceModelState" :model-progress="voiceModelProgress" :model-downloading="voiceModelDownloading" :size-label="voiceModelSizeLabel"
-    @start="startVoice" @stop="stopVoice" @reveal="revealVoiceWord" @keyboard="selectPracticeInput('keyboard')"
-    @download="downloadVoiceModelNow" @cancel-download="cancelVoiceModelDownload" @remove-model="removeVoiceModel" />
-
   <!-- Completion Tray for Review -->
-  <Transition :name="practiceInputMode === 'voice' ? '' : 'result-tray'">
+  <Transition name="result-tray">
     <CompletionTray
       v-if="allWordsRevealed && reviewingVerse"
       context="review"
@@ -313,24 +280,14 @@
       :review-mistakes="reviewMistakes"
       :review-words-length="totalPracticeUnitCount"
       :memorization-mode="memorizationMode"
-      :next-review-label="voiceNeedsConfirmation ? null : reviewingVerseNextReviewLabel"
+      :next-review-label="reviewingVerseNextReviewLabel"
       :is-last-in-list="isLastInReviewList"
-      :allow-continue-below-threshold="voiceNeedsConfirmation"
-      :busy="voiceActionPending"
-      @retry="retryPracticeAttempt"
+      @retry="retryReview"
       @next-verse="completeAndNextVerse"
       @done="completeAndExitReview"
     />
   </Transition>
   </div>
-
-  <ModalSheet :show="!!voiceLeaveAction" title="Unsaved result" max-width="sm:max-w-md" compact @close="voiceLeaveAction = null">
-    <p class="text-sm text-text-secondary">Your result has not been saved. Stay to finish it, or discard it and leave.</p>
-    <template #footer><div class="flex flex-wrap gap-2">
-      <button class="btn-secondary" @click="discardVoiceResults">Discard result</button>
-      <button class="btn-primary" @click="voiceLeaveAction = null">Stay</button>
-    </div></template>
-  </ModalSheet>
 
   <!-- Main Content -->
   <AppShell
@@ -2183,34 +2140,6 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               </button>
             </div>
           </div>
-          <div class="rounded-xl bg-sunken p-4">
-            <div class="flex items-start gap-4">
-              <div class="flex-1">
-                <p id="voice-practice-setting-label" class="text-base font-semibold text-text-primary">Voice practice</p>
-                <p id="voice-practice-setting-description" class="mt-1 text-sm text-text-muted">Beta: This feature is in active development and might not work properly.</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-labelledby="voice-practice-setting-label"
-                aria-describedby="voice-practice-setting-description"
-                :aria-checked="appSettings.voicePracticeEnabled"
-                data-testid="voice-practice-toggle"
-                :class="[
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-                  appSettings.voicePracticeEnabled ? 'bg-accent-strong' : 'bg-border-default'
-                ]"
-                @click="updateVoicePracticeEnabled(!appSettings.voicePracticeEnabled)"
-              >
-                <span
-                  :class="[
-                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
-                    appSettings.voicePracticeEnabled ? 'translate-x-6' : 'translate-x-1'
-                  ]"
-                />
-              </button>
-            </div>
-          </div>
           <div v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" data-testid="analytics-opt-out-row">
             <label class="flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
@@ -2509,6 +2438,7 @@ import {
 import { getProvider, getAllProviders } from './sync/providers/index.js'
 import { usePWAInstall } from './composables/usePWAInstall.js'
 import { useColorScheme } from './composables/useColorScheme.js'
+import { cleanupRetiredVoiceModels } from './migrate-storage.js'
 import { getAppSettings, getAppSettingsRecord, saveAppSettings, saveAppSettingsRecord } from './app-settings.js'
 import { isAnalyticsConfigured, setAnalyticsOptOut, initAnalytics, trackEvent } from './analytics.js'
 import {
@@ -2593,14 +2523,7 @@ import {
   Filler
 } from 'chart.js'
 import IOSInstallModal from './components/IOSInstallModal.vue'
-import { completePracticeUnit, canSavePracticeAttempt } from './utils/practice-operations.js'
-import { voiceCapabilities } from './utils/voice/capability.js'
-import { createLocalRecognitionAdapter, voiceErrors } from './utils/voice/local-recognition.js'
-import { deleteVoiceModel, downloadVoiceModel, modelCacheState } from './utils/voice/model-store.js'
-import { VOICE_MODEL_SIZE_LABEL } from './utils/voice/model-manifest.js'
-import { resolveVoiceAlternatives } from './utils/voice/session.js'
-import { supportedSpokenReference } from './utils/voice/spoken-reference.js'
-import VoicePracticePanel from './components/VoicePracticePanel.vue'
+import { completePracticeUnit } from './utils/practice-operations.js'
 import VersePracticeView from './components/VersePracticeView.vue'
 import CompletionTray from './components/CompletionTray.vue'
 import ModalSheet from './components/ModalSheet.vue'
@@ -2625,7 +2548,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { VoicePracticePanel, IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
+  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -2904,275 +2827,20 @@ export default {
     const reviewTextContainer = ref(null)
     const memorizationPracticeRef = ref(null)
     const reviewPracticeRef = ref(null)
-    const practiceInputMode = ref('keyboard')
-    const voiceAttempt = ref({ hasVoice: false, confirmed: false, discarded: false })
+    // Keep mistake positions so retrying a passage segment preserves earlier errors.
     const attemptLedger = ref([])
-    const voiceLeaveAction = ref(null)
-    const voiceActionPending = ref(false)
-    const voiceNeedsConfirmation = computed(() => voiceAttempt.value.hasVoice && !voiceAttempt.value.confirmed && !voiceAttempt.value.discarded)
-    const practiceSaveEligible = () => canSavePracticeAttempt(voiceAttempt.value)
-    const hasUnconfirmedResults = () => voiceNeedsConfirmation.value && (
-      allWordsRevealed.value || Object.keys(passageSegmentResults.value).some(id => !passageSegmentSaved.value[id])
-    )
-    const guardPracticeLeave = (action) => {
-      abortVoice()
-      if (!hasUnconfirmedResults()) return false
-      voiceLeaveAction.value = action
-      return true
-    }
-    const discardVoiceResults = () => {
-      const action = voiceLeaveAction.value
-      voiceLeaveAction.value = null
-      voiceAttempt.value.discarded = true
-      action?.()
-    }
-
-    // Whether this browser *could* run local recognition. It says nothing about
-    // whether the model is downloaded; the model is optional and fetched later,
-    // so a fresh install must still offer voice.
-    const voiceCapabilitiesNow = voiceCapabilities()
-    const voiceSupported = voiceCapabilitiesNow.supported
-    const voiceUnsupportedReason = voiceCapabilitiesNow.reason
-    const voiceStatus = ref('idle')
-    const voiceMessage = ref('')
-    const voicePreview = ref([])
-    // 'unknown' until checked, then 'ready' | 'missing' | 'unavailable'.
-    const voiceModelState = ref('unknown')
-    const voiceModelProgress = ref(0)
-    const voiceModelDownloading = ref(false)
-    const voiceModelSizeLabel = VOICE_MODEL_SIZE_LABEL
-    let voiceModelDownload = null
-    let voiceModelAbortController = null
-    let voiceBuffers = ['']
-    let voiceRepeatPending = false
-    let voiceAttemptId = 0
-    let activeVoiceAttemptId = 0
-    const voiceAtReference = computed(() => !!reviewWords.value[currentPracticeWordIndex.value]?.isReferenceUnit)
-    const voiceContinuePrompt = computed(() => {
-      const word = reviewWords.value[currentPracticeWordIndex.value]
-      return word ? `Continue from “${word.text}”.` : ''
-    })
-
-    const abortVoice = (status = 'paused') => {
-      voiceAttemptId++
-      recognition.abort(status)
-      voicePreview.value = []
-      voiceBuffers = ['']
-      voiceRepeatPending = false
-    }
-    const resetVoiceAttempt = (words, startIndex = 0) => {
-      abortVoice('idle')
-      voiceMessage.value = ''
-      voiceAttempt.value = { hasVoice: false, confirmed: false, discarded: false }
+    const resetPracticeAttempt = (startIndex = 0) => {
       attemptLedger.value = startIndex > 0
         ? attemptLedger.value.filter(entry => entry.index < startIndex)
         : []
       if (startIndex > 0) reviewMistakes.value = attemptLedger.value.length
     }
-    const selectPracticeInput = (mode) => {
-      if (mode === 'voice' && (!voiceSupported || !appSettings.value.voicePracticeEnabled)) return
-      abortVoice('idle')
-      voiceMessage.value = ''
-      practiceInputMode.value = mode
-      typedLetter.value = ''
-      if (mode === 'voice') {
-        document.activeElement?.blur?.()
-        startVoice()
-      } else nextTick(focusInput)
+    const completePracticeAndMove = (action) => {
+      if (allWordsRevealed.value) action()
     }
-    const voiceMatchContext = () => ({
-      units: reviewWords.value,
-      startIndex: currentPracticeWordIndex.value,
-      reference: (memorizingVerse.value || reviewingVerse.value)?.reference || '',
-    })
-    const consumeVoiceAlternatives = (alternatives, preview = false) => {
-      const resolved = resolveVoiceAlternatives(
-        { ...voiceMatchContext(), buffers: voiceBuffers, repeatPending: voiceRepeatPending },
-        alternatives,
-      )
-      if (preview) return resolved.decisions.filter(decision => !decision.incorrect).map(decision => decision.index)
-      voiceRepeatPending = resolved.repeatPending
-      voiceMessage.value = resolved.overflow || resolved.needsContinuationPrompt
-        ? voiceContinuePrompt.value : ''
-      voiceBuffers = resolved.remainders
-      if (resolved.decisions.length) {
-        voiceAttempt.value.hasVoice = true
-        for (const decision of resolved.decisions) {
-          if (decision.index !== currentPracticeWordIndex.value) break
-          finishPracticeUnit(reviewWords.value[decision.index], { incorrect: decision.incorrect, source: 'voice' })
-        }
-      }
-      if (resolved.unsupported && voiceAtReference.value) {
-        selectPracticeInput('keyboard')
-        showToast('Use the keyboard for this reference. Your verse progress is preserved.')
-      }
-      if (allWordsRevealed.value) abortVoice()
-      return []
-    }
-    // The local recognizer reports one decoded segment at a time. Present it in
-    // the hypothesis shape the matcher consumes, so the matching rules stay
-    // independent of which engine produced the words.
-    const voiceHypothesis = (alternatives, finals) => ({ finals, interim: alternatives.map(text => ({ alternatives: [text] })) })
-    const recognition = createLocalRecognitionAdapter({
-      onStatus: status => {
-        voiceStatus.value = status
-        if (!['listening', 'finishing', 'starting'].includes(status)) voicePreview.value = []
-      },
-      onError: (message) => { voiceMessage.value = message; voicePreview.value = []; voiceBuffers = [''] },
-      onFinal: text => { if (text) onVoiceResult(voiceHypothesis([], [{ alternatives: [text] }])) },
-      onPartial: text => { if (text) onVoiceResult(voiceHypothesis([text], [])) },
-    })
-    const onVoiceResult = ({ finals, interim }) => {
-      if (activeVoiceAttemptId !== voiceAttemptId || practiceInputMode.value !== 'voice') return
-      for (const result of finals) {
-        consumeVoiceAlternatives(result.alternatives)
-        if (activeVoiceAttemptId !== voiceAttemptId) return
-      }
-      const alternatives = interim.reduce((prefixes, result) => prefixes.flatMap(prefix => result.alternatives.map(text => `${prefix} ${text}`)).slice(0, 9), [''])
-      voicePreview.value = interim.length ? consumeVoiceAlternatives(alternatives, true) : []
-    }
-    // Confirm the model is cached before claiming voice works, and never block
-    // the app on it: a first run offers the download and keeps the keyboard.
-    const refreshVoiceModelState = async () => {
-      if (!voiceSupported) return
-      try {
-        const { state } = await modelCacheState()
-        // 'unsupported' means Cache Storage itself is unusable, which is a
-        // different problem from a model that simply has not been fetched yet.
-        voiceModelState.value = state === 'ready' ? 'ready' : (state === 'unsupported' ? 'unavailable' : 'missing')
-        if (state === 'unsupported') voiceMessage.value = 'This browser cannot store the voice model for offline use.'
-      } catch {
-        voiceModelState.value = 'unavailable'
-      }
-    }
-    const removeVoiceModel = async () => {
-      if (voiceModelDownload) return
-      try {
-        abortVoice('idle')
-        recognition.unload()
-        await deleteVoiceModel()
-        voiceModelState.value = 'missing'
-        voiceModelProgress.value = 0
-        showToast('Offline voice model removed.')
-      } catch {
-        showToast('Could not remove the voice model. Try again.')
-      }
-    }
-    const downloadVoiceModelNow = async () => {
-      if (voiceModelDownloading.value || !voiceSupported) return
-      voiceMessage.value = ''
-      voiceModelProgress.value = 0
-      voiceModelDownloading.value = true
-      voiceModelAbortController = new AbortController()
-      // downloadVoiceModel owns the storage-headroom and secure-context policy
-      // and reports it as a ModelStorageError, so do not second-guess it here.
-      voiceModelDownload = downloadVoiceModel({
-        signal: voiceModelAbortController.signal,
-        onProgress: ({ received, total }) => {
-          voiceModelProgress.value = total ? Math.min(1, received / total) : 0
-        },
-      })
-      try {
-        await voiceModelDownload
-        await recognition.prepare()
-        voiceModelState.value = 'ready'
-        showToast('Voice model ready. It works offline now.')
-      } catch (error) {
-        if (voiceModelAbortController.signal.aborted) {
-          await deleteVoiceModel()
-          voiceModelState.value = 'missing'
-          voiceMessage.value = 'Download cancelled.'
-          return
-        }
-        // A storage-policy refusal is not the same as a model that is merely
-        // absent, and the two need different words and a different next step.
-        const blocked = error?.code === 'no-space' || error?.code === 'insecure' || error?.code === 'unsupported'
-        voiceModelState.value = blocked ? 'unavailable' : 'missing'
-        voiceMessage.value = error?.message || voiceErrors['model-load-failed']
-      } finally {
-        voiceModelDownload = null
-        voiceModelAbortController = null
-        voiceModelDownloading.value = false
-      }
-    }
-    const cancelVoiceModelDownload = () => {
-      voiceModelAbortController?.abort()
-      if (voiceModelDownload) recognition.unload()
-    }
-    const startVoice = async () => {
-      if (allWordsRevealed.value || practiceInputMode.value !== 'voice') return
-      const requestedAttempt = voiceAttemptId
-      stopSpeaking()
-      voiceMessage.value = ''
-      if (voiceAtReference.value && !supportedSpokenReference((memorizingVerse.value || reviewingVerse.value).reference)) {
-        selectPracticeInput('keyboard')
-        showToast('Use the keyboard for this reference. Your verse progress is preserved.')
-        return
-      }
-      if (voiceModelState.value === 'unknown') await refreshVoiceModelState()
-      if (requestedAttempt !== voiceAttemptId || practiceInputMode.value !== 'voice' || allWordsRevealed.value) return
-      if (voiceModelState.value === 'missing') {
-        // Do not silently start a 200 MB download: let the user choose.
-        voiceMessage.value = `Download the ${VOICE_MODEL_SIZE_LABEL} offline voice model to practice by voice.`
-        return
-      }
-      if (voiceModelState.value === 'unavailable') {
-        voiceMessage.value = voiceMessage.value || voiceUnsupportedReason || voiceErrors['model-load-failed']
-        return
-      }
-      activeVoiceAttemptId = voiceAttemptId
-      await recognition.start()
-    }
-    const stopVoice = () => recognition.finish()
-    const revealVoiceWord = () => {
-      abortVoice()
-      voiceMessage.value = ''
-      const word = reviewWords.value[currentPracticeWordIndex.value]
-      if (!word) return
-      voiceAttempt.value.hasVoice = true
-      finishPracticeUnit(word, { incorrect: true, source: 'reveal' })
-    }
-    const beginVoiceAfterTransition = () => {
-      if (practiceInputMode.value === 'voice' && !allWordsRevealed.value &&
-          (memorizingVerse.value || reviewingVerse.value)) startVoice()
-    }
-    const retryPracticeAttempt = () => {
-      if (voiceActionPending.value) return
-      voiceActionPending.value = true
-      const continueWithVoice = practiceInputMode.value === 'voice'
-      try {
-        if (voiceNeedsConfirmation.value) voiceAttempt.value.discarded = true
-        voiceLeaveAction.value = null
-        if (memorizingVerse.value) retryMemorization()
-        else retryReview()
-        if (continueWithVoice) beginVoiceAfterTransition()
-      } finally {
-        voiceActionPending.value = false
-      }
-    }
-    const completePracticeAndMove = async (action, continueWithVoice = false) => {
-      if (voiceActionPending.value || !allWordsRevealed.value) return
-      voiceActionPending.value = true
-      const startNextVoice = continueWithVoice && practiceInputMode.value === 'voice'
-      try {
-        if (voiceNeedsConfirmation.value) {
-          voiceAttempt.value.confirmed = true
-          if (combinedPassageReview.value) {
-            for (const segment of combinedPassageReview.value.segments) savePassageSegmentReview(segment.id)
-          }
-          // The review-completion watcher saves the first attempt. Let it run
-          // against this verse before navigation resets the attempt state.
-          await nextTick()
-        }
-        action()
-        if (startNextVoice) beginVoiceAfterTransition()
-      } finally {
-        voiceActionPending.value = false
-      }
-    }
-    const completeAndAdvanceMode = () => completePracticeAndMove(advanceToNextMode, true)
+    const completeAndAdvanceMode = () => completePracticeAndMove(advanceToNextMode)
     const completeAndExitMemorization = () => completePracticeAndMove(exitMemorization)
-    const completeAndNextVerse = () => completePracticeAndMove(nextVerse, true)
+    const completeAndNextVerse = () => completePracticeAndMove(nextVerse)
     const completeAndExitReview = () => completePracticeAndMove(exitReview)
 
     const reviewInstanceKey = ref(0) // Bump on retry so VersePracticeView remounts (keyboard shows on Android PWA)
@@ -3889,11 +3557,6 @@ export default {
 
     // Restore app state from navigation state
     const restoreNavigationState = (state) => {
-      if (guardPracticeLeave(() => window.history.back())) {
-        const current = getNavigationState()
-        window.history.pushState(current, '', buildNavigationUrl(current))
-        return
-      }
       isHandlingBackButton = true
 
       // If we're popping a modal marker and landing back on the same practice session
@@ -3976,7 +3639,7 @@ export default {
       } else {
         // Exit memorization/review if we're going back
         // Save review before exiting if it was completed (fallback — watcher usually handles this)
-        if (practiceSaveEligible() && reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+        if (reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
           const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
           if (verse) {
             const totalWords = totalPracticeUnitCount.value
@@ -4269,8 +3932,7 @@ export default {
     // capture the grade and save SRS immediately — even if accuracy is below 90%.
     // The user must still retry to reach 90% to proceed, but the SRS schedule
     // reflects the honest first-attempt performance, not a polished retry.
-    watch([allWordsRevealed, () => voiceAttempt.value.confirmed], ([revealed]) => {
-      if (!practiceSaveEligible()) return
+    watch(allWordsRevealed, (revealed) => {
       if (!revealed || !reviewingVerse.value || memorizationMode.value !== 'master') return
       if (combinedPassageReview.value) return
       if (firstAttemptGrade.value !== null) return // Already captured
@@ -4320,7 +3982,6 @@ export default {
     // When completion tray appears, scroll verse content so end of verse is visible
     watch(allWordsRevealed, (revealed) => {
       if (!revealed) return
-      abortVoice()
       dismissPracticeModesHint()
       nextTick(() => {
         const practiceRef = memorizingVerse.value ? memorizationPracticeRef.value : reviewPracticeRef.value
@@ -5447,8 +5108,7 @@ export default {
     }
 
     const setPracticeWords = (words, startIndex = 0) => {
-      resetVoiceAttempt(words, startIndex)
-      if (!words.length && !memorizingVerse.value && !reviewingVerse.value) practiceInputMode.value = 'keyboard'
+      resetPracticeAttempt(startIndex)
       reviewWords.value = words
       let nextIndex = Math.max(0, startIndex)
       while (nextIndex < words.length && words[nextIndex].revealed) {
@@ -7575,7 +7235,6 @@ export default {
     }
 
     const speakVerse = (verse, surface = 'practice') => {
-      abortVoice()
       window.speechSynthesis.cancel()
       const verseObj = verse?.value || verse
       if (!verseObj?.content || !verseObj?.reference) return
@@ -7833,7 +7492,6 @@ export default {
 
     // Switch to a different memorization mode
     const switchToMemorizationMode = (mode) => {
-      if (guardPracticeLeave(() => switchToMemorizationMode(mode))) return
       if (!memorizingVerse.value) return
       if (!canSwitchToMode(mode)) return
 
@@ -7988,7 +7646,7 @@ export default {
       }
       passageSegmentFeedback.value = result
 
-      if (!practiceSaveEligible() || passageSegmentSaved.value[segmentId]) return
+      if (passageSegmentSaved.value[segmentId]) return
 
       const verse = verses.value.find((candidate) => candidate.id === segmentId)
       if (!verse) return
@@ -8044,8 +7702,6 @@ export default {
     }
 
     const retryPassageSegment = (segmentId) => {
-      if (voiceNeedsConfirmation.value) { showToast('Save your result or try the passage again.'); return }
-      abortVoice()
       const segment = getPassageSegment(segmentId)
       if (!segment) return
 
@@ -8079,7 +7735,6 @@ export default {
 
     // Start memorizing a verse
     const startMemorization = (verse, mode, options = {}) => {
-      if (guardPracticeLeave(() => startMemorization(verse, mode, options))) return
       if (
         (guidedOnboardingStep.value === 'tap-verse' || guidedOnboardingStep.value === 'practice') &&
         verse.id === guidedOnboardingVerseId.value
@@ -8130,7 +7785,6 @@ export default {
 
     // Switch mode while on review screen (rebuild words, reset state)
     const switchReviewMode = (mode) => {
-      if (guardPracticeLeave(() => switchReviewMode(mode))) return
       if (!reviewingVerse.value) return
       if (mode !== memorizationMode.value) {
         dismissPracticeModesHint()
@@ -8165,7 +7819,6 @@ export default {
 
     // Start reviewing a verse (only for mastered verses)
     const startReview = (verse, options = {}) => {
-      if (guardPracticeLeave(() => startReview(verse, options))) return
       const preserveSource = options.preserveSource === true
       const replaceHistory = options.replaceHistory === true
       const sourceStateOverride = options.sourceState || null
@@ -8202,7 +7855,7 @@ export default {
       
       // IMPORTANT: Before starting a new review, ensure any previous review was saved (only counts when in master mode)
       // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
-      if (practiceSaveEligible() && reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+      if (reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
         console.log('[startReview] Saving previous review before starting new one (fallback)')
         const prevVerse = verses.value.find(v => v.id === reviewingVerse.value.id)
         if (prevVerse) {
@@ -8321,7 +7974,7 @@ export default {
     }
 
     const saveMemorizationCompletion = () => {
-      if (!practiceSaveEligible() || !memorizingVerse.value || !allWordsRevealed.value || !meetsAccuracyRequirement.value) return null
+      if (!memorizingVerse.value || !allWordsRevealed.value || !meetsAccuracyRequirement.value) return null
       const verse = verses.value.find(v => v.id === memorizingVerse.value.id)
       if (verse) {
         const currentStatus = verse.memorizationStatus || 'unmemorized'
@@ -8383,7 +8036,6 @@ export default {
 
     // Advance to next memorization mode
     const advanceToNextMode = () => {
-      if (guardPracticeLeave(() => advanceToNextMode())) return
       const verse = saveMemorizationCompletion()
       if (!verse) return
       markCurrentPracticeModeHintSeen()
@@ -8395,10 +8047,9 @@ export default {
 
     // Exit memorization mode
     const exitMemorization = () => {
-      if (guardPracticeLeave(() => exitMemorization())) return
       stopSpeaking()
       const completedCurrentMemorization =
-        practiceSaveEligible() && !!memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value
+        !!memorizingVerse.value && allWordsRevealed.value && meetsAccuracyRequirement.value
 
       if (
         !completedCurrentMemorization &&
@@ -8474,7 +8125,6 @@ export default {
 
     // Retry memorization (reset without saving)
     const retryMemorization = () => {
-      if (guardPracticeLeave(() => retryMemorization())) return
       if (memorizingVerse.value) {
         setPracticeTransition('mode')
         memorizationInstanceKey.value += 1 // Remount VersePracticeView so keyboard shows
@@ -8491,7 +8141,6 @@ export default {
 
     // Retry current review
     const retryReview = () => {
-      if (guardPracticeLeave(() => retryReview())) return
       if (reviewingVerse.value) {
         setPracticeTransition('mode')
         if (combinedPassageReview.value?.records?.length) {
@@ -8523,7 +8172,6 @@ export default {
     }
 
     const navigateMemorizationVerse = (offset) => {
-      if (guardPracticeLeave(() => navigateMemorizationVerse(offset))) return
       if (!memorizingVerse.value) return
 
       const targetVerse = movePracticeSequenceCursor(offset)
@@ -8549,7 +8197,6 @@ export default {
     }
 
     const previousVerse = () => {
-      if (guardPracticeLeave(() => previousVerse())) return
       if (!reviewingVerse.value) return
 
       const previousSourceVerse = movePracticeSequenceCursor(-1)
@@ -8575,7 +8222,6 @@ export default {
 
     // Move to next verse for review
     const nextVerse = () => {
-      if (guardPracticeLeave(() => nextVerse())) return
       console.log('[nextVerse] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
         verseId: reviewingVerse.value?.id,
@@ -8598,7 +8244,7 @@ export default {
           lastReviewedBefore: verse?.lastReviewed
         })
         
-        if (practiceSaveEligible() && !combinedPassageReview.value && verse && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+        if (!combinedPassageReview.value && verse && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
           console.log('[nextVerse] Entering save block (fallback)')
 
           const totalWords = totalPracticeUnitCount.value
@@ -8713,7 +8359,6 @@ export default {
 
     // Exit review mode
     const exitReview = () => {
-      if (guardPracticeLeave(() => exitReview())) return
       stopSpeaking()
       console.log('[exitReview] Called', {
         hasReviewingVerse: !!reviewingVerse.value,
@@ -8726,7 +8371,7 @@ export default {
       
       // Only count as review (update spaced repetition) when in master mode
       // The allWordsRevealed watcher handles SRS save on first attempt, so this is a fallback safety net.
-      if (practiceSaveEligible() && reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
+      if (reviewingVerse.value && !combinedPassageReview.value && !currentReviewSaved.value && allWordsRevealed.value && memorizationMode.value === 'master') {
         const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
         console.log('[exitReview] Saving review (fallback)', {
           found: !!verse,
@@ -8850,7 +8495,6 @@ export default {
 
     // Handle key press events
     const handleKeyPress = (event) => {
-      if (practiceInputMode.value !== 'keyboard') return
       if (
         event.key === 'Enter' &&
         allWordsRevealed.value
@@ -8892,8 +8536,8 @@ export default {
       maybeCompletePassageSegment(word.passageSegmentId, word.index)
     }
 
-    const recordPracticeMistake = (word, source = 'keyboard') => {
-      attemptLedger.value.push({ index: word.index, source, letterIndex: word.typedLettersIndex || 0 })
+    const recordPracticeMistake = (word) => {
+      attemptLedger.value.push({ index: word.index })
       reviewMistakes.value++
       recordPassageSegmentMistake(word)
       vibrate(50)
@@ -8907,7 +8551,7 @@ export default {
     })
 
     const checkLetter = () => {
-      if (practiceInputMode.value !== 'keyboard' || !typedLetter.value || currentPracticeWordIndex.value < 0) return
+      if (!typedLetter.value || currentPracticeWordIndex.value < 0) return
       const word = reviewWords.value[currentPracticeWordIndex.value]
       const required = word.requiredLetters?.length ? word.requiredLetters : getRequiredLetters(word.text)
       word.requiredLetters = required.length ? required : [word.firstLetter || word.text.charAt(0).toLowerCase()]
@@ -9207,21 +8851,6 @@ export default {
         showMasterPlaceholderLines: enabled
       })
     }
-
-    const updateVoicePracticeEnabled = (enabled) => {
-      saveAppSettingsLocally({
-        ...appSettings.value,
-        voicePracticeEnabled: enabled
-      })
-      if (enabled && voiceSupported) refreshVoiceModelState()
-    }
-
-    watch(
-      () => appSettings.value.voicePracticeEnabled,
-      enabled => {
-        if (!enabled && practiceInputMode.value === 'voice') selectPracticeInput('keyboard')
-      }
-    )
 
     const updateDefaultBibleVersion = (value) => {
       saveAppSettingsLocally({
@@ -9779,10 +9408,9 @@ export default {
       currentTime.value = new Date()
     }
 
-    const abortVoiceOnPageHide = () => abortVoice()
     const handleVisibilityChange = () => {
-      if (document.hidden) abortVoice()
       if (document.visibilityState === 'visible') {
+        void cleanupRetiredVoiceModels()
         refreshCurrentTime()
       }
     }
@@ -9792,7 +9420,6 @@ export default {
       loadCollections()
       loadVerses()
       appSettings.value = getAppSettings()
-      if (voiceSupported && appSettings.value.voicePracticeEnabled) refreshVoiceModelState()
       migrateProviderSetting()
       consumeUpdateAppliedToast()
 
@@ -9826,7 +9453,6 @@ export default {
       document.addEventListener('scroll', handleWindowScroll, { passive: true, capture: true })
       document.addEventListener('click', handleSelectionDocumentClick)
       document.addEventListener('visibilitychange', handleVisibilityChange)
-      window.addEventListener('pagehide', abortVoiceOnPageHide)
       window.addEventListener('online', handleConnectivityChange)
       window.addEventListener('offline', handleConnectivityChange)
       handleConnectivityChange()
@@ -9843,14 +9469,10 @@ export default {
 
     // Cleanup event listener on unmount
     onBeforeUnmount(() => {
-      abortVoice()
-      cancelVoiceModelDownload()
-      recognition.dispose()
       window.removeEventListener('popstate', handlePopState)
       document.removeEventListener('scroll', handleWindowScroll, { capture: true })
       document.removeEventListener('click', handleSelectionDocumentClick)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('pagehide', abortVoiceOnPageHide)
       window.removeEventListener('online', handleConnectivityChange)
       window.removeEventListener('offline', handleConnectivityChange)
       if (toastTimeoutId) {
@@ -9896,13 +9518,7 @@ export default {
       closeForm,
       reviewingVerse,
       reviewWords,
-      practiceInputMode, voiceSupported, voiceStatus, voiceMessage, voicePreview, voiceAtReference,
-      voiceUnsupportedReason, voiceModelState, voiceModelProgress, voiceModelDownloading, voiceModelSizeLabel,
-      voiceNeedsConfirmation, voiceLeaveAction, voiceActionPending,
-      selectPracticeInput, startVoice, stopVoice, revealVoiceWord, retryPracticeAttempt,
-      downloadVoiceModelNow, cancelVoiceModelDownload, removeVoiceModel, refreshVoiceModelState,
       completeAndAdvanceMode, completeAndExitMemorization, completeAndNextVerse, completeAndExitReview,
-      discardVoiceResults,
       currentPracticeWordIndex,
       typedLetter,
       reviewInput,
@@ -10163,7 +9779,6 @@ export default {
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
       updateShowMasterPlaceholderLines,
-      updateVoicePracticeEnabled,
       updateDefaultBibleVersion,
       handleDefaultBibleVersionFocus,
       commitDefaultBibleVersionCache,
@@ -10312,10 +9927,6 @@ export default {
 
 .practice-header-button:hover {
   color: var(--color-text-primary);
-}
-
-.practice-header-button.voice-selected {
-  color: var(--color-accent-warm-text);
 }
 
 .app-view-stage {

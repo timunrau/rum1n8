@@ -45,13 +45,11 @@
             :id="panel.isCurrent ? `practice-word-${index}` : null"
             :class="[
               word.separatorAfter ? 'practice-word inline-block' : 'practice-word inline-block mr-2',
-              panel.isCurrent && currentWordIndex === index ? 'practice-word--current' : '',
-              panel.isCurrent && currentWordIndex === index && inputMode === 'voice' ? 'practice-word--voice-current' : '',
-              panel.isCurrent && voicePreview.includes(index) ? 'practice-word--voice-preview' : ''
+              panel.isCurrent && currentWordIndex === index ? 'practice-word--current' : ''
             ]"
           >
             <span v-if="panel.mode === 'learn'">
-              <template v-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
+              <template v-if="word.revealed">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -78,10 +76,10 @@
               </template>
             </span>
             <span v-else-if="panel.mode === 'memorize'">
-              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word) && !(panel.isCurrent && voicePreview.includes(index))" class="text-word-unrevealed">
+              <span v-if="word.visible && !word.revealed && !isPartiallyTyped(word)" class="text-word-unrevealed">
                 {{ word.text }}{{ word.separatorAfter || '' }}
               </span>
-              <template v-else-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
+              <template v-else-if="word.revealed">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -110,7 +108,7 @@
               </span>
             </span>
             <span v-else-if="panel.mode === 'master'">
-              <template v-if="word.revealed || (panel.isCurrent && voicePreview.includes(index))">
+              <template v-if="word.revealed">
                 <template v-if="shouldRenderReferenceSegments(word)">
                   <span
                     v-for="(segment, segmentIndex) in getReferenceSegments(word)"
@@ -167,7 +165,7 @@
             {{ passageSegmentFeedback.reference }} · {{ passageSegmentFeedback.accuracyLabel }}
           </span>
           <button
-            v-if="passageSegmentFeedback.belowThreshold && !deferPassageRetry"
+            v-if="passageSegmentFeedback.belowThreshold"
             type="button"
             class="passage-segment-feedback__action"
             data-testid="passage-segment-retry"
@@ -224,7 +222,6 @@
       <input
         ref="inputRef"
         :value="typedLetter"
-        :disabled="inputMode !== 'keyboard' || blockInput"
         type="text"
         autocomplete="off"
         autocorrect="off"
@@ -264,10 +261,6 @@ export default {
     getPartialWordText: { type: Function, required: true },
     getRemainingPartText: { type: Function, required: true },
     inputId: { type: String, default: 'letter-input-practice' },
-    inputMode: { type: String, default: 'keyboard' },
-    voicePreview: { type: Array, default: () => [] },
-    deferPassageRetry: { type: Boolean, default: false },
-    blockInput: { type: Boolean, default: false },
     showTray: { type: Boolean, default: false },
     showPracticeModesHint: { type: Boolean, default: false },
     previousVerse: { type: Object, default: null },
@@ -369,14 +362,12 @@ export default {
     }
 
     function onInput(e) {
-      if (props.inputMode !== 'keyboard' || props.blockInput) return
       const value = e.target && e.target.value
       emit('update:typedLetter', value !== undefined ? value : '')
       emit('input')
     }
 
     function onKeydown(e) {
-      if (props.inputMode !== 'keyboard' || props.blockInput) return
       emit('keydown', e)
     }
 
@@ -389,7 +380,6 @@ export default {
     }
 
     function focusInput() {
-      if (props.inputMode !== 'keyboard' || props.blockInput) return
       if (props.showTray && hasCoarsePointer()) return
 
       const input = getRefElement(inputRef.value)
@@ -397,10 +387,6 @@ export default {
         input.focus()
       }
     }
-
-    watch(() => props.inputMode, mode => {
-      if (mode !== 'keyboard') getRefElement(inputRef.value)?.blur()
-    })
 
     watch(() => props.showTray, (showTray) => {
       if (!showTray || !hasCoarsePointer()) return

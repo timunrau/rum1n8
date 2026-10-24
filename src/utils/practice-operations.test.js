@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { canSavePracticeAttempt, completePracticeUnit } from './practice-operations.js'
+import { completePracticeUnit } from './practice-operations.js'
 
 const word = (overrides = {}) => ({
   index: 2,
@@ -52,26 +52,11 @@ describe('completePracticeUnit', () => {
       scroll: vi.fn(),
     }
 
-    completePracticeUnit(unit, { incorrect: true, source: 'voice' }, ops)
+    completePracticeUnit(unit, { incorrect: true }, ops)
 
     expect(calls).toEqual(['recordMistake', 'advance', 'completed'])
-    expect(ops.recordMistake).toHaveBeenCalledWith(unit, 'voice')
+    expect(ops.recordMistake).toHaveBeenCalledWith(unit)
     expect(unit.incorrect).toBe(true)
-  })
-
-  it('defaults the mistake source to the keyboard', () => {
-    const ops = operations()
-    completePracticeUnit(word(), { incorrect: true }, ops)
-
-    expect(ops.recordMistake).toHaveBeenCalledWith(expect.objectContaining({ index: 2 }), 'keyboard')
-  })
-
-  it('marks every digit of a wrong reference unit as incorrect', () => {
-    const unit = word({ isReferenceUnit: true, requiredLetters: ['3', ':', '1', '6'], text: '3:16' })
-
-    completePracticeUnit(unit, { incorrect: true, source: 'voice' }, operations())
-
-    expect(unit.incorrectLetterIndices).toEqual([0, 1, 2, 3])
   })
 
   it('keeps an earlier mistake recorded on the same word', () => {
@@ -101,21 +86,5 @@ describe('completePracticeUnit', () => {
     completePracticeUnit(undefined, {}, ops)
 
     expect(ops.advance).not.toHaveBeenCalled()
-  })
-})
-
-describe('canSavePracticeAttempt', () => {
-  it('saves a keyboard attempt immediately', () => {
-    expect(canSavePracticeAttempt({ hasVoice: false, confirmed: false, discarded: false })).toBe(true)
-  })
-
-  it('withholds a voice attempt until it is confirmed', () => {
-    expect(canSavePracticeAttempt({ hasVoice: true, confirmed: false, discarded: false })).toBe(false)
-    expect(canSavePracticeAttempt({ hasVoice: true, confirmed: true, discarded: false })).toBe(true)
-  })
-
-  it('never saves a discarded attempt, confirmed or not', () => {
-    expect(canSavePracticeAttempt({ hasVoice: false, confirmed: false, discarded: true })).toBe(false)
-    expect(canSavePracticeAttempt({ hasVoice: true, confirmed: true, discarded: true })).toBe(false)
   })
 })

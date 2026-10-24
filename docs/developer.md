@@ -60,6 +60,12 @@ npm run test:e2e
 npm run test:pwa-upgrade
 ```
 
+## Retired voice input
+
+Built-in voice input has been removed; Read Aloud still uses browser speech synthesis. Keep the small voice-model cleanup in `src/migrate-storage.js` permanently so dormant installs can skip releases and still remove their downloads. It silently deletes only `ruminate-voice-model-*` caches on startup and foreground, retries failures later, and preserves Bible caches and app data. Settings normalization also ignores the retired `voicePracticeEnabled` key from older clients and backups without changing settings timestamps. Cleanup begins once the updated app runs; offline installs still running an older release keep their download until they update.
+
+`npm run test:pwa-upgrade` seeds small legacy model caches and checks their removal, unrelated cache/settings preservation, and offline reload. Its default old image also exercises the earlier marketing-cache migration. To test a pre-removal image that already has separate app/site builds, set `OLD_APP_IMAGE` to its immutable image SHA, `OLD_APP_PLATFORM` to its platform, and `EXPECT_OLD_MARKETING_CACHE=0`; retain the default scenario as a separate check.
+
 ## WebDAV development
 
 Use the local proxy when working on WebDAV sync:

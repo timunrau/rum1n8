@@ -11,14 +11,12 @@
       <div class="completion-tray__actions">
         <template v-if="context === 'memorization'">
           <button
-            :disabled="busy"
             @click="$emit('retry')"
             class="btn-secondary"
           >
             Retry
           </button>
           <button
-            :disabled="busy"
             v-if="memorizationMode !== 'master'"
             @click="$emit('advance')"
             class="btn-primary"
@@ -26,7 +24,6 @@
             Continue to {{ memorizationMode === 'learn' ? 'Memorize' : 'Master' }}
           </button>
           <button
-            :disabled="busy"
             v-else
             @click="$emit('exit')"
             class="btn-primary"
@@ -36,14 +33,12 @@
         </template>
         <template v-else>
           <button
-            :disabled="busy"
             @click="$emit('retry')"
             class="btn-secondary"
           >
             Retry
           </button>
           <button
-            :disabled="busy"
             v-if="isLastInList"
             @click="$emit('done')"
             class="btn-primary"
@@ -51,7 +46,6 @@
             Done
           </button>
           <button
-            :disabled="busy"
             v-else
             @click="$emit('next-verse')"
             class="btn-primary"
@@ -61,17 +55,9 @@
         </template>
       </div>
     </div>
-    <div v-else-if="allowContinueBelowThreshold && context === 'review'">
-      <div class="completion-tray__actions">
-        <button :disabled="busy" @click="$emit('retry')" class="btn-secondary">Try Again</button>
-        <button v-if="isLastInList" :disabled="busy" @click="$emit('done')" class="btn-primary">Done</button>
-        <button v-else :disabled="busy" @click="$emit('next-verse')" class="btn-primary">Next Verse</button>
-      </div>
-    </div>
     <div v-else>
       <div class="completion-tray__actions">
         <button
-          :disabled="busy"
           @click="$emit('retry')"
           class="btn-primary"
         >
@@ -93,9 +79,7 @@ export default {
     reviewWordsLength: { type: Number, required: true },
     memorizationMode: { type: String, default: null },
     nextReviewLabel: { type: String, default: null },
-    isLastInList: { type: Boolean, default: false },
-    allowContinueBelowThreshold: { type: Boolean, default: false },
-    busy: { type: Boolean, default: false }
+    isLastInList: { type: Boolean, default: false }
   },
   emits: ['advance', 'exit', 'retry', 'next-verse', 'done'],
   computed: {
