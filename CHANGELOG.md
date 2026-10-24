@@ -1,3 +1,10 @@
+## [1.62.4](https://github.com/timunrau/rum1n8/compare/v1.62.3...v1.62.4) (2026-10-24)
+
+
+### Bug Fixes
+
+* avoid duplicate reference when sharing verses ([2ef1c4f](https://github.com/timunrau/rum1n8/commit/2ef1c4fbf7a9d7bc62d4fd9960552710b78b8ac8))
+
 ## [1.62.3](https://github.com/timunrau/rum1n8/compare/v1.62.2...v1.62.3) (2026-10-16)
 
 
