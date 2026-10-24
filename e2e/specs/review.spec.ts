@@ -150,45 +150,57 @@ test('click verse -> enters review screen', async ({ page }) => {
   await expect(page.locator('#letter-input-review')).toBeFocused()
 })
 
-test('practice share button uses native share with version and Ruminate footer', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'share', {
-      configurable: true,
-      value: async (data: ShareData) => {
-        ;(window as unknown as { __sharedVerse?: ShareData }).__sharedVerse = data
-      },
+for (const surface of ['practice', 'search']) {
+  test(`${surface} share includes the reference only after the verse content`, async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'share', {
+        configurable: true,
+        value: async (data: ShareData) => {
+          ;(window as unknown as { __sharedVerse?: ShareData }).__sharedVerse = data
+        },
+      })
+    })
+    const masteredVerse = {
+      id: 'share-review',
+      reference: 'Psalm 23:1',
+      content: 'The LORD is my shepherd',
+      bibleVersion: 'BSB',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      memorizationStatus: 'mastered',
+      reviewCount: 1,
+      lastReviewed: new Date().toISOString(),
+      nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
+      easeFactor: 2.5,
+      interval: 1,
+      reviewHistory: [],
+      collectionIds: [],
+    }
+    await seedStorage(page, [masteredVerse], [])
+    await page.reload()
+    if (surface === 'practice') {
+      await gotoApp(page, '?view=review-list')
+      await page.getByText('Psalm 23:1').click()
+    } else {
+      await gotoApp(page, '?view=collections')
+      await page.getByTestId('search-bar').click()
+      await page.getByPlaceholder(/Search verses/i).fill('Psalm')
+    }
+
+    await page.getByTitle('Share verse').click()
+
+    const shared = await page.evaluate(() => (window as unknown as { __sharedVerse?: ShareData }).__sharedVerse)
+    expect(shared).toEqual({
+      text: [
+        masteredVerse.content,
+        'Psalm 23:1 (BSB)',
+        '',
+        'Shared from Ruminate',
+        `${(process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')}/`,
+      ].join('\n'),
     })
   })
-  const masteredVerse = {
-    id: 'share-review',
-    reference: 'Psalm 23:1',
-    content: 'The LORD is my shepherd',
-    bibleVersion: 'BSB',
-    createdAt: new Date().toISOString(),
-    lastModified: new Date().toISOString(),
-    memorizationStatus: 'mastered',
-    reviewCount: 1,
-    lastReviewed: new Date().toISOString(),
-    nextReviewDate: new Date(Date.now() - 86400000).toISOString(),
-    easeFactor: 2.5,
-    interval: 1,
-    reviewHistory: [],
-    collectionIds: [],
-  }
-  await seedStorage(page, [masteredVerse], [])
-  await page.reload()
-  await gotoApp(page, '?view=review-list')
-  await page.getByText('Psalm 23:1').click()
-
-  await page.getByTitle('Share verse').click()
-
-  const shared = await page.evaluate(() => (window as unknown as { __sharedVerse?: ShareData }).__sharedVerse)
-  expect(shared?.title).toBe('Psalm 23:1 (BSB)')
-  expect(shared?.text).toContain('The LORD is my shepherd')
-  expect(shared?.text).toContain('Psalm 23:1 (BSB)')
-  expect(shared?.text).toContain('Shared from Ruminate')
-  expect(shared?.text).toContain('/')
-})
+}
 
 test('legacy ref quiz fields do not block review flow', async ({ page }) => {
   const masteredVerse = {

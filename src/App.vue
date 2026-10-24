@@ -7640,14 +7640,11 @@ export default {
       trackShareClicked(surface)
 
       const text = formatVerseShareText(verseObj)
-      const shareData = {
-        title: formatVerseShareReference(verseObj),
-        text
-      }
 
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
         try {
-          await navigator.share(shareData)
+          // Some share targets prepend the title, so keep the reference only in the text.
+          await navigator.share({ text })
           showToast('Verse shared')
           return
         } catch (error) {
