@@ -18,7 +18,10 @@
         v-for="panel in practicePanels"
         :key="panel.key"
         class="practice-swipe-panel flex flex-col min-h-0 sm:px-4"
-        :class="{ 'practice-swipe-panel--active': panel.isCurrent }"
+        :class="{
+          'practice-swipe-panel--active': panel.isCurrent,
+          'practice-swipe-panel--hide-placeholder-lines': panel.mode === 'master' && !showMasterPlaceholderLines
+        }"
         :aria-hidden="!panel.isCurrent"
         :inert="!panel.isCurrent ? '' : null"
       >
@@ -250,6 +253,7 @@ export default {
   props: {
     verse: { type: Object, default: null },
     memorizationMode: { type: String, default: null },
+    showMasterPlaceholderLines: { type: Boolean, default: true },
     reviewWords: { type: Array, default: () => [] },
     currentWordIndex: { type: Number, default: -1 },
     context: { type: String, validator: (v) => ['memorization', 'review'].includes(v) },
@@ -849,6 +853,10 @@ export default {
 
 .practice-word {
   position: relative;
+}
+
+.practice-swipe-panel--hide-placeholder-lines .word-blank {
+  border-bottom-color: transparent;
 }
 
 .practice-stage-shell {

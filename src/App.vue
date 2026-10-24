@@ -148,6 +148,7 @@
         ref="memorizationPracticeRef"
         :verse="memorizingVerse"
         :memorization-mode="memorizationMode"
+        :show-master-placeholder-lines="appSettings.showMasterPlaceholderLines"
         :review-words="reviewWords"
         :current-word-index="currentPracticeWordIndex"
         :input-mode="practiceInputMode"
@@ -265,6 +266,7 @@
         ref="reviewPracticeRef"
         :verse="reviewingVerse"
         :memorization-mode="memorizationMode"
+        :show-master-placeholder-lines="appSettings.showMasterPlaceholderLines"
         :review-words="reviewWords"
         :current-word-index="currentPracticeWordIndex"
         :input-mode="practiceInputMode"
@@ -2152,6 +2154,34 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
                 />
               </button>
             </label>
+          </div>
+          <div class="rounded-xl bg-sunken p-4">
+            <div class="flex items-start gap-4">
+              <div class="flex-1">
+                <p id="master-placeholder-lines-setting-label" class="text-base font-semibold text-text-primary">Show placeholder lines in Master</p>
+                <p id="master-placeholder-lines-setting-description" class="mt-1 text-sm text-text-muted">Show lines beneath hidden words in Master mode.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-labelledby="master-placeholder-lines-setting-label"
+                aria-describedby="master-placeholder-lines-setting-description"
+                :aria-checked="appSettings.showMasterPlaceholderLines"
+                data-testid="master-placeholder-lines-toggle"
+                :class="[
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                  appSettings.showMasterPlaceholderLines ? 'bg-accent-strong' : 'bg-border-default'
+                ]"
+                @click="updateShowMasterPlaceholderLines(!appSettings.showMasterPlaceholderLines)"
+              >
+                <span
+                  :class="[
+                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                    appSettings.showMasterPlaceholderLines ? 'translate-x-6' : 'translate-x-1'
+                  ]"
+                />
+              </button>
+            </div>
           </div>
           <div class="rounded-xl bg-sunken p-4">
             <div class="flex items-start gap-4">
@@ -9171,6 +9201,13 @@ export default {
       trackLegacyAppProfile()
     }
 
+    const updateShowMasterPlaceholderLines = (enabled) => {
+      saveAppSettingsLocally({
+        ...appSettings.value,
+        showMasterPlaceholderLines: enabled
+      })
+    }
+
     const updateVoicePracticeEnabled = (enabled) => {
       saveAppSettingsLocally({
         ...appSettings.value,
@@ -10125,6 +10162,7 @@ export default {
       manualSync,
       manualSyncFromDrawer,
       updateRequireReferenceTyping,
+      updateShowMasterPlaceholderLines,
       updateVoicePracticeEnabled,
       updateDefaultBibleVersion,
       handleDefaultBibleVersionFocus,

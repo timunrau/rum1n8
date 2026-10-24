@@ -4,6 +4,7 @@ const APP_SETTINGS_KEY = 'rum1n8-app-settings'
 
 export const DEFAULT_APP_SETTINGS = Object.freeze({
   requireReferenceTyping: false,
+  showMasterPlaceholderLines: true,
   voicePracticeEnabled: false,
   analyticsOptOut: false,
   defaultBibleVersion: '',
@@ -27,6 +28,7 @@ export function normalizeAppSettings(settings = {}) {
     ...DEFAULT_APP_SETTINGS,
     ...settings,
     requireReferenceTyping: !!settings.requireReferenceTyping,
+    showMasterPlaceholderLines: settings.showMasterPlaceholderLines !== false,
     voicePracticeEnabled: !!settings.voicePracticeEnabled,
     analyticsOptOut: !!settings.analyticsOptOut,
     defaultBibleVersion,
