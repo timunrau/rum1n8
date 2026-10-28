@@ -2,12 +2,14 @@
 
 ## Maintenance Philosophy
 
-- Prioritize stability and steady, manageable maintenance. Keep the app current enough to avoid unsupported dependencies and large, risky catch-up upgrades; do not update merely to have the newest version.
-- Accept stable, compatible patch/minor updates in manageable batches after reviewing release notes and passing the relevant checks. An observed app bug is not required to justify routine maintenance.
-- Avoid prerelease, experimental, or unsupported versions. Do not migrate to a new major simply because Dependabot proposes it; review compatibility and support needs first.
-- Keep Node on a supported LTS line. Update development, CI, and Docker together when a major migration is justified.
-- Keep Dependabot low-noise: monthly version-update batches, separate production and development dependencies, and no routine major-version PRs. Do not repeatedly fight individual bot PRs or disable security maintenance.
-- See [docs/developer.md](docs/developer.md#maintenance) for the maintenance workflow.
+- Follow [docs/maintenance.md](docs/maintenance.md), the authoritative maintenance policy. Keep decisions, owners, evidence, and due dates in [docs/maintenance-status.md](docs/maintenance-status.md).
+- Complete monthly maintenance by the seventh calendar day; review the full support inventory quarterly in January, April, July, and October. Security triage runs independently of this cadence.
+- Accept stable, compatible patch/minor updates in manageable batches after release-note, transitive-dependency, and validation review. An observed app bug is not required. Avoid prerelease, experimental, or unsupported versions.
+- Assess a new Node LTS within 90 days of LTS entry and target migration within 180 days; leave the current line at least 180 days before its end of support. Coordinate development, CI, and all Docker images.
+- Assess stable core-tooling majors within 90 days of release and target adoption within 180 days. Review application-library majors quarterly. Support/security deadlines take precedence; do not upgrade blindly to meet a date.
+- Every deferral needs a concrete blocker, owner, next action, and expiry. Agents may record recommendations but cannot approve risk exceptions. Expired exceptions require an explicit maintainer decision.
+- Keep Dependabot low-noise: monthly version-update batches, separate production and development dependencies, and no routine major-version PRs. Closing a major PR must leave a dated decision in the maintenance register. Do not disable security maintenance.
+- Required validation must pass before merge/push. Report unavailable checks as blocked; follow the policy's exception process rather than treating them as passes.
 
 ## Environment Setup
 

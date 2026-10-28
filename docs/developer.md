@@ -35,30 +35,24 @@ The marketing site's HTML, JavaScript, and CSS live in `site/`. Vite keeps the p
 
 ## Maintenance
 
-Keep the app stable and reasonably current through regular, manageable updates. Avoid both unnecessary version chasing and letting dependencies drift until a large, risky catch-up upgrade is required.
+Follow the [maintenance policy](maintenance.md) for cadence, support deadlines, security response, upgrade decisions, validation, and exceptions. Update the [maintenance register](maintenance-status.md) during each pass; its dates make deferred work actionable. The [October 16, 2026 review](maintenance-2026-10-16.md) is historical evidence, not the current task list.
 
-- Accept stable, compatible patch/minor updates in manageable batches after reviewing release notes, transitive changes, and CI. Routine maintenance does not need to fix an observed app bug to be worthwhile.
-- Avoid prerelease, experimental, or unsupported versions. Review major migrations separately for compatibility, support, and maintenance benefits; do not upgrade just because a newer major exists.
-- Keep Node on a supported LTS line. Coordinate development, CI, and all Docker images when a major migration is needed.
-- Dependabot checks npm, GitHub Actions, Docker, and Android dependencies monthly at 09:00 America/Winnipeg. Production and development npm updates are grouped separately. Routine major-version PRs are disabled; plan those migrations explicitly.
-- Keep security triage separate from routine version-update cadence. Review critical/high findings promptly against actual usage and exposure; moderate/low findings can normally wait for the monthly pass.
-- Avoid `npm audit fix --force` and unreviewed blanket refreshes. Prefer compatible fixes and document remaining findings instead of claiming a clean audit.
-
-The [October 16, 2026 review](maintenance-2026-10-16.md) records the PR decisions and remaining audit findings.
-
-At each monthly pass, also review runtime and toolchain support timelines and plan upcoming major migrations early enough to avoid an end-of-support scramble.
-
-Monthly maintenance pass:
+Run dependency checks for both the root package and Android wrapper. Review the findings before changing versions; nonzero `outdated` or audit results need interpretation, not a forced upgrade.
 
 ```bash
 git pull --ff-only
 npm outdated
+npm outdated --prefix android-twa
 npm audit
+npm audit --omit=dev
+npm audit --prefix android-twa
 npm test
 npm run build
 npm run test:e2e
 npm run test:pwa-upgrade
 ```
+
+Production builds need the documented public URL environment from [hosting.md](hosting.md). The PWA upgrade check requires Docker. Apply the policy's validation matrix to decide which additional Docker or Android checks are required; an unavailable required check remains blocked.
 
 ## Retired voice input
 
