@@ -1,3 +1,10 @@
+## [1.63.3](https://github.com/timunrau/rum1n8/compare/v1.63.2...v1.63.3) (2026-10-28)
+
+
+### Bug Fixes
+
+* append verse references inline when sharing ([2abfcbc](https://github.com/timunrau/rum1n8/commit/2abfcbcf3ed20541911fdf3c5bf64e45e966c220))
+
 ## [1.63.2](https://github.com/timunrau/rum1n8/compare/v1.63.1...v1.63.2) (2026-10-28)
 
 ## [1.63.1](https://github.com/timunrau/rum1n8/compare/v1.63.0...v1.63.1) (2026-10-24)
