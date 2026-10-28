@@ -1,3 +1,5 @@
+## [1.63.2](https://github.com/timunrau/rum1n8/compare/v1.63.1...v1.63.2) (2026-10-28)
+
 ## [1.63.1](https://github.com/timunrau/rum1n8/compare/v1.63.0...v1.63.1) (2026-10-24)
 
 # [1.63.0](https://github.com/timunrau/rum1n8/compare/v1.62.4...v1.63.0) (2026-10-24)
