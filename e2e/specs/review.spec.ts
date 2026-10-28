@@ -151,7 +151,7 @@ test('click verse -> enters review screen', async ({ page }) => {
 })
 
 for (const surface of ['practice', 'search']) {
-  test(`${surface} share includes the reference only after the verse content`, async ({ page }) => {
+  test(`${surface} share includes the reference and version on the same line as the verse content`, async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'share', {
         configurable: true,
@@ -192,8 +192,7 @@ for (const surface of ['practice', 'search']) {
     const shared = await page.evaluate(() => (window as unknown as { __sharedVerse?: ShareData }).__sharedVerse)
     expect(shared).toEqual({
       text: [
-        masteredVerse.content,
-        'Psalm 23:1 (BSB)',
+        `${masteredVerse.content} Psalm 23:1 (BSB)`,
         '',
         'Shared from Ruminate',
         `${(process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')}/`,

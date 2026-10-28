@@ -7310,8 +7310,7 @@ export default {
     }
 
     const formatVerseShareText = (verse) => [
-      verse.content,
-      formatVerseShareReference(verse),
+      `${verse.content.trimEnd()} ${formatVerseShareReference(verse)}`,
       '',
       'Shared from Ruminate',
       getMarketingPageUrl()

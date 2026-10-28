@@ -435,7 +435,7 @@ test('edit verse: changing the reference shows duplicate warnings but ignores th
   await expect(page.getByText('Already in your library: Psalm 23:1 (BSB)')).toBeVisible()
 })
 
-test('share fallback copies the reference only after the verse content', async ({ page }) => {
+test('share fallback copies the reference and version on the same line as the verse content', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-write', 'clipboard-read'])
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'share', {
@@ -452,8 +452,7 @@ test('share fallback copies the reference only after the verse content', async (
   await expect(page.getByText(/Verse copied| copied/i)).toBeVisible({ timeout: 3000 })
   const copied = await page.evaluate(() => navigator.clipboard.readText())
   expect(copied).toBe([
-    sampleVerses[0].content,
-    'John 3:16 (BSB)',
+    `${sampleVerses[0].content} John 3:16 (BSB)`,
     '',
     'Shared from Ruminate',
     `${(process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')}/`,
