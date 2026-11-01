@@ -1,3 +1,10 @@
+## [1.63.4](https://github.com/timunrau/rum1n8/compare/v1.63.3...v1.63.4) (2026-11-01)
+
+
+### Bug Fixes
+
+* unify verse sharing and reference formatting ([75a85c5](https://github.com/timunrau/rum1n8/commit/75a85c5c564328de9b3188b283da88b85b271f5d))
+
 ## [1.63.3](https://github.com/timunrau/rum1n8/compare/v1.63.2...v1.63.3) (2026-10-28)
 
 
