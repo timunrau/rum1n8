@@ -2462,6 +2462,7 @@ import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-c
 import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference, parseVerseSpanReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
 import { getVerseWords } from './utils/verse-words.js'
+import { copyTextToClipboard, shareVerse as shareVerseContent } from './utils/sharing.js'
 import {
   buildPassageReviewVerse,
   calculatePassageSegmentAccuracy,
@@ -7251,71 +7252,6 @@ export default {
       isSpeaking.value = false
     }
 
-    // Copy verse share text to the clipboard.
-    const copyVerse = async (verse) => {
-      // Handle Vue refs - if verse is a ref, get its value
-      let verseObj = verse
-      if (verse && typeof verse === 'object' && 'value' !== undefined && Object.prototype.hasOwnProperty.call(verse, 'value')) {
-        verseObj = verse.value
-      }
-      
-      if (!verseObj || !verseObj.content || !verseObj.reference) {
-        console.error('No verse provided to copyVerse', verse, verseObj)
-        showToast('Error: No verse to copy', true)
-        return
-      }
-      
-      const textToCopy = formatVerseShareText(verseObj)
-      
-      try {
-        await copyTextToClipboard(textToCopy)
-        showToast('Verse copied to clipboard')
-      } catch (err) {
-        console.error('Failed to copy verse:', err)
-        showToast('Failed to copy verse', true)
-      }
-    }
-
-    const copyTextToClipboard = async (text) => {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-        return
-      }
-
-      if (typeof document === 'undefined') {
-        throw new Error('Clipboard is not available.')
-      }
-
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.setAttribute('readonly', '')
-      textArea.style.position = 'fixed'
-      textArea.style.top = '-9999px'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-
-      try {
-        if (!document.execCommand('copy')) {
-          throw new Error('Copy command was not accepted.')
-        }
-      } finally {
-        document.body.removeChild(textArea)
-      }
-    }
-
-    const formatVerseShareReference = (verse) => {
-      const version = typeof verse?.bibleVersion === 'string' ? verse.bibleVersion.trim() : ''
-      return version ? `${verse.reference} (${version.toUpperCase()})` : verse.reference
-    }
-
-    const formatVerseShareText = (verse) => [
-      `${verse.content.trimEnd()} ${formatVerseShareReference(verse)}`,
-      '',
-      'Shared from Ruminate',
-      getMarketingPageUrl()
-    ].join('\n')
-
     const shareVerse = async (verse, surface = 'practice') => {
       const verseObj = verse?.value || verse
 
@@ -7327,25 +7263,12 @@ export default {
 
       trackShareClicked(surface)
 
-      const text = formatVerseShareText(verseObj)
-
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        try {
-          // Some share targets prepend the title, so keep the reference only in the text.
-          await navigator.share({ text })
-          showToast('Verse shared')
-          return
-        } catch (error) {
-          if (error?.name === 'AbortError') return
-          console.error('Failed to share verse:', error)
-        }
-      }
-
       try {
-        await copyTextToClipboard(text)
-        showToast('Verse copied to clipboard')
+        const result = await shareVerseContent(verseObj, getMarketingPageUrl())
+        if (result === 'shared') showToast('Verse shared')
+        if (result === 'copied') showToast('Verse copied to clipboard')
       } catch (error) {
-        console.error('Failed to copy verse:', error)
+        console.error('Failed to share verse:', error)
         showToast('Failed to share verse', true)
       }
     }
@@ -9712,7 +9635,6 @@ export default {
       yAxisLabels,
       dailyActivityScrollRef,
       setVerseCardRef,
-      copyVerse,
       shareVerse,
       speakVerse,
       stopSpeaking,

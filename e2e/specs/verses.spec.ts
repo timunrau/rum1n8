@@ -452,7 +452,7 @@ test('share fallback copies the reference and version on the same line as the ve
   await expect(page.getByText(/Verse copied| copied/i)).toBeVisible({ timeout: 3000 })
   const copied = await page.evaluate(() => navigator.clipboard.readText())
   expect(copied).toBe([
-    `${sampleVerses[0].content} John 3:16 (BSB)`,
+    `${sampleVerses[0].content} John 3:16 BSB`,
     '',
     'Shared from Ruminate',
     `${(process.env.PLAYWRIGHT_MARKETING_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')}/`,
