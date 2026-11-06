@@ -36,12 +36,12 @@
   },
   "dependencies": {
     "@gracious.tech/bible-references": "^1.2.1",
-    "@gracious.tech/fetch-client": "^2.5.1",
+    "@gracious.tech/fetch-client": "^2.6.0",
     "chart.js": "^4.6.1",
     "cors": "^2.8.6",
     "express": "^5.3.0",
     "fuse.js": "^7.5.0",
-    "http-proxy-middleware": "^4.2.0",
+    "http-proxy-middleware": "^4.2.1",
     "vue": "^3.5.44",
     "vue-chartjs": "^5.3.4",
     "webdav": "^5.11.0"
