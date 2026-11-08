@@ -1,3 +1,10 @@
+# [1.64.0](https://github.com/timunrau/rum1n8/compare/v1.63.6...v1.64.0) (2026-11-08)
+
+
+### Features
+
+* add rotation reviews and configurable intervals ([77bce15](https://github.com/timunrau/rum1n8/commit/77bce1508991b688cc61733685d52272fdad6c43))
+
 ## [1.63.6](https://github.com/timunrau/rum1n8/compare/v1.63.5...v1.63.6) (2026-11-06)
 
 ## [1.63.5](https://github.com/timunrau/rum1n8/compare/v1.63.4...v1.63.5) (2026-11-06)
