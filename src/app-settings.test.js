@@ -6,6 +6,7 @@ import {
   normalizeAppSettingsRecord,
   getAppSettingsRecord,
   saveAppSettingsRecord,
+  saveAppSettings,
 } from './app-settings.js'
 
 describe('app settings', () => {
@@ -121,5 +122,77 @@ describe('app settings', () => {
     expect(merged.appSettings.verseSortPreferences).toEqual({
       'collection:remote': { criterion: 'lastReviewed', direction: 'asc' },
     })
+  })
+})
+
+describe('review preferences and installation defaults', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function storage(entries = {}) {
+    const values = new Map(Object.entries(entries))
+    vi.stubGlobal('localStorage', {
+      getItem: key => values.get(key) ?? null,
+      setItem: (key, value) => values.set(key, value),
+    })
+    return values
+  }
+
+  it('pins Rotation for fresh installs without inventing a user-edit timestamp', () => {
+    const values = storage()
+    const first = getAppSettingsRecord()
+    expect(first.appSettings).toMatchObject({ reviewMode: 'rotation', maxReviewIntervalDays: 90 })
+    expect(first.appSettingsLastModified).toBeNull()
+    values.set('rum1n8-verses', '[{"id":"first-verse"}]')
+    expect(getAppSettingsRecord()).toEqual(first)
+  })
+
+  it.each(['rum1n8-verses', 'rum1n8-collections', 'rum1n8-ui-state', 'rum1n8-webdav-settings'])('keeps existing installs on Classic when %s exists', key => {
+    storage({ [key]: '[]' })
+    expect(getAppSettingsRecord().appSettings.reviewMode).toBe('classic')
+  })
+
+  it('preserves older preferences and their timestamps while defaulting missing mode to Classic', () => {
+    storage({ 'rum1n8-app-settings': JSON.stringify({
+      appSettings: { requireReferenceTyping: true }, appSettingsLastModified: '2026-01-01T00:00:00Z',
+    }) })
+    expect(getAppSettingsRecord()).toMatchObject({
+      appSettings: { requireReferenceTyping: true, reviewMode: 'classic' },
+      appSettingsLastModified: '2026-01-01T00:00:00Z',
+    })
+    expect(normalizeAppSettingsRecord({ appSettings: {} }).appSettings.reviewMode).toBe('classic')
+  })
+
+  it.each(['classic', 'rotation'])('preserves a deliberate %s choice through save and load', reviewMode => {
+    storage()
+    saveAppSettings({ reviewMode, maxReviewIntervalDays: 365 })
+    expect(getAppSettingsRecord().appSettings).toMatchObject({ reviewMode, maxReviewIntervalDays: 365 })
+  })
+
+  it.each([0, 366, 10.5, '30', null])('rejects an invalid saved maximum (%s)', maxReviewIntervalDays => {
+    expect(normalizeAppSettings({ reviewMode: 'unknown', maxReviewIntervalDays })).toMatchObject({
+      reviewMode: 'classic', maxReviewIntervalDays: 90,
+    })
+  })
+
+  it.each([null, [], 'invalid', 42])('restores malformed legacy settings safely (%s)', appSettings => {
+    expect(normalizeAppSettingsRecord({ appSettings }).appSettings).toMatchObject({
+      reviewMode: 'classic', maxReviewIntervalDays: 90,
+    })
+  })
+
+  it('restores untimestamped legacy account settings over a fresh installation default', () => {
+    storage()
+    const fresh = getAppSettingsRecord()
+    expect(mergeAppSettingsRecords(fresh, { appSettings: { requireReferenceTyping: true } }).appSettings)
+      .toMatchObject({ reviewMode: 'classic', requireReferenceTyping: true })
+    expect(mergeAppSettingsRecords(fresh, { verses: [], collections: [] }).appSettings.reviewMode).toBe('classic')
+    expect(mergeAppSettingsRecords(fresh, null).appSettings.reviewMode).toBe('rotation')
+  })
+
+  it('keeps a deliberate Rotation choice when a legacy sync file has no settings', () => {
+    storage()
+    const chosen = saveAppSettings({ reviewMode: 'rotation', maxReviewIntervalDays: 30 })
+    expect(mergeAppSettingsRecords(chosen, { verses: [], collections: [] })).toEqual(chosen)
+    expect(mergeAppSettingsRecords(chosen, { appSettings: {} })).toEqual(chosen)
   })
 })

@@ -1,3 +1,6 @@
+import { getLocalCalendarDayDifference } from './utils/local-date.js'
+import { addReviewDays, getReviewSchedule, normalizeMaxReviewInterval } from './review-schedule.js'
+
 // Spaced Repetition System (SM-2 inspired algorithm)
 
 // Calculate grade (0-5) based on accuracy
@@ -28,70 +31,67 @@ export function updateEaseFactor(currentEF, grade) {
 }
 
 // Check if verse was reviewed today
-export function wasReviewedToday(verse) {
+export function wasReviewedToday(verse, now = new Date()) {
   if (!verse.lastReviewed) return false
   const lastReviewed = new Date(verse.lastReviewed)
-  const now = new Date()
   return lastReviewed.toDateString() === now.toDateString()
 }
 
-// Calculate next review date using SM-2-inspired algorithm with shorter intervals
-export function calculateNextReviewDate(verse, grade, isNewReview = false) {
-  const now = new Date()
-  let interval = 0
-  let newEF = verse.easeFactor || 2.5
+// Return the complete schedule so all review paths persist the same metadata.
+export function calculateNextReviewDate(verse, grade, isNewReview = false, options = {}) {
+  const now = options.now || new Date()
+  const maximum = normalizeMaxReviewInterval(options.maxReviewIntervalDays)
+  const rotation = options.reviewMode === 'rotation'
+  const schedule = getReviewSchedule(verse, now)
+  const earned = schedule.earnedInterval
+  const currentEF = verse.easeFactor || 2.5
 
-  // If reviewed today (and this is NOT a new review), don't advance the interval - keep the same next review date
-  // When isNewReview is true, we're actively reviewing now, so always calculate a new date
-  if (!isNewReview && wasReviewedToday(verse) && verse.nextReviewDate) {
+  if (!isNewReview && wasReviewedToday(verse, now) && verse.nextReviewDate) {
     return {
       nextReviewDate: verse.nextReviewDate,
-      easeFactor: newEF,
-      interval: verse.interval || 0
+      easeFactor: currentEF,
+      interval: verse.interval || 0,
+      reviewSchedule: schedule,
     }
   }
 
-  // Update ease factor based on grade
-  newEF = updateEaseFactor(newEF, grade)
+  const measuredGap = verse.lastReviewed ? getLocalCalendarDayDifference(now, verse.lastReviewed) : null
+  const gap = Math.max(1, measuredGap || 1)
+  let newEF = updateEaseFactor(currentEF, grade)
+  if (rotation && grade >= 4 && gap < Math.max(1, Math.floor(earned))) newEF = currentEF
 
-  // Below 90% accuracy (grade < 4): proportionally reduce the interval.
-  // The worse the accuracy, the shorter the next interval. At <30% (grade 0), review tomorrow.
+  let proposed
   if (grade < 4) {
-    const previousInterval = Math.max(verse.interval || 1, 1)
-    // Scale factor: grade 3 (70-89%) → 0.5, grade 2 (50-69%) → 0.25, grade 1 (30-49%) → 0.1, grade 0 (<30%) → 0
-    const scaleFactor = grade / 6 // grade 3→0.5, 2→0.33, 1→0.17, 0→0
-    interval = Math.max(1, previousInterval * scaleFactor) // minimum 1 day
-    // Also reduce ease factor so future intervals grow more slowly
+    let previous = Math.max(1, Math.min(verse.interval || 1, maximum))
+    if (rotation) previous = Math.min(previous, gap)
+    proposed = Math.max(1, previous * grade / 6)
     newEF = Math.max(1.3, newEF * 0.8)
   } else {
-    // Graduated phase: use ease factor to calculate interval
-    // When a verse already has an established or manually customized interval, use it—don't
-    // reset based on reviewCount. This also handles imported/synced verses where those fields
-    // can be out of sync.
-    const previousInterval = verse.interval || 0
-    const hasEstablishedInterval = previousInterval > 4 || verse.reviewScheduleCustomized === true
-
-    if (hasEstablishedInterval) {
-      // Subsequent reviews: previous interval * ease factor (don't reset)
-      interval = previousInterval * newEF
-      if (interval > 90) interval = 90
-    } else if (verse.reviewCount === 0) {
-      interval = 1
-    } else if (verse.reviewCount === 1) {
-      interval = 1
-    } else if (verse.reviewCount === 2) {
-      interval = 2
-    } else if (verse.reviewCount === 3) {
-      interval = 3
-    } else if (verse.reviewCount === 4) {
-      interval = 4
+    const previous = rotation ? earned : (verse.interval || 0)
+    if (previous > 4 || verse.reviewScheduleCustomized === true) {
+      proposed = previous * newEF
+    } else if (verse.reviewCount >= 0 && verse.reviewCount <= 4) {
+      proposed = [1, 1, 2, 3, 4][verse.reviewCount]
     } else {
-      interval = (previousInterval || 1) * newEF
-      if (interval > 90) interval = 90
+      proposed = (previous || 1) * newEF
     }
+    if (rotation) proposed = Math.min(proposed, gap * newEF)
+    proposed = Math.max(earned, proposed)
   }
 
-  const nextDate = new Date(now)
-  nextDate.setDate(nextDate.getDate() + interval)
-  return { nextReviewDate: nextDate.toISOString(), easeFactor: newEF, interval }
+  // No setting can schedule beyond one year. Keeping earned spacing separately
+  // makes a temporarily lower maximum reversible without unbounded hidden growth.
+  const earnedInterval = Math.max(1, Math.min(365, proposed))
+  const interval = Math.min(earnedInterval, maximum)
+  return {
+    nextReviewDate: addReviewDays(now, interval),
+    easeFactor: newEF,
+    interval,
+    reviewSchedule: {
+      earnedInterval,
+      anchorDate: new Date(now).toISOString(),
+      appliedMaximumDays: maximum,
+      forceDue: false,
+    },
+  }
 }

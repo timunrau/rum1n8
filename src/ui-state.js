@@ -328,7 +328,20 @@ export function isStandaloneAppLaunch() {
 export function hasLegacyAppPresence() {
   if (typeof window === 'undefined') return false
 
-  return LEGACY_APP_PRESENCE_KEYS.some((key) => localStorage.getItem(key) !== null)
+  return LEGACY_APP_PRESENCE_KEYS.some((key) => {
+    const stored = localStorage.getItem(key)
+    if (stored === null) return false
+    if (key === 'rum1n8-app-settings') {
+      try {
+        const record = JSON.parse(stored)
+        // Pinning the new-install default is not evidence of an earlier visit.
+        if (record?.appSettingsLastModified === null && record.appSettings?.reviewMode === 'rotation') return false
+      } catch {
+        // A malformed existing record still indicates an earlier installation.
+      }
+    }
+    return true
+  })
 }
 
 export function shouldBypassMarketing() {

@@ -33,6 +33,14 @@ The marketing site's HTML, JavaScript, and CSS live in `site/`. Vite keeps the p
 - In sandboxed environments, e2e may need permission to open a local listening port
 - To exercise already-running production containers, set `PLAYWRIGHT_SKIP_WEBSERVER=1`, `PLAYWRIGHT_BASE_URL`, `PLAYWRIGHT_APP_URL`, and `PLAYWRIGHT_MARKETING_URL`; for a local self-signed TLS proxy, also set `PLAYWRIGHT_IGNORE_HTTPS_ERRORS=1`
 
+## Review scheduling
+
+Settings → Practice & review controls the review mode and maximum interval (1–365 days, initially 90). New installs start in Rotation; existing libraries and older settings/backups retain Classic unless the user chooses otherwise. Mode changes affect future calculations without moving existing dates.
+
+- Classic orders the Review tab by next review date and retains its early-review growth. Rotation puts due verses first, then orders remaining verses by least recent practice and shows when they were last reviewed. Early successes only earn growth supported by the actual gap; they preserve already-earned spacing.
+- The selected mode controls timing throughout the app. Collection review sessions always follow the collection's displayed sort order. Sessions capture their sequence so completed reviews cannot reorder the next verse.
+- Each mastered verse keeps `reviewSchedule` metadata alongside `interval` and `nextReviewDate`. Maximum changes reproject from the stored anchor and earned interval, so lowering then restoring the maximum is reversible until a real review or manual override changes the baseline. Weak reviews shorten earned spacing; Review now stays due through maximum changes. Preserve this metadata in completion paths, sync, imports, reset, and undo.
+
 ## Maintenance
 
 Follow the [maintenance policy](maintenance.md) for cadence, support deadlines, security response, upgrade decisions, validation, and exceptions. Update the [maintenance register](maintenance-status.md) during each pass; its dates make deferred work actionable. The [October 16, 2026 review](maintenance-2026-10-16.md) is historical evidence, not the current task list.

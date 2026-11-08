@@ -7,6 +7,7 @@ import {
   buildTipsUrl,
   getOnboardingUiState,
   getPreferredAppUrl,
+  hasLegacyAppPresence,
   normalizeAppUrl,
   rememberAppUrl,
   shouldBypassMarketing,
@@ -66,6 +67,22 @@ describe('ui-state', () => {
     )
     expect(normalizeAppUrl('/about/')).toBeNull()
     expect(normalizeAppUrl('/')).toBeNull()
+  })
+
+  it('keeps automatic Rotation defaults from hiding first-run onboarding', () => {
+    const store = setupBrowserEnv()
+    store['rum1n8-app-settings'] = JSON.stringify({
+      appSettings: { reviewMode: 'rotation' }, appSettingsLastModified: null,
+    })
+    expect(hasLegacyAppPresence()).toBe(false)
+    expect(shouldBypassMarketing()).toBe(false)
+    store['rum1n8-verses'] = '[]'
+    expect(hasLegacyAppPresence()).toBe(true)
+    delete store['rum1n8-verses']
+    store['rum1n8-app-settings'] = JSON.stringify({
+      appSettings: { reviewMode: 'rotation' }, appSettingsLastModified: '2026-08-01T12:00:00Z',
+    })
+    expect(hasLegacyAppPresence()).toBe(true)
   })
 
   it('remembers the current app URL and marks the app as opened', () => {

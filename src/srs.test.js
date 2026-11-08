@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { addReviewDays, reconcileReviewSchedule } from './review-schedule.js'
 import { calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 
 describe('calculateGrade', () => {
@@ -236,5 +237,105 @@ describe('calculateNextReviewDate', () => {
       const result = calculateNextReviewDate(verse, 5, true)
       expect(result.interval).toBeGreaterThan(14)
     })
+  })
+})
+
+describe('Rotation scheduling and earned spacing', () => {
+  const now = new Date(2026, 8, 20, 12)
+  const makeVerse = (interval = 14, gap = 1) => ({
+    memorizationStatus: 'mastered', interval, easeFactor: 2.5, reviewCount: 10,
+    lastReviewed: addReviewDays(now, -gap), nextReviewDate: addReviewDays(now, interval - gap),
+  })
+  const review = (verse, grade = 5, options = {}) => calculateNextReviewDate(verse, grade, true, {
+    now, reviewMode: 'rotation', maxReviewIntervalDays: 90, ...options,
+  })
+
+  it('daily successful practice cannot rapidly earn a 90-day interval or inflate ease indefinitely', () => {
+    let verse = { interval: 0, easeFactor: 2.5, reviewCount: 0, memorizationStatus: 'mastered' }
+    const intervals = []
+    for (let day = 0; day < 120; day++) {
+      const reviewedAt = new Date(addReviewDays(now, day))
+      const result = review(verse, 5, { now: reviewedAt })
+      intervals.push(result.interval)
+      verse = { ...verse, ...result, lastReviewed: reviewedAt.toISOString(), reviewCount: verse.reviewCount + 1 }
+    }
+    expect(Math.max(...intervals)).toBeLessThan(4)
+    expect(verse.easeFactor).toBeLessThan(3)
+  })
+
+  it('earns growth from a meaningful early gap without claiming the full scheduled gap', () => {
+    const result = review(makeVerse(14, 10))
+    expect(result.interval).toBe(25)
+    expect(result.easeFactor).toBe(2.5)
+    expect(result.reviewSchedule.earnedInterval).toBe(25)
+  })
+
+  it('preserves established spacing after extra practice but grows after the full gap', () => {
+    expect(review(makeVerse(30, 1)).interval).toBe(30)
+    const result = review(makeVerse(14, 14))
+    expect(result.interval).toBeCloseTo(36.4)
+    expect(result.easeFactor).toBeCloseTo(2.6)
+  })
+
+  it.each([null, 'invalid', addReviewDays(now, 2)])('uses a conservative gap for missing or invalid review history (%s)', lastReviewed => {
+    const result = review({ ...makeVerse(14), lastReviewed })
+    expect(result.interval).toBe(14)
+    expect(result.easeFactor).toBe(2.5)
+  })
+
+  it('uses local calendar days across midnight instead of elapsed 24-hour periods', () => {
+    const result = review({ ...makeVerse(14), lastReviewed: new Date(2026, 8, 10, 23, 50).toISOString() }, 5, {
+      now: new Date(2026, 8, 20, 0, 10),
+    })
+    expect(result.interval).toBe(25)
+  })
+
+  it('a weak early review shortens earned spacing using the actual shorter gap', () => {
+    const result = review(makeVerse(30, 4), 3)
+    expect(result.interval).toBe(2)
+    expect(result.reviewSchedule.earnedInterval).toBe(2)
+    expect(result.easeFactor).toBeLessThan(2.5)
+  })
+
+  it.each(['classic', 'rotation'])('a lower maximum preserves earned spacing after success in %s', reviewMode => {
+    const verse = makeVerse(90, 30)
+    reconcileReviewSchedule(verse, 30, now)
+    const result = review(verse, 4, { reviewMode, maxReviewIntervalDays: 30 })
+    expect(result.interval).toBe(30)
+    expect(result.reviewSchedule.earnedInterval).toBe(90)
+    Object.assign(verse, result)
+    reconcileReviewSchedule(verse, 90, now)
+    expect(verse.interval).toBe(90)
+    expect(verse.nextReviewDate).toBe(addReviewDays(now, 90))
+  })
+
+  it.each(['classic', 'rotation'])('raising the maximum cannot undo a weak capped review in %s', reviewMode => {
+    const verse = makeVerse(90, 40)
+    reconcileReviewSchedule(verse, 30, now)
+    Object.assign(verse, review(verse, 3, { reviewMode, maxReviewIntervalDays: 30 }))
+    reconcileReviewSchedule(verse, 365, now)
+    expect(verse.interval).toBe(15)
+    expect(verse.reviewSchedule.earnedInterval).toBe(15)
+  })
+
+  it('Classic retains its early-review growth while Rotation preserves earned spacing', () => {
+    const verse = makeVerse(14, 1)
+    expect(review(verse, 5, { reviewMode: 'classic' }).interval).toBeCloseTo(36.4)
+    expect(review(verse).interval).toBe(14)
+  })
+
+  it('same-day repeats preserve the entire previously saved schedule', () => {
+    const verse = makeVerse(30, 0)
+    reconcileReviewSchedule(verse, 90, now)
+    const result = calculateNextReviewDate(verse, 0, false, { now, reviewMode: 'rotation' })
+    expect(result.interval).toBe(verse.interval)
+    expect(result.nextReviewDate).toBe(verse.nextReviewDate)
+    expect(result.reviewSchedule).toEqual(verse.reviewSchedule)
+    expect(result.easeFactor).toBe(verse.easeFactor)
+  })
+
+  it('permits longer earned spacing when the configured maximum is raised', () => {
+    const result = review(makeVerse(90, 90), 5, { maxReviewIntervalDays: 365 })
+    expect(result.interval).toBeCloseTo(234)
   })
 })

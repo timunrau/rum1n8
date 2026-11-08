@@ -1,3 +1,4 @@
+import { reconcileReviewSchedules } from '../review-schedule.js'
 import { getProvider, getAllProviders } from './providers/index.js'
 import { getAppSettingsRecord, saveAppSettingsRecord, mergeAppSettingsRecords } from '../app-settings.js'
 import { normalizeVerseCollectionIds, repairCollections } from '../utils/collections.js'
@@ -232,6 +233,10 @@ export function resolveVerseConflict(local, remote) {
     return { useRemote: false, reason: 'local has lastModified, remote does not' }
   }
 
+  if (!!local.reviewSchedule !== !!remote.reviewSchedule) {
+    return { useRemote: !!remote.reviewSchedule, reason: 'timestamps equal, preserving reversible schedule metadata' }
+  }
+
   if ((remote.interval || 0) > (local.interval || 0)) {
     return { useRemote: true, reason: 'timestamps equal, remote has longer interval' }
   }
@@ -250,10 +255,15 @@ export function resolveVerseConflict(local, remote) {
  */
 export function mergeData(localVerses, localCollections, remoteData) {
   const mergedAppSettingsRecord = mergeAppSettingsRecords(getAppSettingsRecord(), remoteData)
+  const applyReviewMaximum = verses => {
+    const projected = verses.map(verse => ({ ...verse }))
+    reconcileReviewSchedules(projected, mergedAppSettingsRecord.appSettings.maxReviewIntervalDays)
+    return projected
+  }
 
   if (!remoteData || (!remoteData.verses && !remoteData.collections)) {
     return {
-      verses: localVerses || [],
+      verses: applyReviewMaximum(localVerses || []),
       collections: localCollections || [],
       appSettings: mergedAppSettingsRecord.appSettings,
       appSettingsLastModified: mergedAppSettingsRecord.appSettingsLastModified
@@ -361,7 +371,7 @@ export function mergeData(localVerses, localCollections, remoteData) {
   }))
 
   return {
-    verses: normalizedMergedVerses,
+    verses: applyReviewMaximum(normalizedMergedVerses),
     collections: mergedCollections,
     collectionRepairs: collectionRepair.repairs,
     appSettings: mergedAppSettingsRecord.appSettings,
@@ -399,12 +409,14 @@ export async function syncData(localVerses, localCollections) {
     if (!remoteData) {
       console.log(`[Sync] No remote data found, uploading local data`)
       const localAppSettingsRecord = getAppSettingsRecord()
-      await provider.upload(settings, localVerses, localCollections, null, localAppSettingsRecord)
+      const projectedVerses = localVerses.map(verse => ({ ...verse }))
+      reconcileReviewSchedules(projectedVerses, localAppSettingsRecord.appSettings.maxReviewIntervalDays)
+      await provider.upload(settings, projectedVerses, localCollections, null, localAppSettingsRecord)
       saveSyncState({ lastSync: new Date().toISOString(), lastStatus: 'success', lastError: null, providerId })
       return {
         success: true,
         action: 'uploaded',
-        verses: localVerses,
+        verses: projectedVerses,
         collections: localCollections,
         appSettings: localAppSettingsRecord.appSettings,
         appSettingsLastModified: localAppSettingsRecord.appSettingsLastModified

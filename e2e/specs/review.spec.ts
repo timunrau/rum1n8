@@ -3,6 +3,7 @@ import {
   clearAppStorage,
   seedStorage,
   getStoredVerses,
+  seedAppSettings,
   seedWebDAVSettings,
 } from '../helpers/storage'
 import { mockWebDAVWithStaleRemoteWithFutureTimestamp } from '../helpers/mocks'
@@ -323,6 +324,8 @@ test.describe('day-based review scheduling', () => {
 
   test('counts later-today, overdue, and unscheduled verses but excludes tomorrow', async ({ page }) => {
     await page.clock.install({ time: new Date('2026-08-08T15:00:00.000Z') })
+    // This regression checks Classic's days-until-due labels.
+    await seedAppSettings(page, { reviewMode: 'classic' })
     const verses = [
       {
         ...scheduledBase,
@@ -687,6 +690,8 @@ test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does no
 })
 
 test('established interval preserved on review (no regression to 3 days)', async ({ page }) => {
+  // Classic advances established intervals even when the review is early.
+  await seedAppSettings(page, { reviewMode: 'classic' })
   const verseId = 'regression-test-1'
   const yesterday = new Date(Date.now() - 86400000).toISOString()
   const masteredVerse = {

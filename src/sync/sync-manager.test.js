@@ -116,3 +116,70 @@ describe('sync deletion tracking', () => {
     )
   })
 })
+
+describe('synced review schedules', () => {
+  let store
+  beforeEach(() => {
+    vi.resetModules()
+    store = {}
+    vi.stubGlobal('localStorage', {
+      getItem: key => store[key] ?? null,
+      setItem: (key, value) => { store[key] = value },
+      removeItem: key => { delete store[key] },
+    })
+  })
+
+  async function cappedVerse() {
+    const { addReviewDays, reconcileReviewSchedule } = await import('../review-schedule.js')
+    const anchor = new Date(2026, 6, 1, 12)
+    const verse = {
+      id: 'v', memorizationStatus: 'mastered', interval: 90, reviewCount: 10, easeFactor: 2.5,
+      lastReviewed: anchor.toISOString(), lastModified: anchor.toISOString(),
+      nextReviewDate: addReviewDays(anchor, 90), collectionIds: [],
+    }
+    reconcileReviewSchedule(verse, 30, anchor)
+    return verse
+  }
+
+  it('uses merged settings to restore earned spacing and keeps repeated merges stable', async () => {
+    const local = await cappedVerse()
+    store['rum1n8-app-settings'] = JSON.stringify({
+      appSettings: { reviewMode: 'rotation', maxReviewIntervalDays: 30 }, appSettingsLastModified: '2026-08-01T00:00:00Z',
+    })
+    const remote = {
+      verses: [structuredClone(local)], collections: [],
+      appSettings: { reviewMode: 'rotation', maxReviewIntervalDays: 90 }, appSettingsLastModified: '2026-08-02T00:00:00Z',
+    }
+    const { mergeData } = await import('./sync-manager.js')
+    const merged = mergeData([local], [], remote)
+    expect(merged.verses[0]).toMatchObject({ interval: 90, reviewSchedule: { earnedInterval: 90 } })
+    expect(local.interval).toBe(30)
+    expect(remote.verses[0].interval).toBe(30)
+    const repeated = mergeData(merged.verses, [], { ...remote, verses: merged.verses })
+    expect(repeated.verses).toEqual(merged.verses)
+  })
+
+  it('preserves metadata over a legacy interval tiebreaker, regardless of which side has it', async () => {
+    const capped = await cappedVerse()
+    const legacy = { ...capped, interval: 90, nextReviewDate: '2026-09-29T12:00:00Z' }
+    delete legacy.reviewSchedule
+    const { resolveVerseConflict } = await import('./sync-manager.js')
+    expect(resolveVerseConflict(capped, legacy).useRemote).toBe(false)
+    expect(resolveVerseConflict(legacy, capped).useRemote).toBe(true)
+  })
+
+  it('a newer real review wins over older earned-spacing metadata', async () => {
+    const local = await cappedVerse()
+    store['rum1n8-app-settings'] = JSON.stringify({
+      appSettings: { maxReviewIntervalDays: 90 }, appSettingsLastModified: '2026-08-01T00:00:00Z',
+    })
+    const remoteVerse = {
+      ...local, interval: 7, lastReviewed: '2026-07-10T12:00:00Z', lastModified: '2026-07-10T12:00:00Z',
+      nextReviewDate: '2026-07-17T12:00:00Z',
+    }
+    delete remoteVerse.reviewSchedule
+    const { mergeData } = await import('./sync-manager.js')
+    const merged = mergeData([local], [], { verses: [remoteVerse], collections: [] })
+    expect(merged.verses[0]).toMatchObject({ interval: 7, reviewSchedule: { earnedInterval: 7 } })
+  })
+})

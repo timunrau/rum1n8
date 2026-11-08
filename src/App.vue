@@ -754,32 +754,52 @@
             'space-y-2 py-4 overflow-y-auto stagger-fade',
             listFloatInTarget === 'review-list' ? 'stagger-fade--nav-enter' : ''
           ]"
-          style="max-height: calc(100vh - 4rem);"
+          style="max-height: calc(100vh - 4rem); padding-bottom: calc(6rem + env(safe-area-inset-bottom));"
         >
           <BackupNudgeCard
             v-if="shouldShowBackupNudge"
             @sync="handleNudgeSync"
             @close="snoozeBackupNudge"
           />
-          <PrimaryButton
-            v-if="reviewSortedVerses.length > 0"
-            data-testid="start-review-cta"
-            class="w-full"
-            @click="handleVerseClick(reviewSortedVerses[0])"
-          >
-            Start review<span v-if="dueVersesCount > 0"> · {{ dueVersesCount }} due</span>
-          </PrimaryButton>
 
-          <VerseListItem
-            v-for="verse in reviewSortedVerses"
-            :key="verse.id"
-            :reference="verse.reference"
-            :bible-version="verse.bibleVersion"
-            :status="isDueForReview(verse) ? 'mastered' : ''"
-            :due="isDueForReview(verse)"
-            :meta="isDueForReview(verse) ? '' : getTimeUntilReview(verse)"
-            @click="handleVerseClick(verse)"
-          />
+          <template v-if="appSettings.reviewMode === 'rotation'">
+            <section
+              v-for="section in rotationReviewSections"
+              :key="section.id"
+              :aria-labelledby="`review-section-${section.id}`"
+              class="space-y-2 pt-3"
+            >
+              <div class="flex items-baseline justify-between gap-4 px-4 pb-1">
+                <h2 :id="`review-section-${section.id}`" class="text-sm font-semibold text-text-primary">{{ section.label }}</h2>
+                <span v-if="section.id === 'extra'" class="shrink-0 text-xs text-text-muted">Last reviewed</span>
+              </div>
+              <p v-if="section.id === 'due' && section.verses.length === 0" class="px-4 py-2 text-sm text-text-muted">
+                Nothing due today.
+              </p>
+              <VerseListItem
+                v-for="verse in section.verses"
+                :key="verse.id"
+                :reference="verse.reference"
+                :bible-version="verse.bibleVersion"
+                :status="section.id === 'due' ? 'mastered' : ''"
+                :due="section.id === 'due'"
+                :meta="section.id === 'extra' ? getLastReviewedLabel(verse) : ''"
+                @click="handleVerseClick(verse)"
+              />
+            </section>
+          </template>
+          <template v-else>
+            <VerseListItem
+              v-for="verse in reviewSortedVerses"
+              :key="verse.id"
+              :reference="verse.reference"
+              :bible-version="verse.bibleVersion"
+              :status="isDueForReview(verse) ? 'mastered' : ''"
+              :due="isDueForReview(verse)"
+              :meta="isDueForReview(verse) ? '' : getTimeUntilReview(verse)"
+              @click="handleVerseClick(verse)"
+            />
+          </template>
 
           <!-- Empty state when no verses to review -->
           <div v-if="reviewSortedVerses.length === 0" class="bg-chrome rounded-xl border border-border-default p-12 text-center mt-8">
@@ -1230,6 +1250,19 @@
         </button>
       </div>
     </nav>
+
+    <PrimaryButton
+      v-if="!memorizingVerse && !reviewingVerse && !searchActive && currentView === 'review-list' && !currentCollectionId && reviewSortedVerses.length > 0"
+      data-testid="start-review-cta"
+      class="fixed right-6 z-30 h-14 gap-1.5 rounded-full pl-5 pr-4 text-sm shadow-lift transition-all active:scale-95"
+      style="bottom: calc(5rem + env(safe-area-inset-bottom));"
+      @click="handleVerseClick(reviewSortedVerses[0])"
+    >
+      <span>Start review<span v-if="dueVersesCount > 0"> · {{ dueVersesCount }} due</span></span>
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+      </svg>
+    </PrimaryButton>
 
     <!-- Bulk Verse Selection Bar -->
     <div
@@ -1998,8 +2031,64 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
 
       <ModalSheet :show="showPracticeSettings" title="Settings" data-testid="modal-practice-settings" max-width="sm:max-w-lg" @close="closePracticeSettings">
         <div class="space-y-4">
-          <div class="rounded-xl bg-sunken p-4">
-            <label for="default-bible-version" class="block text-base font-semibold text-text-primary">
+          <ReviewSettings v-if="showPracticeSettings" :settings="appSettings" :verses="verses" :now="currentTime"
+            @mode="updateReviewMode" @maximum="updateReviewMaximum">
+            <div>
+              <label class="flex items-start gap-4 cursor-pointer">
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-text-primary">Require typing the reference after the verse</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="appSettings.requireReferenceTyping"
+                  :class="[
+                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                    appSettings.requireReferenceTyping ? 'bg-accent-strong' : 'bg-border-default'
+                  ]"
+                  @click="updateRequireReferenceTyping(!appSettings.requireReferenceTyping)"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                      appSettings.requireReferenceTyping ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </label>
+            </div>
+            <div>
+              <div class="flex items-start gap-4">
+                <div class="flex-1">
+                  <p id="master-placeholder-lines-setting-label" class="text-sm font-medium text-text-primary">Show placeholder lines in Master</p>
+                  <p id="master-placeholder-lines-setting-description" class="mt-1 text-xs text-text-muted">Show lines beneath hidden words in Master mode.</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-labelledby="master-placeholder-lines-setting-label"
+                  aria-describedby="master-placeholder-lines-setting-description"
+                  :aria-checked="appSettings.showMasterPlaceholderLines"
+                  data-testid="master-placeholder-lines-toggle"
+                  :class="[
+                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                    appSettings.showMasterPlaceholderLines ? 'bg-accent-strong' : 'bg-border-default'
+                  ]"
+                  @click="updateShowMasterPlaceholderLines(!appSettings.showMasterPlaceholderLines)"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                      appSettings.showMasterPlaceholderLines ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </div>
+            </div>
+          </ReviewSettings>
+          <section class="rounded-xl bg-sunken p-4" aria-labelledby="bible-settings-heading">
+            <h3 id="bible-settings-heading" class="text-base font-semibold text-text-primary">Bible</h3>
+            <label for="default-bible-version" class="mt-3 block text-sm font-medium text-text-primary">
               Default translation
             </label>
             <input
@@ -2087,64 +2176,13 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
                 />
               </div>
             </div>
-          </div>
-          <div class="rounded-xl bg-sunken p-4">
-            <label class="flex items-start gap-4 cursor-pointer">
+          </section>
+          <section v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" aria-labelledby="privacy-settings-heading" data-testid="analytics-opt-out-row">
+            <h3 id="privacy-settings-heading" class="text-base font-semibold text-text-primary">Privacy</h3>
+            <label class="mt-3 flex items-start gap-4 cursor-pointer">
               <div class="flex-1">
-                <p class="text-base font-semibold text-text-primary">Require typing the reference after the verse</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="appSettings.requireReferenceTyping"
-                :class="[
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-                  appSettings.requireReferenceTyping ? 'bg-accent-strong' : 'bg-border-default'
-                ]"
-                @click="updateRequireReferenceTyping(!appSettings.requireReferenceTyping)"
-              >
-                <span
-                  :class="[
-                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
-                    appSettings.requireReferenceTyping ? 'translate-x-6' : 'translate-x-1'
-                  ]"
-                />
-              </button>
-            </label>
-          </div>
-          <div class="rounded-xl bg-sunken p-4">
-            <div class="flex items-start gap-4">
-              <div class="flex-1">
-                <p id="master-placeholder-lines-setting-label" class="text-base font-semibold text-text-primary">Show placeholder lines in Master</p>
-                <p id="master-placeholder-lines-setting-description" class="mt-1 text-sm text-text-muted">Show lines beneath hidden words in Master mode.</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-labelledby="master-placeholder-lines-setting-label"
-                aria-describedby="master-placeholder-lines-setting-description"
-                :aria-checked="appSettings.showMasterPlaceholderLines"
-                data-testid="master-placeholder-lines-toggle"
-                :class="[
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-                  appSettings.showMasterPlaceholderLines ? 'bg-accent-strong' : 'bg-border-default'
-                ]"
-                @click="updateShowMasterPlaceholderLines(!appSettings.showMasterPlaceholderLines)"
-              >
-                <span
-                  :class="[
-                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
-                    appSettings.showMasterPlaceholderLines ? 'translate-x-6' : 'translate-x-1'
-                  ]"
-                />
-              </button>
-            </div>
-          </div>
-          <div v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" data-testid="analytics-opt-out-row">
-            <label class="flex items-start gap-4 cursor-pointer">
-              <div class="flex-1">
-                <p class="text-base font-semibold text-text-primary">Share anonymous usage analytics</p>
-                <p class="mt-1 text-sm text-text-muted">Helps the maintainer see how many people use the app. No accounts, no personal data.</p>
+                <p class="text-sm font-medium text-text-primary">Share anonymous usage analytics</p>
+                <p class="mt-1 text-xs text-text-muted">Helps the maintainer see how many people use the app. No accounts, no personal data.</p>
               </div>
               <button
                 type="button"
@@ -2165,7 +2203,7 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
                 />
               </button>
             </label>
-          </div>
+          </section>
         </div>
 
         <template #footer>
@@ -2487,7 +2525,7 @@ import {
 } from './utils/collections.js'
 import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 import { buildCollectionCSV } from './utils/collection-csv.js'
-import { applyReviewFrequencyOverride, REVIEW_FREQUENCY_OPTIONS } from './review-schedule.js'
+import { applyReviewFrequencyOverride, getReviewFrequencyOptions, reconcileReviewSchedules, sortReviewVerses } from './review-schedule.js'
 import {
   getLocalCalendarDayDifference,
   getReviewDayState,
@@ -2534,6 +2572,7 @@ import VerseFormFields from './components/VerseFormFields.vue'
 import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import OnboardingCallout from './components/OnboardingCallout.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
+import ReviewSettings from './components/ReviewSettings.vue'
 import BackupNudgeCard from './components/BackupNudgeCard.vue'
 import AppShell from './components/brand/AppShell.vue'
 import BrandMark from './components/brand/BrandMark.vue'
@@ -2549,7 +2588,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
+  components: { ReviewSettings, IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -3652,11 +3691,12 @@ export default {
 
             // Only advance the spaced repetition schedule on the first review of the day
             if (!wasAlreadyReviewedToday) {
-              const reviewData = calculateNextReviewDate(verse, grade, true)
+              const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
               verse.reviewCount = (verse.reviewCount || 0) + 1
               verse.nextReviewDate = reviewData.nextReviewDate
               verse.easeFactor = reviewData.easeFactor
               verse.interval = reviewData.interval
+              verse.reviewSchedule = reviewData.reviewSchedule
             }
 
             // Always update tracking fields regardless of whether it was reviewed today
@@ -3950,11 +3990,12 @@ export default {
       const wasAlreadyReviewedToday = wasReviewedToday(verse)
 
       if (!wasAlreadyReviewedToday) {
-        const reviewData = calculateNextReviewDate(verse, grade, true)
+        const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
         verse.reviewCount = (verse.reviewCount || 0) + 1
         verse.nextReviewDate = reviewData.nextReviewDate
         verse.easeFactor = reviewData.easeFactor
         verse.interval = reviewData.interval
+        verse.reviewSchedule = reviewData.reviewSchedule
       }
 
       const firstAttemptAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
@@ -4453,17 +4494,22 @@ export default {
       }))
     })
 
-    // Sort verses by next review date (closest first) for review list
-    const reviewSortedVerses = computed(() => {
-      const masteredVerses = verses.value.filter(v => v.memorizationStatus === 'mastered')
-
-      return [...masteredVerses].sort((a, b) => {
-        const dateA = a.nextReviewDate ? new Date(a.nextReviewDate) : new Date(0)
-        const dateB = b.nextReviewDate ? new Date(b.nextReviewDate) : new Date(0)
-        // Sort ascending (closest date first)
-        return dateA - dateB
-      })
+    const reviewSortedVerses = computed(() => sortReviewVerses(
+      verses.value, appSettings.value.reviewMode, currentTime.value
+    ))
+    const rotationReviewSections = computed(() => {
+      const due = []
+      const extra = []
+      for (const verse of reviewSortedVerses.value) {
+        if (isDueForReview(verse)) due.push(verse)
+        else extra.push(verse)
+      }
+      return [
+        { id: 'due', label: 'Due now', verses: due },
+        { id: 'extra', label: 'Keep ruminating', verses: extra },
+      ].filter(section => section.id === 'due' || section.verses.length > 0)
     })
+    const reviewFrequencyOptions = computed(() => getReviewFrequencyOptions(appSettings.value.maxReviewIntervalDays))
 
     // Reactive trigger for sync config changes (localStorage isn't reactive)
     const syncConfigVersion = ref(0)
@@ -4879,7 +4925,7 @@ export default {
           return verse
         })
         // Persist migrations without starting sync; onMounted triggers the single startup sync.
-        if (needsMigration) {
+        if (reconcileReviewSchedules(verses.value, appSettings.value.maxReviewIntervalDays) || needsMigration) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
         }
       }
@@ -5410,6 +5456,15 @@ export default {
 
     const getTimeUntilReview = (verse) => {
       return getReviewDayState(verse.nextReviewDate, currentTime.value)?.label || ''
+    }
+
+    const getLastReviewedLabel = (verse) => {
+      if (!verse.lastReviewed) return 'Never'
+      const days = getLocalCalendarDayDifference(currentTime.value, verse.lastReviewed)
+      if (days === null) return 'Never'
+      if (days <= 0) return 'Today'
+      if (days === 1) return 'Yesterday'
+      return `${days}d ago`
     }
 
     // Get days until review (for sorting/display)
@@ -6130,6 +6185,7 @@ export default {
 
         collections.value = normalizeCollections(plannedCollections)
         verses.value = plannedVerses
+        reconcileReviewSchedules(verses.value, appSettings.value.maxReviewIntervalDays, new Date(), true)
         if (createdCollectionCount > 0) {
           saveCollections()
         }
@@ -6474,6 +6530,7 @@ export default {
         verses.value.splice(targetIndex, 0, restoredVerse)
       }
 
+      reconcileReviewSchedules(verses.value, appSettings.value.maxReviewIntervalDays)
       saveVerses()
     }
 
@@ -6636,7 +6693,7 @@ export default {
 
       verses.value.forEach(verse => {
         if (!selectedIds.has(verse.id) || verse.memorizationStatus !== 'mastered') return
-        applyReviewFrequencyOverride(verse, daysFromNow, now)
+        applyReviewFrequencyOverride(verse, daysFromNow, now, appSettings.value.maxReviewIntervalDays)
         changedCount++
       })
 
@@ -6765,12 +6822,14 @@ export default {
         nextReviewDate: verse.nextReviewDate,
         interval: verse.interval,
         reviewScheduleCustomized: verse.reviewScheduleCustomized,
+        reviewSchedule: verse.reviewSchedule ? { ...verse.reviewSchedule } : undefined,
       }
-      applyReviewFrequencyOverride(verse, daysFromNow)
+      applyReviewFrequencyOverride(verse, daysFromNow, new Date(), appSettings.value.maxReviewIntervalDays)
       saveVerses()
       editingVerse.value.nextReviewDate = verse.nextReviewDate
       editingVerse.value.interval = verse.interval
       editingVerse.value.reviewScheduleCustomized = verse.reviewScheduleCustomized
+      editingVerse.value.reviewSchedule = verse.reviewSchedule ? { ...verse.reviewSchedule } : undefined
       scheduleActionsOpen.value = false
       const label = daysFromNow === 0 ? 'Review now' : `Review in ${daysFromNow}d`
       showToast(label, false, {
@@ -6781,11 +6840,14 @@ export default {
           v.nextReviewDate = snapshot.nextReviewDate
           v.interval = snapshot.interval
           v.reviewScheduleCustomized = snapshot.reviewScheduleCustomized
+          v.reviewSchedule = snapshot.reviewSchedule ? { ...snapshot.reviewSchedule } : undefined
+          reconcileReviewSchedules([v], appSettings.value.maxReviewIntervalDays)
           v.lastModified = new Date().toISOString()
           saveVerses()
           if (editingVerse.value && editingVerse.value.id === v.id) {
             editingVerse.value.nextReviewDate = v.nextReviewDate
             editingVerse.value.interval = v.interval
+            editingVerse.value.reviewSchedule = v.reviewSchedule ? { ...v.reviewSchedule } : undefined
           }
         },
       })
@@ -6800,10 +6862,12 @@ export default {
         nextReviewDate: verse.nextReviewDate,
         interval: verse.interval,
         masteredAt: verse.masteredAt,
+        lastReviewed: verse.lastReviewed,
         reviewCount: verse.reviewCount,
         easeFactor: verse.easeFactor,
         reviewHistory: verse.reviewHistory ? [...verse.reviewHistory] : [],
         reviewScheduleCustomized: verse.reviewScheduleCustomized,
+        reviewSchedule: verse.reviewSchedule ? { ...verse.reviewSchedule } : undefined,
       }
       verse.memorizationStatus = 'unmemorized'
       verse.nextReviewDate = null
@@ -6813,6 +6877,8 @@ export default {
       verse.easeFactor = 2.5
       verse.reviewHistory = []
       verse.reviewScheduleCustomized = false
+      delete verse.reviewSchedule
+      verse.lastReviewed = null
       verse.lastModified = new Date().toISOString()
       saveVerses()
       closeEditVerseForm()
@@ -6825,10 +6891,13 @@ export default {
           v.nextReviewDate = snapshot.nextReviewDate
           v.interval = snapshot.interval
           v.masteredAt = snapshot.masteredAt
+          v.lastReviewed = snapshot.lastReviewed
           v.reviewCount = snapshot.reviewCount
           v.easeFactor = snapshot.easeFactor
           v.reviewHistory = snapshot.reviewHistory
           v.reviewScheduleCustomized = snapshot.reviewScheduleCustomized
+          v.reviewSchedule = snapshot.reviewSchedule ? { ...snapshot.reviewSchedule } : undefined
+          reconcileReviewSchedules([v], appSettings.value.maxReviewIntervalDays)
           v.lastModified = new Date().toISOString()
           saveVerses()
         },
@@ -7576,11 +7645,12 @@ export default {
       const grade = calculateGrade(segment.totalUnits, mistakes)
       const wasAlreadyReviewedToday = wasReviewedToday(verse)
       if (!wasAlreadyReviewedToday) {
-        const reviewData = calculateNextReviewDate(verse, grade, true)
+        const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
         verse.reviewCount = (verse.reviewCount || 0) + 1
         verse.nextReviewDate = reviewData.nextReviewDate
         verse.easeFactor = reviewData.easeFactor
         verse.interval = reviewData.interval
+        verse.reviewSchedule = reviewData.reviewSchedule
       }
 
       verse.lastReviewed = new Date().toISOString()
@@ -7790,11 +7860,12 @@ export default {
 
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(prevVerse, grade, true)
+            const reviewData = calculateNextReviewDate(prevVerse, grade, true, appSettings.value)
             prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1
             prevVerse.nextReviewDate = reviewData.nextReviewDate
             prevVerse.easeFactor = reviewData.easeFactor
             prevVerse.interval = reviewData.interval
+            prevVerse.reviewSchedule = reviewData.reviewSchedule
           }
 
           // Always update tracking fields regardless of whether it was reviewed today
@@ -8189,11 +8260,12 @@ export default {
 
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(verse, grade, true)
+            const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
+            verse.reviewSchedule = reviewData.reviewSchedule
           }
 
           // Always update tracking fields regardless of whether it was reviewed today
@@ -8321,11 +8393,12 @@ export default {
 
           // Only advance the spaced repetition schedule on the first review of the day
           if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(verse, grade, true)
+            const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
             verse.reviewCount = (verse.reviewCount || 0) + 1
             verse.nextReviewDate = reviewData.nextReviewDate
             verse.easeFactor = reviewData.easeFactor
             verse.interval = reviewData.interval
+            verse.reviewSchedule = reviewData.reviewSchedule
           }
 
           // Always update tracking fields regardless of whether it was reviewed today
@@ -8578,6 +8651,7 @@ export default {
                   mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
                   mergedVerse.nextReviewDate = reviewingVerseBeforeSync.nextReviewDate
                   mergedVerse.interval = reviewingVerseBeforeSync.interval
+                  mergedVerse.reviewSchedule = reviewingVerseBeforeSync.reviewSchedule ? { ...reviewingVerseBeforeSync.reviewSchedule } : undefined
                   mergedVerse.easeFactor = reviewingVerseBeforeSync.easeFactor
                   mergedVerse.reviewCount = reviewingVerseBeforeSync.reviewCount
                   if (reviewingVerseBeforeSync.lastGrade != null) mergedVerse.lastGrade = reviewingVerseBeforeSync.lastGrade
@@ -8598,6 +8672,7 @@ export default {
                 }
               }
               // Update verses array - create new array reference for Vue reactivity
+              reconcileReviewSchedules(result.verses, result.appSettings?.maxReviewIntervalDays ?? appSettings.value.maxReviewIntervalDays)
               verses.value = [...result.verses]
               localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
               
@@ -8756,6 +8831,25 @@ export default {
       closeDrawer()
       showPracticeSettings.value = true
       pushModalState('practiceSettings')
+    }
+
+    const updateReviewMode = (reviewMode) => {
+      saveAppSettingsLocally({ ...appSettings.value, reviewMode })
+    }
+
+    const updateReviewMaximum = (maximum) => {
+      if (!Number.isInteger(maximum) || maximum < 1 || maximum > 365) return
+      reconcileReviewSchedules(verses.value, maximum, new Date(), true)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(verses.value))
+      if (editingVerse.value) {
+        const current = verses.value.find(verse => verse.id === editingVerse.value.id)
+        if (current) Object.assign(editingVerse.value, {
+          interval: current.interval, nextReviewDate: current.nextReviewDate,
+          reviewSchedule: { ...current.reviewSchedule },
+        })
+      }
+      saveAppSettingsLocally({ ...appSettings.value, maxReviewIntervalDays: maximum })
+      showToast('Maximum review interval updated')
     }
 
     const updateRequireReferenceTyping = (enabled) => {
@@ -9182,7 +9276,8 @@ export default {
           appSettings.value = { ...savedSettings.appSettings }
         }
 
-        // Save to localStorage
+        // Apply the restored maximum after restoring both settings and verses.
+        reconcileReviewSchedules(verses.value, appSettings.value.maxReviewIntervalDays, new Date(), true)
         saveVerses()
         saveCollections()
 
@@ -9483,7 +9578,7 @@ export default {
       openBulkScheduleAction,
       closeBulkScheduleModal,
       applyBulkScheduleAction,
-      reviewFrequencyOptions: REVIEW_FREQUENCY_OPTIONS,
+      reviewFrequencyOptions,
       deleteSelectedVerses,
       dueVersesCount,
       totalVerseCount,
@@ -9492,6 +9587,7 @@ export default {
       isDueForReview,
       getDaysUntilReview,
       getTimeUntilReview,
+      getLastReviewedLabel,
       splitReference,
       reviewMistakes,
       memorizingVerse,
@@ -9600,6 +9696,7 @@ export default {
       viewAllVerses,
       currentView,
       reviewSortedVerses,
+      rotationReviewSections,
       navigateToReviewList,
       navigateToCollections,
       navigateToStats,
@@ -9652,6 +9749,7 @@ export default {
       showPracticeSettings,
       showSettings,
       appSettings,
+      currentTime,
       showSettingsMenu,
       drawerVisible,
       drawerOpen,
@@ -9698,6 +9796,8 @@ export default {
       isOnline,
       manualSync,
       manualSyncFromDrawer,
+      updateReviewMode,
+      updateReviewMaximum,
       updateRequireReferenceTyping,
       updateShowMasterPlaceholderLines,
       updateDefaultBibleVersion,

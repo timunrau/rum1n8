@@ -151,21 +151,21 @@ const reviewVerses = [
   buildVerse(baseVerses.psalm, {
     memorizationStatus: 'mastered',
     reviewCount: 6,
-    lastReviewed: yesterday,
+    lastReviewed: '2026-04-05T12:00:00.000Z',
     nextReviewDate: tomorrow,
     interval: 8,
   }),
   buildVerse(baseVerses.romans, {
     memorizationStatus: 'mastered',
     reviewCount: 7,
-    lastReviewed: yesterday,
+    lastReviewed: '2026-04-10T12:00:00.000Z',
     nextReviewDate: twoDaysOut,
     interval: 10,
   }),
   buildVerse(baseVerses.john, {
     memorizationStatus: 'mastered',
     reviewCount: 8,
-    lastReviewed: yesterday,
+    lastReviewed: now,
     nextReviewDate: threeDaysOut,
     interval: 12,
   }),
@@ -690,15 +690,16 @@ async function capturePracticeState(browser, baseUrl, colorScheme = 'light') {
 }
 
 async function captureReviewState(browser, baseUrl, colorScheme = 'light') {
-  const { context, page } = await createMobilePage(browser, buildStorageState({
-    verses: reviewVerses,
-  }), colorScheme)
+  const { context, page } = await createMobilePage(browser, {
+    ...buildStorageState({ verses: reviewVerses }),
+    'rum1n8-app-settings': JSON.stringify({ appSettings: { reviewMode: 'rotation' }, appSettingsLastModified: now }),
+  }, colorScheme)
 
   const suffix = colorScheme === 'dark' ? '-dark' : ''
   try {
+    await page.clock.setFixedTime(new Date(now))
     await page.goto(`${baseUrl}/?view=review-list`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Joshua 1:8').waitFor()
-    await orderReferenceCards(page, ['Joshua 1:8', 'Psalm 119:11', 'Romans 12:2', 'John 3:16'])
     await capturePageScreenshot(page, path.join(marketingDir, `screenshot-review${suffix}.png`))
   } finally {
     await context.close()
@@ -931,7 +932,10 @@ async function captureSidebarState(browser, baseUrl, colorScheme = 'light') {
 async function captureSettingsState(browser, baseUrl, colorScheme = 'light') {
   const { context, page } = await createMobilePage(
     browser,
-    buildOnboardingCompleteStorageState({ verses: versesScreenVerses }),
+    {
+      ...buildOnboardingCompleteStorageState({ verses: versesScreenVerses }),
+      'rum1n8-app-settings': JSON.stringify({ appSettings: { reviewMode: 'rotation' }, appSettingsLastModified: now }),
+    },
     colorScheme
   )
 
