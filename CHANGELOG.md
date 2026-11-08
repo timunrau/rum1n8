@@ -1,3 +1,10 @@
+## [1.64.1](https://github.com/timunrau/rum1n8/compare/v1.64.0...v1.64.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* point marketing link arrows straight right ([78dbaaf](https://github.com/timunrau/rum1n8/commit/78dbaafa2e2c05e981b74fc76363aad8c6f7c93e))
+
 # [1.64.0](https://github.com/timunrau/rum1n8/compare/v1.63.6...v1.64.0) (2026-11-08)
 
 
