@@ -1,3 +1,10 @@
+# [1.65.0](https://github.com/timunrau/rum1n8/compare/v1.64.1...v1.65.0) (2026-11-09)
+
+
+### Features
+
+* explain spaced repetition and clarify review settings ([b652473](https://github.com/timunrau/rum1n8/commit/b65247315c799a1f4623898f0df4eaf8e1e85554))
+
 ## [1.64.1](https://github.com/timunrau/rum1n8/compare/v1.64.0...v1.64.1) (2026-11-08)
 
 
