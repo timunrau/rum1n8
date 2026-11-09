@@ -370,6 +370,10 @@ function buildMarketingUrl(path, returnTo) {
     : `${url.pathname}${url.search}${url.hash}`
 }
 
+export function buildSpacedRepetitionUrl(returnTo = getCurrentAppUrl()) {
+  return buildMarketingUrl('/spaced-repetition/', returnTo)
+}
+
 export function buildTipsUrl(returnTo = getCurrentAppUrl()) {
   return buildMarketingUrl(TIPS_PATH, returnTo)
 }

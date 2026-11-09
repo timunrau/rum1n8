@@ -30,6 +30,12 @@ export const MARKETING_PAGES = Object.freeze([
     path: '/import/biblememory/',
   },
   {
+    page: 'spacedRepetition',
+    inputName: 'spacedRepetition',
+    inputFile: 'site/spaced-repetition/index.html',
+    path: '/spaced-repetition/',
+  },
+  {
     page: 'privacy',
     inputName: 'privacy',
     inputFile: 'site/privacy/index.html',
@@ -192,6 +198,11 @@ function buildJsonLd(metadata) {
 
 function pageMetadata(metadata, page) {
   const byPage = {
+    spacedRepetition: {
+      title: 'How Spaced Repetition Works - Ruminate',
+      description: 'Understand the forgetting curve, retrieval practice, and why time between reviews helps you remember Scripture. An illustrated guide to spaced repetition.',
+      path: '/spaced-repetition/',
+    },
     memorizationBenefits: {
       title: metadata.memorizationBenefitsTitle,
       description: metadata.memorizationBenefitsDescription,
@@ -238,7 +249,7 @@ export function buildHtmlReplacements(metadata, page) {
     ? [
         `<meta property="og:title" content="${escapeHtml(current.title)}" />`,
         `<meta property="og:description" content="${escapeHtml(current.description)}" />`,
-        '<meta property="og:type" content="website" />',
+        `<meta property="og:type" content="${page === 'spacedRepetition' ? 'article' : 'website'}" />`,
         `<meta property="og:site_name" content="${escapeHtml(metadata.websiteName)}" />`,
         `<meta property="og:image" content="${escapeHtml(socialImageUrl)}" />`,
         `<meta property="og:image:alt" content="${escapeHtml(metadata.socialPreviewImageAlt)}" />`,
@@ -256,7 +267,14 @@ export function buildHtmlReplacements(metadata, page) {
     '%META_ROBOTS%': isMarketingPage ? 'index,follow' : 'noindex,nofollow',
     '%HEAD_CANONICAL_TAGS%': canonicalTags,
     '%HEAD_SOCIAL_TAGS%': socialTags,
-    '%HEAD_JSON_LD%': page === 'marketing'
+    '%HEAD_JSON_LD%': page === 'spacedRepetition'
+      ? `<script type="application/ld+json">${serializeJsonForHtml({
+          '@context': 'https://schema.org', '@type': 'Article',
+          headline: 'How spaced repetition works', description: current.description,
+          url: canonicalUrl, mainEntityOfPage: canonicalUrl, inLanguage: 'en',
+          publisher: { '@type': 'Organization', name: 'Ruminate', url: metadata.rootUrl },
+        })}</script>`
+      : page === 'marketing'
       ? `<script type="application/ld+json">${serializeJsonForHtml(buildJsonLd(metadata))}</script>`
       : '',
     '%APP_URL%': escapeHtml(metadata.appUrl),

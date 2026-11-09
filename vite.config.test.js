@@ -31,6 +31,19 @@ describe('vite HTML metadata replacements', () => {
     expect(replacements['%HEAD_JSON_LD%']).toBe('')
   })
 
+  it('publishes the spaced repetition article with matching canonical and Article metadata', () => {
+    const replacements = buildHtmlReplacements(siteMetadata, 'spacedRepetition')
+    const canonical = 'https://rum1n8.example/spaced-repetition/'
+    expect(replacements['%META_ROBOTS%']).toBe('index,follow')
+    expect(replacements['%HEAD_CANONICAL_TAGS%']).toContain(`href="${canonical}"`)
+    expect(replacements['%HEAD_SOCIAL_TAGS%']).toContain('content="article"')
+    const json = replacements['%HEAD_JSON_LD%'].match(/<script[^>]*>(.*)<\/script>/)[1]
+    expect(JSON.parse(json)).toMatchObject({
+      '@type': 'Article', headline: 'How spaced repetition works',
+      url: canonical, mainEntityOfPage: canonical,
+    })
+  })
+
   it('sets noindex metadata for the app page without canonical or social tags', () => {
     const replacements = buildHtmlReplacements(siteMetadata, 'app')
 

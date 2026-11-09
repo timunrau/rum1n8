@@ -58,6 +58,7 @@ for (const path of [
   'index.html',
   'memorization-is-a-spiritual-life-hack/index.html',
   'tips-for-memorizing-scripture/index.html',
+  'spaced-repetition/index.html',
   'import/biblememory/index.html',
   'privacy/index.html',
   'marketing/screenshot-empty.png',
@@ -83,6 +84,7 @@ for (const path of [
   'index.html',
   'memorization-is-a-spiritual-life-hack/index.html',
   'tips-for-memorizing-scripture/index.html',
+  'spaced-repetition/index.html',
   'import/biblememory/index.html',
   'privacy/index.html',
   'robots.txt',
@@ -108,7 +110,7 @@ check(manifest.screenshots?.length === 3, 'Manifest must retain exactly three sc
 const sw = await readText(resolve(appDir, 'sw.js'), 'App service worker')
 check(sw.includes('/app/index.html'), 'Service worker must navigate-fallback to /app/index.html.')
 check(sw.includes('allowlist:[/^\\/app'), 'Service worker fallback must be allowlisted to /app/.')
-for (const route of ['memorization-is-a-spiritual-life-hack', 'tips-for-memorizing-scripture', 'import/biblememory', 'privacy/index.html']) {
+for (const route of ['memorization-is-a-spiritual-life-hack', 'tips-for-memorizing-scripture', 'spaced-repetition', 'import/biblememory', 'privacy/index.html']) {
   check(!sw.includes(route), `Service worker must not precache marketing route ${route}.`)
 }
 
@@ -116,6 +118,7 @@ const expectedPages = [
   ['index.html', '/'],
   ['memorization-is-a-spiritual-life-hack/index.html', '/memorization-is-a-spiritual-life-hack/'],
   ['tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
+  ['spaced-repetition/index.html', '/spaced-repetition/'],
   ['import/biblememory/index.html', '/import/biblememory/'],
   ['privacy/index.html', '/privacy/'],
 ]

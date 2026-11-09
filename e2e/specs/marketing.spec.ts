@@ -75,6 +75,7 @@ for (const path of [
   '/',
   '/memorization-is-a-spiritual-life-hack/',
   '/tips-for-memorizing-scripture/',
+  '/spaced-repetition/',
   '/import/biblememory/',
   '/privacy/',
 ]) {
@@ -163,6 +164,8 @@ for (const [alias, canonical] of [
   ['/privacy', '/privacy/'],
   ['/tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
   ['/import/biblememory', '/import/biblememory/'],
+  ['/spaced-repetition', '/spaced-repetition/'],
+  ['/spaced-repetition/index.html', '/spaced-repetition/'],
 ] as const) {
   test(`marketing alias ${alias} redirects canonically with its query`, async ({ page }) => {
     await gotoMarketing(page, `${alias}?campaign=old`)
@@ -245,4 +248,55 @@ test('dedication links are marked for analytics tracking', async ({ page }) => {
     'data-marketing-track',
     'marketing_theway_clicked',
   )
+})
+
+for (const width of [1280, 390]) {
+  test(`spaced repetition article is centered and readable at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await gotoMarketing(page, '/spaced-repetition/')
+    const article = page.getByRole('article')
+    await expect(article.getByRole('heading', { name: 'How spaced repetition works', exact: true })).toBeVisible()
+    await expect(article.getByRole('img')).toHaveCount(3)
+    const box = await article.boundingBox()
+    expect(box).not.toBeNull()
+    expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(2)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    for (const reference of await article.locator('sup a').all()) {
+      const target = await reference.getAttribute('href')
+      await expect(page.locator(target!)).toHaveCount(1)
+    }
+    await expect(page.locator('footer').getByRole('link', { name: 'Spaced repetition', exact: true })).toBeVisible()
+  })
+}
+
+test('spaced repetition content and diagrams remain available without JavaScript', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false })
+  try {
+    const page = await context.newPage()
+    await gotoMarketing(page, '/spaced-repetition/')
+    await expect(page.getByRole('heading', { name: 'How spaced repetition works', exact: true })).toBeVisible()
+    await expect(page.getByRole('article').getByRole('img')).toHaveCount(3)
+    await expect(page.locator('#sources li')).toHaveCount(4)
+  } finally {
+    await context.close()
+  }
+})
+
+test('settings article link opens separately and preserves review choice and return destination', async ({ page }) => {
+  await gotoApp(page, '?view=collections')
+  await openAppMenu(page)
+  await page.getByTestId('settings-practice').click()
+  await expect(page.getByRole('radiogroup', { name: 'Review order' })).toBeVisible()
+  await page.getByTestId('review-mode-classic').click()
+  await expect(page.getByTestId('review-mode-classic')).toContainText('By next review')
+  await expect(page.getByTestId('review-mode-rotation')).toContainText('By last review')
+  await expect(page.getByTestId('review-mode-rotation')).toContainText('Recommended')
+  const popupPromise = page.waitForEvent('popup')
+  await page.getByTestId('settings-spaced-repetition').click()
+  const article = await popupPromise
+  await expect(article).toHaveURL(`${MARKETING_URL}/spaced-repetition/?returnTo=%2Fapp%2F%3Fview%3Dcollections`)
+  await expect(page.getByTestId('review-mode-classic')).toHaveAttribute('aria-checked', 'true')
+  await article.getByRole('link', { name: 'Back to app', exact: true }).click()
+  await expect(article).toHaveURL(`${APP_URL}/app/?view=collections`)
+  await article.close()
 })

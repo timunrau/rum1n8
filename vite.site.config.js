@@ -53,6 +53,8 @@ export default defineConfig(({ mode }) => {
         name: 'marketing-route-canonicalization',
         configureServer(server) {
           const redirects = new Map([
+            ['/spaced-repetition', '/spaced-repetition/'],
+            ['/spaced-repetition/index.html', '/spaced-repetition/'],
             ['/index.html', '/'], ['/home', '/'], ['/home/', '/'], ['/home/index.html', '/'],
             ['/about', '/'], ['/about/', '/'], ['/about/index.html', '/'],
             ['/memorization-is-a-spiritual-life-hack', '/memorization-is-a-spiritual-life-hack/'],

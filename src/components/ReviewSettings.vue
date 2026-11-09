@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { buildSpacedRepetitionUrl } from '../ui-state.js'
 import { previewReviewMaximum } from '../review-schedule.js'
 
 const props = defineProps({
@@ -15,15 +16,15 @@ const valid = computed(() => String(draftMaximum.value).trim() !== '' && Number.
 const changed = computed(() => maximum.value !== props.settings.maxReviewIntervalDays)
 const preview = computed(() => valid.value ? previewReviewMaximum(props.verses, maximum.value, props.now) : null)
 const modes = [
-  { id: 'classic', label: 'Classic', description: 'Review by next due date. Successful early reviews earn longer intervals.' },
-  { id: 'rotation', label: 'Rotation', description: 'Due verses first, then those practiced least recently. Longer gaps between successful reviews earn longer intervals.' },
+  { id: 'rotation', label: 'By last review', recommended: true, description: 'Review due verses first, then those you haven’t reviewed in the longest time. This gives you a break from recently reviewed verses, so you can practice remembering them after more time has passed.' },
+  { id: 'classic', label: 'By next review', description: 'Review due verses first, then those with the soonest review dates. This keeps upcoming reviews at the top, even if you practiced them recently.' },
 ]
 </script>
 
 <template>
   <section class="rounded-xl bg-sunken p-4" aria-labelledby="review-settings-heading">
     <h3 id="review-settings-heading" class="text-base font-semibold text-text-primary">Practice &amp; review</h3>
-    <p class="mt-3 text-sm font-medium text-text-primary" id="review-mode-label">Review mode</p>
+    <p class="mt-3 text-sm font-medium text-text-primary" id="review-mode-label">Review order</p>
     <div class="mt-2 space-y-1" role="radiogroup" aria-labelledby="review-mode-label">
       <button
         v-for="mode in modes" :key="mode.id" type="button" role="radio"
@@ -32,7 +33,10 @@ const modes = [
         @click="emit('mode', mode.id)"
       >
         <span class="min-w-0">
-          <span class="block text-sm font-medium">{{ mode.label }}</span>
+          <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium">
+            <span>{{ mode.label }}</span>
+            <span v-if="mode.recommended" class="text-xs text-accent">Recommended</span>
+          </span>
           <span class="mt-1 block text-xs text-text-muted">{{ mode.description }}</span>
         </span>
         <svg v-if="settings.reviewMode === mode.id" class="h-4 w-4 shrink-0 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -40,6 +44,9 @@ const modes = [
         </svg>
       </button>
     </div>
+    <a :href="buildSpacedRepetitionUrl()" target="_blank" rel="noopener noreferrer"
+      class="mt-3 inline-block text-sm text-accent underline underline-offset-4"
+      data-testid="settings-spaced-repetition">How spaced repetition works<span class="sr-only"> (opens in a new tab)</span></a>
     <form class="mt-4 border-t border-border-default pt-4" @submit.prevent="valid && changed && emit('maximum', maximum)">
       <label for="max-review-interval" class="block text-sm font-medium text-text-primary">Maximum days between reviews</label>
       <p id="max-review-help" class="mt-1 text-xs text-text-muted">Choose 1–365 days. Lowering this brings reviews forward. Raising it restores previously earned spacing unless review performance has changed it.</p>

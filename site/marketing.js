@@ -13,6 +13,7 @@ const MARKETING_PATHS = new Set([
   '/',
   '/memorization-is-a-spiritual-life-hack/',
   TIPS_PATH,
+  '/spaced-repetition/',
   BIBLEMEMORY_IMPORT_PATH,
   '/privacy/',
 ])

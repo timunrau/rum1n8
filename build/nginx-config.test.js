@@ -21,6 +21,7 @@ describe('marketing Nginx boundary', () => {
       '/about',
       '/memorization-is-a-spiritual-life-hack',
       '/tips-for-memorizing-scripture',
+      '/spaced-repetition',
       '/import/biblememory',
       '/privacy',
     ]) {
