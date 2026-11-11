@@ -13,9 +13,10 @@ const ogOnly = process.argv.includes('--og-only')
 
 const productName = 'Ruminate'
 const title = 'Bible Memory App'
+const headline = 'A simple Bible memory system that keeps you in control of your data'
 const descriptionParagraphs = [
-  "Ruminate's structured memory system makes it easy to learn and review Bible verses.",
-  "It's simple, completely free, and requires no account. There are no limits on how many verses you can memorize, and you can export them anytime.",
+  'Ruminate helps you learn new verses and keep up with the ones you’ve already memorized.',
+  'It’s completely free, with no account or verse limits. You’re never locked in. You can download your verses anytime.',
 ]
 const now = '2026-04-12T12:00:00.000Z'
 const yesterday = '2026-04-11T12:00:00.000Z'
@@ -1162,7 +1163,7 @@ async function captureOgCard(browser, baseUrl) {
               flex-direction: column;
               align-items: flex-start;
               gap: 6px;
-              margin-bottom: 12px;
+              margin-bottom: 22px;
             }
             .brand-icon-crop {
               position: relative;
@@ -1182,7 +1183,7 @@ async function captureOgCard(browser, baseUrl) {
               margin: 0;
               font-family: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
               font-weight: 600;
-              font-size: 68px;
+              font-size: 52px;
               line-height: 0.96;
               letter-spacing: -0.04em;
             }
@@ -1193,15 +1194,23 @@ async function captureOgCard(browser, baseUrl) {
             .product-title {
               display: block;
               font-family: "Source Sans 3", "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-              font-size: 30px;
+              font-size: 24px;
               font-weight: 600;
               letter-spacing: -0.02em;
               color: var(--ink);
-              margin-top: 18px;
+              margin-top: 12px;
+            }
+            h2 {
+              margin: 0 0 16px;
+              font-family: "Literata", "Noto Serif", Georgia, Cambria, "Times New Roman", Times, serif;
+              font-size: 30px;
+              font-weight: 600;
+              line-height: 1.2;
+              letter-spacing: -0.025em;
             }
             p {
               margin: 0;
-              font-size: 24px;
+              font-size: 22px;
               line-height: 1.45;
               color: var(--muted);
               max-width: 540px;
@@ -1271,6 +1280,7 @@ async function captureOgCard(browser, baseUrl) {
                   <div class="brand-icon-crop"><img class="brand-icon" src="${iconUrl}" alt="" /></div>
                   <h1><span class="product-name">${productName}</span><span class="product-title">${title}</span></h1>
                 </div>
+                <h2>${headline}</h2>
                 ${descriptionParagraphs.map((paragraph) => `<p>${paragraph}</p>`).join('\n')}
               </div>
             </section>

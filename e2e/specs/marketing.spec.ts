@@ -150,7 +150,7 @@ for (const returnTo of ['https://evil.example/app/', '//evil.example/app/', '/pr
     await gotoMarketing(page, `/tips-for-memorizing-scripture/?returnTo=${encodeURIComponent(returnTo)}`)
 
     await expect(page.getByRole('link', { name: 'Back to app' })).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'Start memorizing' }).first()).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Try it out' }).first()).toHaveAttribute(
       'href',
       `${APP_URL}/app/`,
     )

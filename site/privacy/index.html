@@ -6,7 +6,7 @@
   <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&family=Source+Sans+3:wght@400;500;600;700&display=swap">
   <meta name="robots" content="%META_ROBOTS%">
   <meta name="description" content="%PAGE_DESCRIPTION%">
   %HEAD_CANONICAL_TAGS%
@@ -51,31 +51,6 @@
       padding: 2rem 1.5rem 0;
       max-width: 720px;
       margin: 0 auto;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-weight: 700;
-      color: var(--text);
-      text-decoration: none;
-    }
-    .brand:hover { text-decoration: none; }
-
-    .brand__mark {
-      width: 3.125rem;
-      height: 3.125rem;
-      display: block;
-      object-fit: contain;
-    }
-
-    .brand__name {
-      padding-bottom: 6px;
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
-      line-height: 1;
-      letter-spacing: -0.025em;
     }
 
     .page-body {
@@ -235,8 +210,11 @@
   </div>
   <header class="site-header">
     <a class="brand" href="/">
-      <img class="brand__mark" src="/icons/icon-192x192.png" alt="" aria-hidden="true" />
-      <span class="brand__name">Ruminate</span>
+      <img class="brand__mark" src="/icons/icon-192x192.png" alt="" width="40" height="40" />
+      <span class="brand__wordmark">
+        <span class="brand__name">Ruminate</span>
+        <span class="brand__descriptor">Bible Memory App</span>
+      </span>
     </a>
   </header>
 
