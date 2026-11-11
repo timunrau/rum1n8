@@ -1,3 +1,11 @@
+## [1.66.3](https://github.com/timunrau/rum1n8/compare/v1.66.2...v1.66.3) (2026-11-11)
+
+
+### Bug Fixes
+
+* clarify Scripture memory article and diagrams ([e8f4bcf](https://github.com/timunrau/rum1n8/commit/e8f4bcf8530bed98ae51fbf14f302fd66aa5fbbd))
+* simplify homepage download wording ([ceaffd8](https://github.com/timunrau/rum1n8/commit/ceaffd8f54879b4d9f85ad3cadebd98855bfa074))
+
 ## [1.66.2](https://github.com/timunrau/rum1n8/compare/v1.66.1...v1.66.2) (2026-11-11)
 
 
