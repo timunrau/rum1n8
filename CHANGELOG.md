@@ -1,3 +1,10 @@
+## [1.66.2](https://github.com/timunrau/rum1n8/compare/v1.66.1...v1.66.2) (2026-11-11)
+
+
+### Bug Fixes
+
+* refine spaced repetition article and marketing CTAs ([18bb1aa](https://github.com/timunrau/rum1n8/commit/18bb1aa8cdd73e37184701386e3710846eb8ea3b))
+
 ## [1.66.1](https://github.com/timunrau/rum1n8/compare/v1.66.0...v1.66.1) (2026-11-11)
 
 
