@@ -1,3 +1,10 @@
+# [1.66.0](https://github.com/timunrau/rum1n8/compare/v1.65.0...v1.66.0) (2026-11-11)
+
+
+### Features
+
+* improve the caught-up review state ([4aebc1d](https://github.com/timunrau/rum1n8/commit/4aebc1da6cc16066d5aa0e76e34aaaec4bed31a4))
+
 # [1.65.0](https://github.com/timunrau/rum1n8/compare/v1.64.1...v1.65.0) (2026-11-09)
 
 
