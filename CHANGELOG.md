@@ -1,3 +1,10 @@
+## [1.66.5](https://github.com/timunrau/rum1n8/compare/v1.66.4...v1.66.5) (2026-11-11)
+
+
+### Bug Fixes
+
+* unify marketing logos and footers ([d1ab2b3](https://github.com/timunrau/rum1n8/commit/d1ab2b3e9849295273b19cd1b23668165e16bff1))
+
 ## [1.66.4](https://github.com/timunrau/rum1n8/compare/v1.66.3...v1.66.4) (2026-11-11)
 
 
