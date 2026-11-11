@@ -199,7 +199,7 @@ function buildJsonLd(metadata) {
 function pageMetadata(metadata, page) {
   const byPage = {
     spacedRepetition: {
-      title: 'How Spaced Repetition Works - Ruminate',
+      title: 'How Spaced Repetition Helps You Memorize Scripture - Ruminate',
       description: 'Understand the forgetting curve, retrieval practice, and why time between reviews helps you remember Scripture. An illustrated guide to spaced repetition.',
       path: '/spaced-repetition/',
     },
@@ -270,7 +270,7 @@ export function buildHtmlReplacements(metadata, page) {
     '%HEAD_JSON_LD%': page === 'spacedRepetition'
       ? `<script type="application/ld+json">${serializeJsonForHtml({
           '@context': 'https://schema.org', '@type': 'Article',
-          headline: 'How spaced repetition works', description: current.description,
+          headline: 'How spaced repetition helps you memorize Scripture', description: current.description,
           url: canonicalUrl, mainEntityOfPage: canonicalUrl, inLanguage: 'en',
           publisher: { '@type': 'Organization', name: 'Ruminate', url: metadata.rootUrl },
         })}</script>`

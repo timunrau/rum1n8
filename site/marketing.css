@@ -1088,34 +1088,32 @@ img {
 .spacing-article .essay__body { max-width: 760px; padding-top: 0; }
 .spacing-article .essay-section:not(.essay-section--final) { padding-top: 0; }
 .spacing-article .essay-section + .essay-section:not(.essay-section--final) { margin-top: 3rem; }
-.spacing-article .article-ref { font-size: .65em; line-height: 0; margin-left: .2em; }
-.spacing-article .article-ref a { text-decoration: none; padding: .15em; }
-.memory-figure { margin: 1.5rem 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--page-bg-soft); }
-.curve-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 0 0 1.25rem; font-size: .85rem; color: var(--text-muted); }
+.memory-figure { margin: 1.5rem 0; padding: 1.5rem 1.5rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--page-bg-soft); }
+.curve-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem 1.25rem; margin: 0 0 1.25rem; font-size: .85rem; color: var(--text-muted); }
 .legend-item { display: inline-flex; align-items: center; gap: .5rem; }
-.legend-line { width: 1.5rem; border-top: 3px solid var(--accent); }
+.legend-line { width: 1.5rem; border-top: 3px solid var(--accent); border-radius: 2px; }
 .legend-line--dashed { border-top: 2px dashed var(--text-soft); }
-.curve-axis-label { font: 600 .85rem/1.4 "Source Sans 3", sans-serif; color: var(--text-muted); }
+.curve-chart { position: relative; padding-left: 1.75rem; }
+.curve-axis-label { position: absolute; top: 39%; left: 0; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); white-space: nowrap; font: 600 .9rem/1 var(--font-sans); color: var(--text-muted); }
 .memory-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-.memory-figure text { fill: var(--text-muted); font: 20px "Source Sans 3", sans-serif; }
+.memory-figure text { fill: var(--text-muted); font: 18px var(--font-sans); }
 .memory-figure .curve-event { fill: var(--accent-warm-text); font-weight: 600; }
-.memory-figure .curve-annotation { fill: var(--accent); font-weight: 600; font-size: 23px; }
-.memory-figure .curve-time { font-weight: 600; }
-.curve-axis { stroke: var(--text-soft); stroke-width: 1; fill: none; }
-.curve-line { stroke: var(--accent); stroke-width: 4; fill: none; }
-.curve-review { stroke: var(--accent-warm-text); stroke-width: 3; fill: none; }
+.memory-figure .curve-annotation { fill: var(--accent); font-weight: 600; }
+.memory-figure .curve-time { fill: var(--text); font-weight: 600; }
+.curve-axis, .curve-axis-arrow { stroke: var(--text-soft); stroke-width: 1.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.curve-grid { stroke: var(--border); stroke-width: 1; fill: none; opacity: .5; }
+.curve-area { fill: var(--accent); opacity: .055; }
+.curve-line { stroke: var(--accent); stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.curve-point { fill: var(--accent); }
+.curve-review { stroke: var(--accent-warm-text); stroke-width: 2.5; fill: none; }
 .curve-arrowhead { fill: var(--accent-warm-text); }
-.curve-guide { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 5; }
-.curve-leader { stroke: var(--accent); stroke-width: 1; fill: none; }
-.curve-baseline { stroke: var(--text-soft); stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
-.spacing-article .article-sources { border-top: 1px solid var(--border); padding-top: 1.5rem; }
-.spacing-article .article-sources h2 { font: 600 1.2rem "Source Sans 3", sans-serif; }
-.article-sources li { margin-bottom: .65rem; line-height: 1.6; scroll-margin-top: 2rem; }
-.article-sources ol { padding-left: 1.5rem; }
-.spacing-article .article-sources p, .spacing-article .article-sources ol { font-size: .9rem; }
+.curve-guide { stroke: var(--accent-warm-text); stroke-width: 1; stroke-dasharray: 3 5; opacity: .5; }
+.curve-leader { stroke: var(--accent); stroke-width: 1; fill: none; opacity: .6; }
+.curve-baseline { stroke: var(--text-soft); stroke-width: 2; stroke-dasharray: 6 7; fill: none; opacity: .7; stroke-linecap: round; }
 @media (max-width: 480px) {
-  .memory-figure { padding: 1rem; margin-inline: -.25rem; }
-  .memory-figure text { font-size: 24px; }
-  .memory-figure .curve-annotation { font-size: 25px; }
-  .curve-legend { gap: .5rem 1rem; }
+  .memory-figure { padding: 1rem .75rem .75rem; margin-inline: -.25rem; }
+  .curve-chart { padding-left: 1.25rem; }
+  .curve-axis-label { font-size: clamp(.625rem, 2.82vw, .6875rem); }
+  .memory-figure text { font-size: 28px; }
+  .curve-legend { gap: .5rem 1rem; font-size: .8rem; margin-bottom: 1rem; }
 }

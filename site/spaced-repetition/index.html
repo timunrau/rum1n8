@@ -49,79 +49,119 @@
       <main class="site-main site-main--essay">
         <article class="essay spacing-article">
 <header class="essay__hero">
-  <h1>How spaced repetition works</h1>
-  <div class="essay__lede"><p>Spaced repetition is the practice of recalling things from memory at spaced intervals to help them stick and increase the amount of time before you forget them.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a>, <a href="#source-2" aria-label="Source 2: spacing">2</a></sup></p></div>
+  <h1>How spaced repetition helps you memorize Scripture</h1>
+  <div class="essay__lede"><p>Spaced repetition is the practice of recalling verses from memory at spaced intervals to help them stick and increase the amount of time before you forget them.</p></div>
 </header>
 <div class="essay__body">
   <section class="essay-section" id="forgetting-curve">
     <h2>The forgetting curve</h2>
-    <p>After you learn something, your ability to recall it tends to decline quickly at first, and then more gradually over time. This pattern is called the forgetting curve.<sup class="article-ref"><a href="#source-3" aria-label="Source 3: the forgetting curve">3</a></sup></p>
+    <p>After you learn a verse, your ability to recall it tends to decline quickly at first, and then more gradually over time. This pattern is called the forgetting curve.</p>
     <figure class="memory-figure">
-  <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Without review</span></div>
-  <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
-  <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-1-title curve-1-desc">
-    <title id="curve-1-title">Without review, recall declines</title>
-    <desc id="curve-1-desc">A steep initial decline becomes more gradual over time. The vertical axis is likelihood of remembering, from low to high. Time runs left to right. Solid lines show recall; upward arrows mark reviews.</desc>
-    <defs><marker id="review-arrow-1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" class="curve-arrowhead"/></marker></defs>
-    <path d="M60 30 V275 H580" class="curve-axis"/>
-    <text x="48" y="51" text-anchor="end" class="curve-tick">High</text><text x="48" y="265" text-anchor="end" class="curve-tick">Low</text>
-    
-    <path d="M60 45 C78 98 102 146 135 170 C195 245 330 258 570 260" class="curve-line"/>
-    
-    <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
-  </svg>
-</figure>
+      <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Without review</span></div>
+      <div class="curve-chart">
+        <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
+        <svg viewBox="0 0 620 370" role="img" aria-labelledby="curve-1-title curve-1-desc">
+          <title id="curve-1-title">Without review, recall declines</title>
+          <desc id="curve-1-desc">Likelihood of remembering runs from low to high on the vertical axis. Time runs left to right, beginning when the verse is first learned. Without review, recall falls quickly at first, then more gradually.</desc>
+          <defs>
+            <marker id="axis-arrow-1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1 L8 5 L2 9" class="curve-axis-arrow"/></marker>
+          </defs>
+          <path d="M60 144 H600 M60 252 H600" class="curve-grid"/>
+          <path d="M60 36 C80 117 108 176 160 204 C228 241 384 251 592 252 V270 H60 Z" class="curve-area"/>
+          <path d="M60 270 V18" class="curve-axis" marker-end="url(#axis-arrow-1)"/>
+          <path d="M60 270 H606" class="curve-axis" marker-end="url(#axis-arrow-1)"/>
+          <text x="46" y="43" text-anchor="end" class="curve-tick">High</text>
+          <text x="46" y="258" text-anchor="end" class="curve-tick">Low</text>
+          <path d="M60 36 C80 117 108 176 160 204 C228 241 384 251 592 252" class="curve-line"/>
+          <circle cx="60" cy="36" r="4" class="curve-point"/>
+          <path d="M60 270 V277" class="curve-axis"/>
+          <text x="60" y="303" text-anchor="middle" class="curve-tick"><tspan x="60">First</tspan><tspan x="60" dy="28">learned</tspan></text>
+          <text x="333" y="357" text-anchor="middle" class="curve-time">Time</text>
+        </svg>
+      </div>
+    </figure>
   </section>
   <section class="essay-section" id="retrieval-practice">
     <h2>Recalling things from memory resets the curve</h2>
-    <p>When you successfully recall a verse from memory, it resets the curve, making it easier to remember again. It also helps flatten the curve, so that you are able to remember it longer before forgetting.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a></sup></p>
+    <p>When you successfully recall a verse from memory, it resets the curve, making it easier to remember again. It also helps flatten the curve, so that you are able to remember it longer before forgetting.</p>
     <figure class="memory-figure">
-  <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
-  <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
-  <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-2-title curve-2-desc">
-    <title id="curve-2-title">Review restores recall; forgetting slows</title>
-    <desc id="curve-2-desc">A review brings recall upward. Afterward, a shallower solid curve stays above the dashed curve for no review. The vertical axis is likelihood of remembering, from low to high. Time runs left to right. Solid lines show recall; upward arrows mark reviews. The dashed line shows what happens without review.</desc>
-    <defs><marker id="review-arrow-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" class="curve-arrowhead"/></marker></defs>
-    <path d="M60 30 V275 H580" class="curve-axis"/>
-    <text x="48" y="51" text-anchor="end" class="curve-tick">High</text><text x="48" y="265" text-anchor="end" class="curve-tick">Low</text>
-    <path d="M60 45 C78 98 102 146 135 170 C195 245 330 258 570 260" class="curve-baseline"/>
-    <path d="M60 45 C78 98 102 146 135 170 M135 45 C170 95 220 140 280 170 C370 205 465 222 570 232" class="curve-line"/>
-    <path d="M135 170 V45" class="curve-review" marker-end="url(#review-arrow-2)"/><path d="M135 180 V275" class="curve-guide"/><text x="135" y="300" text-anchor="middle" class="curve-event">Review</text><path d="M365 114 L390 205" class="curve-leader"/><text x="365" y="100" text-anchor="middle" class="curve-annotation">Flatter curve</text>
-    <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
-  </svg>
-</figure>
+      <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
+      <div class="curve-chart">
+        <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
+        <svg viewBox="0 0 620 370" role="img" aria-labelledby="curve-2-title curve-2-desc">
+          <title id="curve-2-title">Review restores recall; forgetting slows</title>
+          <desc id="curve-2-desc">Likelihood of remembering runs from low to high on the vertical axis. Time runs left to right. A review restores recall, and the curve afterward declines more slowly than the dashed curve without review.</desc>
+          <defs>
+            <marker id="axis-arrow-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1 L8 5 L2 9" class="curve-axis-arrow"/></marker>
+            <marker id="review-arrow-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" class="curve-arrowhead"/></marker>
+          </defs>
+          <path d="M60 144 H600 M60 252 H600" class="curve-grid"/>
+          <path d="M60 36 C80 117 108 176 160 204 V36 C202 107 268 159 334 187 C416 222 507 234 592 240 V270 H60 Z" class="curve-area"/>
+          <path d="M60 270 V18" class="curve-axis" marker-end="url(#axis-arrow-2)"/>
+          <path d="M60 270 H606" class="curve-axis" marker-end="url(#axis-arrow-2)"/>
+          <text x="46" y="43" text-anchor="end" class="curve-tick">High</text>
+          <text x="46" y="258" text-anchor="end" class="curve-tick">Low</text>
+          <path d="M60 36 C80 117 108 176 160 204 C228 241 384 251 592 252" class="curve-baseline"/>
+          <path d="M60 36 C80 117 108 176 160 204 M160 36 C202 107 268 159 334 187 C416 222 507 234 592 240" class="curve-line"/>
+          <circle cx="60" cy="36" r="4" class="curve-point"/>
+          <path d="M160 214 V270" class="curve-guide"/>
+          <path d="M160 204 V39" class="curve-review" marker-end="url(#review-arrow-2)"/>
+          <path d="M160 270 V277" class="curve-axis"/>
+          <text x="160" y="303" text-anchor="middle" class="curve-event">Review</text>
+          <path d="M414 138 L432 218" class="curve-leader"/>
+          <text x="408" y="123" text-anchor="middle" class="curve-annotation">Flatter curve</text>
+          <path d="M60 270 V277" class="curve-axis"/>
+          <text x="60" y="303" text-anchor="middle" class="curve-tick"><tspan x="60">First</tspan><tspan x="60" dy="28">learned</tspan></text>
+          <text x="333" y="357" text-anchor="middle" class="curve-time">Time</text>
+        </svg>
+      </div>
+    </figure>
   </section>
   <section class="essay-section" id="spacing-reviews">
     <h2>Successive recalls help flatten the curve</h2>
-    <p>Each time you successfully recall a verse, it helps reset and flatten the curve a bit more. Over time, you can extend the time between recalls, eventually going for really long periods between them. But here’s the catch: it helps to wait long enough that recalling the verse takes some effort, while you can still bring it to mind. This is why it helps to progressively increase the time between recalls.<sup class="article-ref"><a href="#source-2" aria-label="Source 2: spacing">2</a>, <a href="#source-4" aria-label="Source 4: retrieval effort">4</a></sup></p>
+    <p>Each time you successfully recall a verse, it helps reset and flatten the curve a bit more. Over time, you can extend the time between recalls, eventually going for really long periods between them. But here’s the catch: it helps to wait long enough that recalling the verse takes some effort, while you can still bring it to mind. This is why it helps to progressively increase the time between recalls.</p>
     <figure class="memory-figure">
-  <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
-  <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
-  <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-3-title curve-3-desc">
-    <title id="curve-3-title">The gaps between reviews can grow</title>
-    <desc id="curve-3-desc">Three review arrows are spaced progressively farther apart. After each review the curve declines more slowly. The vertical axis is likelihood of remembering, from low to high. Time runs left to right. Solid lines show recall; upward arrows mark reviews. The dashed line shows what happens without review.</desc>
-    <defs><marker id="review-arrow-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" class="curve-arrowhead"/></marker></defs>
-    <path d="M60 30 V275 H580" class="curve-axis"/>
-    <text x="48" y="51" text-anchor="end" class="curve-tick">High</text><text x="48" y="265" text-anchor="end" class="curve-tick">Low</text>
-    <path d="M60 45 C78 98 102 146 135 170 C195 245 330 258 570 260" class="curve-baseline"/>
-    <path d="M60 45 C78 98 102 146 135 170 M135 45 C170 95 220 140 280 170 M280 45 C330 90 410 135 490 170 M490 45 C520 63 545 76 570 88" class="curve-line"/>
-    <path d="M135 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M135 180 V275" class="curve-guide"/><text x="135" y="300" text-anchor="middle" class="curve-event">Review 1</text><path d="M280 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M280 180 V275" class="curve-guide"/><text x="280" y="300" text-anchor="middle" class="curve-event">Review 2</text><path d="M490 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M490 180 V275" class="curve-guide"/><text x="490" y="300" text-anchor="middle" class="curve-event">Review 3</text>
-    <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
-  </svg>
-</figure>
+      <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
+      <div class="curve-chart">
+        <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
+        <svg viewBox="0 0 620 370" role="img" aria-labelledby="curve-3-title curve-3-desc">
+          <title id="curve-3-title">The gaps between reviews can grow</title>
+          <desc id="curve-3-desc">Likelihood of remembering runs from low to high on the vertical axis. Time runs left to right. Three reviews are spaced progressively farther apart. Each restores recall, and the curve afterward declines more slowly. The dashed curve shows recall without review.</desc>
+          <defs>
+            <marker id="axis-arrow-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1 L8 5 L2 9" class="curve-axis-arrow"/></marker>
+            <marker id="review-arrow-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" class="curve-arrowhead"/></marker>
+          </defs>
+          <path d="M60 144 H600 M60 252 H600" class="curve-grid"/>
+          <path d="M60 36 C80 117 108 176 160 204 V36 C202 107 262 169 320 204 V36 C380 100 464 166 544 204 V36 C560 47 576 56 592 64 V270 H60 Z" class="curve-area"/>
+          <path d="M60 270 V18" class="curve-axis" marker-end="url(#axis-arrow-3)"/>
+          <path d="M60 270 H606" class="curve-axis" marker-end="url(#axis-arrow-3)"/>
+          <text x="46" y="43" text-anchor="end" class="curve-tick">High</text>
+          <text x="46" y="258" text-anchor="end" class="curve-tick">Low</text>
+          <path d="M60 36 C80 117 108 176 160 204 C228 241 384 251 592 252" class="curve-baseline"/>
+          <path d="M60 36 C80 117 108 176 160 204 M160 36 C202 107 262 169 320 204 M320 36 C380 100 464 166 544 204 M544 36 C560 47 576 56 592 64" class="curve-line"/>
+          <circle cx="60" cy="36" r="4" class="curve-point"/>
+          <path d="M160 214 V270" class="curve-guide"/>
+          <path d="M160 204 V39" class="curve-review" marker-end="url(#review-arrow-3)"/>
+          <path d="M160 270 V277" class="curve-axis"/>
+          <text x="160" y="303" text-anchor="middle" class="curve-event">Review 1</text>
+          <path d="M320 214 V270" class="curve-guide"/>
+          <path d="M320 204 V39" class="curve-review" marker-end="url(#review-arrow-3)"/>
+          <path d="M320 270 V277" class="curve-axis"/>
+          <text x="320" y="303" text-anchor="middle" class="curve-event">Review 2</text>
+          <path d="M544 214 V270" class="curve-guide"/>
+          <path d="M544 204 V39" class="curve-review" marker-end="url(#review-arrow-3)"/>
+          <path d="M544 270 V277" class="curve-axis"/>
+          <text x="544" y="303" text-anchor="middle" class="curve-event">Review 3</text>
+          <path d="M60 270 V277" class="curve-axis"/>
+          <text x="60" y="303" text-anchor="middle" class="curve-tick"><tspan x="60">First</tspan><tspan x="60" dy="28">learned</tspan></text>
+          <text x="333" y="357" text-anchor="middle" class="curve-time">Time</text>
+        </svg>
+      </div>
+    </figure>
   </section>
   <section class="essay-section" id="why-wait">
     <h2>The hopeful part</h2>
-    <p>Research has shown that the effort of bringing something back to mind can strengthen your memory of it. So when you have to stop and think before the words come back, that effort is helping the verse stick. Don’t be discouraged that it’s hard to memorize! Just keep practicing and coming back to it over time. Over time, your "memorization muscles" will become stronger and it will be easier to memorize and recall verses.</p>
-  </section>
-  <section class="essay-section article-sources" id="sources">
-    <h2>Sources</h2>
-    <ol>
-      <li id="source-1"><a href="https://pubmed.ncbi.nlm.nih.gov/16507066/">Roediger &amp; Karpicke (2006)</a>. Retrieval practice and long-term retention.</li>
-      <li id="source-2"><a href="https://digitalcommons.usf.edu/psy_facpub/1766/">Cepeda et al. (2008)</a>. Spacing and the timing of reviews.</li>
-      <li id="source-3"><a href="https://doi.org/10.1371/journal.pone.0120644">Murre &amp; Dros (2015)</a>. Ebbinghaus’ forgetting curve.</li>
-      <li id="source-4"><a href="https://doi.org/10.1016/j.jml.2009.01.004">Pyc &amp; Rawson (2009)</a>. Effortful, successful retrieval.</li>
-    </ol>
+    <p>Research has shown that the effort of bringing a verse back to mind can strengthen your memory of it. So when you have to stop and think before the words come back, that effort is helping the verse stick. Don’t be discouraged if it’s hard to memorize! Just keep practicing your verses each day. Over time, your "memorization muscles" will become stronger and it will be easier to memorize and recall verses.</p>
   </section>
   <section class="essay-section essay-section--final" id="start-today">
     <h2>Start ruminating</h2>

@@ -257,16 +257,12 @@ for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 })
     await gotoMarketing(page, '/spaced-repetition/')
     const article = page.getByRole('article')
-    await expect(article.getByRole('heading', { name: 'How spaced repetition works', exact: true })).toBeVisible()
+    await expect(article.getByRole('heading', { name: 'How spaced repetition helps you memorize Scripture', exact: true })).toBeVisible()
     await expect(article.getByRole('img')).toHaveCount(3)
     const box = await article.boundingBox()
     expect(box).not.toBeNull()
     expect(Math.abs(box!.x + box!.width / 2 - width / 2)).toBeLessThan(2)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    for (const reference of await article.locator('sup a').all()) {
-      const target = await reference.getAttribute('href')
-      await expect(page.locator(target!)).toHaveCount(1)
-    }
     await expect(page.locator('footer').getByRole('link', { name: 'Spaced repetition', exact: true })).toBeVisible()
   })
 }
@@ -276,9 +272,8 @@ test('spaced repetition content and diagrams remain available without JavaScript
   try {
     const page = await context.newPage()
     await gotoMarketing(page, '/spaced-repetition/')
-    await expect(page.getByRole('heading', { name: 'How spaced repetition works', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'How spaced repetition helps you memorize Scripture', exact: true })).toBeVisible()
     await expect(page.getByRole('article').getByRole('img')).toHaveCount(3)
-    await expect(page.locator('#sources li')).toHaveCount(4)
   } finally {
     await context.close()
   }

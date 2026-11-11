@@ -39,7 +39,7 @@ describe('vite HTML metadata replacements', () => {
     expect(replacements['%HEAD_SOCIAL_TAGS%']).toContain('content="article"')
     const json = replacements['%HEAD_JSON_LD%'].match(/<script[^>]*>(.*)<\/script>/)[1]
     expect(JSON.parse(json)).toMatchObject({
-      '@type': 'Article', headline: 'How spaced repetition works',
+      '@type': 'Article', headline: 'How spaced repetition helps you memorize Scripture',
       url: canonical, mainEntityOfPage: canonical,
     })
   })
