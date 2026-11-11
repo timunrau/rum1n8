@@ -1,3 +1,10 @@
+## [1.66.4](https://github.com/timunrau/rum1n8/compare/v1.66.3...v1.66.4) (2026-11-11)
+
+
+### Bug Fixes
+
+* clarify scripture memorization tips ([34b4399](https://github.com/timunrau/rum1n8/commit/34b4399824f30ae7d141476fda71048d76e01895))
+
 ## [1.66.3](https://github.com/timunrau/rum1n8/compare/v1.66.2...v1.66.3) (2026-11-11)
 
 
