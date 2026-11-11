@@ -240,9 +240,11 @@ test('Share app shares the public marketing URL', async ({ page }) => {
 test('dedication links are marked for analytics tracking', async ({ page }) => {
   await gotoMarketing(page)
 
-  await expect(page.getByRole('link', { name: 'Donate to Church Renewal International' })).toHaveAttribute(
+  const churchRenewalLink = page.getByRole('link', { name: 'Visit Church Renewal International' })
+  await expect(churchRenewalLink).toHaveAttribute('href', 'https://churchrenewal.com/')
+  await expect(churchRenewalLink).toHaveAttribute(
     'data-marketing-track',
-    'marketing_church_renewal_donate_clicked',
+    'marketing_church_renewal_clicked',
   )
   await expect(page.getByRole('link', { name: 'Visit TheWay.app' })).toHaveAttribute(
     'data-marketing-track',
