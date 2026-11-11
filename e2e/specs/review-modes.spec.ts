@@ -133,26 +133,70 @@ test('Rotation explains dates and keeps the visible sequence after a completed r
   await expect(page.getByTestId('start-review-cta')).toHaveCount(0)
 })
 
-test('Rotation keeps the empty Due now section; Classic keeps its next-date labels', async ({ page }) => {
+test('caught-up state hides Due now while retaining each mode’s list labels', async ({ page }) => {
   await seedVerses(page, [makeVerse('future', 'John 16:33', { lastReviewed: iso(-1), nextReviewDate: iso(9) })])
   await seedAppSettings(page, { reviewMode: 'rotation' })
   await gotoApp(page, '?view=review-list')
-  await expect(page.getByRole('region', { name: 'Due now', exact: true })).toContainText('Nothing due today.')
+  await expect(page.getByTestId('review-caught-up')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Due now', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Keep ruminating', exact: true })).toContainText('Last reviewed')
   await expect(page.locator('.verse-card__meta')).toHaveText('Yesterday')
   await openSettings(page)
   await page.getByTestId('review-mode-classic').click()
   await closeSettings(page)
   await page.getByTestId('nav-review').click()
+  await expect(page.getByTestId('review-caught-up')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Keep ruminating', exact: true })).toHaveCount(0)
   await expect(page.locator('.verse-card__meta')).toHaveText('9d')
   await seedVerses(page, [])
   await seedAppSettings(page, { reviewMode: 'rotation' })
   await gotoApp(page, '?view=review-list')
-  await expect(page.getByRole('region', { name: 'Due now', exact: true })).toContainText('Nothing due today.')
+  await expect(page.getByTestId('review-caught-up')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Due now', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Keep ruminating', exact: true })).toHaveCount(0)
+  await expect(page.getByText('No verses to review', { exact: true })).toBeVisible()
   await expect(page.getByTestId('start-review-cta')).toHaveCount(0)
 })
 
 for (const mode of ['classic', 'rotation']) {
+  test(`${mode} caught-up actions preserve review order and return navigation`, async ({ page }) => {
+    await seedVerses(page, [
+      makeVerse('recent', 'John 16:33', { lastReviewed: iso(-1), nextReviewDate: iso(2) }),
+      makeVerse('old', 'Psalm 23:1', { lastReviewed: iso(-12), nextReviewDate: iso(10) }),
+    ])
+    await seedAppSettings(page, { reviewMode: mode })
+    await gotoApp(page, '?view=review-list')
+    const card = page.getByTestId('review-caught-up')
+    await card.getByRole('button', { name: 'Add verse', exact: true }).click()
+    await page.getByTestId('modal-add-verse').getByRole('button', { name: 'Close', exact: true }).click()
+    await expect(card).toBeVisible()
+    const sequence = mode === 'rotation' ? ['old', 'recent'] : ['recent', 'old']
+    await card.getByRole('button', { name: 'Keep ruminating', exact: true }).click()
+    await expect.poll(() => page.evaluate(() => history.state?.practiceSequence?.verseIds)).toEqual(sequence)
+    await page.locator('#letter-input-review').focus()
+    await page.keyboard.type('gil', { delay: 40 })
+    await page.getByRole('button', { name: 'Next Verse', exact: true }).click()
+    await expect(page.locator('h1')).toContainText(mode === 'rotation' ? 'John 16:33' : 'Psalm 23:1')
+    await page.goBack()
+    await expect(card).toBeVisible()
+    await expect(page.getByTestId('nav-review')).toHaveClass(/tab-btn--active/)
+  })
+
+  test(`${mode} final due review reveals the caught-up state`, async ({ page }) => {
+    await seedVerses(page, [makeVerse('due', 'Romans 8:1', { nextReviewDate: iso(-1) })])
+    await seedAppSettings(page, { reviewMode: mode })
+    await gotoApp(page, '?view=review-list')
+    await expect(page.getByTestId('review-caught-up')).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Due now', exact: true })).toHaveCount(mode === 'rotation' ? 1 : 0)
+    await page.getByTestId('start-review-cta').click()
+    await page.locator('#letter-input-review').focus()
+    await page.keyboard.type('gil', { delay: 40 })
+    await page.getByRole('button', { name: 'Done', exact: true }).click()
+    await expect(page.getByTestId('review-caught-up')).toBeVisible()
+    await expect(page.getByTestId('start-review-cta')).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Due now', exact: true })).toHaveCount(0)
+  })
+
   test(`${mode} timing applies inside collections while their visible order is respected`, async ({ page }) => {
     await seedStorage(page, [
       makeVerse('first', 'Psalm 1:1', { collectionIds: ['group'] }),
@@ -206,7 +250,7 @@ test('backup restore retains Rotation and earned spacing for a later maximum inc
 
 test('floating review action stays above tabs and leaves the last verse reachable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 717 })
-  await seedVerses(page, Array.from({ length: 20 }, (_, i) => makeVerse(`v${i}`, `Psalm ${i + 1}:1`)))
+  await seedVerses(page, Array.from({ length: 20 }, (_, i) => makeVerse(`v${i}`, `Psalm ${i + 1}:1`, { nextReviewDate: iso(-1) })))
   await seedAppSettings(page, { reviewMode: 'rotation' })
   await gotoApp(page, '?view=review-list')
   const action = page.getByTestId('start-review-cta')

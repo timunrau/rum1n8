@@ -18,7 +18,7 @@
       <div class="relative flex flex-col items-center">
         <button
           type="button"
-          class="btn-secondary"
+          class="btn-secondary btn--trailing-icon"
           data-testid="almanac-start-review"
           @click="$emit('start-review')"
         >

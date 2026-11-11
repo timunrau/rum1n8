@@ -793,6 +793,36 @@
     color: var(--color-accent-warm-contrast);
   }
 
+  .review-caught-up {
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .review-caught-up__actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-top: 1rem;
+  }
+
+  .review-caught-up__actions button {
+    white-space: nowrap;
+  }
+
+  .btn--trailing-icon {
+    padding-right: 1rem;
+  }
+
+  @media (max-width: 430px) {
+    .review-caught-up__actions {
+      flex-direction: column;
+    }
+
+    .review-caught-up__actions .btn-primary {
+      order: -1;
+    }
+  }
+
   .completion-tray {
     position: relative;
     z-index: 10;
@@ -1127,6 +1157,7 @@ body {
 }
 
 .fab-menu__item {
+  text-align: left;
   will-change: transform, opacity;
 }
 

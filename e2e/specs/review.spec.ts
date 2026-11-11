@@ -278,7 +278,7 @@ test('start review CTA: shows due count when verses are due', async ({ page }) =
   await expect(cta).toContainText('2 due')
 })
 
-test('start review CTA: omits due count when no verses are due', async ({ page }) => {
+test('caught-up action replaces the floating start review CTA when nothing is due', async ({ page }) => {
   const notDueVerse = {
     id: 'not-due-1',
     reference: 'Psalm 5:1',
@@ -300,9 +300,10 @@ test('start review CTA: omits due count when no verses are due', async ({ page }
   await gotoApp(page, '?view=review-list')
 
   const cta = page.getByTestId('start-review-cta')
-  await expect(cta).toBeVisible()
-  await expect(cta).toContainText('Start review')
-  await expect(cta).not.toContainText('due')
+  await expect(cta).toHaveCount(0)
+  await expect(page.getByTestId('review-caught-up')).toContainText('All caught up')
+  await page.getByRole('button', { name: 'Keep ruminating', exact: true }).click()
+  await expect(page.locator('h1')).toContainText('Psalm 5:1')
 })
 
 test.describe('day-based review scheduling', () => {

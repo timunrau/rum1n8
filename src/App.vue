@@ -762,9 +762,28 @@
             @close="snoozeBackupNudge"
           />
 
+          <section
+            v-if="isReviewCaughtUp"
+            aria-labelledby="review-caught-up-heading"
+            data-testid="review-caught-up"
+            class="review-caught-up"
+          >
+            <h2 id="review-caught-up-heading" class="completion-tray__title">All caught up</h2>
+            <p class="mx-auto mt-2 max-w-md text-balance text-sm text-text-muted">No verses due for review. Keep ruminating on your verses, or memorize a new one.</p>
+            <div class="review-caught-up__actions">
+              <button type="button" class="btn-secondary" @click="openNewVerse">Add verse</button>
+              <button type="button" class="btn-primary btn--trailing-icon" @click="handleVerseClick(reviewSortedVerses[0])">
+                Keep ruminating
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </section>
+
           <template v-if="appSettings.reviewMode === 'rotation'">
             <section
-              v-for="section in rotationReviewSections"
+              v-for="section in reviewSections"
               :key="section.id"
               :aria-labelledby="`review-section-${section.id}`"
               class="space-y-2 pt-3"
@@ -773,9 +792,6 @@
                 <h2 :id="`review-section-${section.id}`" class="text-sm font-semibold text-text-primary">{{ section.label }}</h2>
                 <span v-if="section.id === 'extra'" class="shrink-0 text-xs text-text-muted">Last reviewed</span>
               </div>
-              <p v-if="section.id === 'due' && section.verses.length === 0" class="px-4 py-2 text-sm text-text-muted">
-                Nothing due today.
-              </p>
               <VerseListItem
                 v-for="verse in section.verses"
                 :key="verse.id"
@@ -1252,7 +1268,7 @@
     </nav>
 
     <PrimaryButton
-      v-if="!memorizingVerse && !reviewingVerse && !searchActive && currentView === 'review-list' && !currentCollectionId && reviewSortedVerses.length > 0"
+      v-if="!memorizingVerse && !reviewingVerse && !searchActive && currentView === 'review-list' && !currentCollectionId && reviewSortedVerses.length > 0 && !isReviewCaughtUp"
       data-testid="start-review-cta"
       class="fixed right-6 z-30 h-14 gap-1.5 rounded-full pl-5 pr-4 text-sm shadow-lift transition-all active:scale-95"
       style="bottom: calc(5rem + env(safe-area-inset-bottom));"
@@ -4497,7 +4513,10 @@ export default {
     const reviewSortedVerses = computed(() => sortReviewVerses(
       verses.value, appSettings.value.reviewMode, currentTime.value
     ))
-    const rotationReviewSections = computed(() => {
+    const isReviewCaughtUp = computed(() => (
+      reviewSortedVerses.value.length > 0 && !reviewSortedVerses.value.some(isDueForReview)
+    ))
+    const reviewSections = computed(() => {
       const due = []
       const extra = []
       for (const verse of reviewSortedVerses.value) {
@@ -4507,7 +4526,7 @@ export default {
       return [
         { id: 'due', label: 'Due now', verses: due },
         { id: 'extra', label: 'Keep ruminating', verses: extra },
-      ].filter(section => section.id === 'due' || section.verses.length > 0)
+      ].filter(section => section.verses.length > 0)
     })
     const reviewFrequencyOptions = computed(() => getReviewFrequencyOptions(appSettings.value.maxReviewIntervalDays))
 
@@ -9696,7 +9715,8 @@ export default {
       viewAllVerses,
       currentView,
       reviewSortedVerses,
-      rotationReviewSections,
+      isReviewCaughtUp,
+      reviewSections,
       navigateToReviewList,
       navigateToCollections,
       navigateToStats,
