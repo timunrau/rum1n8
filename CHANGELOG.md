@@ -1,3 +1,10 @@
+## [1.66.1](https://github.com/timunrau/rum1n8/compare/v1.66.0...v1.66.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* clarify marketing copy and simplify essay headings ([8e42b51](https://github.com/timunrau/rum1n8/commit/8e42b511de1398fa482f5c767ac6e91f824189ff))
+
 # [1.66.0](https://github.com/timunrau/rum1n8/compare/v1.65.0...v1.66.0) (2026-11-11)
 
 
