@@ -1086,15 +1086,12 @@ img {
 .spacing-article { max-width: 760px; }
 .spacing-article .essay__hero { padding-bottom: 0; margin-bottom: 2.5rem; }
 .spacing-article .essay__body { max-width: 760px; padding-top: 0; }
-.spacing-article .essay-section { padding-top: 0; }
-.spacing-article .essay-section + .essay-section { margin-top: 3rem; }
+.spacing-article .essay-section:not(.essay-section--final) { padding-top: 0; }
+.spacing-article .essay-section + .essay-section:not(.essay-section--final) { margin-top: 3rem; }
 .spacing-article .article-ref { font-size: .65em; line-height: 0; margin-left: .2em; }
 .spacing-article .article-ref a { text-decoration: none; padding: .15em; }
 .memory-figure { margin: 1.5rem 0; padding: 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--page-bg-soft); }
-.memory-figure__heading { display: flex; align-items: baseline; gap: .65rem; }
-.memory-figure__number { font: 500 .8rem var(--font-mono, monospace); color: var(--text-muted); }
-.memory-figure h3 { margin: 0; font: 600 1.15rem/1.35 "Source Sans 3", sans-serif; color: var(--text); }
-.curve-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 1rem 0 1.25rem; font-size: .85rem; color: var(--text-muted); }
+.curve-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 0 0 1.25rem; font-size: .85rem; color: var(--text-muted); }
 .legend-item { display: inline-flex; align-items: center; gap: .5rem; }
 .legend-line { width: 1.5rem; border-top: 3px solid var(--accent); }
 .legend-line--dashed { border-top: 2px dashed var(--text-soft); }
@@ -1111,7 +1108,6 @@ img {
 .curve-guide { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 5; }
 .curve-leader { stroke: var(--accent); stroke-width: 1; fill: none; }
 .curve-baseline { stroke: var(--text-soft); stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
-.memory-figure figcaption { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--border); font-size: .95rem; line-height: 1.6; color: var(--text); }
 .spacing-article .article-sources { border-top: 1px solid var(--border); padding-top: 1.5rem; }
 .spacing-article .article-sources h2 { font: 600 1.2rem "Source Sans 3", sans-serif; }
 .article-sources li { margin-bottom: .65rem; line-height: 1.6; scroll-margin-top: 2rem; }
@@ -1121,6 +1117,5 @@ img {
   .memory-figure { padding: 1rem; margin-inline: -.25rem; }
   .memory-figure text { font-size: 24px; }
   .memory-figure .curve-annotation { font-size: 25px; }
-  .memory-figure h3 { font-size: 1.05rem; }
   .curve-legend { gap: .5rem 1rem; }
 }

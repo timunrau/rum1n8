@@ -50,14 +50,13 @@
         <article class="essay spacing-article">
 <header class="essay__hero">
   <h1>How spaced repetition works</h1>
-  <div class="essay__lede"><p>Recalling something from memory, with time between attempts, helps it stay in memory longer. This combines two well-studied learning methods: active recall and spaced repetition.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a>, <a href="#source-2" aria-label="Source 2: spacing">2</a></sup></p></div>
+  <div class="essay__lede"><p>Spaced repetition is the practice of recalling things from memory at spaced intervals to help them stick and increase the amount of time before you forget them.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a>, <a href="#source-2" aria-label="Source 2: spacing">2</a></sup></p></div>
 </header>
 <div class="essay__body">
   <section class="essay-section" id="forgetting-curve">
-    <h2>Memory fades between reviews</h2>
-    <p>After something is learned, the ability to recall it tends to decline quickly at first, then more slowly. This pattern is called the <strong>forgetting curve</strong>.<sup class="article-ref"><a href="#source-3" aria-label="Source 3: the forgetting curve">3</a></sup> The lower the line falls, the less likely the information is to come to mind.</p>
+    <h2>The forgetting curve</h2>
+    <p>After you learn something, your ability to recall it tends to decline quickly at first, and then more gradually over time. This pattern is called the forgetting curve.<sup class="article-ref"><a href="#source-3" aria-label="Source 3: the forgetting curve">3</a></sup></p>
     <figure class="memory-figure">
-  <div class="memory-figure__heading"><span class="memory-figure__number">01</span><h3>Without review, recall declines</h3></div>
   <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Without review</span></div>
   <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
   <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-1-title curve-1-desc">
@@ -71,15 +70,12 @@
     
     <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
   </svg>
-  <figcaption>Recall becomes less likely as time passes.</figcaption>
 </figure>
   </section>
   <section class="essay-section" id="retrieval-practice">
-    <h2>A review lifts and flattens the curve</h2>
-    <p>Recalling a verse without looking at the words is <strong>active recall</strong>, also called retrieval practice. Checking the text afterward provides a chance to catch and correct mistakes.</p>
-    <p>A review brings recall back up. Successful retrieval can also strengthen the memory, so the next curve falls more slowly. The memory lasts longer.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a></sup></p>
+    <h2>Recalling things from memory resets the curve</h2>
+    <p>When you successfully recall a verse from memory, it resets the curve, making it easier to remember again. It also helps flatten the curve, so that you are able to remember it longer before forgetting.<sup class="article-ref"><a href="#source-1" aria-label="Source 1: active recall">1</a></sup></p>
     <figure class="memory-figure">
-  <div class="memory-figure__heading"><span class="memory-figure__number">02</span><h3>Review restores recall; forgetting slows</h3></div>
   <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
   <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
   <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-2-title curve-2-desc">
@@ -93,14 +89,12 @@
     <path d="M135 170 V45" class="curve-review" marker-end="url(#review-arrow-2)"/><path d="M135 180 V275" class="curve-guide"/><text x="135" y="300" text-anchor="middle" class="curve-event">Review</text><path d="M365 114 L390 205" class="curve-leader"/><text x="365" y="100" text-anchor="middle" class="curve-annotation">Flatter curve</text>
     <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
   </svg>
-  <figcaption>The upward arrow shows recall returning. The flatter curve shows slower forgetting afterward.</figcaption>
 </figure>
   </section>
   <section class="essay-section" id="spacing-reviews">
-    <h2>Stronger memories can wait longer</h2>
-    <p>Repeating this process over time is <strong>spaced repetition</strong>. As successful reviews make a memory more durable, the gaps between reviews can grow.</p>
+    <h2>Successive recalls help flatten the curve</h2>
+    <p>Each time you successfully recall a verse, it helps reset and flatten the curve a bit more. Over time, you can extend the time between recalls, eventually going for really long periods between them. But here’s the catch: it helps to wait long enough that recalling the verse takes some effort, while you can still bring it to mind. This is why it helps to progressively increase the time between recalls.<sup class="article-ref"><a href="#source-2" aria-label="Source 2: spacing">2</a>, <a href="#source-4" aria-label="Source 4: retrieval effort">4</a></sup></p>
     <figure class="memory-figure">
-  <div class="memory-figure__heading"><span class="memory-figure__number">03</span><h3>The gaps between reviews can grow</h3></div>
   <div class="curve-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>With review</span><span class="legend-item"><i class="legend-line legend-line--dashed"></i>Without review</span></div>
   <div class="curve-axis-label" aria-hidden="true">Likelihood of remembering</div>
   <svg viewBox="0 0 610 340" role="img" aria-labelledby="curve-3-title curve-3-desc">
@@ -114,14 +108,11 @@
     <path d="M135 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M135 180 V275" class="curve-guide"/><text x="135" y="300" text-anchor="middle" class="curve-event">Review 1</text><path d="M280 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M280 180 V275" class="curve-guide"/><text x="280" y="300" text-anchor="middle" class="curve-event">Review 2</text><path d="M490 170 V45" class="curve-review" marker-end="url(#review-arrow-3)"/><path d="M490 180 V275" class="curve-guide"/><text x="490" y="300" text-anchor="middle" class="curve-event">Review 3</text>
     <text x="60" y="330" class="curve-tick">First learned</text><text x="575" y="330" text-anchor="end" class="curve-time">Time →</text>
   </svg>
-  <figcaption>Flatter curves allow longer gaps between reviews.</figcaption>
 </figure>
   </section>
   <section class="essay-section" id="why-wait">
-    <h2>Why leave a gap?</h2>
-    <p>A recently practiced verse may be easy to recall. After a gap, bringing it to mind takes more effort. Successful recall that takes some effort can improve long-term retention more than easier repetitions.<sup class="article-ref"><a href="#source-4" aria-label="Source 4: retrieval effort">4</a></sup></p>
-    <p>The aim is to allow some fading while recall is still possible. Waiting longer is not always better.<sup class="article-ref"><a href="#source-2" aria-label="Source 2: spacing">2</a></sup> When recall fails, checking the words and practicing again helps restore the memory. A shorter gap before the next review may help.</p>
-    <p>A daily practice can include different verses each day. Verses due for review get attention while familiar ones have more time between attempts.</p>
+    <h2>The hopeful part</h2>
+    <p>Research has shown that the effort of bringing something back to mind can strengthen your memory of it. So when you have to stop and think before the words come back, that effort is helping the verse stick. Don’t be discouraged that it’s hard to memorize! Just keep practicing and coming back to it over time. Over time, your "memorization muscles" will become stronger and it will be easier to memorize and recall verses.</p>
   </section>
   <section class="essay-section article-sources" id="sources">
     <h2>Sources</h2>
@@ -131,6 +122,15 @@
       <li id="source-3"><a href="https://doi.org/10.1371/journal.pone.0120644">Murre &amp; Dros (2015)</a>. Ebbinghaus’ forgetting curve.</li>
       <li id="source-4"><a href="https://doi.org/10.1016/j.jml.2009.01.004">Pyc &amp; Rawson (2009)</a>. Effortful, successful retrieval.</li>
     </ol>
+  </section>
+  <section class="essay-section essay-section--final" id="start-today">
+    <h2>Start ruminating</h2>
+    <p>Pick one verse, practice daily, and gain momentum in your walk with God.</p>
+    <p class="essay__action">
+      <a class="button button--primary" data-app-link href="%APP_URL%">
+        <span>Try it out</span>
+      </a>
+    </p>
   </section>
 </div>
         </article>
