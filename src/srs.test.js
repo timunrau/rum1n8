@@ -277,6 +277,40 @@ describe('Rotation scheduling and earned spacing', () => {
     expect(result.easeFactor).toBeCloseTo(2.6)
   })
 
+  it.each([
+    [1.3, 1.3],
+    [1.5, 1.5],
+    [2.197, 1.3],
+    [3.375, 1.5],
+    [7.8, 1.3],
+  ])('grows a fractional %s-day interval with ease %s after consecutive on-time successes', (interval, easeFactor) => {
+    let verse = { ...makeVerse(interval), easeFactor }
+    let expected = interval
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const reviewedAt = new Date(verse.nextReviewDate)
+      const result = review(verse, 4, { now: reviewedAt })
+      expected *= easeFactor
+      expect(result.reviewSchedule.earnedInterval).toBeCloseTo(expected)
+      expect(result.interval).toBeCloseTo(expected)
+      expect(result.nextReviewDate).toBe(addReviewDays(reviewedAt, expected))
+      verse = { ...verse, ...result, lastReviewed: reviewedAt.toISOString(), reviewCount: verse.reviewCount + 1 }
+    }
+
+    expect(verse.interval).toBeGreaterThan(2)
+  })
+
+  it('preserves fractional spacing without compounding it during daily early practice', () => {
+    let verse = { ...makeVerse(3.375), easeFactor: 1.5 }
+    for (let day = 0; day < 8; day++) {
+      const reviewedAt = new Date(addReviewDays(now, day))
+      const result = review(verse, 4, { now: reviewedAt })
+      expect(result.interval).toBe(3.375)
+      expect(result.easeFactor).toBe(1.5)
+      verse = { ...verse, ...result, lastReviewed: reviewedAt.toISOString(), reviewCount: verse.reviewCount + 1 }
+    }
+  })
+
   it.each([null, 'invalid', addReviewDays(now, 2)])('uses a conservative gap for missing or invalid review history (%s)', lastReviewed => {
     const result = review({ ...makeVerse(14), lastReviewed })
     expect(result.interval).toBe(14)

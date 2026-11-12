@@ -75,7 +75,12 @@ export function calculateNextReviewDate(verse, grade, isNewReview = false, optio
     } else {
       proposed = (previous || 1) * newEF
     }
-    if (rotation) proposed = Math.min(proposed, gap * newEF)
+    if (rotation) {
+      // Dates use whole days. Once that gap is met, retain fractional progress
+      // so on-time successes can grow beyond the same rounded review date.
+      const growthGap = gap >= Math.max(1, Math.floor(earned)) ? Math.max(gap, earned) : gap
+      proposed = Math.min(proposed, growthGap * newEF)
+    }
     proposed = Math.max(earned, proposed)
   }
 
