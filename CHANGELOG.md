@@ -1,3 +1,10 @@
+## [1.66.7](https://github.com/timunrau/rum1n8/compare/v1.66.6...v1.66.7) (2026-11-12)
+
+
+### Bug Fixes
+
+* preserve review scheduling changes through sync ([0cdeb97](https://github.com/timunrau/rum1n8/commit/0cdeb97e2eb3a678f453e1ccc2a741140633a752))
+
 ## [1.66.6](https://github.com/timunrau/rum1n8/compare/v1.66.5...v1.66.6) (2026-11-12)
 
 
