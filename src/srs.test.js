@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { addReviewDays, reconcileReviewSchedule } from './review-schedule.js'
+import { addReviewDays, applyReviewFrequencyOverride, reconcileReviewSchedule } from './review-schedule.js'
 import { calculateGrade, updateEaseFactor, wasReviewedToday, calculateNextReviewDate } from './srs.js'
 
 describe('calculateGrade', () => {
@@ -366,6 +366,16 @@ describe('Rotation scheduling and earned spacing', () => {
     expect(result.nextReviewDate).toBe(verse.nextReviewDate)
     expect(result.reviewSchedule).toEqual(verse.reviewSchedule)
     expect(result.easeFactor).toBe(verse.easeFactor)
+  })
+
+  it.each([0, 5])('a same-day grade %i consumes an explicit Review now without earning or losing spacing', grade => {
+    const verse = makeVerse(30, 0)
+    applyReviewFrequencyOverride(verse, 0, now)
+    const result = calculateNextReviewDate(verse, grade, false, { now, reviewMode: 'rotation' })
+    expect(result.interval).toBe(30)
+    expect(result.easeFactor).toBe(verse.easeFactor)
+    expect(result.nextReviewDate).toBe(addReviewDays(now, 30))
+    expect(result.reviewSchedule).toMatchObject({ forceDue: false, earnedInterval: 30 })
   })
 
   it('permits longer earned spacing when the configured maximum is raised', () => {

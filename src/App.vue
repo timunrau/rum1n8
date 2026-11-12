@@ -2477,6 +2477,7 @@ import Fuse from 'fuse.js'
 import { BibleCacheMissError, createBibleCacheService, resolveBibleTranslationId } from './bible-cache.js'
 import {
   syncData,
+  mergeData,
   markVerseDeleted,
   unmarkVersesDeleted,
   markCollectionDeleted,
@@ -2539,7 +2540,7 @@ import {
   repairCollections,
   VIRTUAL_COLLECTION_IDS,
 } from './utils/collections.js'
-import { calculateGrade, wasReviewedToday, calculateNextReviewDate } from './srs.js'
+import { calculateGrade, wasReviewedToday, applyReviewSchedule } from './srs.js'
 import { buildCollectionCSV } from './utils/collection-csv.js'
 import { applyReviewFrequencyOverride, getReviewFrequencyOptions, reconcileReviewSchedules, sortReviewVerses } from './review-schedule.js'
 import {
@@ -3702,18 +3703,8 @@ export default {
             const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
             const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
-            // Check if verse was already reviewed today
-            const wasAlreadyReviewedToday = wasReviewedToday(verse)
-
             // Only advance the spaced repetition schedule on the first review of the day
-            if (!wasAlreadyReviewedToday) {
-              const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
-              verse.reviewCount = (verse.reviewCount || 0) + 1
-              verse.nextReviewDate = reviewData.nextReviewDate
-              verse.easeFactor = reviewData.easeFactor
-              verse.interval = reviewData.interval
-              verse.reviewSchedule = reviewData.reviewSchedule
-            }
+            applyReviewSchedule(verse, grade, appSettings.value)
 
             // Always update tracking fields regardless of whether it was reviewed today
             const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
@@ -4003,16 +3994,7 @@ export default {
       const verse = verses.value.find(v => v.id === reviewingVerse.value.id)
       if (!verse) return
 
-      const wasAlreadyReviewedToday = wasReviewedToday(verse)
-
-      if (!wasAlreadyReviewedToday) {
-        const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
-        verse.reviewCount = (verse.reviewCount || 0) + 1
-        verse.nextReviewDate = reviewData.nextReviewDate
-        verse.easeFactor = reviewData.easeFactor
-        verse.interval = reviewData.interval
-        verse.reviewSchedule = reviewData.reviewSchedule
-      }
+      applyReviewSchedule(verse, grade, appSettings.value)
 
       const firstAttemptAccuracy = ((totalWords - reviewMistakes.value) / totalWords * 100).toFixed(1)
       verse.lastReviewed = new Date().toISOString()
@@ -5337,7 +5319,7 @@ export default {
       }
     }
 
-    // SRS functions (calculateGrade, wasReviewedToday, calculateNextReviewDate)
+    // SRS functions (calculateGrade, wasReviewedToday, applyReviewSchedule)
     // are imported from ./srs.js
 
     // Check if a verse is due for review (only for mastered verses)
@@ -6535,7 +6517,7 @@ export default {
         .filter(Boolean)
     }
 
-    const restoreVerseSnapshots = (snapshots) => {
+    const restoreVerseSnapshots = (snapshots, reviewScheduleChanged = false) => {
       const now = new Date().toISOString()
       const restoredIds = new Set(snapshots.map(snapshot => snapshot.verse.id))
       verses.value = verses.value.filter(verse => !restoredIds.has(verse.id))
@@ -6545,6 +6527,7 @@ export default {
           ...JSON.parse(JSON.stringify(snapshot.verse)),
           lastModified: now
         }
+        if (reviewScheduleChanged) restoredVerse.reviewScheduleModifiedAt = now
         const targetIndex = Math.min(Math.max(snapshot.index, 0), verses.value.length)
         verses.value.splice(targetIndex, 0, restoredVerse)
       }
@@ -6727,7 +6710,7 @@ export default {
       const label = daysFromNow === 0 ? 'Review now' : `Review in ${daysFromNow}d`
       showToast(`${label} for ${formatVerseCount(changedCount)}`, false, {
         label: 'Undo',
-        handler: () => restoreVerseSnapshots(snapshots),
+        handler: () => restoreVerseSnapshots(snapshots, true),
       })
     }
 
@@ -6862,6 +6845,7 @@ export default {
           v.reviewSchedule = snapshot.reviewSchedule ? { ...snapshot.reviewSchedule } : undefined
           reconcileReviewSchedules([v], appSettings.value.maxReviewIntervalDays)
           v.lastModified = new Date().toISOString()
+          v.reviewScheduleModifiedAt = v.lastModified
           saveVerses()
           if (editingVerse.value && editingVerse.value.id === v.id) {
             editingVerse.value.nextReviewDate = v.nextReviewDate
@@ -6899,6 +6883,7 @@ export default {
       delete verse.reviewSchedule
       verse.lastReviewed = null
       verse.lastModified = new Date().toISOString()
+      verse.reviewScheduleModifiedAt = verse.lastModified
       saveVerses()
       closeEditVerseForm()
       showToast('Progress cleared', false, {
@@ -6918,6 +6903,7 @@ export default {
           v.reviewSchedule = snapshot.reviewSchedule ? { ...snapshot.reviewSchedule } : undefined
           reconcileReviewSchedules([v], appSettings.value.maxReviewIntervalDays)
           v.lastModified = new Date().toISOString()
+          v.reviewScheduleModifiedAt = v.lastModified
           saveVerses()
         },
       })
@@ -7662,15 +7648,7 @@ export default {
       if (!verse) return
 
       const grade = calculateGrade(segment.totalUnits, mistakes)
-      const wasAlreadyReviewedToday = wasReviewedToday(verse)
-      if (!wasAlreadyReviewedToday) {
-        const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
-        verse.reviewCount = (verse.reviewCount || 0) + 1
-        verse.nextReviewDate = reviewData.nextReviewDate
-        verse.easeFactor = reviewData.easeFactor
-        verse.interval = reviewData.interval
-        verse.reviewSchedule = reviewData.reviewSchedule
-      }
+      applyReviewSchedule(verse, grade, appSettings.value)
 
       verse.lastReviewed = new Date().toISOString()
       verse.lastGrade = grade
@@ -7874,18 +7852,8 @@ export default {
           const grade = firstAttemptGrade.value !== null ? firstAttemptGrade.value : calculateGrade(totalWords, reviewMistakes.value)
           const mistakes = firstAttemptMistakes.value !== null ? firstAttemptMistakes.value : reviewMistakes.value
 
-          // Check if verse was already reviewed today
-          const wasAlreadyReviewedToday = wasReviewedToday(prevVerse)
-
           // Only advance the spaced repetition schedule on the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(prevVerse, grade, true, appSettings.value)
-            prevVerse.reviewCount = (prevVerse.reviewCount || 0) + 1
-            prevVerse.nextReviewDate = reviewData.nextReviewDate
-            prevVerse.easeFactor = reviewData.easeFactor
-            prevVerse.interval = reviewData.interval
-            prevVerse.reviewSchedule = reviewData.reviewSchedule
-          }
+          applyReviewSchedule(prevVerse, grade, appSettings.value)
 
           // Always update tracking fields regardless of whether it was reviewed today
           const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
@@ -8278,14 +8246,7 @@ export default {
           })
 
           // Only advance the spaced repetition schedule on the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
-            verse.reviewCount = (verse.reviewCount || 0) + 1
-            verse.nextReviewDate = reviewData.nextReviewDate
-            verse.easeFactor = reviewData.easeFactor
-            verse.interval = reviewData.interval
-            verse.reviewSchedule = reviewData.reviewSchedule
-          }
+          applyReviewSchedule(verse, grade, appSettings.value)
 
           // Always update tracking fields regardless of whether it was reviewed today
           const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
@@ -8411,14 +8372,7 @@ export default {
           })
 
           // Only advance the spaced repetition schedule on the first review of the day
-          if (!wasAlreadyReviewedToday) {
-            const reviewData = calculateNextReviewDate(verse, grade, true, appSettings.value)
-            verse.reviewCount = (verse.reviewCount || 0) + 1
-            verse.nextReviewDate = reviewData.nextReviewDate
-            verse.easeFactor = reviewData.easeFactor
-            verse.interval = reviewData.interval
-            verse.reviewSchedule = reviewData.reviewSchedule
-          }
+          applyReviewSchedule(verse, grade, appSettings.value)
 
           // Always update tracking fields regardless of whether it was reviewed today
           const firstAttemptAccuracy = ((totalWords - mistakes) / totalWords * 100).toFixed(1)
@@ -8640,6 +8594,13 @@ export default {
         try {
           const result = await syncData(verses.value, collections.value)
           if (result.success) {
+            // A review, edit, or setting may have changed while the upload was
+            // pending. Merge against the current library before applying it;
+            // the existing queued sync will upload those pending changes.
+            const latest = mergeData(verses.value, collections.value, result)
+            latest.collectionRepairs = [...(result.collectionRepairs || []), ...(latest.collectionRepairs || [])]
+            Object.assign(result, latest)
+            saveAppSettingsRecord({ appSettings: result.appSettings, appSettingsLastModified: result.appSettingsLastModified })
             // Update local data with merged data from sync
             if (result.verses) {
               console.log('[triggerSync] Sync complete - updating verses:', result.verses.length, 'local verses before:', verses.value.length)
@@ -8656,27 +8617,6 @@ export default {
                   lastReviewedOlder: mergedVerse?.lastReviewed && reviewingVerseBeforeSync?.lastReviewed && 
                     new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)
                 })
-                
-                // If merge overwrote our new lastReviewed with an older one, keep all local review fields
-                // (merge chose remote incorrectly; we must preserve nextReviewDate, interval, etc.)
-                if (mergedVerse && reviewingVerseBeforeSync && 
-                    mergedVerse.lastReviewed && reviewingVerseBeforeSync.lastReviewed &&
-                    new Date(mergedVerse.lastReviewed) < new Date(reviewingVerseBeforeSync.lastReviewed)) {
-                  console.warn('[triggerSync] WARNING: Merge overwrote newer review! Restoring all local review fields.', {
-                    merged: mergedVerse.lastReviewed,
-                    local: reviewingVerseBeforeSync.lastReviewed
-                  })
-                  mergedVerse.lastReviewed = reviewingVerseBeforeSync.lastReviewed
-                  mergedVerse.lastModified = reviewingVerseBeforeSync.lastModified || new Date().toISOString()
-                  mergedVerse.nextReviewDate = reviewingVerseBeforeSync.nextReviewDate
-                  mergedVerse.interval = reviewingVerseBeforeSync.interval
-                  mergedVerse.reviewSchedule = reviewingVerseBeforeSync.reviewSchedule ? { ...reviewingVerseBeforeSync.reviewSchedule } : undefined
-                  mergedVerse.easeFactor = reviewingVerseBeforeSync.easeFactor
-                  mergedVerse.reviewCount = reviewingVerseBeforeSync.reviewCount
-                  if (reviewingVerseBeforeSync.lastGrade != null) mergedVerse.lastGrade = reviewingVerseBeforeSync.lastGrade
-                  if (reviewingVerseBeforeSync.lastAccuracy != null) mergedVerse.lastAccuracy = reviewingVerseBeforeSync.lastAccuracy
-                  if (reviewingVerseBeforeSync.reviewHistory?.length) mergedVerse.reviewHistory = reviewingVerseBeforeSync.reviewHistory
-                }
               }
               
               // Log a sample of merged verses for debugging (especially those with review dates)

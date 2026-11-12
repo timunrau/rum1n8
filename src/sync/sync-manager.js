@@ -180,13 +180,30 @@ function pruneDeletionList(entries, remoteIds) {
 
 // --- Conflict resolution ---
 
+function timestamp(value) {
+  const time = value ? new Date(value).getTime() : 0
+  return Number.isFinite(time) ? time : 0
+}
+
+function reviewActionTime(verse) {
+  const reviewed = timestamp(verse.lastReviewed)
+  const modified = timestamp(verse.lastModified)
+  // Older manual overrides can use their anchor. Do not infer a reset from
+  // lastModified: an old unreviewed copy may simply have had its text edited.
+  const manualAnchor = verse.reviewScheduleCustomized || verse.reviewSchedule?.forceDue
+    ? timestamp(verse.reviewSchedule?.anchorDate) : 0
+  return Math.max(reviewed, timestamp(verse.reviewScheduleModifiedAt),
+    manualAnchor <= modified ? manualAnchor : 0,
+    !reviewed ? timestamp(verse.masteredAt) : 0)
+}
+
 /**
  * Resolve a conflict between local and remote versions of the same verse.
  *
  * Algorithm:
- *   1. Reject remote if its timestamp is >1hr in the future (clock skew)
- *   2. Pick whichever has the later lastReviewed
- *   3. If neither has lastReviewed, pick later lastModified
+ *   1. Prefer the copy without timestamps >1hr in the future (clock skew)
+ *   2. Pick the later review or explicit scheduling action
+ *   3. Use lastReviewed, then lastModified to break action-time ties
  *   4. Tiebreaker: pick longer interval (more review progress)
  *   5. Default: keep local
  */
@@ -194,17 +211,19 @@ export function resolveVerseConflict(local, remote) {
   const oneHourMs = 60 * 60 * 1000
   const nowMs = Date.now()
 
-  const localLastReviewed = local.lastReviewed ? new Date(local.lastReviewed).getTime() : 0
-  const remoteLastReviewed = remote.lastReviewed ? new Date(remote.lastReviewed).getTime() : 0
-  const localLastModified = local.lastModified ? new Date(local.lastModified).getTime() : (local.createdAt ? new Date(local.createdAt).getTime() : 0)
-  const remoteLastModified = remote.lastModified ? new Date(remote.lastModified).getTime() : (remote.createdAt ? new Date(remote.createdAt).getTime() : 0)
-
-  const remoteTimestamp = remoteLastReviewed || remoteLastModified
-  if (remoteTimestamp > nowMs + oneHourMs) {
-    if ((remote.interval || 0) > (local.interval || 0)) {
-      return { useRemote: true, reason: 'remote timestamp future (clock skew?), but remote has more progress' }
-    }
-    return { useRemote: false, reason: 'remote timestamp is in the future, keeping local' }
+  const localLastReviewed = timestamp(local.lastReviewed)
+  const remoteLastReviewed = timestamp(remote.lastReviewed)
+  const localLastModified = timestamp(local.lastModified || local.createdAt)
+  const remoteLastModified = timestamp(remote.lastModified || remote.createdAt)
+  const localAction = reviewActionTime(local)
+  const remoteAction = reviewActionTime(remote)
+  const localFuture = Math.max(localLastReviewed, localLastModified, localAction) > nowMs + oneHourMs
+  const remoteFuture = Math.max(remoteLastReviewed, remoteLastModified, remoteAction) > nowMs + oneHourMs
+  if (localFuture || remoteFuture) {
+    return { useRemote: localFuture && !remoteFuture, reason: 'preserving the copy with trustworthy timestamps' }
+  }
+  if (localAction !== remoteAction) {
+    return { useRemote: remoteAction > localAction, reason: 'preserving the newer review or scheduling action' }
   }
 
   if (localLastReviewed && remoteLastReviewed) {
@@ -391,7 +410,7 @@ export async function syncData(localVerses, localCollections) {
     return { success: false, error: 'No sync provider configured', friendlyError: mapSyncError('not configured', null) }
   }
 
-  const settings = provider.getSettings()
+  let settings = provider.getSettings()
   if (!settings) {
     return { success: false, error: `${provider.name} not configured`, friendlyError: mapSyncError('not configured', providerId) }
   }
@@ -402,6 +421,7 @@ export async function syncData(localVerses, localCollections) {
     // Ensure provider is ready (e.g. refresh expired tokens)
     if (provider.ensureReady) {
       await provider.ensureReady(settings)
+      settings = provider.getSettings() || settings
     }
 
     const { data: remoteData } = await provider.download(settings)

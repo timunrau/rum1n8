@@ -165,6 +165,26 @@ test('undo restores the prior review schedule', async ({ page }) => {
   expect(verses[0].reviewScheduleCustomized).toBeUndefined()
 })
 
+test('completing an explicit Review now on an already-reviewed day clears the due request without advancing progress', async ({ page }) => {
+  const today = new Date().toISOString()
+  await seedVerses(page, [{ ...masteredVerse, content: 'For God', lastReviewed: today, lastModified: today, interval: 30 }])
+  await gotoApp(page, '?view=collections')
+  await page.getByRole('button', { name: 'Edit verse' }).first().click()
+  await page.getByTestId('verse-schedule-change').click()
+  await page.getByTestId('verse-schedule-popover').getByRole('button', { name: 'Now', exact: true }).click()
+  await gotoApp(page, '?view=review-list')
+  await page.getByText('Psalm 23:1', { exact: true }).click()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('fg')
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  const verse = (await getStoredVerses(page) as Array<typeof masteredVerse & { reviewSchedule: { forceDue: boolean } }>)[0]
+  expect(verse.reviewSchedule.forceDue).toBe(false)
+  expect(verse.interval).toBe(30)
+  expect(verse.reviewCount).toBe(masteredVerse.reviewCount)
+  expect(verse.easeFactor).toBe(masteredVerse.easeFactor)
+  expect(new Date(verse.nextReviewDate).getTime()).toBeGreaterThan(Date.now())
+})
+
 test('reset clears progress, closes modal, and shows undo toast', async ({ page }) => {
   await seedVerses(page, [{ ...masteredVerse, reviewScheduleCustomized: true }])
   await gotoApp(page, '?view=collections')

@@ -136,6 +136,7 @@ export function applyReviewFrequencyOverride(verse, daysFromNow, now = new Date(
     verse.interval = Math.min(schedule.earnedInterval, limit)
   }
   verse.reviewSchedule = { ...schedule, anchorDate: changedAt, appliedMaximumDays: limit, forceDue: daysFromNow === 0 }
+  verse.reviewScheduleModifiedAt = changedAt
   verse.lastModified = changedAt
   return verse
 }

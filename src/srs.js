@@ -47,6 +47,17 @@ export function calculateNextReviewDate(verse, grade, isNewReview = false, optio
   const currentEF = verse.easeFactor || 2.5
 
   if (!isNewReview && wasReviewedToday(verse, now) && verse.nextReviewDate) {
+    // Completing an explicit same-day Review now consumes the due request,
+    // without grading the same day's practice a second time.
+    if (schedule.forceDue) {
+      const interval = Math.min(earned, maximum)
+      return {
+        nextReviewDate: addReviewDays(now, interval),
+        easeFactor: currentEF,
+        interval,
+        reviewSchedule: { ...schedule, anchorDate: new Date(now).toISOString(), appliedMaximumDays: maximum, forceDue: false },
+      }
+    }
     return {
       nextReviewDate: verse.nextReviewDate,
       easeFactor: currentEF,
@@ -99,4 +110,13 @@ export function calculateNextReviewDate(verse, grade, isNewReview = false, optio
       forceDue: false,
     },
   }
+}
+
+// Every completion path uses the same first-review-of-the-day rule.
+export function applyReviewSchedule(verse, grade, options = {}) {
+  const now = options.now || new Date()
+  const firstReviewToday = !wasReviewedToday(verse, now)
+  const result = calculateNextReviewDate(verse, grade, false, { ...options, now })
+  if (firstReviewToday) verse.reviewCount = (verse.reviewCount || 0) + 1
+  Object.assign(verse, result)
 }
