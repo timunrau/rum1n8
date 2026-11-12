@@ -1,3 +1,10 @@
+## [1.66.6](https://github.com/timunrau/rum1n8/compare/v1.66.5...v1.66.6) (2026-11-12)
+
+
+### Bug Fixes
+
+* advance fractional rotation review intervals ([22e0811](https://github.com/timunrau/rum1n8/commit/22e0811d0f81e2e571ab41c1e06ffd2cd4f6fa35))
+
 ## [1.66.5](https://github.com/timunrau/rum1n8/compare/v1.66.4...v1.66.5) (2026-11-11)
 
 
