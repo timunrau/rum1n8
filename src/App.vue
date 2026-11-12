@@ -2540,7 +2540,7 @@ import {
   repairCollections,
   VIRTUAL_COLLECTION_IDS,
 } from './utils/collections.js'
-import { calculateGrade, wasReviewedToday, applyReviewSchedule } from './srs.js'
+import { DEFAULT_EASE_FACTOR, SRS_VERSION, calculateGrade, wasReviewedToday, applyReviewSchedule } from './srs.js'
 import { buildCollectionCSV } from './utils/collection-csv.js'
 import { applyReviewFrequencyOverride, getReviewFrequencyOptions, reconcileReviewSchedules, sortReviewVerses } from './review-schedule.js'
 import {
@@ -4866,14 +4866,14 @@ export default {
             verse.reviewCount = 0
             verse.lastReviewed = null
             verse.nextReviewDate = verse.createdAt || new Date().toISOString()
-            verse.easeFactor = 2.5 // Default ease factor
+            verse.easeFactor = DEFAULT_EASE_FACTOR // Default ease factor
             verse.interval = 0
             verse.reviewHistory = []
             needsMigration = true
           }
           // Ensure all new fields exist
           if (!verse.hasOwnProperty('easeFactor')) {
-            verse.easeFactor = 2.5
+            verse.easeFactor = DEFAULT_EASE_FACTOR
             needsMigration = true
           }
           if (!verse.hasOwnProperty('interval')) {
@@ -5497,7 +5497,8 @@ export default {
           reviewCount: 0,
           lastReviewed: null,
           nextReviewDate: null, // Not in spaced repetition until mastered
-          easeFactor: 2.5, // Default ease factor (SM-2 standard)
+          easeFactor: DEFAULT_EASE_FACTOR,
+          srsVersion: SRS_VERSION,
           interval: 0,
           reviewHistory: [],
           masteredAt: null,
@@ -6111,10 +6112,6 @@ export default {
               hasAnyUpdate = true
             }
 
-            if (interval !== null && interval > 0 && existingVerse.easeFactor === 2.5) {
-              existingVerse.easeFactor = 2.5
-            }
-
             const nextCollectionIds = normalizeVerseCollectionIds(
               plannedCollections,
               [...(existingVerse.collectionIds || []), ...row.collectionIds]
@@ -6171,7 +6168,8 @@ export default {
             reviewCount: reviewCount,
             lastReviewed: lastReviewed,
             nextReviewDate: nextReviewDate,
-            easeFactor: 2.5,
+            easeFactor: DEFAULT_EASE_FACTOR,
+            srsVersion: SRS_VERSION,
             interval: verseInterval,
             reviewHistory: [],
             collectionIds: normalizeVerseCollectionIds(plannedCollections, [...row.collectionIds])
@@ -6868,6 +6866,7 @@ export default {
         lastReviewed: verse.lastReviewed,
         reviewCount: verse.reviewCount,
         easeFactor: verse.easeFactor,
+        srsVersion: verse.srsVersion,
         reviewHistory: verse.reviewHistory ? [...verse.reviewHistory] : [],
         reviewScheduleCustomized: verse.reviewScheduleCustomized,
         reviewSchedule: verse.reviewSchedule ? { ...verse.reviewSchedule } : undefined,
@@ -6877,7 +6876,8 @@ export default {
       verse.interval = 0
       verse.masteredAt = null
       verse.reviewCount = 0
-      verse.easeFactor = 2.5
+      verse.easeFactor = DEFAULT_EASE_FACTOR
+      verse.srsVersion = SRS_VERSION
       verse.reviewHistory = []
       verse.reviewScheduleCustomized = false
       delete verse.reviewSchedule
@@ -6898,6 +6898,8 @@ export default {
           v.lastReviewed = snapshot.lastReviewed
           v.reviewCount = snapshot.reviewCount
           v.easeFactor = snapshot.easeFactor
+          if (snapshot.srsVersion === undefined) delete v.srsVersion
+          else v.srsVersion = snapshot.srsVersion
           v.reviewHistory = snapshot.reviewHistory
           v.reviewScheduleCustomized = snapshot.reviewScheduleCustomized
           v.reviewSchedule = snapshot.reviewSchedule ? { ...snapshot.reviewSchedule } : undefined
@@ -7995,7 +7997,7 @@ export default {
             verse.reviewCount = 0
           }
           if (!verse.easeFactor) {
-            verse.easeFactor = 2.5
+            verse.easeFactor = DEFAULT_EASE_FACTOR
           }
           if (verse.interval === undefined || verse.interval === null) {
             verse.interval = 0
@@ -8059,7 +8061,7 @@ export default {
               verse.reviewCount = 0
             }
             if (!verse.easeFactor) {
-              verse.easeFactor = 2.5
+              verse.easeFactor = DEFAULT_EASE_FACTOR
             }
             if (verse.interval === undefined || verse.interval === null) {
               verse.interval = 0

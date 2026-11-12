@@ -196,6 +196,8 @@ test('reset clears progress, closes modal, and shows undo toast', async ({ page 
   await expect(page.getByTestId('toast-action')).toBeVisible()
 
   const verses = (await getStoredVerses(page)) as Array<{
+    easeFactor: number
+    srsVersion?: number
     memorizationStatus: string
     nextReviewDate: string | null
     interval: number
@@ -203,6 +205,8 @@ test('reset clears progress, closes modal, and shows undo toast', async ({ page 
     masteredAt: string | null
     reviewScheduleCustomized: boolean
   }>
+  expect(verses[0].easeFactor).toBe(1.5)
+  expect(verses[0].srsVersion).toBe(2)
   expect(verses[0].memorizationStatus).toBe('unmemorized')
   expect(verses[0].nextReviewDate).toBeNull()
   expect(verses[0].interval).toBe(0)
@@ -220,6 +224,8 @@ test('undo after reset restores mastered state', async ({ page }) => {
   await page.getByTestId('toast-action').click()
 
   const verses = (await getStoredVerses(page)) as Array<{
+    easeFactor: number
+    srsVersion?: number
     memorizationStatus: string
     nextReviewDate: string | null
     interval: number
@@ -227,6 +233,8 @@ test('undo after reset restores mastered state', async ({ page }) => {
     masteredAt: string | null
     reviewScheduleCustomized: boolean
   }>
+  expect(verses[0].easeFactor).toBe(masteredVerse.easeFactor)
+  expect(verses[0].srsVersion).toBeUndefined()
   expect(verses[0].memorizationStatus).toBe('mastered')
   expect(verses[0].nextReviewDate).toBe(masteredVerse.nextReviewDate)
   expect(verses[0].interval).toBe(masteredVerse.interval)

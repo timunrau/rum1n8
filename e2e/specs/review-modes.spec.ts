@@ -17,6 +17,8 @@ const makeVerse = (id: string, reference: string, overrides: Record<string, unkn
   ...overrides,
 })
 type StoredVerse = ReturnType<typeof makeVerse> & {
+  srsVersion?: number
+  lastGrade?: number
   reviewSchedule?: { earnedInterval: number; anchorDate: string; appliedMaximumDays: number; forceDue: boolean }
 }
 const storedVerses = async (page: Page) => await getStoredVerses(page) as StoredVerse[]
@@ -212,7 +214,7 @@ for (const mode of ['classic', 'rotation']) {
     await page.locator('#letter-input-review').focus()
     await page.keyboard.type('gil', { delay: 40 })
     await expect(page.getByRole('button', { name: 'Next Verse', exact: true })).toBeVisible()
-    const expected = mode === 'rotation' ? 14 : 36.4
+    const expected = 14
     await expect.poll(async () => (await storedVerses(page)).find(v => v.id === 'second')?.interval).toBeCloseTo(expected)
     const result = (await storedVerses(page)).find(v => v.id === 'second')!
     expect(result.reviewSchedule?.earnedInterval).toBeCloseTo(expected)
@@ -223,7 +225,7 @@ for (const mode of ['classic', 'rotation']) {
 
 test('backup restore retains Rotation and earned spacing for a later maximum increase', async ({ page }) => {
   const verse = makeVerse('mature', 'Psalm 1:1', {
-    interval: 30, lastReviewed: iso(-40), nextReviewDate: iso(-10),
+    srsVersion: 2, interval: 30, lastReviewed: iso(-40), nextReviewDate: iso(-10),
     reviewSchedule: { earnedInterval: 90, anchorDate: iso(-40), appliedMaximumDays: 30, forceDue: false },
   })
   await seedVerses(page, [verse])
@@ -240,6 +242,7 @@ test('backup restore retains Rotation and earned spacing for a later maximum inc
   await page.getByTestId('modal-restore-backup-confirm').getByRole('button', { name: 'Restore' }).click()
   await page.getByTestId('modal-restore-backup-success').getByRole('button', { name: 'OK' }).click()
   expect((await storedVerses(page))[0].reviewSchedule?.earnedInterval).toBe(90)
+  expect((await storedVerses(page))[0].srsVersion).toBe(2)
   await openSettings(page)
   await expect(page.getByTestId('review-mode-rotation')).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByTestId('max-review-interval')).toHaveValue('30')
@@ -265,4 +268,50 @@ test('floating review action stays above tabs and leaves the last verse reachabl
   expect(last.y + last.height).toBeLessThan(after.y)
   await action.click()
   await expect(page.locator('h1')).toContainText('Psalm 1:1')
+})
+
+for (const mode of ['classic', 'rotation']) {
+  test(`${mode} saves a near-perfect early review without inflating spacing`, async ({ page }) => {
+    await seedVerses(page, [makeVerse('graded', 'Psalm 1:1', {
+      content: Array(20).fill('Blessed').join(' '), interval: 30,
+      lastReviewed: iso(-4), nextReviewDate: iso(26),
+    })])
+    await seedAppSettings(page, { reviewMode: mode })
+    await gotoApp(page, '?view=review-list')
+    await page.getByText('Psalm 1:1', { exact: true }).click()
+    await page.locator('#letter-input-review').focus()
+    await page.keyboard.type('x' + 'b'.repeat(19), { delay: 30 })
+    await expect.poll(async () => (await storedVerses(page))[0].lastGrade).toBe(4.5)
+    const result = (await storedVerses(page))[0]
+    expect(result.interval).toBe(30)
+    expect(result.easeFactor).toBeCloseTo(2.5 + 0.055 * 4 / 30)
+    expect(result.srsVersion).toBe(2)
+    expect(result.reviewHistory).toMatchObject([{ grade: 4.5, accuracy: 95 }])
+    await page.reload()
+    expect((await storedVerses(page))[0].easeFactor).toBeCloseTo(result.easeFactor)
+  })
+}
+
+test('legacy ladder transition happens on review and reset undo restores its version', async ({ page }) => {
+  const original = makeVerse('ladder', 'Psalm 1:1', {
+    interval: 2, reviewCount: 2, lastReviewed: iso(-2), nextReviewDate: iso(0),
+  })
+  await seedVerses(page, [original])
+  await gotoApp(page, '?view=review-list')
+  expect((await storedVerses(page))[0].easeFactor).toBe(2.5)
+  expect((await storedVerses(page))[0].srsVersion).toBeUndefined()
+  await page.getByText('Psalm 1:1', { exact: true }).click()
+  await page.locator('#letter-input-review').focus()
+  await page.keyboard.type('gil', { delay: 40 })
+  await expect.poll(async () => (await storedVerses(page))[0].srsVersion).toBe(2)
+  const reviewed = (await storedVerses(page))[0]
+  expect(reviewed.easeFactor).toBeCloseTo(1.6)
+  expect(reviewed.interval).toBeCloseTo(3.2)
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await gotoApp(page, '?view=collections')
+  await page.getByRole('button', { name: 'Edit verse' }).first().click()
+  await page.getByTestId('verse-schedule-reset').click()
+  expect((await storedVerses(page))[0]).toMatchObject({ easeFactor: 1.5, interval: 0, srsVersion: 2 })
+  await page.getByTestId('toast-action').click()
+  expect((await storedVerses(page))[0]).toMatchObject({ easeFactor: reviewed.easeFactor, interval: reviewed.interval, srsVersion: 2 })
 })

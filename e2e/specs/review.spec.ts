@@ -684,14 +684,14 @@ test('Luke 11:9-13 regression: WebDAV merge with future remote timestamp does no
   }>
   const verse = verses.find((v) => v.id === verseId)
   expect(verse).toBeDefined()
-  expect(verse!.interval).toBeGreaterThanOrEqual(20)
+  expect(verse!.interval).toBe(14)
   const nextReview = new Date(verse!.nextReviewDate)
   const now = new Date()
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())
 })
 
 test('established interval preserved on review (no regression to 3 days)', async ({ page }) => {
-  // Classic advances established intervals even when the review is early.
+  // Classic now shares conservative early growth and must preserve earned spacing.
   await seedAppSettings(page, { reviewMode: 'classic' })
   const verseId = 'regression-test-1'
   const yesterday = new Date(Date.now() - 86400000).toISOString()
@@ -729,7 +729,7 @@ test('established interval preserved on review (no regression to 3 days)', async
   const verses = (await getStoredVerses(page)) as Array<{ id: string; interval: number; nextReviewDate: string }>
   const verse = verses.find((v) => v.id === verseId)
   expect(verse).toBeDefined()
-  expect(verse!.interval).toBeGreaterThanOrEqual(20)
+  expect(verse!.interval).toBe(14)
   const nextReview = new Date(verse!.nextReviewDate)
   const now = new Date()
   expect(nextReview.getTime()).toBeGreaterThan(now.getTime())

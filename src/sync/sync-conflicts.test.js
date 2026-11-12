@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { addReviewDays, applyReviewFrequencyOverride, reconcileReviewSchedule } from '../review-schedule.js'
+import { applyReviewSchedule } from '../srs.js'
 import { mergeData, resolveVerseConflict } from './sync-manager.js'
 
 const now = new Date('2026-11-12T12:00:00.000Z')
@@ -38,6 +39,16 @@ function expectWinner(older, newer) {
 describe('existing conflict-resolution guarantees', () => {
   it.each([1, 7, 60])('the newer real review wins even when its interval is %i days', interval => {
     expectWinner(verse(), verse({ lastReviewed: date(-1), lastModified: date(-1), interval, nextReviewDate: date(interval - 1) }))
+  })
+  it('keeps the scheduler version and fractional grade with the winning review through JSON round trips', () => {
+    const older = verse({ interval: 2, reviewCount: 2 })
+    const reviewed = JSON.parse(JSON.stringify(older))
+    applyReviewSchedule(reviewed, 4.5, { now })
+    Object.assign(reviewed, { lastReviewed: date(0), lastModified: date(0),
+      lastGrade: 4.5, reviewHistory: [{ date: date(0), grade: 4.5 }] })
+    const restored = JSON.parse(JSON.stringify(reviewed))
+    expect(restored.srsVersion).toBe(2)
+    expectWinner(older, restored)
   })
   it('a stale content edit cannot replace a newer review or its first-attempt result', () => {
     const staleEdit = verse({ content: 'Edited on another device', lastModified: date(0) })
