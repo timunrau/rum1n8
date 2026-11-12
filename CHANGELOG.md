@@ -1,3 +1,10 @@
+## [1.66.8](https://github.com/timunrau/rum1n8/compare/v1.66.7...v1.66.8) (2026-11-12)
+
+
+### Bug Fixes
+
+* unify and simplify review scheduling ([0758309](https://github.com/timunrau/rum1n8/commit/07583094428169e9e5bd791f5e7e11657ea86a3f))
+
 ## [1.66.7](https://github.com/timunrau/rum1n8/compare/v1.66.6...v1.66.7) (2026-11-12)
 
 
