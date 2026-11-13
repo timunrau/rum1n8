@@ -1,3 +1,10 @@
+# [1.67.0](https://github.com/timunrau/rum1n8/compare/v1.66.8...v1.67.0) (2026-11-13)
+
+
+### Features
+
+* add optional verse statistics ([ef30c48](https://github.com/timunrau/rum1n8/commit/ef30c48216d06de275e991abcca1745950f45011))
+
 ## [1.66.8](https://github.com/timunrau/rum1n8/compare/v1.66.7...v1.66.8) (2026-11-12)
 
 
