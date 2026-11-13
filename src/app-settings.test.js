@@ -12,6 +12,28 @@ import {
 describe('app settings', () => {
   afterEach(() => vi.unstubAllGlobals())
 
+  it('keeps stats for nerds off for older records and accepts an explicit boolean preference', () => {
+    expect(normalizeAppSettings().statsForNerds).toBe(false)
+    expect(normalizeAppSettings({ statsForNerds: true }).statsForNerds).toBe(true)
+    expect(normalizeAppSettings({ statsForNerds: 'false' }).statsForNerds).toBe(false)
+  })
+
+  it('preserves stats for nerds through saving, backup normalization, and sync', () => {
+    const storage = new Map()
+    vi.stubGlobal('localStorage', {
+      getItem: key => storage.get(key) ?? null,
+      setItem: (key, value) => storage.set(key, value),
+    })
+    const enabled = saveAppSettings({ statsForNerds: true }, '2026-11-12T12:00:00Z')
+    expect(getAppSettingsRecord()).toEqual(enabled)
+    expect(normalizeAppSettingsRecord(JSON.parse(JSON.stringify(enabled)))).toEqual(enabled)
+    const older = { appSettings: { statsForNerds: false }, appSettingsLastModified: '2026-11-11T12:00:00Z' }
+    expect(mergeAppSettingsRecords(older, enabled).appSettings.statsForNerds).toBe(true)
+    expect(mergeAppSettingsRecords(enabled, older).appSettings.statsForNerds).toBe(true)
+    const disabled = saveAppSettings({ statsForNerds: false }, '2026-11-13T12:00:00Z')
+    expect(mergeAppSettingsRecords(enabled, disabled).appSettings.statsForNerds).toBe(false)
+  })
+
   it('ignores the retired voice preference while preserving unrelated settings and the input object', () => {
     const settings = { voicePracticeEnabled: true, requireReferenceTyping: true, futureSetting: 'keep' }
     const normalized = normalizeAppSettings(settings)

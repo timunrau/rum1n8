@@ -46,6 +46,12 @@ Settings → Practice & review controls review order and the maximum interval (1
 - Same-day repeats do not change ease, spacing, daily review count, or transition status. History and last-practiced tracking still update. Review now only makes a verse due; a same-day completion clears that request and schedules the existing interval from today without grading again. Positive manual overrides replace the interval and earned baseline without resetting ease or history. Reset progress clears progress and uses ease 1.5.
 - Manual scheduling, reset, and scheduling undo record `reviewScheduleModifiedAt`. Sync compares these actions with real review dates; unrelated edits cannot make old progress win. Preserve schedule metadata and the version marker in all completion, import, sync, reset, and undo paths.
 
+## Verse statistics
+
+Settings → Stats for nerds enables read-only verse statistics, defaults off, and syncs with the other app preferences. Tap and hold a Review-list verse (or use its context menu) to open stats; the practice header info button opens the same sheet in Learn, Memorize, and Master. Combined-passage sessions omit the button. Stats also appear below the verse edit fields.
+
+The accuracy chart starts at the mastery date when available and uses recorded review accuracy only. Times reviewed counts saved history entries, including same-day practice; it is distinct from the scheduler's once-per-day review count. Ease, earned spacing, and scheduled intervals show the current saved state. Opening or dismissing the sheet must preserve practice progress and never record a review.
+
 ## Sync validation
 
 Sync remains download → merge → upload, with one queued follow-up when saves occur during an active sync. Before applying a successful response, merge it against the current library and settings so changes made during the upload survive. Use the same conflict rules for this merge and cross-device merges; do not add a separate rule that restores only the currently open verse.

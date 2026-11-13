@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import HeadwordReference from './brand/HeadwordReference.vue'
 import POSBadge from './brand/POSBadge.vue'
 
-defineProps({
+const props = defineProps({
   reference: { type: String, required: true },
   bibleVersion: { type: String, default: '' },
   status: { type: String, default: '' },
@@ -14,12 +14,15 @@ defineProps({
   selecting: { type: Boolean, default: false },
   selected: { type: Boolean, default: false },
   showEdit: { type: Boolean, default: false },
+  statsEnabled: { type: Boolean, default: false },
 })
 
-defineEmits([
+const emit = defineEmits([
   'toggle-expanded',
   'toggle-selected',
   'edit',
+  'stats',
+  'click',
 ])
 
 const root = ref(null)
@@ -27,12 +30,83 @@ const root = ref(null)
 const scrollIntoView = (options) => root.value?.scrollIntoView(options)
 
 defineExpose({ scrollIntoView })
+
+let holdTimer = null
+let holdStart = null
+let suppressClick = false
+function cancelStatsHold() {
+  clearTimeout(holdTimer)
+  holdTimer = null
+  holdStart = null
+  document.removeEventListener('scroll', cancelStatsHold, true)
+}
+function startStatsHold(event) {
+  if (!props.statsEnabled) return
+  cancelStatsHold()
+  suppressClick = false
+  if (!event.isPrimary || event.button !== 0 || event.target.closest('button')) return
+  holdStart = { x: event.clientX, y: event.clientY }
+  document.addEventListener('scroll', cancelStatsHold, { capture: true, passive: true })
+  holdTimer = setTimeout(() => {
+    cancelStatsHold()
+    suppressClick = true
+    root.value?.focus({ preventScroll: true })
+    emit('stats')
+  }, 500)
+}
+function moveStatsHold(event) {
+  if (holdStart && Math.hypot(event.clientX - holdStart.x, event.clientY - holdStart.y) > 8) cancelStatsHold()
+}
+function onStatsClick(event) {
+  if (suppressClick) {
+    suppressClick = false
+    event.preventDefault()
+    return
+  }
+  emit('click', event)
+}
+function openStatsContext(event) {
+  if (!props.statsEnabled) return
+  event.preventDefault()
+  cancelStatsHold()
+  if (suppressClick) return
+  root.value?.focus({ preventScroll: true })
+  emit('stats')
+}
+function onStatsKeydown(event) {
+  if (!props.statsEnabled || event.target !== root.value) return
+  suppressClick = false
+  if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+    openStatsContext(event)
+  } else if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    root.value.click()
+  }
+}
+watch(() => props.statsEnabled, enabled => {
+  if (!enabled) {
+    cancelStatsHold()
+    suppressClick = false
+  }
+})
+onBeforeUnmount(cancelStatsHold)
 </script>
 
 <template>
   <div
     ref="root"
     class="verse-card"
+    :tabindex="statsEnabled ? 0 : null"
+    :role="statsEnabled ? 'button' : null"
+    :aria-label="statsEnabled ? `${reference}. Review verse; hold or use the context menu for stats.` : null"
+    @pointerdown="startStatsHold"
+    @pointermove="moveStatsHold"
+    @pointerup="cancelStatsHold"
+    @pointercancel="cancelStatsHold"
+    @pointerleave="cancelStatsHold"
+    @click="onStatsClick"
+    @contextmenu="openStatsContext"
+    @keydown="onStatsKeydown"
     :class="{
       'verse-card--due': due,
       'verse-card--expanded': expanded,

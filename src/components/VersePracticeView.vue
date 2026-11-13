@@ -685,13 +685,20 @@ export default {
       return 'word-blank text-transparent'
     }
 
+    let initialFocusTimer = null
     onMounted(() => {
       nextTick(() => {
-        setTimeout(() => focusInput(), 100)
+        initialFocusTimer = setTimeout(() => {
+          // The delayed keyboard focus must not override a deliberate header or dialog action.
+          if (!document.activeElement?.closest('.practice-header-button, .modal-sheet-panel')) {
+            focusInput()
+          }
+        }, 100)
       })
     })
 
     onBeforeUnmount(() => {
+      clearTimeout(initialFocusTimer)
       clearPracticeSwipeResetTimer()
       clearPracticeSwipeAnimationFrame()
       clearPracticeScrollAnimationFrame()

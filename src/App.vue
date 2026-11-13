@@ -96,6 +96,7 @@
   <!-- Memorization Screen -->
   <div
     v-if="memorizingVerse"
+    :inert="statsVerse ? true : null"
     class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
@@ -115,6 +116,20 @@
           <span class="truncate min-w-0">{{ splitReference(memorizingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(memorizingVerse.reference).verseRef">&nbsp;{{ splitReference(memorizingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1 relative">
+          <button
+            v-if="appSettings.statsForNerds"
+            type="button"
+            @click="openVerseStats(memorizingVerse, $event)"
+            class="practice-header-button practice-header-button--plain"
+            aria-label="Show verse stats"
+            title="Stats for nerds"
+            data-testid="practice-verse-stats"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke-width="1.75" />
+              <path stroke-linecap="round" stroke-width="1.75" d="M12 11v6m0-10v.01" />
+            </svg>
+          </button>
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(memorizingVerse, 'practice')"
@@ -187,6 +202,7 @@
   <!-- Review Screen -->
   <div
     v-if="reviewingVerse"
+    :inert="statsVerse ? true : null"
     class="fixed inset-0 bg-base z-50 flex flex-col"
     style="height: 100dvh;"
   >
@@ -206,6 +222,20 @@
           <span class="truncate min-w-0">{{ splitReference(reviewingVerse.reference).book }}</span><span class="shrink-0 whitespace-nowrap" v-if="splitReference(reviewingVerse.reference).verseRef">&nbsp;{{ splitReference(reviewingVerse.reference).verseRef }}</span>
         </h1>
         <div class="flex items-center gap-1 ml-1">
+          <button
+            v-if="appSettings.statsForNerds && !combinedPassageReview"
+            type="button"
+            @click="openVerseStats(reviewingVerse, $event)"
+            class="practice-header-button practice-header-button--plain"
+            aria-label="Show verse stats"
+            title="Stats for nerds"
+            data-testid="practice-verse-stats"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke-width="1.75" />
+              <path stroke-linecap="round" stroke-width="1.75" d="M12 11v6m0-10v.01" />
+            </svg>
+          </button>
           <!-- Read Aloud / Stop Button -->
           <button
             @click="isSpeaking ? stopSpeaking() : speakVerse(reviewingVerse, 'practice')"
@@ -292,6 +322,7 @@
   <!-- Main Content -->
   <AppShell
     v-if="!memorizingVerse && !reviewingVerse"
+    :inert="statsVerse ? true : null"
     class="min-h-screen"
     @touchstart.passive="handleSwipeTouchStart"
     @touchmove="handleSwipeTouchMove"
@@ -800,6 +831,8 @@
                 :status="section.id === 'due' ? 'mastered' : ''"
                 :due="section.id === 'due'"
                 :meta="section.id === 'extra' ? getLastReviewedLabel(verse) : ''"
+                :stats-enabled="appSettings.statsForNerds"
+                @stats="openVerseStats(verse)"
                 @click="handleVerseClick(verse)"
               />
             </section>
@@ -813,6 +846,8 @@
               :status="isDueForReview(verse) ? 'mastered' : ''"
               :due="isDueForReview(verse)"
               :meta="isDueForReview(verse) ? '' : getTimeUntilReview(verse)"
+              :stats-enabled="appSettings.statsForNerds"
+              @stats="openVerseStats(verse)"
               @click="handleVerseClick(verse)"
             />
           </template>
@@ -1605,6 +1640,9 @@
               >{{ option.label }}</button>
             </div>
           </div>
+          <div v-if="appSettings.statsForNerds && editingStatsVerse" class="border-t border-border-default pt-4">
+            <VerseStatsPanel :verse="editingStatsVerse" :settings="appSettings" :now="currentTime" :colors="chartColors" />
+          </div>
         </form>
 
         <template #footer>
@@ -2220,6 +2258,20 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               </button>
             </label>
           </section>
+          <section class="rounded-xl bg-sunken p-4" aria-labelledby="nerd-stats-heading">
+            <div class="flex items-start gap-4">
+              <div class="flex-1">
+                <h3 id="nerd-stats-heading" class="text-base font-semibold text-text-primary">Stats for nerds</h3>
+                <p id="nerd-stats-description" class="mt-1 text-xs text-text-muted">Explore verse history, accuracy, ease, and scheduling. Tap and hold a verse in Review or tap the info icon while practicing.</p>
+              </div>
+              <button type="button" role="switch" aria-labelledby="nerd-stats-heading" aria-describedby="nerd-stats-description"
+                :aria-checked="appSettings.statsForNerds" data-testid="stats-for-nerds-toggle"
+                :class="['relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200', appSettings.statsForNerds ? 'bg-accent-strong' : 'bg-border-default']"
+                @click="updateStatsForNerds(!appSettings.statsForNerds)">
+                <span :class="['inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1', appSettings.statsForNerds ? 'translate-x-6' : 'translate-x-1']" />
+              </button>
+            </div>
+          </section>
         </div>
 
         <template #footer>
@@ -2456,6 +2508,8 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
         </template>
       </ModalSheet>
 
+      <VerseStatsSheet :verse="statsVerse" :settings="appSettings" :now="currentTime" :colors="chartColors" :return-focus="statsTrigger" @close="closeVerseStats" />
+
       <AppDialog
         :show="appDialog.show"
         :title="appDialog.title"
@@ -2472,7 +2526,7 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, onUpdated, computed, nextTick, watch } from 'vue'
+import { ref, shallowRef, onMounted, onBeforeUnmount, onUpdated, computed, nextTick, watch } from 'vue'
 import Fuse from 'fuse.js'
 import { BibleCacheMissError, createBibleCacheService, resolveBibleTranslationId } from './bible-cache.js'
 import {
@@ -2590,6 +2644,8 @@ import CollectionsAlmanac from './components/CollectionsAlmanac.vue'
 import OnboardingCallout from './components/OnboardingCallout.vue'
 import SyncSettingsModal from './components/SyncSettingsModal.vue'
 import ReviewSettings from './components/ReviewSettings.vue'
+import VerseStatsPanel from './components/VerseStatsPanel.vue'
+import VerseStatsSheet from './components/VerseStatsSheet.vue'
 import BackupNudgeCard from './components/BackupNudgeCard.vue'
 import AppShell from './components/brand/AppShell.vue'
 import BrandMark from './components/brand/BrandMark.vue'
@@ -2605,7 +2661,7 @@ ChartJS.register(
 
 export default {
   name: 'App',
-  components: { ReviewSettings, IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
+  components: { VerseStatsPanel, VerseStatsSheet, ReviewSettings, IOSInstallModal, VersePracticeView, CompletionTray, ModalSheet, AppDialog, CollectionPicker, VerseFormFields, CollectionsAlmanac, OnboardingCallout, SyncSettingsModal, BackupNudgeCard, Line, Bar, AppShell, BrandMark, PrimaryButton, SecondaryButton, CollectionSummary, VerseListItem },
   setup() {
     const verses = ref([])
     const collections = ref([])
@@ -3566,9 +3622,31 @@ export default {
       }
     }
 
+    const statsVerseId = ref(null)
+    const statsTrigger = shallowRef(null)
+    const statsVerse = computed(() => appSettings.value.statsForNerds
+      ? verses.value.find(verse => verse.id === statsVerseId.value) || null
+      : null)
+    const editingStatsVerse = computed(() => verses.value.find(verse => verse.id === editingVerse.value?.id) || null)
+    const openVerseStats = (verse, event) => {
+      if (!appSettings.value.statsForNerds || !verse || verse.passageRecordIds?.length) return
+      statsTrigger.value = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement
+      currentTime.value = new Date()
+      statsVerseId.value = verse.id
+      pushModalState('verseStats')
+    }
+    const closeVerseStats = () => {
+      statsVerseId.value = null
+      consumeModalState('verseStats')
+    }
+    watch(statsVerse, (verse) => {
+      if (!verse && statsVerseId.value !== null) closeVerseStats()
+    })
+
     // Close all modal UI state without touching browser history. Called from
     // restoreNavigationState when we're popping back to a non-modal entry.
     const closeAllModalUi = () => {
+      statsVerseId.value = null
       showForm.value = false
       newVerse.value = createEmptyVerseDraft()
       newVerseReferenceTouched.value = false
@@ -8829,6 +8907,10 @@ export default {
       })
     }
 
+    const updateStatsForNerds = (enabled) => {
+      saveAppSettingsLocally({ ...appSettings.value, statsForNerds: enabled })
+    }
+
     const updateDefaultBibleVersion = (value) => {
       saveAppSettingsLocally({
         ...appSettings.value,
@@ -9631,6 +9713,13 @@ export default {
       collectionFormError,
       showEditVerseForm,
       editingVerse,
+      editingStatsVerse,
+      statsVerse,
+      statsTrigger,
+      combinedPassageReview,
+      openVerseStats,
+      closeVerseStats,
+      updateStatsForNerds,
       newCollection,
       addCollection,
       closeCollectionForm,
