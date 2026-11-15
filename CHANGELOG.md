@@ -1,3 +1,10 @@
+## [1.67.3](https://github.com/timunrau/rum1n8/compare/v1.67.2...v1.67.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* standardize list heading typography and spacing ([5561cfc](https://github.com/timunrau/rum1n8/commit/5561cfc1a4c83d8d6d6e26ff2673f3c0e3684b75))
+
 ## [1.67.2](https://github.com/timunrau/rum1n8/compare/v1.67.1...v1.67.2) (2026-11-15)
 
 
