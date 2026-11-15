@@ -161,6 +161,58 @@ test('caught-up state hides Due now while retaining each mode’s list labels', 
 })
 
 for (const mode of ['classic', 'rotation']) {
+  test(`${mode} groups neighboring due verses without pulling in future verses or reordering an active session`, async ({ page }) => {
+    await seedVerses(page, [
+      makeVerse('second', 'Psalm 1:2', { nextReviewDate: iso(-3), lastReviewed: iso(-20) }),
+      makeVerse('john', 'John 3:16', { nextReviewDate: iso(-1), lastReviewed: iso(-20) }),
+      makeVerse('first', 'Psalm 1:1', { nextReviewDate: iso(0), lastReviewed: iso(-20) }),
+      makeVerse('future', 'Psalm 1:3', { nextReviewDate: iso(1), lastReviewed: iso(-1) }),
+      makeVerse('old', 'Psalm 23:1', { nextReviewDate: iso(8), lastReviewed: iso(-12) }),
+      makeVerse('never', 'Romans 8:1', { nextReviewDate: iso(20), lastReviewed: null }),
+    ])
+    await seedAppSettings(page, { reviewMode: mode, requireReferenceTyping: false })
+    await gotoApp(page, '?view=review-list')
+
+    const extraIds = mode === 'classic' ? ['future', 'old', 'never'] : ['never', 'old', 'future']
+    const extraReferences = mode === 'classic'
+      ? ['Psalm 1:3', 'Psalm 23:1', 'Romans 8:1']
+      : ['Romans 8:1', 'Psalm 23:1', 'Psalm 1:3']
+    const sequence = ['first', 'second', 'john', ...extraIds]
+    const dueReferences = ['Psalm 1:1', 'Psalm 1:2', 'John 3:16']
+    await expect.poll(() => page.locator('.verse-card__reference').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label'))))
+      .toEqual([...dueReferences, ...extraReferences])
+    if (mode === 'rotation') {
+      await expect.poll(() => page.getByRole('region', { name: 'Due now', exact: true })
+        .locator('.verse-card__reference').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label'))))
+        .toEqual(dueReferences)
+      await expect.poll(() => page.getByRole('region', { name: 'Keep ruminating', exact: true })
+        .locator('.verse-card__reference').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label'))))
+        .toEqual(extraReferences)
+    }
+    await expect(page.getByTestId('start-review-cta')).toContainText('3 due')
+    const before = await storedVerses(page)
+
+    await page.getByTestId('start-review-cta').click()
+    await expect(page.locator('h1')).toContainText('Psalm 1:1')
+    await expect.poll(() => page.evaluate(() => history.state?.practiceSequence?.verseIds)).toEqual(sequence)
+    for (const [id, nextReference] of [['first', 'Psalm 1:2'], ['second', 'John 3:16']]) {
+      await page.locator('#letter-input-review').focus()
+      await page.keyboard.type('gil', { delay: 40 })
+      await expect.poll(async () => (await storedVerses(page)).find(verse => verse.id === id)?.reviewCount).toBe(11)
+      await expect.poll(() => page.evaluate(() => history.state?.practiceSequence?.verseIds)).toEqual(sequence)
+      await page.getByRole('button', { name: 'Next Verse', exact: true }).click()
+      await expect(page.locator('h1')).toContainText(nextReference)
+    }
+
+    const after = await storedVerses(page)
+    for (const id of ['john', ...extraIds]) {
+      expect(after.find(verse => verse.id === id)).toEqual(before.find(verse => verse.id === id))
+    }
+    await page.goBack()
+    await expect(page.getByTestId('start-review-cta')).toContainText('1 due')
+    await expect(page.locator('.verse-card__reference').first()).toHaveAttribute('aria-label', 'John 3:16')
+  })
+
   test(`${mode} caught-up actions preserve review order and return navigation`, async ({ page }) => {
     await seedVerses(page, [
       makeVerse('recent', 'John 16:33', { lastReviewed: iso(-1), nextReviewDate: iso(2) }),

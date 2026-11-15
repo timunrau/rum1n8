@@ -170,3 +170,142 @@ describe('review ordering', () => {
     expect(sortReviewVerses([...verses, laterToday], 'rotation', now).map(v => v.id)).toEqual(['today', 'earlier', 'a', 'b'])
   })
 })
+
+describe.each(['classic', 'rotation'])('neighboring due verses (%s)', mode => {
+  const now = new Date(2026, 10, 15, 12)
+  const makeVerse = (id, reference, daysUntil, overrides = {}) => ({
+    id, reference, bibleVersion: 'BSB', memorizationStatus: 'mastered',
+    nextReviewDate: addReviewDays(now, daysUntil),
+    ...overrides,
+  })
+  const expectOrder = (verses, expected) => {
+    const original = structuredClone(verses)
+    expect(sortReviewVerses(verses, mode, now).map(verse => verse.id)).toEqual(expected)
+    expect(sortReviewVerses([...verses].reverse(), mode, now).map(verse => verse.id)).toEqual(expected)
+    expect(verses).toEqual(original)
+  }
+
+  it('orders the same local due day biblically instead of by time of day', () => {
+    expectOrder([
+      makeVerse('john', 'John 3:16', 0, { nextReviewDate: new Date(2026, 10, 15, 0).toISOString() }),
+      makeVerse('second', 'Psalm 1:2', 0, { nextReviewDate: new Date(2026, 10, 15, 8).toISOString() }),
+      makeVerse('first', 'Psalm 1:1', 0, { nextReviewDate: new Date(2026, 10, 15, 23).toISOString() }),
+    ], ['first', 'second', 'john'])
+  })
+
+  it('gives a whole consecutive run its oldest due day while preserving older unrelated reviews', () => {
+    expectOrder([
+      makeVerse('second', 'Psalm 1:2', -4),
+      makeVerse('john', 'John 3:16', -3),
+      makeVerse('first', 'Psalm 1:1', 0),
+      makeVerse('oldest', 'Romans 8:1', -5),
+      makeVerse('third', 'Psalm 1:3', -2),
+    ], ['oldest', 'first', 'second', 'third', 'john'])
+  })
+
+  it('breaks equal group priorities in biblical order', () => {
+    expectOrder([
+      makeVerse('john-second', 'John 3:17', -3),
+      makeVerse('psalm-second', 'Psalm 1:2', -3),
+      makeVerse('john-first', 'John 3:16', 0),
+      makeVerse('genesis', 'Genesis 1:1', -3),
+      makeVerse('psalm-first', 'Psalm 1:1', -1),
+    ], ['genesis', 'psalm-first', 'psalm-second', 'john-first', 'john-second'])
+  })
+
+  it('keeps saved ranges together across a chapter boundary', () => {
+    expectOrder([
+      makeVerse('last', 'John 4:2-3', -1),
+      makeVerse('other', 'Psalm 1:1', -2),
+      makeVerse('first', 'John 3:35-36', 0),
+      makeVerse('middle', 'John 4:1', -3),
+    ], ['first', 'middle', 'last', 'other'])
+  })
+
+  it.each(['missing', 'future', 'unmastered'])('does not bridge a %s verse', state => {
+    const verses = [
+      makeVerse('third', 'Psalm 1:3', -3),
+      makeVerse('first', 'Psalm 1:1', 0),
+      makeVerse('john', 'John 3:16', -1),
+    ]
+    if (state === 'future') verses.push(makeVerse('second', 'Psalm 1:2', 1))
+    if (state === 'unmastered') {
+      verses.push(makeVerse('second', 'Psalm 1:2', -2, { memorizationStatus: 'memorized' }))
+    }
+    expectOrder(verses, ['third', 'john', 'first', ...(state === 'future' ? ['second'] : [])])
+  })
+
+  it('does not group across books or translations', () => {
+    expectOrder([
+      makeVerse('psalm-first', 'Psalm 1:1', 0),
+      makeVerse('psalm-second', 'Psalm 1:2', -3, { bibleVersion: 'ESV' }),
+      makeVerse('malachi', 'Malachi 4:6', 0),
+      makeVerse('matthew', 'Matthew 1:1', -3),
+      makeVerse('john', 'John 3:16', -1),
+    ], ['psalm-second', 'matthew', 'john', 'psalm-first', 'malachi'])
+  })
+
+  it('groups matching translations despite casing, whitespace, and interleaved other translations', () => {
+    expectOrder([
+      makeVerse('first', 'Psalm 1:1', 0, { bibleVersion: ' bsb ' }),
+      makeVerse('other-version', 'Psalm 1:1', -1, { bibleVersion: 'ESV' }),
+      makeVerse('second', 'Psalm 1:2', -3),
+    ], ['first', 'second', 'other-version'])
+  })
+
+  it('keeps duplicate references standalone instead of assigning a neighbor to one copy', () => {
+    expectOrder([
+      makeVerse('second', 'Psalm 1:2', -4),
+      makeVerse('first-a', 'Psalm 1:1', 0),
+      makeVerse('first-b', 'Ps 1:1', -2),
+      makeVerse('john', 'John 3:16', -1),
+    ], ['second', 'first-b', 'john', 'first-a'])
+  })
+
+  it('keeps partially overlapping ranges and their neighbors standalone', () => {
+    expectOrder([
+      makeVerse('first', 'Psalm 1:1-3', 0),
+      makeVerse('overlap', 'Psalm 1:3-4', -2),
+      makeVerse('last', 'Psalm 1:5-6', -4),
+    ], ['last', 'overlap', 'first'])
+  })
+
+  it('detects every contained overlap rather than just neighboring starts', () => {
+    expectOrder([
+      makeVerse('range', 'Psalm 1:1-5', 0),
+      makeVerse('second', 'Psalm 1:2', -2),
+      makeVerse('fourth', 'Psalm 1:4', -4),
+      makeVerse('sixth', 'Psalm 1:6', -6),
+    ], ['sixth', 'fourth', 'second', 'range'])
+  })
+
+  it('keeps unparseable references standalone and resolves equal-reference ties deterministically', () => {
+    expectOrder([
+      makeVerse('b', 'Personal note', -2),
+      makeVerse('second', 'Psalm 1:2', -3),
+      makeVerse('first', 'Psalm 1:1', 0),
+      makeVerse('a', 'Personal note', -2),
+    ], ['first', 'second', 'a', 'b'])
+  })
+
+  it('keeps undated reviews and their due neighbors at highest priority', () => {
+    expectOrder([
+      makeVerse('second', 'Psalm 1:2', -3),
+      makeVerse('first', 'Psalm 1:1', 0, { nextReviewDate: null }),
+      makeVerse('john', 'John 3:16', -30),
+      makeVerse('genesis', 'Genesis 1:1', 0, { nextReviewDate: null }),
+    ], ['genesis', 'first', 'second', 'john'])
+  })
+
+  it('preserves future ordering and all saved schedules and history', () => {
+    const verses = [
+      makeVerse('first', 'Psalm 1:1', 0, { reviewHistory: [{ grade: 5 }], interval: 14 }),
+      makeVerse('recent', 'Psalm 1:2', 1, { lastReviewed: addReviewDays(now, -1) }),
+      makeVerse('old', 'Psalm 23:1', 8, { lastReviewed: addReviewDays(now, -12) }),
+      makeVerse('never', 'Romans 8:1', 20, { lastReviewed: null }),
+    ]
+    expectOrder(verses, mode === 'classic'
+      ? ['first', 'recent', 'old', 'never']
+      : ['first', 'never', 'old', 'recent'])
+  })
+})

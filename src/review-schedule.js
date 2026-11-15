@@ -1,4 +1,6 @@
 import { getLocalCalendarDayDifference, isVerseDueForReview } from './utils/local-date.js'
+import { areVerseSpansContiguous, parseVerseSpanReference } from './utils/bible-reference.js'
+import { sortVerses } from './utils/verse-sort.js'
 
 export const REVIEW_FREQUENCY_OPTIONS = [
   { days: 1, label: '+1d' },
@@ -103,21 +105,80 @@ export function previewReviewMaximum(verses, maximum, now = new Date()) {
   return counts
 }
 
-export function sortReviewVerses(verses, mode = 'classic', now = new Date()) {
-  const timestamp = value => validDate(value)?.getTime() || 0
-  return verses.filter(verse => verse.memorizationStatus === 'mastered').sort((a, b) => {
-    if (mode === 'rotation') {
-      const aDue = isVerseDueForReview(a, now)
-      const bDue = isVerseDueForReview(b, now)
-      if (aDue !== bDue) return aDue ? -1 : 1
-      if (!aDue) {
-        const reviewed = timestamp(a.lastReviewed) - timestamp(b.lastReviewed)
-        if (reviewed) return reviewed
+function sortDueReviewVerses(verses, now) {
+  const buckets = new Map()
+  const groups = []
+  sortVerses(verses, { criterion: 'reference', direction: 'asc' }).forEach((verse, rank) => {
+    const span = parseVerseSpanReference(String(verse.reference || ''))
+    const day = verse.nextReviewDate
+      ? getLocalCalendarDayDifference(verse.nextReviewDate, now)
+      : -Infinity
+    const entry = { verse, span, rank, day, ambiguous: false }
+    if (!span) {
+      groups.push({ entries: [entry], day, rank })
+      return
+    }
+
+    const version = String(verse.bibleVersion || '').trim().toUpperCase()
+    const key = `${span.bookId}:${version}`
+    if (!buckets.has(key)) buckets.set(key, [])
+    buckets.get(key).push(entry)
+  })
+
+  for (const entries of buckets.values()) {
+    // All records involved in an overlap stay standalone, including duplicates
+    // and records contained in a larger range. Entries are ordered by start.
+    let furthest = null
+    for (const entry of entries) {
+      if (furthest && furthest.span.passage.overlaps(entry.span.passage)) {
+        furthest.ambiguous = true
+        entry.ambiguous = true
       }
+      if (!furthest || entry.span.endChapter > furthest.span.endChapter ||
+          (entry.span.endChapter === furthest.span.endChapter && entry.span.endVerse > furthest.span.endVerse)) {
+        furthest = entry
+      }
+    }
+
+    let group = null
+    let previous = null
+    for (const entry of entries) {
+      if (previous && !previous.ambiguous && !entry.ambiguous &&
+          areVerseSpansContiguous(previous.span, entry.span)) {
+        group.entries.push(entry)
+        group.day = Math.min(group.day, entry.day)
+      } else {
+        group = { entries: [entry], day: entry.day, rank: entry.rank }
+        groups.push(group)
+      }
+      previous = entry
+    }
+  }
+
+  // A passage takes its oldest member's priority, then stays in biblical order.
+  groups.sort((a, b) => (a.day === b.day ? a.rank - b.rank : a.day - b.day))
+  return groups.flatMap(group => group.entries.map(entry => entry.verse))
+}
+
+export function sortReviewVerses(verses, mode = 'classic', now = new Date()) {
+  const due = []
+  const extra = []
+  for (const verse of verses) {
+    if (verse.memorizationStatus !== 'mastered') continue
+    if (isVerseDueForReview(verse, now)) due.push(verse)
+    else extra.push(verse)
+  }
+
+  const timestamp = value => validDate(value)?.getTime() || 0
+  extra.sort((a, b) => {
+    if (mode === 'rotation') {
+      const reviewed = timestamp(a.lastReviewed) - timestamp(b.lastReviewed)
+      if (reviewed) return reviewed
     }
     const scheduled = timestamp(a.nextReviewDate) - timestamp(b.nextReviewDate)
     return scheduled || (mode === 'rotation' ? String(a.id).localeCompare(String(b.id)) : 0)
   })
+  return [...sortDueReviewVerses(due, now), ...extra]
 }
 
 export function applyReviewFrequencyOverride(verse, daysFromNow, now = new Date(), maximum = 90) {
