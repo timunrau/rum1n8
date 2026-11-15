@@ -66,5 +66,5 @@ onBeforeUnmount(() => document.removeEventListener('keydown', trapFocus, true))
 <style scoped>
 .verse-stats-sheet__title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.3rem 0.6rem; min-width: 0; }
 .verse-stats-sheet__title h2 { font: 400 1.65rem var(--font-serif); overflow-wrap: anywhere; }
-.verse-stats-sheet__title span { font: 0.75rem var(--font-mono); color: var(--color-text-muted); }
+.verse-stats-sheet__title span { font: 0.75rem var(--font-sans); color: var(--color-text-muted); }
 </style>

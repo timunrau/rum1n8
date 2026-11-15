@@ -137,8 +137,8 @@ const chartOptions = computed(() => ({
 .verse-stats { color: var(--color-text-primary); padding: 0.5rem 0 1rem; }
 .verse-stats__identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem; }
 .verse-stats h3 { font: 400 1.65rem var(--font-serif); }
-.verse-stats h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.35rem; }
-.verse-stats__version { font: 0.75rem var(--font-mono); color: var(--color-text-muted); }
+.verse-stats h4 { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; line-height: 1.5; margin-bottom: 0.35rem; color: var(--color-text-muted); }
+.verse-stats__version { font: 0.75rem var(--font-sans); color: var(--color-text-muted); }
 .verse-stats__section { margin-top: 1.5rem; }
 .verse-stats--without-identity > .verse-stats__section:first-child { margin-top: 0; }
 .verse-stats__muted, .verse-stats__ribbon-labels { color: var(--color-text-muted); font-size: 0.8rem; }
@@ -149,7 +149,7 @@ const chartOptions = computed(() => ({
 .verse-stats__ribbon-labels { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-size: 0.7rem; }
 .verse-stats__metrics { text-align: center; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.65rem; border-block: 1px solid var(--color-border-default); padding-block: 1.1rem; margin-top: 1.5rem; }
 .verse-stats__metrics dd { font: 400 clamp(1.35rem, 5vw, 1.9rem) var(--font-serif); font-variant-numeric: tabular-nums; }
-.verse-stats__metrics dt { color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.25rem; }
+.verse-stats__metrics dt { font-family: var(--font-sans); color: var(--color-text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; line-height: 1.5; margin-top: 0.25rem; }
 .verse-stats__chart { height: 190px; margin-top: 0.8rem; }
 .verse-stats__facts { display: grid; gap: 0.6rem; font-size: 0.85rem; margin-top: 0.8rem; }
 .verse-stats__facts > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; }

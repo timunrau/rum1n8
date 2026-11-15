@@ -59,7 +59,7 @@ for (const legacy of ['library', 'settings']) {
     await openSettings(page)
     await expect(page.getByTestId('review-mode-classic')).toHaveAttribute('aria-checked', 'true')
     if (legacy === 'settings') {
-      await expect(page.getByRole('switch', { name: /Require typing the reference/ })).toHaveAttribute('aria-checked', 'true')
+      await expect(page.getByRole('switch', { name: /Type the reference after each verse/ })).toHaveAttribute('aria-checked', 'true')
     }
   })
 }
@@ -71,9 +71,10 @@ test('maximum preview is non-destructive, reversible, persistent, and limits man
   await openSettings(page)
   const practice = page.getByRole('region', { name: 'Practice & review', exact: true })
   await expect(practice.getByTestId('master-placeholder-lines-toggle')).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Bible', exact: true }).getByLabel('Default translation')).toHaveCount(1)
+  await expect(page.getByTestId('modal-practice-settings').getByLabel('Default translation')).toHaveCount(1)
   const maximum = page.getByTestId('max-review-interval')
   const apply = page.getByTestId('apply-max-review-interval')
+  await expect(apply).toHaveCount(0)
   await maximum.fill('0')
   await expect(apply).toBeDisabled()
   await maximum.fill('30')
@@ -81,6 +82,7 @@ test('maximum preview is non-destructive, reversible, persistent, and limits man
   await expect(page.getByTestId('review-maximum-preview')).toContainText('1 become due')
   expect((await storedVerses(page))[0].nextReviewDate).toBe(original.nextReviewDate)
   await apply.click()
+  await expect(apply).toHaveCount(0)
   let verse = (await storedVerses(page))[0]
   expect(verse.interval).toBe(30)
   expect(verse.reviewSchedule?.earnedInterval).toBe(90)

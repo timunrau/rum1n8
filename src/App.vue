@@ -903,14 +903,7 @@
             class="collection-tile cursor-pointer"
             :class="{ 'collection-tile--due': dueVersesCount > 0 }"
           >
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-accent-strong" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <h3 class="collection-tile__name">{{ getCollectionName('master-list') }}</h3>
-              </div>
-            </div>
+            <h3 class="collection-tile__name collection-tile__name--calculated">{{ getCollectionName('master-list') }}</h3>
             <CollectionSummary :summary="getCollectionStatus('master-list')" />
           </div>
 
@@ -921,14 +914,7 @@
             class="collection-tile cursor-pointer"
             :class="{ 'collection-tile--due': getCollectionDueCount('no-collection') > 0 }"
           >
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                <h3 class="collection-tile__name">{{ getCollectionName('no-collection') }}</h3>
-              </div>
-            </div>
+            <h3 class="collection-tile__name collection-tile__name--calculated">{{ getCollectionName('no-collection') }}</h3>
             <CollectionSummary :summary="getCollectionStatus('no-collection')" />
           </div>
 
@@ -938,14 +924,7 @@
             @click="viewCollection('to-learn')"
             class="collection-tile cursor-pointer"
           >
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1 min-w-0">
-                <svg class="w-5 h-5 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                </svg>
-                <h3 class="collection-tile__name">{{ getCollectionName('to-learn') }}</h3>
-              </div>
-            </div>
+            <h3 class="collection-tile__name collection-tile__name--calculated">{{ getCollectionName('to-learn') }}</h3>
             <CollectionSummary :summary="getCollectionStatus('to-learn')" :show-status="false" />
           </div>
 
@@ -2090,13 +2069,14 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
           <ReviewSettings v-if="showPracticeSettings" :settings="appSettings" :verses="verses" :now="currentTime"
             @mode="updateReviewMode" @maximum="updateReviewMaximum">
             <div>
-              <label class="flex items-start gap-4 cursor-pointer">
+              <label class="flex items-center gap-4 cursor-pointer">
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-text-primary">Require typing the reference after the verse</p>
+                  <p id="reference-typing-setting-label" class="text-sm font-medium text-text-primary">Type the reference after each verse</p>
                 </div>
                 <button
                   type="button"
                   role="switch"
+                  aria-labelledby="reference-typing-setting-label"
                   :aria-checked="appSettings.requireReferenceTyping"
                   :class="[
                     'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
@@ -2114,16 +2094,14 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               </label>
             </div>
             <div>
-              <div class="flex items-start gap-4">
+              <div class="flex items-center gap-4">
                 <div class="flex-1">
                   <p id="master-placeholder-lines-setting-label" class="text-sm font-medium text-text-primary">Show placeholder lines in Master</p>
-                  <p id="master-placeholder-lines-setting-description" class="mt-1 text-xs text-text-muted">Show lines beneath hidden words in Master mode.</p>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-labelledby="master-placeholder-lines-setting-label"
-                  aria-describedby="master-placeholder-lines-setting-description"
                   :aria-checked="appSettings.showMasterPlaceholderLines"
                   data-testid="master-placeholder-lines-toggle"
                   :class="[
@@ -2142,138 +2120,137 @@ Philippians 2:3,"Value others above yourselves",NIV,Core Values/Humility,30,60</
               </div>
             </div>
           </ReviewSettings>
-          <section class="rounded-xl bg-sunken p-4" aria-labelledby="bible-settings-heading">
-            <h3 id="bible-settings-heading" class="text-base font-semibold text-text-primary">Bible</h3>
-            <label for="default-bible-version" class="mt-3 block text-sm font-medium text-text-primary">
-              Default translation
-            </label>
-            <input
-              id="default-bible-version"
-              :value="appSettings.defaultBibleVersion"
-              type="text"
-              placeholder="e.g., BSB, NIV, ESV"
-              maxlength="10"
-              class="mt-3 w-full px-4 py-3 border border-border-input rounded-lg focus:ring-0 focus:border-accent outline-none bg-overlay text-text-primary uppercase tracking-wider"
-              style="text-transform: uppercase;"
-              @focus="handleDefaultBibleVersionFocus"
-              @input="updateDefaultBibleVersion($event.target.value)"
-              @blur="commitDefaultBibleVersionCache"
-            />
-            <div
-              v-if="bibleCacheStatus.kind !== 'idle' && bibleCacheStatus.kind !== 'unsupported'"
-              class="mt-3 text-sm"
-              :class="bibleCacheStatus.kind === 'error'
-                ? 'text-status-error-text'
-                : bibleCacheStatus.kind === 'ready'
-                  ? 'text-status-success-text'
-                  : 'text-text-muted'"
-              data-testid="default-bible-cache-status"
-              role="status"
-              aria-live="polite"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-2">
-                  <svg
-                    v-if="bibleCacheStatus.kind === 'ready'"
-                    class="h-5 w-5 shrink-0"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
+          <div class="rounded-xl bg-sunken p-4 space-y-5">
+            <div class="grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-x-4">
+              <label for="default-bible-version" class="text-sm font-medium text-text-primary">Default translation</label>
+              <input
+                id="default-bible-version"
+                :value="appSettings.defaultBibleVersion"
+                type="text"
+                placeholder="e.g., BSB"
+                maxlength="10"
+                class="w-full min-w-0 rounded-lg border border-border-input bg-overlay px-3 py-2.5 text-center text-sm uppercase text-text-primary outline-none focus:border-accent"
+                style="text-transform: uppercase;"
+                @focus="handleDefaultBibleVersionFocus"
+                @input="updateDefaultBibleVersion($event.target.value)"
+                @blur="commitDefaultBibleVersionCache"
+              />
+              <div
+                v-if="bibleCacheStatus.kind !== 'idle' && bibleCacheStatus.kind !== 'unsupported'"
+                class="col-span-2 mt-1.5 text-xs leading-relaxed"
+                :class="[
+                  bibleCacheStatus.kind === 'ready' ? 'justify-self-end' : '',
+                  bibleCacheStatus.kind === 'error' ? 'text-status-error-text' : 'text-text-muted'
+                ]"
+                data-testid="default-bible-cache-status"
+                role="status"
+                aria-live="polite"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex min-w-0 items-center gap-1.5">
+                    <svg
+                      v-if="bibleCacheStatus.kind === 'ready'"
+                      class="h-3.5 w-3.5 shrink-0 text-status-success-text"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.86-9.94a.75.75 0 0 0-1.22-.87l-3.43 4.8-1.85-1.85a.75.75 0 1 0-1.06 1.06l2.47 2.47a.75.75 0 0 0 1.14-.09l3.95-5.52Z" clip-rule="evenodd" />
+                    </svg>
+                    <svg
+                      v-else-if="bibleCacheStatus.kind === 'checking' || bibleCacheStatus.kind === 'downloading'"
+                      class="h-5 w-5 shrink-0 animate-spin"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle class="opacity-25" cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" />
+                      <path class="opacity-75" d="M17 10a7 7 0 0 0-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <svg
+                      v-else-if="bibleCacheStatus.kind === 'waiting'"
+                      class="h-5 w-5 shrink-0"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M6.25 4.5A.75.75 0 0 1 7 5.25v9.5a.75.75 0 0 1-1.5 0v-9.5a.75.75 0 0 1 .75-.75Zm7.5 0a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-1.5 0v-9.5a.75.75 0 0 1 .75-.75Z" />
+                    </svg>
+                    <svg
+                      v-else
+                      class="h-5 w-5 shrink-0"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8.75-3.25a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5ZM10 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+                    </svg>
+                    <span>{{ bibleCacheStatusMessage }}</span>
+                  </div>
+                  <button
+                    v-if="bibleCacheStatus.kind === 'error'"
+                    type="button"
+                    class="shrink-0 font-semibold text-accent hover:text-accent-strong"
+                    @click="retryDefaultBibleVersionCache"
                   >
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.86-9.94a.75.75 0 0 0-1.22-.87l-3.43 4.8-1.85-1.85a.75.75 0 1 0-1.06 1.06l2.47 2.47a.75.75 0 0 0 1.14-.09l3.95-5.52Z" clip-rule="evenodd" />
-                  </svg>
-                  <svg
-                    v-else-if="bibleCacheStatus.kind === 'checking' || bibleCacheStatus.kind === 'downloading'"
-                    class="h-5 w-5 shrink-0 animate-spin"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <circle class="opacity-25" cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" />
-                    <path class="opacity-75" d="M17 10a7 7 0 0 0-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                  </svg>
-                  <svg
-                    v-else-if="bibleCacheStatus.kind === 'waiting'"
-                    class="h-5 w-5 shrink-0"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M6.25 4.5A.75.75 0 0 1 7 5.25v9.5a.75.75 0 0 1-1.5 0v-9.5a.75.75 0 0 1 .75-.75Zm7.5 0a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-1.5 0v-9.5a.75.75 0 0 1 .75-.75Z" />
-                  </svg>
-                  <svg
-                    v-else
-                    class="h-5 w-5 shrink-0"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8.75-3.25a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5ZM10 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
-                  </svg>
-                  <span class="font-medium">{{ bibleCacheStatusMessage }}</span>
+                    Retry
+                  </button>
+                </div>
+                <div
+                  v-if="bibleCacheStatus.kind === 'downloading' && bibleCacheStatus.total > 0"
+                  class="mt-2 h-1.5 overflow-hidden rounded-full bg-border-default"
+                  aria-hidden="true"
+                >
+                  <div
+                    class="h-full rounded-full bg-accent-strong transition-[width] duration-200"
+                    :style="{ width: `${Math.round((bibleCacheStatus.completed / bibleCacheStatus.total) * 100)}%` }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div v-if="analyticsAvailable" data-testid="analytics-opt-out-row">
+              <label class="flex items-start gap-4 cursor-pointer">
+                <div class="flex-1">
+                  <p id="analytics-setting-label" class="text-sm font-medium text-text-primary">Share anonymous usage analytics</p>
+                  <p id="analytics-setting-description" class="mt-1 text-xs leading-relaxed text-text-muted">Helps the maintainer see how many people use the app. No personal information is shared.</p>
                 </div>
                 <button
-                  v-if="bibleCacheStatus.kind === 'error'"
                   type="button"
-                  class="shrink-0 font-semibold text-accent hover:text-accent-strong"
-                  @click="retryDefaultBibleVersionCache"
+                  role="switch"
+                  aria-labelledby="analytics-setting-label"
+                  aria-describedby="analytics-setting-description"
+                  :aria-checked="!appSettings.analyticsOptOut"
+                  data-testid="analytics-opt-out-toggle"
+                  :class="[
+                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
+                    !appSettings.analyticsOptOut ? 'bg-accent-strong' : 'bg-border-default'
+                  ]"
+                  @click="updateAnalyticsOptOut(!appSettings.analyticsOptOut)"
                 >
-                  Retry
+                  <span
+                    :class="[
+                      'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
+                      !appSettings.analyticsOptOut ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </label>
+            </div>
+            <div>
+              <div class="flex items-start gap-4">
+                <div class="flex-1">
+                  <p id="nerd-stats-heading" class="text-sm font-medium text-text-primary">Stats for nerds</p>
+                  <p id="nerd-stats-description" class="mt-1 text-xs leading-relaxed text-text-muted">Show detailed verse statistics. Long-press a verse on the Review screen to see them.</p>
+                </div>
+                <button type="button" role="switch" aria-labelledby="nerd-stats-heading" aria-describedby="nerd-stats-description"
+                  :aria-checked="appSettings.statsForNerds" data-testid="stats-for-nerds-toggle"
+                  :class="['relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200', appSettings.statsForNerds ? 'bg-accent-strong' : 'bg-border-default']"
+                  @click="updateStatsForNerds(!appSettings.statsForNerds)">
+                  <span :class="['inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1', appSettings.statsForNerds ? 'translate-x-6' : 'translate-x-1']" />
                 </button>
               </div>
-              <div
-                v-if="bibleCacheStatus.kind === 'downloading' && bibleCacheStatus.total > 0"
-                class="mt-2 h-1.5 overflow-hidden rounded-full bg-border-default"
-                aria-hidden="true"
-              >
-                <div
-                  class="h-full rounded-full bg-accent-strong transition-[width] duration-200"
-                  :style="{ width: `${Math.round((bibleCacheStatus.completed / bibleCacheStatus.total) * 100)}%` }"
-                />
-              </div>
             </div>
-          </section>
-          <section v-if="analyticsAvailable" class="rounded-xl bg-sunken p-4" aria-labelledby="privacy-settings-heading" data-testid="analytics-opt-out-row">
-            <h3 id="privacy-settings-heading" class="text-base font-semibold text-text-primary">Privacy</h3>
-            <label class="mt-3 flex items-start gap-4 cursor-pointer">
-              <div class="flex-1">
-                <p class="text-sm font-medium text-text-primary">Share anonymous usage analytics</p>
-                <p class="mt-1 text-xs text-text-muted">Helps the maintainer see how many people use the app. No accounts, no personal data.</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="!appSettings.analyticsOptOut"
-                data-testid="analytics-opt-out-toggle"
-                :class="[
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-                  !appSettings.analyticsOptOut ? 'bg-accent-strong' : 'bg-border-default'
-                ]"
-                @click="updateAnalyticsOptOut(!appSettings.analyticsOptOut)"
-              >
-                <span
-                  :class="[
-                    'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1',
-                    !appSettings.analyticsOptOut ? 'translate-x-6' : 'translate-x-1'
-                  ]"
-                />
-              </button>
-            </label>
-          </section>
-          <section class="rounded-xl bg-sunken p-4" aria-labelledby="nerd-stats-heading">
-            <div class="flex items-start gap-4">
-              <div class="flex-1">
-                <h3 id="nerd-stats-heading" class="text-base font-semibold text-text-primary">Stats for nerds</h3>
-                <p id="nerd-stats-description" class="mt-1 text-xs text-text-muted">Explore verse history, accuracy, ease, and scheduling. Tap and hold a verse in Review or tap the info icon while practicing.</p>
-              </div>
-              <button type="button" role="switch" aria-labelledby="nerd-stats-heading" aria-describedby="nerd-stats-description"
-                :aria-checked="appSettings.statsForNerds" data-testid="stats-for-nerds-toggle"
-                :class="['relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors duration-200', appSettings.statsForNerds ? 'bg-accent-strong' : 'bg-border-default']"
-                @click="updateStatsForNerds(!appSettings.statsForNerds)">
-                <span :class="['inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 mt-1', appSettings.statsForNerds ? 'translate-x-6' : 'translate-x-1']" />
-              </button>
-            </div>
-          </section>
+          </div>
         </div>
 
         <template #footer>

@@ -6,17 +6,23 @@ const props = defineProps({
   showStatus: { type: Boolean, default: true },
 })
 
-const label = computed(() => {
+const parts = computed(() => {
   const { total, due, learning } = props.summary
-  const parts = [`${total} verse${total !== 1 ? 's' : ''}`]
+  const parts = [{ key: 'total', label: `${total} verse${total !== 1 ? 's' : ''}` }]
   if (props.showStatus) {
-    if (due > 0) parts.push(`${due} due`)
-    if (learning > 0) parts.push(`${learning} unmastered`)
+    if (learning > 0) parts.push({ key: 'learning', label: `${learning} unmastered` })
+    if (due > 0) parts.push({ key: 'due', label: `${due} due` })
   }
-  return parts.join(' · ')
+  return parts
 })
 </script>
 
 <template>
-  <div class="collection-tile__meta">{{ label }}</div>
+  <div class="collection-tile__meta">
+    <span
+      v-for="part in parts"
+      :key="part.key"
+      :class="{ 'collection-tile__meta-due': part.key === 'due' }"
+    >{{ part.label }}</span>
+  </div>
 </template>

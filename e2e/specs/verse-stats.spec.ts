@@ -49,7 +49,7 @@ test('the final settings toggle defaults off, persists, and gates all stats acce
   const settings = await openSettings(page)
   const toggle = settings.getByRole('switch', { name: 'Stats for nerds', exact: true })
   await expect(toggle).toHaveAttribute('aria-checked', 'false')
-  await expect(settings.locator('section').last()).toContainText('Tap and hold a verse in Review')
+  await expect(settings.locator('#nerd-stats-description')).toContainText('Long-press a verse on the Review screen')
   await toggle.click()
   await settings.getByRole('button', { name: 'Done', exact: true }).click()
   await page.reload()

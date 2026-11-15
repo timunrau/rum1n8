@@ -74,7 +74,7 @@ test('practice settings toggle persists across reload', async ({ page }) => {
   await page.locator('header button').first().click()
   await page.getByTestId('settings-practice').click()
 
-  const toggle = page.getByRole('switch', { name: /Require typing the reference/i })
+  const toggle = page.getByRole('switch', { name: /Type the reference after each verse/i })
   await expect(toggle).toHaveAttribute('aria-checked', 'false')
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-checked', 'true')
@@ -84,5 +84,5 @@ test('practice settings toggle persists across reload', async ({ page }) => {
 
   await page.locator('header button').first().click()
   await page.getByTestId('settings-practice').click()
-  await expect(page.getByRole('switch', { name: /Require typing the reference/i })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('switch', { name: /Type the reference after each verse/i })).toHaveAttribute('aria-checked', 'true')
 })
