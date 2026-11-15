@@ -1,3 +1,10 @@
+## [1.67.4](https://github.com/timunrau/rum1n8/compare/v1.67.3...v1.67.4) (2026-11-15)
+
+
+### Bug Fixes
+
+* simplify collection and settings typography ([102d32e](https://github.com/timunrau/rum1n8/commit/102d32e7d70670f64ca4bc05a60cdf18fc6610c0))
+
 ## [1.67.3](https://github.com/timunrau/rum1n8/compare/v1.67.2...v1.67.3) (2026-11-15)
 
 
