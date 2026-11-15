@@ -1,3 +1,10 @@
+## [1.67.1](https://github.com/timunrau/rum1n8/compare/v1.67.0...v1.67.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* pronounce Bible references naturally in read aloud ([5127162](https://github.com/timunrau/rum1n8/commit/51271626137a0091107b8128ae389b8ff47de08d))
+
 # [1.67.0](https://github.com/timunrau/rum1n8/compare/v1.66.8...v1.67.0) (2026-11-13)
 
 
