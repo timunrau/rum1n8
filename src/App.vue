@@ -2570,6 +2570,7 @@ import {
 import { countVersesInReference, sumVerseReferenceCounts } from './utils/verse-count.js'
 import { findReferenceMatches, formatReferenceMatchSummary, normalizeVerseReference, parseSimpleVerseReference, parseVerseSpanReference } from './utils/bible-reference.js'
 import { buildReferencePracticeUnits, normalizeReferenceForTyping } from './utils/reference-typing.js'
+import { formatReferenceForSpeech } from './utils/reference-speech.js'
 import { getVerseWords } from './utils/verse-words.js'
 import { copyTextToClipboard, shareVerse as shareVerseContent } from './utils/sharing.js'
 import {
@@ -7393,7 +7394,7 @@ export default {
       window.speechSynthesis.cancel()
       const verseObj = verse?.value || verse
       if (!verseObj?.content || !verseObj?.reference) return
-      const utterance = new SpeechSynthesisUtterance(`${verseObj.reference}. ${verseObj.content}`)
+      const utterance = new SpeechSynthesisUtterance(`${formatReferenceForSpeech(verseObj.reference)}. ${verseObj.content}`)
       utterance.onend = () => { isSpeaking.value = false }
       utterance.onerror = () => { isSpeaking.value = false }
       isSpeaking.value = true

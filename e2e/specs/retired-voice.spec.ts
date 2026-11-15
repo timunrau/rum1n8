@@ -62,36 +62,47 @@ test('legacy downloads are cleaned on startup and foreground without changing sa
   expect(modelRequests).toEqual([])
 })
 
-test('Read Aloud still starts and stops in practice and review without requesting the microphone', async ({ page }) => {
-  await page.addInitScript(() => {
-    const calls = { spoken: [] as string[], cancelled: 0, microphone: 0 }
-    Object.defineProperty(window, '__audioCalls', { value: calls })
-    Object.defineProperty(window, 'speechSynthesis', { value: {
-      speak: (utterance: SpeechSynthesisUtterance) => calls.spoken.push(utterance.text),
-      cancel: () => { calls.cancelled++ },
-    } })
-    navigator.mediaDevices.getUserMedia = async () => {
-      calls.microphone++
-      throw new Error('The retired feature must not request the microphone')
+for (const [reference, spokenReference] of [
+  ['John 1:1', 'John one verse one'],
+  ['1 Corinthians 6:4-11', 'First Corinthians six verses four to eleven'],
+  ['Psalm 1:1', 'Psalm one verse one'],
+  ['John 3:36-4:2', 'John three verse thirty-six to chapter four verse two'],
+]) {
+  test(`Read Aloud formats ${reference} and starts and stops in practice and review without requesting the microphone`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const calls = { spoken: [] as string[], cancelled: 0, microphone: 0 }
+      Object.defineProperty(window, '__audioCalls', { value: calls })
+      Object.defineProperty(window, 'speechSynthesis', { value: {
+        speak: (utterance: SpeechSynthesisUtterance) => calls.spoken.push(utterance.text),
+        cancel: () => { calls.cancelled++ },
+      } })
+      navigator.mediaDevices.getUserMedia = async () => {
+        calls.microphone++
+        throw new Error('The retired feature must not request the microphone')
+      }
+    })
+    await gotoApp(page)
+    await clearAppStorage(page)
+    const content = 'One two three. See Psalm 1:1 and 1 Corinthians 6:4-11.'
+    await seedStorage(page, [{
+      id: 'read-aloud', reference, content, bibleVersion: 'BSB',
+      memorizationStatus: 'mastered', createdAt: '2026-01-01T00:00:00.000Z',
+      lastModified: '2026-01-01T00:00:00.000Z', reviewHistory: [], collectionIds: [],
+    }], [])
+    for (const view of ['memorization', 'review']) {
+      await gotoApp(page, `?view=${view}&verse=read-aloud&mode=learn`)
+      await expect(page.locator('h1')).toContainText(reference)
+      await page.getByTitle('Read aloud', { exact: true }).click()
+      await expect(page.getByTitle('Stop reading', { exact: true })).toBeVisible()
+      await page.getByTitle('Stop reading', { exact: true }).click()
+      await expect(page.getByTitle('Read aloud', { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Voice practice' })).toHaveCount(0)
+      const calls = await page.evaluate(() => (window as typeof window & { __audioCalls: AudioCalls }).__audioCalls)
+      expect(calls.spoken).toEqual([`${spokenReference}. ${content}`])
+      expect(calls.cancelled).toBeGreaterThanOrEqual(2)
+      expect(calls.microphone).toBe(0)
+      const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('rum1n8-verses') || '[]'))
+      expect(saved.find((verse: { id: string }) => verse.id === 'read-aloud')).toMatchObject({ reference, content })
     }
   })
-  await gotoApp(page)
-  await clearAppStorage(page)
-  await seedStorage(page, [{
-    id: 'read-aloud', reference: 'John 1:1', content: 'One two three', bibleVersion: 'BSB',
-    memorizationStatus: 'mastered', createdAt: '2026-01-01T00:00:00.000Z',
-    lastModified: '2026-01-01T00:00:00.000Z', reviewHistory: [], collectionIds: [],
-  }], [])
-  for (const view of ['memorization', 'review']) {
-    await gotoApp(page, `?view=${view}&verse=read-aloud&mode=learn`)
-    await page.getByTitle('Read aloud', { exact: true }).click()
-    await expect(page.getByTitle('Stop reading', { exact: true })).toBeVisible()
-    await page.getByTitle('Stop reading', { exact: true }).click()
-    await expect(page.getByTitle('Read aloud', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Voice practice' })).toHaveCount(0)
-    const calls = await page.evaluate(() => (window as typeof window & { __audioCalls: AudioCalls }).__audioCalls)
-    expect(calls.spoken).toEqual(['John 1:1. One two three'])
-    expect(calls.cancelled).toBeGreaterThanOrEqual(2)
-    expect(calls.microphone).toBe(0)
-  }
-})
+}
