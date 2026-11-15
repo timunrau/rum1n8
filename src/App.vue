@@ -817,24 +817,26 @@
               v-for="section in reviewSections"
               :key="section.id"
               :aria-labelledby="`review-section-${section.id}`"
-              class="space-y-2 pt-3"
+              class="pt-3"
             >
-              <div class="flex items-baseline justify-between gap-4 px-4 pb-1">
-                <h2 :id="`review-section-${section.id}`" class="text-sm font-semibold text-text-primary">{{ section.label }}</h2>
+              <div class="list-section-header flex items-baseline justify-between gap-4 px-4">
+                <h2 :id="`review-section-${section.id}`" class="list-section-heading">{{ section.label }}</h2>
                 <span v-if="section.id === 'extra'" class="shrink-0 text-xs text-text-muted">Last reviewed</span>
               </div>
-              <VerseListItem
-                v-for="verse in section.verses"
-                :key="verse.id"
-                :reference="verse.reference"
-                :bible-version="verse.bibleVersion"
-                :status="section.id === 'due' ? 'mastered' : ''"
-                :due="section.id === 'due'"
-                :meta="section.id === 'extra' ? getLastReviewedLabel(verse) : ''"
-                :stats-enabled="appSettings.statsForNerds"
-                @stats="openVerseStats(verse)"
-                @click="handleVerseClick(verse)"
-              />
+              <div class="space-y-2">
+                <VerseListItem
+                  v-for="verse in section.verses"
+                  :key="verse.id"
+                  :reference="verse.reference"
+                  :bible-version="verse.bibleVersion"
+                  :status="section.id === 'due' ? 'mastered' : ''"
+                  :due="section.id === 'due'"
+                  :meta="section.id === 'extra' ? getLastReviewedLabel(verse) : ''"
+                  :stats-enabled="appSettings.statsForNerds"
+                  @stats="openVerseStats(verse)"
+                  @click="handleVerseClick(verse)"
+                />
+              </div>
             </section>
           </template>
           <template v-else>

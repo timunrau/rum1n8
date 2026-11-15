@@ -513,7 +513,14 @@
   }
 
   .almanac__section-heading {
-    margin: 1rem 0 0.25rem;
+    margin: 1rem 0 0;
+  }
+
+  .list-section-header {
+    padding-bottom: 0.75rem;
+  }
+
+  .list-section-heading {
     font-family: var(--font-serif);
     font-size: 1.15rem;
     font-weight: 400;
