@@ -1,3 +1,10 @@
+## [1.67.2](https://github.com/timunrau/rum1n8/compare/v1.67.1...v1.67.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* keep neighboring due verses together ([249f370](https://github.com/timunrau/rum1n8/commit/249f3701deb689bfe8e81b6a3904ebfe6f3d706a))
+
 ## [1.67.1](https://github.com/timunrau/rum1n8/compare/v1.67.0...v1.67.1) (2026-11-15)
 
 
