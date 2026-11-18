@@ -491,14 +491,34 @@ for (const mobile of [true, false]) {
       await expect(results.getByRole('heading')).toHaveCount(verses.length)
 
       if (mobile) {
-        const client = await page.context().newCDPSession(page)
-        await client.send('Input.synthesizeScrollGesture', {
-          x: 180,
-          y: 520,
-          yDistance: -300,
-          gestureSourceType: 'touch',
+        const { x, startY, distance } = await results.evaluate((element) => {
+          element.addEventListener('scrollend', () => {
+            element.setAttribute('data-test-scroll-ended', '')
+          }, { once: true })
+          const bounds = element.getBoundingClientRect()
+          return {
+            x: bounds.left + bounds.width / 2,
+            startY: bounds.top + bounds.height * 0.75,
+            distance: bounds.height / 2,
+          }
         })
-        await client.detach()
+        const client = await page.context().newCDPSession(page)
+        try {
+          await client.send('Input.dispatchTouchEvent', {
+            type: 'touchStart',
+            touchPoints: [{ x, y: startY }],
+          })
+          const steps = 8
+          for (let step = 1; step <= steps; step += 1) {
+            await client.send('Input.dispatchTouchEvent', {
+              type: 'touchMove',
+              touchPoints: [{ x, y: startY - distance * step / steps }],
+            })
+          }
+          await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+        } finally {
+          await client.detach()
+        }
       } else {
         await results.hover()
         await page.mouse.wheel(0, 300)
@@ -508,6 +528,7 @@ for (const mobile of [true, false]) {
       await expect(input).toHaveValue('John')
       if (mobile) {
         await expect(input).not.toBeFocused()
+        await expect(results).toHaveAttribute('data-test-scroll-ended', '')
         await input.tap()
       }
       await expect(input).toBeFocused()
