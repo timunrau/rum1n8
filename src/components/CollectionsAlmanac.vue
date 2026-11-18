@@ -1,6 +1,6 @@
 <template>
   <section class="almanac px-1 pt-2" :class="{ 'pb-6': !sectionTitle }">
-    <div class="almanac__stats grid grid-cols-3 gap-3 sm:gap-6 stagger-fade">
+    <div class="almanac__stats grid grid-cols-3 gap-3 sm:gap-6">
       <div class="almanac__stat">
         <div class="almanac__numeral">{{ currentStreak }}</div>
         <div class="almanac__label">day streak</div>
