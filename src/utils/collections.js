@@ -269,18 +269,30 @@ export function getCollectionScopeIds(collections = [], collectionId, { includeC
 }
 
 export function normalizeVerseCollectionIds(collections = [], collectionIds = []) {
-  const normalizedIds = [...new Set((collectionIds || []).filter(Boolean).map(String))]
-  const selectedIds = new Set(normalizedIds)
-  const redundantAncestorIds = new Set()
+  if (!collectionIds || (Array.isArray(collectionIds) && collectionIds.length === 0)) return []
+  return createVerseCollectionNormalizer(normalizeCollections(collections))(collectionIds)
+}
 
-  for (const id of normalizedIds) {
-    for (const ancestor of getCollectionAncestors(collections, id)) {
-      const ancestorId = String(ancestor.id)
-      if (selectedIds.has(ancestorId)) redundantAncestorIds.add(ancestorId)
+export function createVerseCollectionNormalizer(normalizedCollections) {
+  const parentById = new Map(normalizedCollections.map(({ id, parentId }) => [String(id), parentId]))
+
+  return (collectionIds = []) => {
+    const normalizedIds = [...new Set((collectionIds || []).filter(Boolean).map(String))]
+    const selectedIds = new Set(normalizedIds)
+    const redundantAncestorIds = new Set()
+
+    for (const id of normalizedIds) {
+      const seen = new Set()
+      let parentId = parentById.get(id)
+      while (parentId && parentById.has(parentId) && !seen.has(parentId)) {
+        seen.add(parentId)
+        if (selectedIds.has(parentId)) redundantAncestorIds.add(parentId)
+        parentId = parentById.get(parentId)
+      }
     }
-  }
 
-  return normalizedIds.filter(id => !redundantAncestorIds.has(id))
+    return normalizedIds.filter(id => !redundantAncestorIds.has(id))
+  }
 }
 
 export function getCollectionVerses(verses = [], collections = [], collectionId, { includeChildren = false } = {}) {

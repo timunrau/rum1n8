@@ -32,6 +32,9 @@ const APP_STATIC_ASSETS = [
   ...ICONS.map(({ src }) => src),
   '.well-known/assetlinks.json',
   'gdrive-callback.html',
+  'font-licenses/ibm-plex-mono.txt',
+  'font-licenses/literata.txt',
+  'font-licenses/source-sans-3.txt',
   'marketing/screenshot-empty.png',
   'marketing/screenshot-practice.png',
   'marketing/screenshot-review.png',
@@ -64,6 +67,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist-app',
       emptyOutDir: true,
+      assetsInlineLimit: filePath => filePath.endsWith('.woff2') ? false : undefined,
       rollupOptions: {
         input: { app: resolve(process.cwd(), APP_PAGE.inputFile) },
       },
@@ -134,27 +138,19 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           cleanupOutdatedCaches: true,
-          globPatterns: ['app/**/*.html', 'assets/*.{js,css}', 'icons/*.png'],
+          // Basic Latin is available after install. Other subsets are cached when first used.
+          globPatterns: ['app/**/*.html', 'assets/*.{js,css}', 'assets/*-latin-basic-*.woff2', 'icons/*.png'],
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           navigateFallback: '/app/index.html',
           navigateFallbackAllowlist: [/^\/app(?:\/.*)?$/],
           runtimeCaching: [
             {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              urlPattern: ({ sameOrigin, url }) => sameOrigin && /^\/assets\/.*\.woff2$/.test(url.pathname),
               handler: 'CacheFirst',
               options: {
-                cacheName: 'google-fonts-cache',
-                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'gstatic-fonts-cache',
-                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
+                cacheName: 'rum1n8-font-subsets',
+                expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [200] },
               },
             },
           ],

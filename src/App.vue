@@ -319,10 +319,6 @@
     v-if="!memorizingVerse && !reviewingVerse"
     :inert="statsVerse ? true : null"
     class="min-h-screen"
-    @touchstart.passive="handleSwipeTouchStart"
-    @touchmove="handleSwipeTouchMove"
-    @touchend.passive="handleSwipeTouchEnd"
-    @touchcancel="resetViewSwipe"
   >
     <!-- Navigation Drawer -->
       <div
@@ -584,27 +580,22 @@
     <!-- Content Area -->
     <div
       class="app-view-stage"
-      :class="{ 'app-view-stage--moving': isViewSwipeMoving }"
+      :class="{ 'app-view-stage--moving': viewNavAnimating }"
     >
       <div
         class="app-view-track"
-        :class="{
-          'app-view-track--ready': viewTrackReady,
-          'app-view-track--dragging': isViewSwipeDragging,
-          'app-view-track--settling': isViewSwipeSettling
-        }"
+        :class="{ 'app-view-track--ready': viewTrackReady }"
         :style="appViewTrackStyle"
-        @transitionend="handleViewTrackTransitionEnd"
       >
         <section
-          v-for="panelView in swipeViews"
+          v-for="panelView in topLevelViews"
           :key="panelView"
           class="app-view-panel"
           :class="{ 'app-view-panel--active': panelView === currentView }"
           :aria-hidden="panelView !== currentView"
           :inert="panelView !== currentView ? '' : null"
         >
-          <template v-if="shouldRenderViewPanel(panelView)">
+          <template v-if="panelView === currentView">
           <header
             v-if="panelView === 'collections'"
             :class="['app-view-header glass-chrome', isScrolled ? '' : 'glass-chrome--transparent']"
@@ -2556,6 +2547,7 @@ import {
   canAssignCollectionParent,
   canCreateChildCollection,
   canDeleteCollection as canDeleteCollectionRecord,
+  createVerseCollectionNormalizer,
   getChildCollections,
   getCollectionAncestors,
   getCollectionPath,
@@ -3082,34 +3074,11 @@ export default {
     const startReviewCalloutTitle = "You've mastered your first verse."
     const startReviewCalloutBody = 'Review your verses each day to keep ruminating on the Word.'
     const verseCardRefs = new Map()
-    const swipeViews = ['collections', 'review-list', 'stats']
+    const topLevelViews = ['collections', 'review-list', 'stats']
     const viewTrackReady = ref(false)
     const viewNavAnimating = ref(false)
-    const renderedViewPanels = ref(['collections'])
     const listFloatInTarget = ref(null)
     const practiceVerseTransitionName = ref('practice-mode-fade')
-    const createEmptyViewSwipe = () => ({
-      started: false,
-      dragging: false,
-      settling: false,
-      baseIndex: null,
-      startX: 0,
-      startY: 0,
-      lastX: 0,
-      lastTime: 0,
-      rawDx: 0,
-      dx: 0,
-      dy: 0,
-      velocityX: 0,
-      direction: null,
-      targetView: null,
-      lockedAxis: null,
-      canNavigate: false,
-      width: 1
-    })
-    const viewSwipe = ref(createEmptyViewSwipe())
-    let viewSwipeResetTimer = null
-    let viewSwipeAnimationFrame = null
     let viewNavAnimationTimer = null
     let listFloatInTimer = null
 
@@ -4503,10 +4472,8 @@ export default {
       minMatchCharLength: 1
     }
     
-    // Create Fuse instance (will be recreated when verses change)
-    const getFuseInstance = () => {
-      return new Fuse(verses.value, fuseOptions)
-    }
+    // Fuse reads the reactive verse array and indexed fields while building its index.
+    const searchFuse = computed(() => new Fuse(verses.value, fuseOptions))
 
     // Search results using Fuse.js
     const searchResults = computed(() => {
@@ -4516,8 +4483,7 @@ export default {
       
       const query = searchQuery.value.trim()
 
-      const fuse = getFuseInstance()
-      const results = fuse.search(query)
+      const results = searchFuse.value.search(query)
 
       // Include verses that contain the full query in content (case-insensitive) when Fuse
       // excludes them due to long-content scoring (e.g. "if you who are evil" in Luke 11:9-13).
@@ -4912,6 +4878,7 @@ export default {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const loadedVerses = JSON.parse(stored)
+        const normalizeCollectionIds = createVerseCollectionNormalizer(collections.value)
         let needsMigration = false
         // Migrate existing verses to include review fields
         verses.value = loadedVerses.map(verse => {
@@ -4971,7 +4938,7 @@ export default {
             }
             needsMigration = true
           }
-          const normalizedCollectionIds = normalizeVerseCollectionIds(collections.value, verse.collectionIds)
+          const normalizedCollectionIds = normalizeCollectionIds(verse.collectionIds)
           if (JSON.stringify(normalizedCollectionIds) !== JSON.stringify(verse.collectionIds)) {
             verse.collectionIds = normalizedCollectionIds
             needsMigration = true
@@ -6998,64 +6965,21 @@ export default {
       replaceNavigationState({ view: 'stats' })
     }
 
-    const getViewportWidth = () => (typeof window === 'undefined' ? 390 : Math.max(window.innerWidth || 390, 1))
-    const getSwipeSurfaceWidth = (el) => {
-      const rect = el?.getBoundingClientRect?.()
-      return Math.max(rect?.width || getViewportWidth(), 1)
-    }
-    const currentViewIndex = computed(() => {
-      const index = swipeViews.indexOf(currentView.value)
-      return index === -1 ? 0 : index
-    })
-    const setRenderedViewPanels = (views) => {
-      renderedViewPanels.value = [...new Set(views.filter(view => swipeViews.includes(view)))]
-    }
-    const shouldRenderViewPanel = (view) => renderedViewPanels.value.includes(view)
-    const isViewSwipeDragging = computed(() => viewSwipe.value.dragging && !viewSwipe.value.settling)
-    const isViewSwipeSettling = computed(() => viewSwipe.value.settling)
-    const isViewSwipeMoving = computed(() => (
-      viewSwipe.value.dragging ||
-      viewSwipe.value.settling ||
-      viewNavAnimating.value
-    ))
     const appViewTrackStyle = computed(() => {
-      const state = viewSwipe.value
-      const isSwiping = state.dragging || state.settling
-      const baseIndex = isSwiping && Number.isFinite(state.baseIndex)
-        ? state.baseIndex
-        : currentViewIndex.value
-      const dx = isSwiping ? state.dx : 0
-      return {
-        transform: `translate3d(calc(${-baseIndex * 100}% + ${dx}px), 0, 0)`
-      }
+      const index = Math.max(0, topLevelViews.indexOf(currentView.value))
+      return { transform: `translate3d(${-index * 100}%, 0, 0)` }
     })
 
-    const startViewNavAnimation = (_fromView, toView) => {
-      if (!viewTrackReady.value) return
+    watch(currentView, (view, previousView) => {
+      if (!viewTrackReady.value || !topLevelViews.includes(view) || !topLevelViews.includes(previousView)) return
       if (viewNavAnimationTimer) {
         clearTimeout(viewNavAnimationTimer)
       }
-      setRenderedViewPanels([toView])
       viewNavAnimating.value = true
       viewNavAnimationTimer = setTimeout(() => {
         viewNavAnimating.value = false
-        setRenderedViewPanels([currentView.value])
         viewNavAnimationTimer = null
       }, 380)
-    }
-
-    watch(currentView, (view, previousView) => {
-      if (!viewTrackReady.value) {
-        setRenderedViewPanels([view])
-        return
-      }
-      if (view === previousView) return
-      if (!swipeViews.includes(view) || !swipeViews.includes(previousView)) return
-      if (viewSwipe.value.dragging || viewSwipe.value.settling) {
-        setRenderedViewPanels(swipeViews)
-        return
-      }
-      startViewNavAnimation(previousView, view)
     })
 
     watch(currentCollectionId, (collectionId, previousCollectionId) => {
@@ -7096,216 +7020,6 @@ export default {
       el.querySelectorAll('input[id]').forEach((input) => {
         input.removeAttribute('id')
       })
-    }
-
-    const getAdjacentSwipeView = (direction) => {
-      const currentIndex = swipeViews.indexOf(currentView.value)
-      if (currentIndex === -1) return null
-      const offset = direction === 'next' ? 1 : -1
-      return swipeViews[currentIndex + offset] || null
-    }
-
-    const getViewDisplayDx = (rawDx, hasTarget, width) => {
-      const sign = rawDx < 0 ? -1 : 1
-      const distance = Math.abs(rawDx)
-
-      if (!hasTarget) {
-        return sign * Math.min(48, 6 + Math.sqrt(distance) * 4)
-      }
-
-      const maxDistance = width * 0.9
-      if (distance <= maxDistance) return rawDx
-
-      return sign * (maxDistance + (distance - maxDistance) * 0.14)
-    }
-
-    const clearViewSwipeResetTimer = () => {
-      if (viewSwipeResetTimer) {
-        clearTimeout(viewSwipeResetTimer)
-        viewSwipeResetTimer = null
-      }
-    }
-
-    const clearViewSwipeAnimationFrame = () => {
-      if (viewSwipeAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(viewSwipeAnimationFrame)
-      }
-      viewSwipeAnimationFrame = null
-    }
-
-    const resetViewSwipe = () => {
-      clearViewSwipeResetTimer()
-      clearViewSwipeAnimationFrame()
-      viewSwipe.value = createEmptyViewSwipe()
-      setRenderedViewPanels([currentView.value])
-    }
-
-    const settleViewSwipeTo = (targetDx) => {
-      clearViewSwipeResetTimer()
-      clearViewSwipeAnimationFrame()
-      const baseIndex = Number.isFinite(viewSwipe.value.baseIndex)
-        ? viewSwipe.value.baseIndex
-        : currentViewIndex.value
-
-      viewSwipe.value = {
-        ...viewSwipe.value,
-        baseIndex,
-        settling: true,
-        dragging: false
-      }
-
-      const finishFrame = () => {
-        viewSwipeAnimationFrame = null
-        viewSwipe.value = {
-          ...viewSwipe.value,
-          dx: targetDx,
-          rawDx: targetDx
-        }
-      }
-
-      if (typeof requestAnimationFrame === 'undefined') {
-        finishFrame()
-      } else {
-        viewSwipeAnimationFrame = requestAnimationFrame(finishFrame)
-      }
-
-      viewSwipeResetTimer = setTimeout(() => {
-        resetViewSwipe()
-      }, 360)
-    }
-
-    const settleViewSwipeBack = () => {
-      settleViewSwipeTo(0)
-    }
-
-    const handleViewTrackTransitionEnd = (event) => {
-      if (event.target !== event.currentTarget || !viewSwipe.value.settling) return
-      resetViewSwipe()
-    }
-
-    const hasHorizontalScrollableAncestor = (target, root) => {
-      let el = target
-      while (el && el !== root) {
-        const style = window.getComputedStyle(el)
-        if ((style.overflowX === 'auto' || style.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
-          return true
-        }
-        el = el.parentElement
-      }
-      return false
-    }
-
-    const navigateToSwipeView = (view) => {
-      if (view === 'collections') navigateToCollections()
-      else if (view === 'review-list') navigateToReviewList()
-      else if (view === 'stats') navigateToStats()
-    }
-
-    const handleSwipeTouchStart = (e) => {
-      if (
-        currentCollectionId.value ||
-        searchActive.value ||
-        drawerVisible.value ||
-        fabMenuOpen.value ||
-        e.touches.length !== 1
-      ) {
-        resetViewSwipe()
-        return
-      }
-
-      if (hasHorizontalScrollableAncestor(e.target, e.currentTarget)) return
-
-      const touch = e.touches[0]
-      clearViewSwipeResetTimer()
-      clearViewSwipeAnimationFrame()
-      setRenderedViewPanels(swipeViews)
-      viewSwipe.value = {
-        ...createEmptyViewSwipe(),
-        started: true,
-        baseIndex: currentViewIndex.value,
-        startX: touch.clientX,
-        startY: touch.clientY,
-        lastX: touch.clientX,
-        lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
-        width: getSwipeSurfaceWidth(e.currentTarget)
-      }
-    }
-
-    const handleSwipeTouchMove = (e) => {
-      const state = viewSwipe.value
-      if (!state.started || e.touches.length !== 1 || currentCollectionId.value) return
-
-      const touch = e.touches[0]
-      const rawDx = touch.clientX - state.startX
-      const dy = touch.clientY - state.startY
-      const absDx = Math.abs(rawDx)
-      const absDy = Math.abs(dy)
-
-      let lockedAxis = state.lockedAxis
-      if (!lockedAxis) {
-        if (absDx > 10 && absDx > absDy * 1.2) {
-          lockedAxis = 'x'
-        } else if (absDy > 10 && absDy > absDx) {
-          resetViewSwipe()
-          return
-        } else {
-          return
-        }
-      }
-
-      if (lockedAxis !== 'x') return
-      e.preventDefault()
-
-      const direction = rawDx < 0 ? 'next' : 'previous'
-      const targetView = getAdjacentSwipeView(direction)
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      const elapsed = Math.max(now - state.lastTime, 1)
-      const velocityX = (touch.clientX - state.lastX) / elapsed
-      const displayDx = getViewDisplayDx(rawDx, !!targetView, state.width)
-
-      viewSwipe.value = {
-        ...state,
-        dragging: true,
-        settling: false,
-        lockedAxis,
-        rawDx,
-        dx: displayDx,
-        dy,
-        direction,
-        targetView,
-        canNavigate: !!targetView,
-        velocityX,
-        lastX: touch.clientX,
-        lastTime: now
-      }
-    }
-
-    const handleSwipeTouchEnd = (e) => {
-      const state = viewSwipe.value
-      if (!state.started || currentCollectionId.value) return
-
-      if (!state.dragging) {
-        resetViewSwipe()
-        return
-      }
-
-      const touch = e.changedTouches[0]
-      const rawDx = touch.clientX - state.startX
-      const absDx = Math.abs(rawDx)
-      const targetView = state.targetView
-      const threshold = Math.min(116, Math.max(58, state.width * 0.2))
-      const isFastEnough = Math.abs(state.velocityX) > 0.48 && absDx > 36
-
-      if (targetView && (absDx >= threshold || isFastEnough)) {
-        const fromIndex = Number.isFinite(state.baseIndex) ? state.baseIndex : currentViewIndex.value
-        const targetIndex = swipeViews.indexOf(targetView)
-        const targetDx = (fromIndex - targetIndex) * state.width
-        settleViewSwipeTo(targetDx)
-        navigateToSwipeView(targetView)
-        return
-      }
-
-      settleViewSwipeBack()
     }
 
     const clearSearch = () => {
@@ -9519,12 +9233,6 @@ export default {
       if (drawerHideTimeoutId) {
         clearTimeout(drawerHideTimeoutId)
       }
-      if (viewSwipeResetTimer) {
-        clearTimeout(viewSwipeResetTimer)
-      }
-      if (viewSwipeAnimationFrame && typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(viewSwipeAnimationFrame)
-      }
       if (viewNavAnimationTimer) {
         clearTimeout(viewNavAnimationTimer)
       }
@@ -9726,17 +9434,9 @@ export default {
       navigateToReviewList,
       navigateToCollections,
       navigateToStats,
-      handleSwipeTouchStart,
-      handleSwipeTouchMove,
-      handleSwipeTouchEnd,
-      resetViewSwipe,
-      handleViewTrackTransitionEnd,
-      swipeViews,
+      topLevelViews,
       viewTrackReady,
-      shouldRenderViewPanel,
-      isViewSwipeDragging,
-      isViewSwipeSettling,
-      isViewSwipeMoving,
+      viewNavAnimating,
       appViewTrackStyle,
       clearSearch,
       openSearch,
@@ -9980,7 +9680,6 @@ export default {
   position: relative;
   min-height: 100dvh;
   overflow: hidden;
-  touch-action: pan-y;
 }
 
 .app-view-track {
@@ -9992,14 +9691,6 @@ export default {
 
 .app-view-track--ready {
   transition: transform 340ms cubic-bezier(0.2, 0.86, 0.22, 1);
-}
-
-.app-view-track--dragging {
-  transition: none;
-}
-
-.app-view-track--settling {
-  transition: transform 360ms cubic-bezier(0.18, 0.88, 0.24, 1);
 }
 
 .app-view-panel {
