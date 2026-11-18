@@ -1,3 +1,11 @@
+## [1.67.7](https://github.com/timunrau/rum1n8/compare/v1.67.6...v1.67.7) (2026-11-18)
+
+
+### Bug Fixes
+
+* dismiss mobile keyboard on search scroll ([0bace1e](https://github.com/timunrau/rum1n8/commit/0bace1e6e540d97f9bcdf505d5cc768f58c7fcd1))
+* show verse and stats counters immediately ([83bbf0c](https://github.com/timunrau/rum1n8/commit/83bbf0ca96a3a7c2d0f118c25558321d51d59902))
+
 ## [1.67.6](https://github.com/timunrau/rum1n8/compare/v1.67.5...v1.67.6) (2026-11-18)
 
 
