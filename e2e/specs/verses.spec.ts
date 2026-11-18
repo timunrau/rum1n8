@@ -470,6 +470,54 @@ test('search: type in search bar on Verses tab -> results filtered', async ({ pa
   await expect(searchScreen.getByRole('heading', { name: /John 3:16/ })).not.toBeVisible()
 })
 
+for (const mobile of [true, false]) {
+  test.describe(mobile ? 'mobile search' : 'desktop search', () => {
+    test.use({ viewport: { width: mobile ? 393 : 1280, height: 700 }, isMobile: mobile, hasTouch: mobile })
+
+    test(mobile ? 'swiping results dismisses the keyboard' : 'scrolling results keeps the search input focused', async ({ page }) => {
+      const verses = Array.from({ length: 20 }, (_, index) => ({
+        ...sampleVerses[0],
+        id: `john-3-${index + 1}`,
+        reference: `John 3:${index + 1}`,
+      }))
+      await seedStorage(page, verses, [])
+      await page.reload()
+      await page.getByTestId('search-bar').click()
+
+      const input = page.getByPlaceholder('Search verses...')
+      const results = page.getByTestId('search-results')
+      await input.fill('John')
+      await expect(input).toBeFocused()
+      await expect(results.getByRole('heading')).toHaveCount(verses.length)
+
+      if (mobile) {
+        const client = await page.context().newCDPSession(page)
+        await client.send('Input.synthesizeScrollGesture', {
+          x: 180,
+          y: 520,
+          yDistance: -300,
+          gestureSourceType: 'touch',
+        })
+        await client.detach()
+      } else {
+        await results.hover()
+        await page.mouse.wheel(0, 300)
+      }
+
+      await expect.poll(() => results.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+      await expect(input).toHaveValue('John')
+      if (mobile) {
+        await expect(input).not.toBeFocused()
+        await input.tap()
+      }
+      await expect(input).toBeFocused()
+      await input.fill('unmatchedword')
+      await expect(results.getByText('No results found')).toBeVisible()
+      await expect(input).toBeFocused()
+    })
+  })
+}
+
 test('search: clearing search restores collection cards', async ({ page }) => {
   const collections = [
     { id: 'col-1', name: 'My Collection', createdAt: '2024-01-01T00:00:00.000Z', lastModified: '2024-01-01T00:00:00.000Z' },

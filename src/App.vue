@@ -42,7 +42,11 @@
         </div>
       </div>
     </header>
-    <div class="flex-1 overflow-y-auto px-4 pt-3 pb-8">
+    <div
+      data-testid="search-results"
+      class="flex-1 overflow-y-auto px-4 pt-3 pb-8"
+      @touchmove.passive="dismissSearchKeyboard"
+    >
       <div class="max-w-app mx-auto">
       <div v-if="searchQuery.trim()" class="space-y-3">
         <VerseListItem
@@ -7022,6 +7026,12 @@ export default {
       })
     }
 
+    const dismissSearchKeyboard = (event) => {
+      if (event.touches.length === 1 && window.matchMedia('(pointer: coarse)').matches) {
+        searchInputRef.value?.blur()
+      }
+    }
+
     const clearSearch = () => {
       searchQuery.value = ''
       searchActive.value = false
@@ -9442,6 +9452,7 @@ export default {
       openSearch,
       searchActive,
       searchInputRef,
+      dismissSearchKeyboard,
       searchQuery,
       searchResults,
       highlightText,
