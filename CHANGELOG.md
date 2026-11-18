@@ -1,3 +1,10 @@
+## [1.67.5](https://github.com/timunrau/rum1n8/compare/v1.67.4...v1.67.5) (2026-11-18)
+
+
+### Bug Fixes
+
+* reuse verse list cards in search ([657be08](https://github.com/timunrau/rum1n8/commit/657be08d4087e6bb8b2971e31db7030cba1e292d))
+
 ## [1.67.4](https://github.com/timunrau/rum1n8/compare/v1.67.3...v1.67.4) (2026-11-15)
 
 
