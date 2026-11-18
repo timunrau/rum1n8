@@ -1,3 +1,10 @@
+## [1.67.6](https://github.com/timunrau/rum1n8/compare/v1.67.5...v1.67.6) (2026-11-18)
+
+
+### Performance Improvements
+
+* speed up launch, search, and tab controls ([16a78b7](https://github.com/timunrau/rum1n8/commit/16a78b70f7bd9e1370b46f86869114c3c6e7042e))
+
 ## [1.67.5](https://github.com/timunrau/rum1n8/compare/v1.67.4...v1.67.5) (2026-11-18)
 
 
