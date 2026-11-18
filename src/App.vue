@@ -22,7 +22,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search verses..."
-            class="w-full py-2 pl-10 border border-border-default rounded-lg focus:ring-1 focus:ring-accent focus:border-accent outline-none text-text-primary bg-surface placeholder-text-muted text-base"
+            class="w-full py-2 pl-10 border border-border-default rounded-lg focus:ring-1 focus:ring-accent focus:border-accent outline-none text-text-primary bg-surface placeholder-text-muted font-sans text-base"
             :class="searchQuery.trim() ? 'pr-9' : 'pr-3'"
             @keydown.escape="clearSearch"
           />
@@ -45,41 +45,36 @@
     <div class="flex-1 overflow-y-auto px-4 pt-3 pb-8">
       <div class="max-w-app mx-auto">
       <div v-if="searchQuery.trim()" class="space-y-3">
-        <div
+        <VerseListItem
           v-for="result in searchResults"
           :key="result.item.id"
+          :reference="result.item.reference"
+          :expanded="true"
+          show-edit
           @click="handleVerseClick(result.item); clearSearch()"
-          class="bg-surface rounded-lg py-3 px-4 border border-border-default transition-colors duration-200 cursor-pointer active:scale-98 relative"
+          @edit="startEditVerse(result.item)"
         >
-          <div class="flex flex-col gap-2">
-            <div class="flex items-start justify-between gap-2">
-              <h3 class="text-lg font-semibold text-text-primary flex-1" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
-              <div class="flex items-center gap-0.5 shrink-0">
-                <button
-                  @click.stop="startEditVerse(result.item)"
-                  class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                  title="Edit verse"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  @click.stop="shareVerse(result.item, 'search')"
-                  class="text-text-muted hover:text-text-primary p-1.5 rounded-full hover:bg-surface-hover transition-colors"
-                  title="Share verse"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p class="text-text-secondary text-sm leading-relaxed" v-html="highlightText(result.item.content, result.matches, 'content')"></p>
-          </div>
-        </div>
+          <template #reference>
+            <h3 class="break-words" v-html="highlightText(result.item.reference, result.matches, 'reference')"></h3>
+          </template>
+          <template #actions>
+            <button
+              type="button"
+              @click.stop="shareVerse(result.item, 'search')"
+              title="Share verse"
+              aria-label="Share verse"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+          </template>
+          <template #body>
+            <p v-html="highlightText(result.item.content, result.matches, 'content')"></p>
+          </template>
+        </VerseListItem>
         <div v-if="searchResults.length === 0" class="bg-surface rounded-lg border border-border-default p-12 text-center">
-          <p class="text-text-muted text-lg">No results found</p>
+          <p class="font-serif text-lg text-text-primary">No results found</p>
           <p class="text-text-muted text-sm mt-2">Try different search terms</p>
         </div>
       </div>
@@ -654,7 +649,7 @@
                   <svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span class="text-text-muted text-sm flex-1">Search verses...</span>
+                  <span class="font-sans text-text-muted text-sm flex-1">Search verses...</span>
                 </div>
               </div>
 

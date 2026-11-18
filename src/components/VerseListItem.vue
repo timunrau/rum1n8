@@ -150,7 +150,10 @@ onBeforeUnmount(cancelStatsHold)
 
       <div class="verse-card__summary">
         <div class="verse-card__identity">
-          <HeadwordReference class="verse-card__reference" :reference="reference" size="sm" />
+          <div v-if="$slots.reference" class="verse-card__reference">
+            <slot name="reference" />
+          </div>
+          <HeadwordReference v-else class="verse-card__reference" :reference="reference" size="sm" />
           <span v-if="bibleVersion" class="verse-card__version">{{ bibleVersion }}</span>
         </div>
 
@@ -169,6 +172,7 @@ onBeforeUnmount(cancelStatsHold)
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
+          <slot name="actions" />
         </div>
       </div>
     </div>
@@ -258,6 +262,13 @@ onBeforeUnmount(cancelStatsHold)
 }
 
 .verse-card__reference {
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
   transform: translateY(-0.125rem);
 }
 
@@ -341,7 +352,8 @@ onBeforeUnmount(cancelStatsHold)
   position: absolute;
 }
 
-.verse-card__edit {
+.verse-card__edit,
+.verse-card__actions :slotted(button) {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -352,7 +364,8 @@ onBeforeUnmount(cancelStatsHold)
   transition: color 160ms ease, background-color 160ms ease;
 }
 
-.verse-card__edit:hover {
+.verse-card__edit:hover,
+.verse-card__actions :slotted(button:hover) {
   background-color: var(--color-bg-hover);
   color: var(--color-accent);
 }
