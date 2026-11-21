@@ -37,6 +37,7 @@ export function initMarketingAnalyticsPreference() {
   const control = document.querySelector('[data-marketing-analytics-opt-out]')
   if (!control) return
 
+  control.closest('label').hidden = false
   control.checked = optedOut
   control.addEventListener('change', () => {
     writeOptOut(control.checked)

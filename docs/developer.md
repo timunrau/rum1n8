@@ -23,7 +23,41 @@ The individual processes remain available as `npm run dev:app`, `npm run dev:sit
 HOST=0.0.0.0 npm run dev
 ```
 
-The marketing site's HTML, JavaScript, and CSS live in `site/`. Vite keeps the public routes at `/`, `/privacy/`, and the other page paths when it builds `dist-site/`. Shared screenshots remain in `public/marketing/` because the app also uses some of them. Regenerate them with `node scripts/generate-marketing-assets.mjs` when the app UI changes.
+## Marketing pages
+
+The marketing build writes complete HTML pages under `dist-site/`. Every Markdown page uses the same article template, header, and footer in `site/templates.js` and `site/components.js`. Reading width, heading spacing, and media styling are shared in `site/marketing.css`. Edit the homepage in `site/home.html`.
+
+Add a `.md` file anywhere under `site/content/` to publish a new side page. Start it with YAML front matter:
+
+```markdown
+---
+slug: guides/memorize-a-psalm
+title: How to memorize a psalm
+description: A simple daily plan for learning a psalm by heart.
+structuredData: article
+---
+
+Start with a psalm you already know a little.
+
+## Choose a short passage
+
+Read it aloud each day.
+
+::: start-ruminating
+```
+
+- `slug`, `title`, and `description` are required. The slug sets the URL independently of the filename. Use lowercase letters, numbers, hyphens, and optional slash-separated segments. Slugs must be unique.
+- The layout supplies the H1 from `title`. Start sections in the body with `##`. The build generates links from heading text. For example, “Choose a short passage” becomes `#choose-a-short-passage`. Renaming a heading changes its generated link.
+- Write the introduction as ordinary Markdown before the first heading. For a step-by-step guide, put the number in the heading text, like `## 1. Choose a short passage`. `seoTitle` overrides the default browser title. `structuredData: article` adds Article metadata.
+- Put `::: start-ruminating` on its own line in the body to insert the shared Start ruminating card. Use `::: start-memorizing` for the button on its own.
+- Add images with `![Alt text](/images/example.svg)` and put the image file in `site/images/`. The build copies referenced images into the output.
+- Standard Markdown works for links, lists, and blockquotes. To cite a Scripture quote, put `> — Joshua 1:8 BSB` in its own paragraph within the blockquote. Interactive controls such as the importer and the analytics checkbox use named build-time components on standalone `::: component-name` lines.
+
+Run `npm run dev:site` to preview edits and new pages locally at `http://127.0.0.1:5174/`. The example builds to `dist-site/guides/memorize-a-psalm/index.html` and is listed automatically in the sitemap. The normal deployment builds the Markdown from the repository when it publishes the marketing image. For manual hosting, run `npm run build:site` with the public URLs documented in [Hosting notes](hosting.md) and upload the contents of `dist-site/`.
+
+When marketing Umami is configured, all generated pages use the same marketing website ID and honour the opt-out on `/privacy/` in that browser.
+
+Shared screenshots live in `public/marketing/` because the app also uses some of them. Regenerate them with `node scripts/generate-marketing-assets.mjs` when the app UI changes.
 
 ## Tests
 

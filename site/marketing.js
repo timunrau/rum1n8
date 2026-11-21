@@ -1,5 +1,4 @@
-import './marketing.css'
-import bibleMemoryBookmarkletUrl from '../scripts/biblememory-migration/bookmarklet.min.js?raw'
+import './navigation.js'
 import {
   initMarketingAnalytics,
   initMarketingAnalyticsPreference,
@@ -7,17 +6,7 @@ import {
 } from './marketing-analytics.js'
 
 const APP_ROOT_PATH = '/app/'
-const BIBLEMEMORY_IMPORT_PATH = '/import/biblememory/'
-const TIPS_PATH = '/tips-for-memorizing-scripture/'
-const MARKETING_PATHS = new Set([
-  '/',
-  '/memorization-is-a-spiritual-life-hack/',
-  TIPS_PATH,
-  '/spaced-repetition/',
-  BIBLEMEMORY_IMPORT_PATH,
-  '/privacy/',
-])
-const APP_URL = import.meta.env?.VITE_APP_URL || 'http://127.0.0.1:5173/app/'
+const APP_URL = document.body.dataset.appUrl
 
 function getReturnTarget() {
   const params = new URLSearchParams(window.location.search)
@@ -58,28 +47,7 @@ function updateReturnLink(target, isVisible) {
     return
   }
 
-  const header = document.querySelector('.home-header')
-    || document.querySelector('.site-header__inner')
-    || document.querySelector('.site-header')
-  const brand = header?.querySelector('.brand')
-  if (brand) {
-    banner.classList.add('app-return--header')
-    brand.insertAdjacentElement('beforebegin', banner)
-    if (header.matches('.site-header')) header.classList.add('site-header--with-return')
-  }
-
-  banner.querySelectorAll('[data-return-link]').forEach((link) => {
-    link.setAttribute('href', target)
-    link.setAttribute('aria-label', 'Back to app')
-    link.setAttribute('title', 'Back to app')
-    link.classList.add('app-return__link')
-    link.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m0 0 6-6m-6 6 6 6" />
-      </svg>
-      <span class="app-return__label">Back to app</span>
-    `
-  })
+  banner.querySelector('[data-return-link]').href = target
   banner.hidden = false
 }
 
@@ -91,7 +59,7 @@ function preserveReturnTarget(returnTarget) {
     if (!href || href.startsWith('#')) return
 
     const url = new URL(href, window.location.href)
-    if (url.origin !== window.location.origin || !MARKETING_PATHS.has(url.pathname)) return
+    if (url.origin !== window.location.origin || !/^\/(?:[a-z0-9-]+\/)*$/.test(url.pathname)) return
 
     url.searchParams.set('returnTo', returnTarget)
     link.setAttribute('href', `${url.pathname}${url.search}${url.hash}`)
@@ -99,17 +67,8 @@ function preserveReturnTarget(returnTarget) {
 }
 
 function initBibleMemoryImportPage() {
-  const bookmarkletUrl = bibleMemoryBookmarkletUrl.trim()
-
-  document.querySelectorAll('[data-biblememory-bookmarklet]').forEach((link) => {
-    link.setAttribute('href', bookmarkletUrl)
-  })
-
-  document.querySelectorAll('[data-biblememory-bookmarklet-code]').forEach((node) => {
-    node.textContent = bookmarkletUrl
-  })
-
   document.querySelectorAll('[data-copy-bookmarklet]').forEach((button) => {
+    button.hidden = false
     button.addEventListener('click', async () => {
       const codeNode = document.querySelector('[data-biblememory-bookmarklet-code]')
       if (!codeNode) return
@@ -149,14 +108,6 @@ function initBibleMemoryImportPage() {
 }
 
 function initMarketingPage() {
-  const pathname = window.location.pathname
-  document.documentElement.dataset.page =
-    pathname.startsWith(BIBLEMEMORY_IMPORT_PATH)
-      ? 'biblememory-import'
-      : pathname.startsWith(TIPS_PATH)
-        ? 'tips'
-        : 'home'
-
   const explicitReturnTarget = getReturnTarget()
   const appTarget = getAppTarget(explicitReturnTarget)
   const appLabel = explicitReturnTarget ? 'Open app' : 'Start memorizing'
@@ -165,9 +116,7 @@ function initMarketingPage() {
   updateReturnLink(appTarget, !!explicitReturnTarget)
   preserveReturnTarget(explicitReturnTarget)
 
-  if (pathname.startsWith(BIBLEMEMORY_IMPORT_PATH)) {
-    initBibleMemoryImportPage()
-  }
+  initBibleMemoryImportPage()
 }
 
 function initTrackedMarketingLinks() {

@@ -1,20 +1,17 @@
-import './marketing.js'
-import './home.css'
-
-const header = document.querySelector('.home-header')
-const menuToggle = header?.querySelector('.home-menu-toggle')
-const navigation = header?.querySelector('#home-navigation')
+const header = document.querySelector('.site-header')
+const menuToggle = header?.querySelector('.site-menu-toggle')
+const navigation = header?.querySelector('#site-navigation')
 
 if (menuToggle && navigation) {
   const mobileLayout = window.matchMedia('(max-width: 800px)')
 
   function setMenuOpen(isOpen) {
-    header.classList.toggle('home-header--menu-open', isOpen)
+    header.classList.toggle('site-header--menu-open', isOpen)
     menuToggle.setAttribute('aria-expanded', String(isOpen))
     menuToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu')
   }
 
-  header.classList.add('home-header--collapsible')
+  header.classList.add('site-header--collapsible')
   menuToggle.hidden = false
 
   menuToggle.addEventListener('click', () => {

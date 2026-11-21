@@ -1,13 +1,14 @@
 import { resolve } from 'node:path'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, normalizePath } from 'vite'
 import {
-  MARKETING_PAGES,
   buildSiteMetadata,
-  createHtmlMetadataPlugin,
   createMarketingFilesPlugin,
   createStaticAssetsPlugin,
+  homePageMetadata,
   serverHost,
 } from './build/vite-shared.js'
+import { readMarkdownPages } from './site/content.js'
+import { renderPage } from './site/templates.js'
 
 const SITE_STATIC_ASSETS = [
   'icons/icon-192x192.png',
@@ -24,13 +25,86 @@ const SITE_STATIC_ASSETS = [
   'marketing/screenshot-sync-dark.png',
   'marketing/screenshot-sync.png',
 ]
+const siteStaticAssetPaths = new Set(SITE_STATIC_ASSETS.map((file) => `/${file}`))
 
-export default defineConfig(({ mode }) => {
+const legacyRedirects = new Map([
+  ['/home', '/'], ['/home/', '/'], ['/home/index.html', '/'],
+  ['/about', '/'], ['/about/', '/'], ['/about/index.html', '/'],
+  ['/privacy.html', '/privacy/'],
+])
+
+function createStaticPagesPlugin(metadata, htmlEntries) {
+  const home = homePageMetadata(metadata)
+  return {
+    name: 'ruminate-static-pages',
+    enforce: 'pre',
+
+    // Give Vite directory-index HTML entries so its normal asset pipeline can
+    // fingerprint the linked CSS and optional browser enhancements.
+    resolveId(id) {
+      if (htmlEntries.has(id)) return id
+    },
+    load(id) {
+      const page = htmlEntries.get(id)
+      if (page) return renderPage(page, metadata, siteStaticAssetPaths)
+    },
+
+    configureServer(server) {
+      const root = server.config.root
+      server.watcher.on('all', (_event, file) => {
+        const path = normalizePath(file)
+        if (path.startsWith(`${root}/content/`) || path.startsWith(`${root}/partials/`) || path === `${root}/home.html`) {
+          server.ws.send({ type: 'full-reload', path: '*' })
+        }
+      })
+
+      server.middlewares.use(async (req, res, next) => {
+        if (!['GET', 'HEAD'].includes(req.method)) return next()
+
+        const url = req.url || '/'
+        const pathname = url.split('?')[0]
+        if (!/^\/(?:[a-z0-9-]+\/)*([a-z0-9-]+(?:\.html)?)?$/.test(pathname)) return next()
+
+        try {
+          const pages = readMarkdownPages()
+          const canonical = pathname.endsWith('/index.html')
+            ? pathname.slice(0, -'index.html'.length)
+            : `${pathname}/`
+          const target = legacyRedirects.get(pathname)
+            || (canonical === '/' || pages.has(canonical) ? canonical : null)
+          if (target) {
+            res.statusCode = 301
+            res.setHeader('Location', target + url.slice(pathname.length))
+            res.end()
+            return
+          }
+
+          const page = pathname === '/' ? home : pages.get(pathname)
+          if (!page) return next()
+
+          const html = await server.transformIndexHtml(
+            `${pathname}index.html`, renderPage(page, metadata, siteStaticAssetPaths), url,
+          )
+          res.setHeader('Content-Type', 'text/html; charset=utf-8')
+          res.end(req.method === 'HEAD' ? undefined : html)
+        } catch (error) {
+          next(error)
+        }
+      })
+    },
+  }
+}
+
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const metadata = buildSiteMetadata(env, mode)
+  const root = resolve('site')
+  const pages = command === 'build' ? [homePageMetadata(metadata), ...readMarkdownPages().values()] : []
+  const htmlEntries = new Map(pages.map((page) => [normalizePath(resolve(root, `.${page.path}index.html`)), page]))
 
   return {
-    root: resolve(process.cwd(), 'site'),
+    root,
+    appType: 'custom',
     publicDir: false,
     server: {
       host: serverHost(),
@@ -39,47 +113,15 @@ export default defineConfig(({ mode }) => {
       watch: { ignored: ['**/dist-app/**', '**/dist-site/**', '**/dev-dist/**'] },
     },
     build: {
-      outDir: resolve(process.cwd(), 'dist-site'),
+      outDir: resolve('dist-site'),
       emptyOutDir: true,
-      rollupOptions: {
-        input: Object.fromEntries(MARKETING_PAGES.map(({ inputName, inputFile }) => [
-          inputName,
-          resolve(process.cwd(), inputFile),
-        ])),
-      },
+      assetsInlineLimit: file => file.endsWith('.svg') ? false : undefined,
+      rollupOptions: { input: [...htmlEntries.keys()] },
     },
     plugins: [
-      {
-        name: 'marketing-route-canonicalization',
-        configureServer(server) {
-          const redirects = new Map([
-            ['/spaced-repetition', '/spaced-repetition/'],
-            ['/spaced-repetition/index.html', '/spaced-repetition/'],
-            ['/index.html', '/'], ['/home', '/'], ['/home/', '/'], ['/home/index.html', '/'],
-            ['/about', '/'], ['/about/', '/'], ['/about/index.html', '/'],
-            ['/memorization-is-a-spiritual-life-hack', '/memorization-is-a-spiritual-life-hack/'],
-            ['/memorization-is-a-spiritual-life-hack/index.html', '/memorization-is-a-spiritual-life-hack/'],
-            ['/tips-for-memorizing-scripture', '/tips-for-memorizing-scripture/'],
-            ['/tips-for-memorizing-scripture/index.html', '/tips-for-memorizing-scripture/'],
-            ['/import/biblememory', '/import/biblememory/'],
-            ['/import/biblememory/index.html', '/import/biblememory/'],
-            ['/privacy', '/privacy/'], ['/privacy.html', '/privacy/'], ['/privacy/index.html', '/privacy/'],
-          ])
-
-          server.middlewares.use((req, res, next) => {
-            const [pathname, query] = (req.url || '').split('?')
-            const target = redirects.get(pathname)
-            if (!target) return next()
-
-            res.statusCode = 301
-            res.setHeader('Location', `${target}${query ? `?${query}` : ''}`)
-            res.end()
-          })
-        },
-      },
+      createStaticPagesPlugin(metadata, htmlEntries),
       createStaticAssetsPlugin(SITE_STATIC_ASSETS),
-      createHtmlMetadataPlugin(metadata, MARKETING_PAGES),
-      createMarketingFilesPlugin(metadata),
+      createMarketingFilesPlugin(metadata, pages),
     ],
   }
 })

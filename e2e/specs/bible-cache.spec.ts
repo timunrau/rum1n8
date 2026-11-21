@@ -5,6 +5,7 @@ import { MOCK_VERSE_CONTENT, mockBibleApi } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
 
 test.beforeEach(async ({ page }) => {
+  await mockBibleApi(page)
   await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
@@ -24,7 +25,6 @@ async function openAddVerseModal(page: Page) {
 }
 
 test('a supported default becomes available offline and imports after a reload', async ({ page }) => {
-  await mockBibleApi(page)
   await openPracticeSettings(page)
 
   await page.getByLabel('Default translation').fill('BSB')
@@ -49,7 +49,6 @@ test('a supported default becomes available offline and imports after a reload',
 })
 
 test('saving a new verse translation as the default starts its offline download', async ({ page }) => {
-  await mockBibleApi(page)
   await openAddVerseModal(page)
 
   await page.getByLabel('Bible version').fill('BSB')
@@ -64,13 +63,10 @@ test('saving a new verse translation as the default starts its offline download'
 })
 
 test('unsupported defaults stay quiet in Settings and retain import guidance', async ({ page }) => {
-  await mockBibleApi(page)
   await openPracticeSettings(page)
 
-  const manifestResponse = page.waitForResponse(response => response.url().includes('manifest.json'))
   await page.getByLabel('Default translation').fill('NIV')
   await page.getByRole('button', { name: 'Done' }).click()
-  await manifestResponse
 
   await openPracticeSettings(page)
   await expect(page.getByLabel('Default translation')).toHaveValue('NIV')

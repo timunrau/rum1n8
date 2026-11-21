@@ -1,0 +1,25 @@
+<p class="essay__action">
+  <a
+    class="button button--primary bookmarklet-button"
+    data-biblememory-bookmarklet
+    href="@BOOKMARKLET@"
+    draggable="true"
+  >Export to Ruminate</a>
+</p>
+<div class="bookmarklet-fallback">
+  <h3>If dragging does not work</h3>
+  <ol>
+    <li>Create a new bookmark named <strong>Export to Ruminate</strong>.</li>
+    <li>Copy the code below.</li>
+    <li>Paste it into the bookmark's URL or Address field.</li>
+  </ol>
+  <div class="bookmarklet-code-wrapper">
+    <pre class="bookmarklet-code" data-biblememory-bookmarklet-code>@BOOKMARKLET@</pre>
+    <button class="bookmarklet-code-copy" data-copy-bookmarklet hidden aria-label="Copy code">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+  </div>
+</div>

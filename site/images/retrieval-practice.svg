@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="666" height="396" viewBox="0 0 666 396">
+  <title>Review restores recall; forgetting slows</title>
+  <desc>Likelihood of remembering runs from low to high on the vertical axis. Time runs left to right. A review restores recall, and the curve afterward declines more slowly than the dashed curve without review.</desc>
+  <style>
+    svg {
+      --chart-font: "Source Sans 3", "Noto Sans", Arial, sans-serif;
+      --text: #1e1e1e;
+      --text-muted: #4f5b54;
+      --text-soft: #666e66;
+      --border: rgba(30, 30, 30, 0.14);
+      --accent: #1f3d2e;
+      --accent-warm-text: #8a661e;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --text: #f3efe6;
+        --text-muted: #cfc7b8;
+        --text-soft: #9e988c;
+        --border: rgba(243, 239, 230, 0.12);
+        --accent: #8fb79e;
+        --accent-warm-text: #d2b66f;
+      }
+    }
+    text { fill: var(--text-muted); font: 20px var(--chart-font); }
+    .curve-event { fill: var(--accent-warm-text); font-weight: 600; }
+    .curve-annotation { fill: var(--accent); font-weight: 600; }
+    .curve-time { fill: var(--text); font-weight: 600; }
+    .curve-axis, .curve-axis-arrow { stroke: var(--text-soft); stroke-width: 1.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .curve-grid { stroke: var(--border); stroke-width: 1; fill: none; opacity: .5; }
+    .curve-area { fill: var(--accent); opacity: .055; }
+    .curve-line { stroke: var(--accent); stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .curve-point { fill: var(--accent); }
+    .curve-review { stroke: var(--accent-warm-text); stroke-width: 2.5; fill: none; }
+    .curve-arrowhead { fill: var(--accent-warm-text); }
+    .curve-guide { stroke: var(--accent-warm-text); stroke-width: 1; stroke-dasharray: 3 5; opacity: .5; }
+    .curve-leader { stroke: var(--accent); stroke-width: 1; fill: none; opacity: .6; }
+    .curve-baseline { stroke: var(--text-soft); stroke-width: 2; stroke-dasharray: 6 7; fill: none; opacity: .7; stroke-linecap: round; }
+    .curve-legend text { font-size: 19px; }
+    .curve-axis-label { font-size: 18px; font-weight: 600; }
+    .curve-tick { font-size: 18px; }
+    @media (max-width: 480px) {
+      .curve-axis-label, .curve-tick, .curve-event, .curve-annotation { font-size: 22px; }
+    }
+  </style>
+  <g class="curve-legend">
+    <path class="curve-line" d="M2 13h22"/>
+    <text x="34" y="19">With review</text>
+    <path class="curve-baseline" d="M158 13h22"/>
+    <text x="190" y="19">Without review</text>
+  </g>
+  <text class="curve-axis-label" text-anchor="middle" dominant-baseline="central" transform="translate(20 178) rotate(-90)">Likelihood of remembering</text>
+  <g class="curve-plot" transform="translate(46 34)">
+    <defs>
+      <marker id="axis-arrow-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1 L8 5 L2 9" class="curve-axis-arrow"/></marker>
+      <marker id="review-arrow-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" class="curve-arrowhead"/></marker>
+    </defs>
+    <path d="M60 144 H600 M60 252 H600" class="curve-grid"/>
+    <path d="M60 36 C80 117 108 176 160 204 V36 C202 107 268 159 334 187 C416 222 507 234 592 240 V270 H60 Z" class="curve-area"/>
+    <path d="M60 270 V18" class="curve-axis" marker-end="url(#axis-arrow-2)"/>
+    <path d="M60 270 H606" class="curve-axis" marker-end="url(#axis-arrow-2)"/>
+    <text x="48" y="36" text-anchor="end" dominant-baseline="central" class="curve-tick">High</text>
+    <text x="48" y="252" text-anchor="end" dominant-baseline="central" class="curve-tick">Low</text>
+    <path d="M60 36 C80 117 108 176 160 204 C228 241 384 251 592 252" class="curve-baseline"/>
+    <path d="M60 36 C80 117 108 176 160 204 M160 36 C202 107 268 159 334 187 C416 222 507 234 592 240" class="curve-line"/>
+    <circle cx="60" cy="36" r="4" class="curve-point"/>
+    <path d="M160 214 V270" class="curve-guide"/>
+    <path d="M160 204 V39" class="curve-review" marker-end="url(#review-arrow-2)"/>
+    <path d="M160 270 V277" class="curve-axis"/>
+    <text x="160" y="301" text-anchor="middle" class="curve-event">Review</text>
+    <path d="M414 138 L432 218" class="curve-leader"/>
+    <text x="408" y="123" text-anchor="middle" class="curve-annotation">Flatter curve</text>
+    <path d="M60 270 V277" class="curve-axis"/>
+    <text x="60" y="301" text-anchor="middle" class="curve-tick"><tspan x="60">First</tspan><tspan x="60" dy="24">learned</tspan></text>
+    <text x="333" y="350" text-anchor="middle" class="curve-time">Time</text>
+  </g>
+</svg>

@@ -1,49 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { extname, resolve } from 'node:path'
+import { readMarkdownPages } from '../site/content.js'
 
 export const APP_PATH = '/app/'
-
-export const MARKETING_PAGES = Object.freeze([
-  {
-    page: 'marketing',
-    inputName: 'marketing',
-    inputFile: 'site/index.html',
-    path: '/',
-    includeJsonLd: true,
-  },
-  {
-    page: 'memorizationBenefits',
-    inputName: 'memorizationBenefits',
-    inputFile: 'site/memorization-is-a-spiritual-life-hack/index.html',
-    path: '/memorization-is-a-spiritual-life-hack/',
-  },
-  {
-    page: 'scriptureTips',
-    inputName: 'scriptureTips',
-    inputFile: 'site/tips-for-memorizing-scripture/index.html',
-    path: '/tips-for-memorizing-scripture/',
-  },
-  {
-    page: 'bibleMemoryImport',
-    inputName: 'bibleMemoryImport',
-    inputFile: 'site/import/biblememory/index.html',
-    path: '/import/biblememory/',
-  },
-  {
-    page: 'spacedRepetition',
-    inputName: 'spacedRepetition',
-    inputFile: 'site/spaced-repetition/index.html',
-    path: '/spaced-repetition/',
-  },
-  {
-    page: 'privacy',
-    inputName: 'privacy',
-    inputFile: 'site/privacy/index.html',
-    path: '/privacy/',
-  },
-])
-
-const PAGE_NAMES = new Set(MARKETING_PAGES.map(({ page }) => page))
 
 const MIME_TYPES = Object.freeze({
   '.html': 'text/html; charset=utf-8',
@@ -108,7 +67,7 @@ function absoluteUrl(rootUrl, path) {
   return new URL(path.replace(/^\//, ''), rootUrl).toString()
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
@@ -141,23 +100,11 @@ export function buildSiteMetadata(env, mode = 'development') {
     applicationName,
     shortName,
     defaultDescription: 'A simple Bible memory system that keeps you in control of your data.',
-    memorizationBenefitsTitle: `Memorization Is A Spiritual Life-Hack - ${websiteName}`,
-    memorizationBenefitsDescription: 'This simple daily practice can unlock real growth in your walk with God.',
-    scriptureTipsTitle: `Tips For Memorizing Scripture - ${websiteName}`,
-    scriptureTipsDescription: "Want to memorize Scripture? These 10 practical tips will help you build a daily habit and keep God's Word fresh in your mind.",
-    bibleMemoryImportTitle: `Import from BibleMemory.com - ${websiteName}`,
-    bibleMemoryImportDescription: 'Export your BibleMemory.com verses with a local bookmarklet, download a CSV, and import it into Ruminate.',
-    privacyTitle: `Privacy Policy - ${websiteName}`,
-    privacyDescription: 'How Ruminate stores your data, handles optional sync, and respects your analytics preference.',
     appUrl,
     marketingUrl,
     siteUrl: withoutTrailingSlash(marketingUrl),
     rootUrl: marketingUrl,
     appPath: APP_PATH,
-    memorizationBenefitsPath: '/memorization-is-a-spiritual-life-hack/',
-    scriptureTipsPath: '/tips-for-memorizing-scripture/',
-    bibleMemoryImportPath: '/import/biblememory/',
-    privacyPath: '/privacy/',
     socialPreviewImagePath: '/marketing/og-card.png',
     socialPreviewImageAlt: 'Ruminate: Bible Memory App preview',
     screenshotPaths: [
@@ -196,45 +143,37 @@ function buildJsonLd(metadata) {
   }
 }
 
-function pageMetadata(metadata, page) {
-  const byPage = {
-    spacedRepetition: {
-      title: 'How Spaced Repetition Helps You Memorize Scripture - Ruminate',
-      description: 'Understand the forgetting curve, retrieval practice, and why time between reviews helps you remember Scripture. An illustrated guide to spaced repetition.',
-      path: '/spaced-repetition/',
-    },
-    memorizationBenefits: {
-      title: metadata.memorizationBenefitsTitle,
-      description: metadata.memorizationBenefitsDescription,
-      path: metadata.memorizationBenefitsPath,
-    },
-    scriptureTips: {
-      title: metadata.scriptureTipsTitle,
-      description: metadata.scriptureTipsDescription,
-      path: metadata.scriptureTipsPath,
-    },
-    bibleMemoryImport: {
-      title: metadata.bibleMemoryImportTitle,
-      description: metadata.bibleMemoryImportDescription,
-      path: metadata.bibleMemoryImportPath,
-    },
-    privacy: {
-      title: metadata.privacyTitle,
-      description: metadata.privacyDescription,
-      path: metadata.privacyPath,
-    },
-  }
-
-  return byPage[page] || {
-    title: page === 'app' ? metadata.applicationName : metadata.websiteName,
-    description: metadata.defaultDescription,
+export function homePageMetadata(metadata) {
+  return {
     path: '/',
+    title: metadata.websiteName,
+    seoTitle: metadata.websiteName,
+    description: metadata.defaultDescription,
+    structuredData: 'application',
   }
+}
+
+function pageMetadata(metadata, page) {
+  if (page === 'app') return { title: metadata.applicationName, description: metadata.defaultDescription }
+  if (page === 'marketing') return homePageMetadata(metadata)
+  if (typeof page !== 'string') return page
+
+  // Keep the original metadata lookup names available to callers.
+  const slug = {
+    memorizationBenefits: 'memorization-is-a-spiritual-life-hack',
+    scriptureTips: 'tips-for-memorizing-scripture',
+    bibleMemoryImport: 'import/biblememory',
+    spacedRepetition: 'spaced-repetition',
+  }[page] || page
+  const entry = readMarkdownPages().get(`/${slug}/`)
+  if (!entry) throw new Error(`Unknown marketing page "${page}".`)
+  return entry
 }
 
 export function buildHtmlReplacements(metadata, page) {
   const current = pageMetadata(metadata, page)
-  const isMarketingPage = PAGE_NAMES.has(page)
+  const isMarketingPage = Boolean(current.path)
+  const title = current.seoTitle || (isMarketingPage ? `${current.title} - ${metadata.websiteName}` : current.title)
   const canonicalUrl = isMarketingPage ? absoluteUrl(metadata.rootUrl, current.path) : null
   const socialImageUrl = absoluteUrl(metadata.rootUrl, metadata.socialPreviewImagePath)
 
@@ -247,14 +186,14 @@ export function buildHtmlReplacements(metadata, page) {
 
   const socialTags = isMarketingPage
     ? [
-        `<meta property="og:title" content="${escapeHtml(current.title)}" />`,
+        `<meta property="og:title" content="${escapeHtml(title)}" />`,
         `<meta property="og:description" content="${escapeHtml(current.description)}" />`,
-        `<meta property="og:type" content="${page === 'spacedRepetition' ? 'article' : 'website'}" />`,
+        `<meta property="og:type" content="${current.structuredData === 'article' ? 'article' : 'website'}" />`,
         `<meta property="og:site_name" content="${escapeHtml(metadata.websiteName)}" />`,
         `<meta property="og:image" content="${escapeHtml(socialImageUrl)}" />`,
         `<meta property="og:image:alt" content="${escapeHtml(metadata.socialPreviewImageAlt)}" />`,
         '<meta name="twitter:card" content="summary_large_image" />',
-        `<meta name="twitter:title" content="${escapeHtml(current.title)}" />`,
+        `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
         `<meta name="twitter:description" content="${escapeHtml(current.description)}" />`,
         `<meta name="twitter:image" content="${escapeHtml(socialImageUrl)}" />`,
         `<meta name="twitter:image:alt" content="${escapeHtml(metadata.socialPreviewImageAlt)}" />`,
@@ -262,19 +201,19 @@ export function buildHtmlReplacements(metadata, page) {
     : ''
 
   return {
-    '%PAGE_TITLE%': escapeHtml(current.title),
+    '%PAGE_TITLE%': escapeHtml(title),
     '%PAGE_DESCRIPTION%': escapeHtml(current.description),
     '%META_ROBOTS%': isMarketingPage ? 'index,follow' : 'noindex,nofollow',
     '%HEAD_CANONICAL_TAGS%': canonicalTags,
     '%HEAD_SOCIAL_TAGS%': socialTags,
-    '%HEAD_JSON_LD%': page === 'spacedRepetition'
+    '%HEAD_JSON_LD%': current.structuredData === 'article'
       ? `<script type="application/ld+json">${serializeJsonForHtml({
           '@context': 'https://schema.org', '@type': 'Article',
-          headline: 'How spaced repetition helps you memorize Scripture', description: current.description,
+          headline: current.title, description: current.description,
           url: canonicalUrl, mainEntityOfPage: canonicalUrl, inLanguage: 'en',
           publisher: { '@type': 'Organization', name: 'Ruminate', url: metadata.rootUrl },
         })}</script>`
-      : page === 'marketing'
+      : current.structuredData === 'application'
       ? `<script type="application/ld+json">${serializeJsonForHtml(buildJsonLd(metadata))}</script>`
       : '',
     '%APP_URL%': escapeHtml(metadata.appUrl),
@@ -293,10 +232,7 @@ function detectPage(ctx, pages) {
 }
 
 function renderTemplate(html, replacements) {
-  return Object.entries(replacements).reduce(
-    (result, [placeholder, value]) => result.replaceAll(placeholder, value),
-    html,
-  )
+  return html.replace(/%[A-Z_]+%/g, (placeholder) => replacements[placeholder] ?? placeholder)
 }
 
 export function createHtmlMetadataPlugin(metadata, pages) {
@@ -308,7 +244,7 @@ export function createHtmlMetadataPlugin(metadata, pages) {
   }
 }
 
-export function createMarketingFilesPlugin(metadata) {
+export function createMarketingFilesPlugin(metadata, pages) {
   return {
     name: 'rum1n8-marketing-files',
     generateBundle() {
@@ -318,7 +254,7 @@ export function createMarketingFilesPlugin(metadata) {
         source: `User-agent: *\nAllow: /\n\nSitemap: ${absoluteUrl(metadata.rootUrl, '/sitemap.xml')}\n`,
       })
 
-      const urls = MARKETING_PAGES.map(({ path }) => [
+      const urls = pages.map(({ path }) => [
         '  <url>',
         `    <loc>${escapeXml(absoluteUrl(metadata.rootUrl, path))}</loc>`,
         '  </url>',

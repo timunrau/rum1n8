@@ -57,6 +57,8 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-vue": "^6.0.10",
     "concurrently": "^10.0.6",
+    "js-yaml": "^5.5.0",
+    "markdown-it": "^15.0.3",
     "pngjs": "^7.0.0",
     "semantic-release": "25.0.9",
     "tailwindcss": "^4.3.0",
