@@ -1,3 +1,10 @@
+# [1.68.0](https://github.com/timunrau/rum1n8/compare/v1.67.7...v1.68.0) (2026-11-21)
+
+
+### Features
+
+* publish marketing pages from Markdown ([582506b](https://github.com/timunrau/rum1n8/commit/582506b185ff6a78e7d65a915dee7c8274210b4e))
+
 ## [1.67.7](https://github.com/timunrau/rum1n8/compare/v1.67.6...v1.67.7) (2026-11-18)
 
 
