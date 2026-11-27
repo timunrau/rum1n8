@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { clearAppStorage, getStoredVerses, seedStorage } from '../helpers/storage'
-import { MOCK_VERSE_CONTENT, mockBibleApi } from '../helpers/mocks'
+import { MOCK_PSALM_1_VERSES, MOCK_VERSE_CONTENT, blockBibleApi, mockBibleApi } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -12,7 +12,10 @@ const sampleVerses = JSON.parse(
   readFileSync(path.join(__dirname, '../fixtures/sample-verses.json'), 'utf-8')
 )
 
-test.beforeEach(async ({ page }) => {
+test.use({ serviceWorkers: 'block' })
+
+test.beforeEach(async ({ context, page }) => {
+  await mockBibleApi(context)
   await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
@@ -240,7 +243,7 @@ test('add verse reference input: normalizes valid references and validates inval
   await expect(page.getByText('Examples: John 3:16 · John 3:16–17 · John 3:36–4:2 · Psalm 1 · Psalm 1–3')).toBeVisible()
 })
 
-test('add verse import: stays visible, validates on click, and clears stale offline feedback on edit', async ({ page }) => {
+test('add verse import: stays visible, validates on click, and clears stale offline feedback on edit', async ({ context, page }) => {
   await openAddVerseModal(page)
 
   const reference = page.getByLabel('Reference')
@@ -272,7 +275,8 @@ test('add verse import: stays visible, validates on click, and clears stale offl
   await bibleVersion.fill('BSB')
   await expect(page.getByText('Please enter a Bible version first.')).toHaveCount(0)
 
-  await page.context().setOffline(true)
+  await blockBibleApi(context)
+  await context.setOffline(true)
   await page.evaluate(() => window.dispatchEvent(new Event('offline')))
   await importButton.click()
 
@@ -280,16 +284,13 @@ test('add verse import: stays visible, validates on click, and clears stale offl
 
   await reference.fill('John 3:17')
   await expect(page.getByText(/has not finished downloading for offline import/i)).toHaveCount(0)
-  await page.context().setOffline(false)
+  await context.setOffline(false)
 })
 
 test('add verse with Bible import: BSB shorthand imports content through the fetch-client v2 API', async ({
   page,
 }) => {
-  await mockBibleApi(page)
-  await page.getByTestId('nav-collections').click()
-  await page.getByTestId('fab-trigger').click()
-  await page.getByTestId('fab-new-verse').click()
+  await openAddVerseModal(page)
 
   await page.getByLabel('Reference').fill('John 3:16')
   await page.getByLabel('Bible version').fill('BSB')
@@ -316,21 +317,14 @@ test('add verse with Bible import: BSB shorthand imports content through the fet
 })
 
 test('add passage with Bible import: whole-chapter shorthand imports through the final verse', async ({ page }) => {
-  const chapterVerses = Array.from({ length: 6 }, (_, index) => `Psalm 1 verse ${index + 1}.`)
-  await mockBibleApi(page, MOCK_VERSE_CONTENT, {
-    bookId: 'psa',
-    bookName: 'Psalms',
-    chapter: 1,
-    startVerse: 1,
-    verseContents: chapterVerses,
-  })
+  const chapterContent = MOCK_PSALM_1_VERSES.join(' ')
   await openAddVerseModal(page)
 
   await page.getByLabel('Reference').fill('Psalm 1')
   await page.getByLabel('Bible version').fill('BSB')
   await page.getByRole('button', { name: 'Import verse text' }).click()
 
-  await expect(page.getByLabel('Verse text', { exact: true })).toHaveValue(chapterVerses.join(' '))
+  await expect(page.getByLabel('Verse text', { exact: true })).toHaveValue(chapterContent)
   await page.getByRole('button', { name: 'Add Verse' }).click()
   await expect(page.getByText('Psalms 1')).toBeVisible()
 
@@ -338,12 +332,11 @@ test('add passage with Bible import: whole-chapter shorthand imports through the
   expect(storedVerses).toHaveLength(1)
   expect(storedVerses[0]).toMatchObject({
     reference: 'Psalms 1',
-    content: chapterVerses.join(' '),
+    content: chapterContent,
   })
 })
 
 test('whole-chapter references link to the full chapter for unavailable translations', async ({ page }) => {
-  await mockBibleApi(page)
   await openAddVerseModal(page)
 
   await page.getByLabel('Reference').fill('Psalm 1')
@@ -357,7 +350,6 @@ test('whole-chapter references link to the full chapter for unavailable translat
 })
 
 test('verse import: unavailable translations use the same guidance in Add and Edit', async ({ page }) => {
-  await mockBibleApi(page)
   const copyrightGuidance = 'This translation is copyrighted. Copy the text from one of the links below and paste it into Verse text.'
   const bsbGuidance = 'Or try the BSB translation to fill in the verse text automatically.'
 

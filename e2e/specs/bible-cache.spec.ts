@@ -1,14 +1,13 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { clearAppStorage } from '../helpers/storage'
-import { MOCK_VERSE_CONTENT, mockBibleApi } from '../helpers/mocks'
+import { MOCK_VERSE_CONTENT, blockBibleApi, mockBibleApi } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
 
-test.beforeEach(async ({ page }) => {
-  await mockBibleApi(page)
+test.use({ serviceWorkers: 'block' })
+
+test.beforeEach(async ({ context, page }) => {
+  await mockBibleApi(context)
   await gotoApp(page)
-  await clearAppStorage(page)
-  await page.reload()
 })
 
 async function openPracticeSettings(page: Page) {
@@ -24,7 +23,7 @@ async function openAddVerseModal(page: Page) {
   await expect(page.getByTestId('modal-add-verse')).toBeVisible()
 }
 
-test('a supported default becomes available offline and imports after a reload', async ({ page }) => {
+test('a supported default becomes available offline and imports after a reload', async ({ context, page }) => {
   await openPracticeSettings(page)
 
   await page.getByLabel('Default translation').fill('BSB')
@@ -33,8 +32,10 @@ test('a supported default becomes available offline and imports after a reload',
   await expect(page.getByTestId('default-bible-cache-status')).toHaveText('Available offline')
   await page.getByRole('button', { name: 'Done' }).click()
 
+  // Keep the app shell reachable for the reload while forcing the Bible cache to serve the import.
+  await blockBibleApi(context)
   await page.reload()
-  await page.context().setOffline(true)
+  await context.setOffline(true)
   await page.evaluate(() => window.dispatchEvent(new Event('offline')))
 
   try {
@@ -44,7 +45,7 @@ test('a supported default becomes available offline and imports after a reload',
     await page.getByRole('button', { name: 'Import verse text' }).click()
     await expect(page.getByLabel('Verse text', { exact: true })).toHaveValue(MOCK_VERSE_CONTENT)
   } finally {
-    await page.context().setOffline(false)
+    await context.setOffline(false)
   }
 })
 
@@ -74,6 +75,7 @@ test('unsupported defaults stay quiet in Settings and retain import guidance', a
   await page.getByRole('button', { name: 'Done' }).click()
 
   await openAddVerseModal(page)
+  await expect(page.getByLabel('Bible version')).toHaveValue('NIV')
   await page.getByLabel('Reference').fill('John 3:16')
   await page.getByRole('button', { name: 'Import verse text' }).click()
   await expect(page.getByText('This translation is copyrighted. Copy the text from one of the links below and paste it into Verse text.')).toBeVisible()

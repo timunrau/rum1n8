@@ -3,40 +3,40 @@
  * Mocks Bible API and WebDAV to avoid external dependencies.
  */
 
-import type { Page } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
 
 /** Mock verse content returned by Bible API import */
 export const MOCK_VERSE_CONTENT = 'For God so loved the world that he gave his one and only Son.'
+export const MOCK_PSALM_1_VERSES = Array.from({ length: 6 }, (_, index) => `Psalm 1 verse ${index + 1}.`)
+const BIBLE_API_URL_PATTERN = 'https://v1.fetch.bible/**'
 
 /**
- * Setup Bible API mock for importVerseContent.
- * Intercepts fetch.bible requests and returns mock book/verse data.
+ * Serve the fetch.bible manifest and both fixture books. Register before navigation
+ * so startup cache checks and interactive imports use the same data.
  */
-export async function mockBibleApi(
-  page: Page,
-  verseContent = MOCK_VERSE_CONTENT,
-  options: {
-    bookId?: string
-    bookName?: string
-    chapter?: number
-    startVerse?: number
-    verseContents?: string[]
-  } = {},
-) {
-  const bookId = options.bookId || 'jhn'
-  const bookName = options.bookName || 'John'
-  const chapter = options.chapter || 3
-  const startVerse = options.startVerse || 16
-  const verseContents = options.verseContents || [verseContent]
+export async function mockBibleApi(context: BrowserContext) {
+  const books = {
+    '/bibles/eng_bsb/txt/jhn.json': {
+      book: 'jhn',
+      name: { normal: 'John', long: 'John', abbrev: 'John' },
+      contents: [[], [], [], [...Array.from({ length: 16 }, () => []), [MOCK_VERSE_CONTENT]]],
+    },
+    '/bibles/eng_bsb/txt/psa.json': {
+      book: 'psa',
+      name: { normal: 'Psalms', long: 'Psalms', abbrev: 'Psa' },
+      contents: [[], [[], ...MOCK_PSALM_1_VERSES.map(verse => [verse])]],
+    },
+  }
 
-  await page.route(/.*fetch\.bible.*/, async (route) => {
-    const url = route.request().url()
-    // Return mock manifest or book data based on URL
-    if (url.includes('manifest')) {
+  await context.route(BIBLE_API_URL_PATTERN, async (route) => {
+    const { pathname } = new URL(route.request().url())
+    if (route.request().method() !== 'GET') {
+      await route.fulfill({ status: 405 })
+      return
+    }
+    if (pathname === '/manifest.json') {
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
+        json: {
           bibles: {
             eng_bsb: {
               name: {
@@ -46,8 +46,8 @@ export async function mockBibleApi(
                 english_abbrev: 'BSB',
               },
               year: 2020,
-              books_ot: bookId === 'psa' ? [bookId] : [],
-              books_nt: bookId === 'psa' ? [] : [bookId],
+              books_ot: ['psa'],
+              books_nt: ['jhn'],
               copyright: {
                 attribution: 'Mock Bible',
                 attribution_url: 'https://example.com/mock-bible',
@@ -71,9 +71,10 @@ export async function mockBibleApi(
             en: 'eng',
           },
           languages_most_spoken: ['eng'],
-          books_ordered: [bookId],
+          books_ordered: ['psa', 'jhn'],
           book_names_english: {
-            [bookId]: bookName,
+            psa: 'Psalms',
+            jhn: 'John',
           },
           licenses: {
             'mock-open': {
@@ -87,68 +88,48 @@ export async function mockBibleApi(
               },
             },
           },
-        }),
+        },
       })
       return
     }
-    if (url.includes('.json') && !url.includes('manifest')) {
-      const contents = Array.from({ length: chapter + 1 }, () => [])
-      const chapterContents = Array.from({ length: startVerse + verseContents.length }, () => [])
-      verseContents.forEach((content, index) => {
-        chapterContents[startVerse + index] = [content]
-      })
-      contents[chapter] = chapterContents
-
-      // Book format - return minimal structure with verse content
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          book: bookId,
-          name: {
-            normal: bookName,
-            long: bookName,
-            abbrev: bookName,
-          },
-          contents,
-        }),
-      })
-      return
-    }
-    await route.continue()
+    const book = books[pathname as keyof typeof books]
+    await route.fulfill(book ? { json: book } : { status: 404 })
   })
 }
 
-/**
- * Setup WebDAV mock for test connection and sync.
- * Intercepts requests to common WebDAV paths.
- */
-export async function mockWebDAV(page: Page, options?: { failSync?: boolean }) {
-  await page.route('**/remote.php/webdav/**', async (route) => {
-    const method = route.request().method()
-    if (method === 'PROPFIND' || method === 'OPTIONS') {
-      await route.fulfill({ status: 207, body: '<?xml version="1.0"?><multistatus/>' })
-      return
-    }
-    if (method === 'PUT' && options?.failSync) {
-      await route.fulfill({ status: 500 })
-      return
-    }
-    if (method === 'GET' && (route.request().url().includes('rum1n8') || route.request().url().includes('bible-memory'))) {
-      await route.fulfill({ status: 404 })
-      return
-    }
-    await route.continue()
-  })
+export async function blockBibleApi(context: BrowserContext) {
+  // Playwright can fulfill a routed request even when the browser is offline.
+  await context.route(BIBLE_API_URL_PATTERN, route => route.abort('internetdisconnected'))
+}
 
-  // Also mock requests to localhost proxy (dev)
-  await page.route('**/localhost:**/webdav/**', async (route) => {
+/** Serve the connection probe on the direct endpoint or the app's hosted proxy. */
+export async function mockWebDAVConnection(context: BrowserContext, serverUrl: string, baseURL?: string) {
+  const proxyUrl = baseURL && new URL(`/api/webdav${new URL(serverUrl).pathname}`, baseURL).href
+  const corsHeaders = { 'access-control-allow-origin': '*' }
+
+  await context.route(url => url.href === serverUrl || url.href === proxyUrl, async (route) => {
     const method = route.request().method()
-    if (method === 'PROPFIND' || method === 'OPTIONS') {
-      await route.fulfill({ status: 207, body: '<?xml version="1.0"?><multistatus/>' })
+    if (method === 'OPTIONS') {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          ...corsHeaders,
+          'access-control-allow-methods': 'PROPFIND',
+          'access-control-allow-headers': 'Authorization, Depth',
+        },
+      })
       return
     }
-    await route.continue()
+    if (method === 'PROPFIND') {
+      await route.fulfill({
+        status: 207,
+        headers: corsHeaders,
+        contentType: 'application/xml',
+        body: '<?xml version="1.0"?><multistatus xmlns="DAV:"/>',
+      })
+      return
+    }
+    await route.fulfill({ status: 405, headers: corsHeaders })
   })
 }
 

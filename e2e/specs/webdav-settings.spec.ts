@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { clearAppStorage } from '../helpers/storage'
-import { mockWebDAV } from '../helpers/mocks'
+import { mockWebDAVConnection } from '../helpers/mocks'
 import { gotoApp } from '../helpers/navigation'
 
-test.beforeEach(async ({ page }) => {
+const WEBDAV_SERVER_URL = 'https://test.example.com/remote.php/webdav/'
+
+test.use({ serviceWorkers: 'block' })
+
+test.beforeEach(async ({ baseURL, context, page }) => {
+  await mockWebDAVConnection(context, WEBDAV_SERVER_URL, baseURL)
   await gotoApp(page)
   await clearAppStorage(page)
   await page.reload()
@@ -24,7 +29,7 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
   await page.getByTestId('drawer-sync-setup').click()
   await page.getByTestId('sync-advanced-toggle').click()
 
-  await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
+  await page.getByLabel(/WebDAV Server URL/i).fill(WEBDAV_SERVER_URL)
   await page.getByLabel(/Username/i).fill('testuser')
   await page.getByLabel(/Password/i).fill('testpass')
   await page.getByRole('button', { name: /^Save$/i }).click()
@@ -40,15 +45,14 @@ test('fill URL, username, password -> Save -> settings persist (reopen modal, va
 })
 
 test('test connection: mock WebDAV -> Test -> success message', async ({ page }) => {
-  await mockWebDAV(page)
   await page.getByTestId('hamburger-button').click()
   await page.getByTestId('drawer-sync-setup').click()
   await page.getByTestId('sync-advanced-toggle').click()
 
-  await page.getByLabel(/WebDAV Server URL/i).fill('https://test.example.com/remote.php/webdav/')
+  await page.getByLabel(/WebDAV Server URL/i).fill(WEBDAV_SERVER_URL)
   await page.getByLabel(/Username/i).fill('testuser')
   await page.getByLabel(/Password/i).fill('testpass')
   await page.getByRole('button', { name: /^Test$/i }).click()
 
-  await expect(page.getByText(/success|connected|OK/i)).toBeVisible({ timeout: 5000 })
+  await expect(page.getByText('Connection successful!', { exact: true })).toBeVisible()
 })
